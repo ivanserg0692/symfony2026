@@ -1,0 +1,23 @@
+services:
+  symfony-cli:
+    build:
+      context: .
+      dockerfile: docker/php-symfony-cli/Dockerfile
+      args:
+        UBUNTU_VERSION: "24.04"
+    image: symfony-cli:dev
+    container_name: symfony-cli
+    working_dir: /workspace
+    volumes:
+      - ./symfony:/workspace
+    environment:
+      GIT_AUTHOR_NAME: ${GIT_AUTHOR_NAME:-}
+      GIT_AUTHOR_EMAIL: ${GIT_AUTHOR_EMAIL:-}
+      GIT_COMMITTER_NAME: ${GIT_COMMITTER_NAME:-}
+      GIT_COMMITTER_EMAIL: ${GIT_COMMITTER_EMAIL:-}
+    entrypoint:
+      - /usr/local/bin/symfony-entrypoint
+    command:
+      - bash
+    stdin_open: true
+    tty: true
