@@ -6,7 +6,7 @@ This is my Symfony learning project.
 
 The Symfony codebase itself lives in `symfony`.
 
-![Hello in Symfony](symfony/directory/hello-in-symfony.png)
+![Hello in Symfony](symfony/docs/images/hello-in-symfony.png)
 
 ## Run With Docker Compose
 
@@ -81,7 +81,7 @@ GIT_COMMITTER_EMAIL="you@example.com"
 
 Исходный код проекта Symfony находится в каталоге `symfony`.
 
-![Hello in Symfony](symfony/directory/hello-in-symfony.png)
+![Hello in Symfony](symfony/docs/images/hello-in-symfony.png)
 
 ## Запуск через Docker Compose
 
