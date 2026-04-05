@@ -36,10 +36,16 @@ docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
 ```
 
-Start the Symfony local server inside the container:
+Start the Symfony local web server:
 
 ```bash
-docker compose run --rm --service-ports symfony-cli symfony server:start --allow-http --no-tls --listen-ip=0.0.0.0
+docker compose up --build symfony-web
+```
+
+Open the app in your browser:
+
+```text
+http://localhost:8000
 ```
 
 ## Source Directory
@@ -103,10 +109,16 @@ docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
 ```
 
-Запуск локального Symfony-сервера внутри контейнера:
+Запуск локального Symfony-сервера:
 
 ```bash
-docker compose run --rm --service-ports symfony-cli symfony server:start --allow-http --no-tls --listen-ip=0.0.0.0
+docker compose up --build symfony-web
+```
+
+Откройте приложение в браузере:
+
+```text
+http://localhost:8000
 ```
 
 ## Каталог исходников

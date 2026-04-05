@@ -1,5 +1,5 @@
 services:
-  symfony-cli:
+  symfony-cli: &symfony-base
     build:
       context: .
       dockerfile: docker/php-symfony-cli/Dockerfile
@@ -21,3 +21,18 @@ services:
       - bash
     stdin_open: true
     tty: true
+
+  symfony-web:
+    <<: *symfony-base
+    container_name: symfony-web
+    command:
+      - symfony
+      - serve
+      - --allow-http
+      - --no-tls
+      - --listen-ip=0.0.0.0
+      - --port=8000
+    ports:
+      - "8000:8000"
+    stdin_open: false
+    tty: false
