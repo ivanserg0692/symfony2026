@@ -6,6 +6,8 @@ This is my Symfony learning project.
 
 The Symfony codebase itself lives in `symfony`.
 
+![Hello in Symfony](symfony/directory/hello-in-symfony.png)
+
 ## Run With Docker Compose
 
 Start the runner from the repository root.
@@ -78,6 +80,8 @@ GIT_COMMITTER_EMAIL="you@example.com"
 Это мой учебный проект на Symfony.
 
 Исходный код проекта Symfony находится в каталоге `symfony`.
+
+![Hello in Symfony](symfony/directory/hello-in-symfony.png)
 
 ## Запуск через Docker Compose
 
