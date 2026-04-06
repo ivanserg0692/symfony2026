@@ -1,5 +1,4 @@
-ARG UBUNTU_VERSION=24.04
-FROM ubuntu:${UBUNTU_VERSION}
+FROM php:8.4-cli-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH="/root/.symfony5/bin:${PATH}"
@@ -7,18 +6,21 @@ ENV PATH="/root/.symfony5/bin:${PATH}"
 RUN apt-get update && apt-get install -y \
     bash \
     ca-certificates \
-    composer \
     curl \
     git \
-    php-cli \
-    php-curl \
-    php-intl \
-    php-mbstring \
-    php-xml \
-    php-zip \
+    libicu-dev \
+    libonig-dev \
+    libzip-dev \
     unzip \
     wget \
     && rm -rf /var/lib/apt/lists/*
+
+RUN docker-php-ext-install \
+    intl \
+    mbstring \
+    zip
+
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 RUN wget https://get.symfony.com/cli/installer -O - | bash
 

@@ -4,16 +4,16 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
-        "php": ">=8.2",
+        "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "symfony/console": "7.4.*",
-        "symfony/dotenv": "7.4.*",
-        "symfony/flex": "^2",
-        "symfony/framework-bundle": "7.4.*",
-        "symfony/monolog-bundle": "^3.0|^4.0",
-        "symfony/runtime": "7.4.*",
-        "symfony/yaml": "7.4.*"
+        "symfony/console": "8.0.*",
+        "symfony/dotenv": "8.0.*",
+        "symfony/flex": "^2.10",
+        "symfony/framework-bundle": "8.0.*",
+        "symfony/monolog-bundle": "^3.0|^4.0.2",
+        "symfony/runtime": "8.0.*",
+        "symfony/yaml": "8.0.*"
     },
     "config": {
         "allow-plugins": {
@@ -62,12 +62,12 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "7.4.*"
+            "require": "8.0.*"
         }
     },
     "require-dev": {
-        "symfony/debug-bundle": "7.4.*",
-        "symfony/stopwatch": "7.4.*",
-        "symfony/web-profiler-bundle": "7.4.*"
+        "symfony/debug-bundle": "8.0.*",
+        "symfony/stopwatch": "8.0.*",
+        "symfony/web-profiler-bundle": "8.0.*"
     }
 }

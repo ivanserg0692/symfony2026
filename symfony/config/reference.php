@@ -188,7 +188,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         only_exceptions?: bool|Param, // Default: false
  *         only_main_requests?: bool|Param, // Default: false
  *         dsn?: scalar|Param|null, // Default: "file:%kernel.cache_dir%/profiler"
- *         collect_serializer_data?: bool|Param, // Enables the serializer data collector and profiler panel. // Default: false
+ *         collect_serializer_data?: true|Param, // Default: true
  *     },
  *     workflows?: bool|array{
  *         enabled?: bool|Param, // Default: false
@@ -232,7 +232,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         enabled?: bool|Param, // Default: false
  *         resource?: scalar|Param|null,
  *         type?: scalar|Param|null,
- *         cache_dir?: scalar|Param|null, // Deprecated: Setting the "framework.router.cache_dir.cache_dir" configuration option is deprecated. It will be removed in version 8.0. // Default: "%kernel.build_dir%"
  *         default_uri?: scalar|Param|null, // The default URI used to generate URLs in a non-HTTP context. // Default: null
  *         http_port?: scalar|Param|null, // Default: 80
  *         https_port?: scalar|Param|null, // Default: 443
@@ -256,8 +255,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         gc_maxlifetime?: scalar|Param|null,
  *         save_path?: scalar|Param|null, // Defaults to "%kernel.cache_dir%/sessions" if the "handler_id" option is not null.
  *         metadata_update_threshold?: int|Param, // Seconds to wait between 2 session metadata updates. // Default: 0
- *         sid_length?: int|Param, // Deprecated: Setting the "framework.session.sid_length.sid_length" configuration option is deprecated. It will be removed in version 8.0. No alternative is provided as PHP 8.4 has deprecated the related option.
- *         sid_bits_per_character?: int|Param, // Deprecated: Setting the "framework.session.sid_bits_per_character.sid_bits_per_character" configuration option is deprecated. It will be removed in version 8.0. No alternative is provided as PHP 8.4 has deprecated the related option.
  *     },
  *     request?: bool|array{ // Request configuration
  *         enabled?: bool|Param, // Default: false
@@ -287,14 +284,14 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         paths?: array<string, scalar|Param|null>,
  *         excluded_patterns?: list<scalar|Param|null>,
  *         exclude_dotfiles?: bool|Param, // If true, any files starting with "." will be excluded from the asset mapper. // Default: true
- *         server?: bool|Param, // If true, a "dev server" will return the assets from the public docs (true in "debug" mode only by default). // Default: true
+ *         server?: bool|Param, // If true, a "dev server" will return the assets from the public directory (true in "debug" mode only by default). // Default: true
  *         public_prefix?: scalar|Param|null, // The public path where the assets will be written to (and served from when "server" is true). // Default: "/assets/"
  *         missing_import_mode?: "strict"|"warn"|"ignore"|Param, // Behavior if an asset cannot be found when imported from JavaScript or CSS files - e.g. "import './non-existent.js'". "strict" means an exception is thrown, "warn" means a warning is logged, "ignore" means the import is left as-is. // Default: "warn"
  *         extensions?: array<string, scalar|Param|null>,
  *         importmap_path?: scalar|Param|null, // The path of the importmap.php file. // Default: "%kernel.project_dir%/importmap.php"
  *         importmap_polyfill?: scalar|Param|null, // The importmap name that will be used to load the polyfill. Set to false to disable. // Default: "es-module-shims"
  *         importmap_script_attributes?: array<string, scalar|Param|null>,
- *         vendor_dir?: scalar|Param|null, // The docs to store JavaScript vendors. // Default: "%kernel.project_dir%/assets/vendor"
+ *         vendor_dir?: scalar|Param|null, // The directory to store JavaScript vendors. // Default: "%kernel.project_dir%/assets/vendor"
  *         precompress?: bool|array{ // Precompress assets with Brotli, Zstandard and gzip.
  *             enabled?: bool|Param, // Default: false
  *             formats?: list<scalar|Param|null>,
@@ -331,11 +328,10 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     },
  *     validation?: bool|array{ // Validation configuration
  *         enabled?: bool|Param, // Default: false
- *         cache?: scalar|Param|null, // Deprecated: Setting the "framework.validation.cache.cache" configuration option is deprecated. It will be removed in version 8.0.
  *         enable_attributes?: bool|Param, // Default: true
  *         static_method?: list<scalar|Param|null>,
  *         translation_domain?: scalar|Param|null, // Default: "validators"
- *         email_validation_mode?: "html5"|"html5-allow-no-tld"|"strict"|"loose"|Param, // Default: "html5"
+ *         email_validation_mode?: "html5"|"html5-allow-no-tld"|"strict"|Param, // Default: "html5"
  *         mapping?: array{
  *             paths?: list<scalar|Param|null>,
  *         },
@@ -347,9 +343,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         auto_mapping?: array<string, array{ // Default: []
  *             services?: list<scalar|Param|null>,
  *         }>,
- *     },
- *     annotations?: bool|array{
- *         enabled?: bool|Param, // Default: false
  *     },
  *     serializer?: bool|array{ // Serializer configuration
  *         enabled?: bool|Param, // Default: false
@@ -382,13 +375,13 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     },
  *     property_info?: bool|array{ // Property info configuration
  *         enabled?: bool|Param, // Default: false
- *         with_constructor_extractor?: bool|Param, // Registers the constructor extractor.
+ *         with_constructor_extractor?: bool|Param, // Registers the constructor extractor. // Default: true
  *     },
  *     cache?: array{ // Cache configuration
  *         prefix_seed?: scalar|Param|null, // Used to namespace cache keys when using several apps with the same shared backend. // Default: "_%kernel.project_dir%.%kernel.container_class%"
  *         app?: scalar|Param|null, // App related cache pools configuration. // Default: "cache.adapter.filesystem"
  *         system?: scalar|Param|null, // System related cache pools configuration. // Default: "cache.adapter.system"
- *         docs?: scalar|Param|null, // Default: "%kernel.share_dir%/pools/app"
+ *         directory?: scalar|Param|null, // Default: "%kernel.share_dir%/pools/app"
  *         default_psr6_provider?: scalar|Param|null,
  *         default_redis_provider?: scalar|Param|null, // Default: "redis://localhost"
  *         default_valkey_provider?: scalar|Param|null, // Default: "valkey://localhost"
@@ -488,7 +481,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             verify_peer?: bool|Param, // Indicates if the peer should be verified in a TLS context.
  *             verify_host?: bool|Param, // Indicates if the host should exist as a certificate common name.
  *             cafile?: scalar|Param|null, // A certificate authority file.
- *             capath?: scalar|Param|null, // A docs that contains multiple certificate authority files.
+ *             capath?: scalar|Param|null, // A directory that contains multiple certificate authority files.
  *             local_cert?: scalar|Param|null, // A PEM formatted certificate file.
  *             local_pk?: scalar|Param|null, // A private key file.
  *             passphrase?: scalar|Param|null, // The passphrase used to encrypt the "local_pk" file.
@@ -541,7 +534,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             verify_peer?: bool|Param, // Indicates if the peer should be verified in a TLS context.
  *             verify_host?: bool|Param, // Indicates if the host should exist as a certificate common name.
  *             cafile?: scalar|Param|null, // A certificate authority file.
- *             capath?: scalar|Param|null, // A docs that contains multiple certificate authority files.
+ *             capath?: scalar|Param|null, // A directory that contains multiple certificate authority files.
  *             local_cert?: scalar|Param|null, // A PEM formatted certificate file.
  *             local_pk?: scalar|Param|null, // A private key file.
  *             passphrase?: scalar|Param|null, // The passphrase used to encrypt the "local_pk" file.
@@ -699,7 +692,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     }>,
  *     autoescape_service?: scalar|Param|null, // Default: null
  *     autoescape_service_method?: scalar|Param|null, // Default: null
- *     base_template_class?: scalar|Param|null, // Deprecated: The child node "base_template_class" at path "twig.base_template_class" is deprecated.
  *     cache?: scalar|Param|null, // Default: true
  *     charset?: scalar|Param|null, // Default: "%kernel.charset%"
  *     debug?: bool|Param, // Default: "%kernel.debug%"
