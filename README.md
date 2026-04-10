@@ -50,6 +50,24 @@ Open the app in your browser:
 http://localhost:8000
 ```
 
+## API Documentation
+
+API documentation for `api/v1` is generated automatically at runtime by the Symfony app.
+
+- OpenAPI format: `3.0.0`
+- Symfony bundle: `nelmio/api-doc-bundle` `v5.9.5`
+- Attribute parser: `zircote/swagger-php` `5.8.3`
+- UI renderer: `Swagger UI` `v7.0.0`
+
+Available endpoints:
+
+```text
+http://localhost:8000/api/v1/doc
+http://localhost:8000/api/v1/doc.json
+```
+
+The documentation includes only routes that match `^/api/v1`.
+
 ## Source Directory
 
 Project files are mounted from `symfony` into `/workspace` inside the container.
@@ -124,6 +142,24 @@ docker compose up --build symfony-web
 ```text
 http://localhost:8000
 ```
+
+## Документация API
+
+Документация для `api/v1` генерируется приложением Symfony автоматически во время запроса.
+
+- Формат спецификации OpenAPI: `3.0.0`
+- Symfony bundle: `nelmio/api-doc-bundle` `v5.9.5`
+- Парсер атрибутов: `zircote/swagger-php` `5.8.3`
+- UI для отображения: `Swagger UI` `v7.0.0`
+
+Доступные адреса:
+
+```text
+http://localhost:8000/api/v1/doc
+http://localhost:8000/api/v1/doc.json
+```
+
+В документацию попадают только маршруты, которые соответствуют шаблону `^/api/v1`.
 
 ## Каталог исходников
 
