@@ -60,6 +60,29 @@ docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
 ```
 
+## Doctrine Database Setup
+
+Start PostgreSQL and create the database if it does not exist yet:
+
+```bash
+docker compose -f app/docker-compose.yml up -d database
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:database:create --if-not-exists
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:status
+```
+
+Generate and apply migrations:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console make:migration
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:migrate --no-interaction
+```
+
+Quick database connection check:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console dbal:run-sql "SELECT 1"
+```
+
 Start the Symfony local web server:
 
 ```bash
@@ -181,6 +204,29 @@ docker compose run --rm symfony-cli symfony <command>
 docker compose run --rm symfony-cli composer install
 docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
+```
+
+## Настройка Doctrine и базы данных
+
+Поднимите PostgreSQL и создайте базу, если она еще не существует:
+
+```bash
+docker compose -f app/docker-compose.yml up -d database
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:database:create --if-not-exists
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:status
+```
+
+Сгенерируйте и примените миграции:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console make:migration
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:migrate --no-interaction
+```
+
+Быстрая проверка подключения к базе:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console dbal:run-sql "SELECT 1"
 ```
 
 Запуск локального Symfony-сервера:
