@@ -1,4 +1,19 @@
 services:
+  database:
+    image: postgres:16-alpine
+    container_name: symfony-db
+    env_file:
+      - .env.local
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d app -U app"]
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - database_data:/var/lib/postgresql/data
+
   symfony-cli: &symfony-base
     build:
       context: .
@@ -10,6 +25,8 @@ services:
     working_dir: /workspace
     volumes:
       - ./symfony:/workspace
+    env_file:
+      - .env.local
     environment:
       GIT_AUTHOR_NAME: ${GIT_AUTHOR_NAME:-}
       GIT_AUTHOR_EMAIL: ${GIT_AUTHOR_EMAIL:-}
@@ -33,3 +50,6 @@ services:
       - "8000:8000"
     stdin_open: false
     tty: false
+
+volumes:
+  database_data:

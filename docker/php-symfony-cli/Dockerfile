@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     git \
     libicu-dev \
     libonig-dev \
+    libpq-dev \
     libzip-dev \
     unzip \
     wget \
@@ -18,6 +19,7 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-install \
     intl \
     mbstring \
+    pdo_pgsql \
     zip
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
