@@ -75,6 +75,7 @@
         }
     },
     "require-dev": {
+        "fakerphp/faker": "^1.24",
         "symfony/debug-bundle": "8.0.*",
         "symfony/maker-bundle": "^1.67",
         "symfony/stopwatch": "8.0.*",
