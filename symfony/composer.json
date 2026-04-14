@@ -10,7 +10,9 @@
         "doctrine/doctrine-bundle": "^3.2",
         "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.6",
+        "gedmo/doctrine-extensions": "^3.22",
         "nelmio/api-doc-bundle": "^5.9",
+        "stof/doctrine-extensions-bundle": "^1.15",
         "symfony/asset": "8.0.*",
         "symfony/console": "8.0.*",
         "symfony/dotenv": "8.0.*",
@@ -66,7 +68,7 @@
     },
     "extra": {
         "symfony": {
-            "allow-contrib": false,
+            "allow-contrib": "true",
             "require": "8.0.*"
         }
     },
