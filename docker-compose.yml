@@ -26,12 +26,9 @@ services:
     <<: *symfony-base
     container_name: symfony-web
     command:
-      - symfony
-      - serve
-      - --allow-http
-      - --no-tls
-      - --listen-ip=0.0.0.0
-      - --port=8000
+      - sh
+      - -lc
+      - /root/.symfony5/bin/symfony server:stop || true; /root/.symfony5/bin/symfony serve --allow-http --no-tls --listen-ip=0.0.0.0 --port=8000 --daemon; exec tail -f /dev/null
     ports:
       - "8000:8000"
     stdin_open: false
