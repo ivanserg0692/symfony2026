@@ -24,6 +24,24 @@ The current implementation path is:
 - OpenAPI specification is generated automatically at runtime
 - The next planned step is the baseline News API
 
+## Tech Stack
+
+- PHP `8.4+`
+- Symfony `8.0`
+- Doctrine ORM `3.6`
+- Doctrine Migrations Bundle `4.0`
+- Doctrine Fixtures Bundle `4.3`
+- PostgreSQL
+- Symfony Serializer
+- Symfony Security
+- Nelmio ApiDoc Bundle `5.9`
+- Swagger-PHP `5.8`
+- Pagerfanta `4.8`
+- Gedmo Doctrine Extensions `3.22`
+- StofDoctrineExtensionsBundle `1.15`
+- FakerPHP Faker `1.24`
+- Docker Compose
+
 ## Tasks
 
 - `Task 1` - done
@@ -177,6 +195,24 @@ GIT_COMMITTER_EMAIL="you@example.com"
 - Swagger UI доступен для `api/v1`
 - OpenAPI-спецификация генерируется автоматически во время запроса
 - Следующий шаг по плану: базовая News API
+
+## Технологический стек
+
+- PHP `8.4+`
+- Symfony `8.0`
+- Doctrine ORM `3.6`
+- Doctrine Migrations Bundle `4.0`
+- Doctrine Fixtures Bundle `4.3`
+- PostgreSQL
+- Symfony Serializer
+- Symfony Security
+- Nelmio ApiDoc Bundle `5.9`
+- Swagger-PHP `5.8`
+- Pagerfanta `4.8`
+- Gedmo Doctrine Extensions `3.22`
+- StofDoctrineExtensionsBundle `1.15`
+- FakerPHP Faker `1.24`
+- Docker Compose
 
 ## Задачи
 
