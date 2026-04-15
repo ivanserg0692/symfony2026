@@ -115,6 +115,14 @@ The documentation includes only routes that match `^/api/v1`.
 
 ## Changelog
 
+### 2026-04-16
+
+- Added `GET /api/v1/news` list endpoint with pagination and sorting
+- Added `ListQueryDto` for query mapping and Swagger schema description
+- Added `Pagerfanta` for paginated News list responses
+- Updated News query to join author data and serialize fields with `news:read` and `user:read` groups
+- Expanded Swagger documentation for News list query parameters and response structure
+
 ### 2026-04-10
 
 - Added Swagger/OpenAPI support for `api/v1`
@@ -260,6 +268,14 @@ http://localhost:8000/api/v1/doc.json
 В документацию попадают только маршруты, которые соответствуют шаблону `^/api/v1`.
 
 ## Changelog
+
+### 2026-04-16
+
+- Добавлен endpoint `GET /api/v1/news` со списком новостей, пагинацией и сортировкой
+- Добавлен `ListQueryDto` для маппинга query-параметров и описания схемы в Swagger
+- Подключен `Pagerfanta` для пагинированного ответа списка News
+- Обновлен запрос News: добавлен join автора и сериализация полей через группы `news:read` и `user:read`
+- Расширена Swagger-документация для query-параметров и структуры ответа списка News
 
 ### 2026-04-10
 

@@ -28,6 +28,8 @@ class UserFixtures extends Fixture
         for ($i = 0; $i < self::USERS_COUNT; ++$i) {
             $user = new User();
             $user->setEmail($faker->unique()->safeEmail());
+            $user->setFirstName($faker->firstName());
+            $user->setSecondName($faker->lastName());
             $user->setRoles($this->generateRoles($faker));
             $user->setPassword($this->passwordHasher->hashPassword($user, self::DEFAULT_PASSWORD));
 
