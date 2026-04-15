@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\NewsRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: NewsRepository::class)]
 class News
@@ -17,15 +18,18 @@ class News
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
+    #[Groups(['news:read'])]
     #[ORM\Column(length: 255)]
     private ?string $slug = null;
 
+    #[Groups(['news:read'])]
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    #[Groups(['news:read'])]
     #[ORM\ManyToOne(inversedBy: 'news')]
     #[ORM\JoinColumn(nullable: false)]
     #[Gedmo\Blameable(on: 'create')] // Эту строку добавьте вручную

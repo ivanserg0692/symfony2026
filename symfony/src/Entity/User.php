@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -39,6 +40,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: News::class, mappedBy: 'createdBy', orphanRemoval: true)]
     private Collection $news;
+
+    #[Groups(['user:read'])]
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $firstName = null;
+
+
+    #[Groups(['user:read'])]
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $secondName = null;
 
     public function __construct()
     {
@@ -146,6 +156,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $news->setCreatedBy(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getFirstName(): ?string
+    {
+        return $this->firstName;
+    }
+
+    public function setFirstName(?string $firstName): static
+    {
+        $this->firstName = $firstName;
+
+        return $this;
+    }
+
+    public function getSecondName(): ?string
+    {
+        return $this->secondName;
+    }
+
+    public function setSecondName(?string $secondName): static
+    {
+        $this->secondName = $secondName;
 
         return $this;
     }
