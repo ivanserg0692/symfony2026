@@ -20,6 +20,8 @@ security:
             pattern: ^/api/v1/auth/login$
             stateless: true
             provider: app_user_provider
+            login_throttling:
+                limiter: auth_login
             json_login:
                 check_path: api_v1_auth_login
                 username_path: email

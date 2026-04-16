@@ -143,6 +143,8 @@ The documentation includes only routes that match `^/api/v1`.
 
 JWT authentication is configured for the API and uses key files stored in `symfony/config/jwt`.
 
+Login attempts are rate-limited: up to `5` failed requests per `15 minutes` for `POST /api/v1/auth/login`.
+
 Before generating the keypair, set `JWT_PASSPHRASE` in `app/.env.local`:
 
 ```env
@@ -356,6 +358,8 @@ http://localhost:8000/api/v1/doc.json
 
 JWT-аутентификация настроена для API и использует файлы ключей в `symfony/config/jwt`.
 
+Для логина включено ограничение запросов: не более `5` неуспешных попыток за `15 минут` на `POST /api/v1/auth/login`.
+
 Перед генерацией ключей задайте `JWT_PASSPHRASE` в `app/.env.local`:
 
 ```env
@@ -392,6 +396,7 @@ curl -X POST http://localhost:8000/api/v1/auth/login \
 - Подключен `Pagerfanta` для пагинированного ответа списка News
 - Обновлен запрос News: добавлен join автора и сериализация полей через группы `news:read` и `user:read`
 - Расширена Swagger-документация для query-параметров и структуры ответа списка News
+- Добавлен rate limit на `POST /api/v1/auth/login`
 
 ### 2026-04-10
 
