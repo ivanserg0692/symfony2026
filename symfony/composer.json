@@ -12,6 +12,7 @@
         "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.6",
         "gedmo/doctrine-extensions": "^3.22",
+        "lexik/jwt-authentication-bundle": "^3.2",
         "nelmio/api-doc-bundle": "^5.9",
         "pagerfanta/doctrine-orm-adapter": "^4.7",
         "pagerfanta/pagerfanta": "^4.8",
