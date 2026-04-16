@@ -18,34 +18,6 @@ final class NewsController extends AbstractController
 {
     #[Route('/api/v1/news', name: 'app_news', methods: ['GET'])]
     #[OA\Tag(name: 'News')]
-    #[OA\Parameter(
-        name: 'page',
-        in: 'query',
-        required: false,
-        description: 'Page number starting from 1.',
-        schema: new OA\Schema(type: 'integer', default: 1, minimum: 1),
-    )]
-    #[OA\Parameter(
-        name: 'limit',
-        in: 'query',
-        required: false,
-        description: 'Number of items per page.',
-        schema: new OA\Schema(type: 'integer', default: 10, minimum: 1, maximum: 100),
-    )]
-    #[OA\Parameter(
-        name: 'sort',
-        in: 'query',
-        required: false,
-        description: 'Sort field.',
-        schema: new OA\Schema(type: 'string', default: 'createdAt', enum: ['id', 'slug', 'createdAt']),
-    )]
-    #[OA\Parameter(
-        name: 'direction',
-        in: 'query',
-        required: false,
-        description: 'Sort direction.',
-        schema: new OA\Schema(type: 'string', default: 'DESC', enum: ['ASC', 'DESC']),
-    )]
     #[OA\Response(
         response: 200,
         description: 'Paginated list of news.',

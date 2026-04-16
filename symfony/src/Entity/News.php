@@ -15,6 +15,7 @@ class News
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Groups(['news:read'])]
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
