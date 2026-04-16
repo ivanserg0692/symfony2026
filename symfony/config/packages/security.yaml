@@ -25,6 +25,12 @@ security:
                 interval: '15 minutes'
             custom_authenticators:
                 - App\Security\JwtLoginAuthenticator
+        token_refresh:
+            pattern: ^/api/v1/auth/refresh$
+            stateless: true
+            provider: app_user_provider
+            refresh_jwt:
+                check_path: api_v1_auth_refresh
         api:
             pattern: ^/api/v1
             stateless: true
@@ -43,6 +49,7 @@ security:
     # Note: Only the *first* matching rule is applied
     access_control:
         - { path: ^/api/v1/auth/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/auth/refresh$, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/ping$, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/auth/me$, roles: IS_AUTHENTICATED_FULLY }
 

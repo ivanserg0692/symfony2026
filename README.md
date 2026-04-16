@@ -145,7 +145,7 @@ JWT authentication is configured for the API and uses key files stored in `symfo
 
 Login attempts are rate-limited: up to `5` failed requests per `15 minutes` for `POST /api/v1/auth/login`.
 
-Browser clients can also receive the JWT in an `HttpOnly` cookie. The frontend origin for cross-origin requests is configured through `FRONTEND_ORIGIN`.
+Browser clients can receive both the access JWT and the refresh token through `HttpOnly` cookies. The frontend origin for cross-origin requests is configured through `FRONTEND_ORIGIN`.
 
 Before generating the keypair, set `JWT_PASSPHRASE` in `app/.env.local`:
 
@@ -169,6 +169,7 @@ Available authentication endpoints:
 
 ```text
 POST http://localhost:8000/api/v1/auth/login
+POST http://localhost:8000/api/v1/auth/refresh
 GET  http://localhost:8000/api/v1/auth/me
 ```
 
@@ -178,6 +179,13 @@ Login request example:
 curl -X POST http://localhost:8000/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"user@example.com","password":"password123"}'
+```
+
+Refresh request example:
+
+```bash
+curl -i -X POST http://localhost:8000/api/v1/auth/refresh \
+  -H 'Cookie: refresh_token=<refresh_token>'
 ```
 
 Cross-origin CORS preflight example:
@@ -190,7 +198,8 @@ curl -i -X OPTIONS http://localhost:8000/api/v1/auth/login \
 ```
 
 What to verify:
-- the login response includes `Set-Cookie` for `AUTH_TOKEN`
+- the login response includes `Set-Cookie` for both `AUTH_TOKEN` and the refresh token cookie
+- the refresh response issues a new access token and rotates the refresh token
 - cross-origin responses include `Access-Control-Allow-Origin` with the exact frontend origin
 - cross-origin responses include `Access-Control-Allow-Credentials: true`
 - browser requests use `credentials: 'include'`
@@ -385,7 +394,7 @@ JWT-аутентификация настроена для API и использ
 
 Для логина включено ограничение запросов: не более `5` неуспешных попыток за `15 минут` на `POST /api/v1/auth/login`.
 
-Для браузерных клиентов JWT также может выдаваться через `HttpOnly` cookie. Origin фронта для cross-origin запросов задается через `FRONTEND_ORIGIN`.
+Для браузерных клиентов access JWT и refresh token могут выдаваться через `HttpOnly` cookie. Origin фронта для cross-origin запросов задается через `FRONTEND_ORIGIN`.
 
 Перед генерацией ключей задайте `JWT_PASSPHRASE` в `app/.env.local`:
 
@@ -409,6 +418,7 @@ docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
 
 ```text
 POST http://localhost:8000/api/v1/auth/login
+POST http://localhost:8000/api/v1/auth/refresh
 GET  http://localhost:8000/api/v1/auth/me
 ```
 
@@ -418,6 +428,13 @@ GET  http://localhost:8000/api/v1/auth/me
 curl -X POST http://localhost:8000/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"user@example.com","password":"password123"}'
+```
+
+Пример refresh-запроса:
+
+```bash
+curl -i -X POST http://localhost:8000/api/v1/auth/refresh \
+  -H 'Cookie: refresh_token=<refresh_token>'
 ```
 
 Пример CORS preflight для cross-origin сценария:
@@ -430,7 +447,8 @@ curl -i -X OPTIONS http://localhost:8000/api/v1/auth/login \
 ```
 
 Что проверять:
-- в ответе логина есть `Set-Cookie` для `AUTH_TOKEN`
+- в ответе логина есть `Set-Cookie` для `AUTH_TOKEN` и refresh cookie
+- refresh-ответ перевыпускает access token и ротирует refresh token
 - в cross-origin ответах есть `Access-Control-Allow-Origin` с точным origin фронта
 - в cross-origin ответах есть `Access-Control-Allow-Credentials: true`
 - браузерные запросы идут с `credentials: 'include'`
