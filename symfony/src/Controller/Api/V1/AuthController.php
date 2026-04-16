@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api\V1;
 
+use App\Dto\AuthLoginRequestDto;
 use App\Entity\User;
 use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
@@ -20,14 +21,7 @@ final class AuthController extends AbstractController
     #[OA\Tag(name: 'Auth')]
     #[OA\RequestBody(
         required: true,
-        content: new OA\JsonContent(
-            required: ['email', 'password'],
-            properties: [
-                new OA\Property(property: 'email', type: 'string', format: 'email', example: 'user@example.com'),
-                new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password123'),
-            ],
-            type: 'object',
-        )
+        content: new OA\JsonContent(ref: new Model(type: AuthLoginRequestDto::class))
     )]
     #[OA\Response(
         response: 200,
