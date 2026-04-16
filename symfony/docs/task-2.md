@@ -24,6 +24,16 @@
 ### Цель
 Подготовить базовый механизм авторизации для API, чтобы дальнейшие бизнес-ручки можно было безопасно открывать только для аутентифицированных пользователей.
 
+### Технический стек
+- `symfony/security-bundle` для firewall, `access_control` и кастомного аутентификатора логина
+- `lexik/jwt-authentication-bundle` `v3.2.0` для выпуска и проверки access JWT
+- `gesdinet/jwt-refresh-token-bundle` `v2.0.0` для refresh token, их ротации и хранения через Doctrine
+- `symfony/rate-limiter` `v8.0.8` для ограничения неуспешных попыток логина
+- `symfony/validator` для валидации DTO логина
+- `nelmio/cors-bundle` `v2.6.1` для cross-origin cookie и CORS-заголовков
+- `doctrine/orm` для хранения refresh token в БД
+- `nelmio/api-doc-bundle` и `zircote/swagger-php` для Swagger/OpenAPI документации auth-ручек
+
 ### Критерии приемки
 - `POST /api/v1/auth/login` принимает `email` и `password`
 - `POST /api/v1/auth/refresh` перевыпускает access token по refresh token
@@ -126,6 +136,16 @@ The initial scope includes:
 
 ### Goal
 Establish a baseline API authorization mechanism so that upcoming business endpoints can be exposed only to authenticated users.
+
+### Technical Stack
+- `symfony/security-bundle` for firewalls, `access_control`, and the custom login authenticator
+- `lexik/jwt-authentication-bundle` `v3.2.0` for issuing and validating access JWTs
+- `gesdinet/jwt-refresh-token-bundle` `v2.0.0` for refresh tokens, token rotation, and Doctrine-backed storage
+- `symfony/rate-limiter` `v8.0.8` for failed-login throttling
+- `symfony/validator` for login DTO validation
+- `nelmio/cors-bundle` `v2.6.1` for cross-origin cookie delivery and CORS headers
+- `doctrine/orm` for refresh-token persistence
+- `nelmio/api-doc-bundle` and `zircote/swagger-php` for Swagger/OpenAPI documentation of the auth endpoints
 
 ### Acceptance Criteria
 - `POST /api/v1/auth/login` accepts `email` and `password`

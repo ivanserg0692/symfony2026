@@ -27,19 +27,24 @@ The current implementation path is:
 ## Tech Stack
 
 - PHP `8.4+`
-- Symfony `8.0`
-- Doctrine ORM `3.6`
-- Doctrine Migrations Bundle `4.0`
-- Doctrine Fixtures Bundle `4.3`
+- Symfony Framework Bundle `8.0.8`
+- Doctrine ORM `3.6.3`
+- Doctrine Migrations Bundle `4.0.0`
+- Doctrine Fixtures Bundle `4.3.1`
 - PostgreSQL
-- Symfony Serializer
-- Symfony Security
-- Nelmio ApiDoc Bundle `5.9`
-- Swagger-PHP `5.8`
-- Pagerfanta `4.8`
-- Gedmo Doctrine Extensions `3.22`
-- StofDoctrineExtensionsBundle `1.15`
-- FakerPHP Faker `1.24`
+- Symfony Serializer `8.0.8`
+- Symfony Security Bundle `8.0.8`
+- Symfony Validator
+- Symfony Rate Limiter `8.0.8`
+- LexikJWTAuthenticationBundle `3.2.0`
+- GesdinetJWTRefreshTokenBundle `2.0.0`
+- NelmioCorsBundle `2.6.1`
+- Nelmio ApiDoc Bundle `5.9.5`
+- Swagger-PHP `5.8.3`
+- Pagerfanta `4.8.0`
+- Gedmo Doctrine Extensions `3.22.0`
+- StofDoctrineExtensionsBundle `1.15.3`
+- FakerPHP Faker `1.24.1`
 - Docker Compose
 
 ## Tasks
@@ -146,6 +151,16 @@ JWT authentication is configured for the API and uses key files stored in `symfo
 Login attempts are rate-limited: up to `5` failed requests per `15 minutes` for `POST /api/v1/auth/login`.
 
 Browser clients can receive both the access JWT and the refresh token through `HttpOnly` cookies. The frontend origin for cross-origin requests is configured through `FRONTEND_ORIGIN`.
+
+Authentication stack used in this project:
+- `symfony/security-bundle` provides the firewall system, access control, user provider integration, and the custom login authenticator entry point
+- `lexik/jwt-authentication-bundle` `v3.2.0` issues and validates access JWTs, reads them from the `Authorization` header or `AUTH_TOKEN` cookie, and can automatically set the access-token cookie
+- `gesdinet/jwt-refresh-token-bundle` `v2.0.0` implements the refresh-token flow, stores refresh tokens through Doctrine, rotates them, and exposes console commands for cleanup and revoke
+- `symfony/rate-limiter` `v8.0.8` is used by `login_throttling` to limit failed login attempts
+- `symfony/validator` validates the login DTO fields such as `email` and `password`
+- `nelmio/cors-bundle` `v2.6.1` adds CORS headers for cross-origin frontend requests with `credentials: include`
+- `doctrine/orm` persists refresh tokens in the database and lets them be managed through migrations and cleanup commands
+- `nelmio/api-doc-bundle` and `zircote/swagger-php` document the authentication endpoints in Swagger/OpenAPI
 
 Before generating the keypair, set `JWT_PASSPHRASE` in `app/.env.local`:
 
@@ -289,19 +304,24 @@ GIT_COMMITTER_EMAIL="you@example.com"
 ## Технологический стек
 
 - PHP `8.4+`
-- Symfony `8.0`
-- Doctrine ORM `3.6`
-- Doctrine Migrations Bundle `4.0`
-- Doctrine Fixtures Bundle `4.3`
+- Symfony Framework Bundle `8.0.8`
+- Doctrine ORM `3.6.3`
+- Doctrine Migrations Bundle `4.0.0`
+- Doctrine Fixtures Bundle `4.3.1`
 - PostgreSQL
-- Symfony Serializer
-- Symfony Security
-- Nelmio ApiDoc Bundle `5.9`
-- Swagger-PHP `5.8`
-- Pagerfanta `4.8`
-- Gedmo Doctrine Extensions `3.22`
-- StofDoctrineExtensionsBundle `1.15`
-- FakerPHP Faker `1.24`
+- Symfony Serializer `8.0.8`
+- Symfony Security Bundle `8.0.8`
+- Symfony Validator
+- Symfony Rate Limiter `8.0.8`
+- LexikJWTAuthenticationBundle `3.2.0`
+- GesdinetJWTRefreshTokenBundle `2.0.0`
+- NelmioCorsBundle `2.6.1`
+- Nelmio ApiDoc Bundle `5.9.5`
+- Swagger-PHP `5.8.3`
+- Pagerfanta `4.8.0`
+- Gedmo Doctrine Extensions `3.22.0`
+- StofDoctrineExtensionsBundle `1.15.3`
+- FakerPHP Faker `1.24.1`
 - Docker Compose
 
 ## Задачи
@@ -408,6 +428,16 @@ JWT-аутентификация настроена для API и использ
 Для логина включено ограничение запросов: не более `5` неуспешных попыток за `15 минут` на `POST /api/v1/auth/login`.
 
 Для браузерных клиентов access JWT и refresh token могут выдаваться через `HttpOnly` cookie. Origin фронта для cross-origin запросов задается через `FRONTEND_ORIGIN`.
+
+Стек, который используется для аутентификации:
+- `symfony/security-bundle` дает firewall-механику, `access_control`, интеграцию с user provider и точку входа для кастомного аутентификатора логина
+- `lexik/jwt-authentication-bundle` `v3.2.0` отвечает за выпуск и проверку access JWT, чтение токена из `Authorization` header или `AUTH_TOKEN` cookie, а также за автоматическую установку access-cookie
+- `gesdinet/jwt-refresh-token-bundle` `v2.0.0` реализует refresh-flow, хранит refresh token через Doctrine, делает ротацию токенов и дает консольные команды для очистки и revoke
+- `symfony/rate-limiter` `v8.0.8` используется через `login_throttling` для ограничения неуспешных попыток логина
+- `symfony/validator` валидирует DTO логина по полям `email` и `password`
+- `nelmio/cors-bundle` `v2.6.1` добавляет CORS-заголовки для cross-origin фронта с `credentials: include`
+- `doctrine/orm` хранит refresh token в базе и позволяет управлять ими через миграции и cleanup-команды
+- `nelmio/api-doc-bundle` и `zircote/swagger-php` документируют auth-ручки в Swagger/OpenAPI
 
 Перед генерацией ключей задайте `JWT_PASSPHRASE` в `app/.env.local`:
 
