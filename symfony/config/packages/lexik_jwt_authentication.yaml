@@ -3,3 +3,19 @@ lexik_jwt_authentication:
     public_key: '%kernel.project_dir%/config/jwt/public.pem'
     pass_phrase: '%env(JWT_PASSPHRASE)%'
     token_ttl: 3600
+    token_extractors:
+        authorization_header:
+            enabled: true
+            prefix: Bearer
+            name: Authorization
+        cookie:
+            enabled: true
+            name: AUTH_TOKEN
+    remove_token_from_body_when_cookies_used: false
+    set_cookies:
+        AUTH_TOKEN:
+            lifetime: 3600
+            samesite: none
+            path: /
+            secure: true
+            httpOnly: true
