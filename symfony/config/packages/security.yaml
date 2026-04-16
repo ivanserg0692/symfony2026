@@ -21,13 +21,10 @@ security:
             stateless: true
             provider: app_user_provider
             login_throttling:
-                limiter: auth_login
-            json_login:
-                check_path: api_v1_auth_login
-                username_path: email
-                password_path: password
-                success_handler: lexik_jwt_authentication.handler.authentication_success
-                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+                max_attempts: 5
+                interval: '15 minutes'
+            custom_authenticators:
+                - App\Security\JwtLoginAuthenticator
         api:
             pattern: ^/api/v1
             stateless: true
