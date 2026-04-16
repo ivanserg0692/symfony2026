@@ -8,6 +8,46 @@ The Symfony codebase itself lives in `symfony`.
 
 ![Hello in Symfony](symfony/docs/images/hello-in-symfony.png)
 
+## Overview
+
+The project is currently focused on setting up the API foundation in Symfony.
+
+The current implementation path is:
+- launch Swagger/OpenAPI for `api/v1`
+- stabilize the API entry point and documentation
+- build a baseline API for working with news
+
+## Current Status
+
+- Docker-based local environment is configured
+- Swagger UI is available for `api/v1`
+- OpenAPI specification is generated automatically at runtime
+- The next planned step is the baseline News API
+
+## Tech Stack
+
+- PHP `8.4+`
+- Symfony `8.0`
+- Doctrine ORM `3.6`
+- Doctrine Migrations Bundle `4.0`
+- Doctrine Fixtures Bundle `4.3`
+- PostgreSQL
+- Symfony Serializer
+- Symfony Security
+- Nelmio ApiDoc Bundle `5.9`
+- Swagger-PHP `5.8`
+- Pagerfanta `4.8`
+- Gedmo Doctrine Extensions `3.22`
+- StofDoctrineExtensionsBundle `1.15`
+- FakerPHP Faker `1.24`
+- Docker Compose
+
+## Tasks
+
+- `Task 1` - done
+- Task file: [symfony/docs/task-1.md](symfony/docs/task-1.md)
+- Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
+
 ## Run With Docker Compose
 
 Start the runner from the repository root.
@@ -38,6 +78,29 @@ docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
 ```
 
+## Doctrine Database Setup
+
+Start PostgreSQL and create the database if it does not exist yet:
+
+```bash
+docker compose -f app/docker-compose.yml up -d database
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:database:create --if-not-exists
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:status
+```
+
+Generate and apply migrations:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console make:migration
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:migrate --no-interaction
+```
+
+Quick database connection check:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console dbal:run-sql "SELECT 1"
+```
+
 Start the Symfony local web server:
 
 ```bash
@@ -49,6 +112,40 @@ Open the app in your browser:
 ```text
 http://localhost:8000
 ```
+
+## API Documentation
+
+API documentation for `api/v1` is generated automatically at runtime by the Symfony app.
+
+- OpenAPI format: `3.0.0`
+- Symfony bundle: `nelmio/api-doc-bundle` `v5.9.5`
+- Attribute parser: `zircote/swagger-php` `5.8.3`
+- UI renderer: `Swagger UI` `v7.0.0`
+
+Available endpoints:
+
+```text
+http://localhost:8000/api/v1/doc
+http://localhost:8000/api/v1/doc.json
+```
+
+The documentation includes only routes that match `^/api/v1`.
+
+## Changelog
+
+### 2026-04-16
+
+- Added `GET /api/v1/news` list endpoint with pagination and sorting
+- Added `ListQueryDto` for query mapping and Swagger schema description
+- Added `Pagerfanta` for paginated News list responses
+- Updated News query to join author data and serialize fields with `news:read` and `user:read` groups
+- Expanded Swagger documentation for News list query parameters and response structure
+
+### 2026-04-10
+
+- Added Swagger/OpenAPI support for `api/v1`
+- Fixed the current API documentation stack in this README
+- Added task description for Swagger launch and baseline News API preparation
 
 ## Source Directory
 
@@ -83,6 +180,46 @@ GIT_COMMITTER_EMAIL="you@example.com"
 
 ![Hello in Symfony](symfony/docs/images/hello-in-symfony.png)
 
+## Обзор
+
+Сейчас проект сфокусирован на подготовке базового API-слоя на Symfony.
+
+Текущий план реализации:
+- запустить Swagger/OpenAPI для `api/v1`
+- зафиксировать и стабилизировать точку входа в API и документацию
+- реализовать базовую API для работы с новостями
+
+## Текущий статус
+
+- Настроено локальное окружение на Docker
+- Swagger UI доступен для `api/v1`
+- OpenAPI-спецификация генерируется автоматически во время запроса
+- Следующий шаг по плану: базовая News API
+
+## Технологический стек
+
+- PHP `8.4+`
+- Symfony `8.0`
+- Doctrine ORM `3.6`
+- Doctrine Migrations Bundle `4.0`
+- Doctrine Fixtures Bundle `4.3`
+- PostgreSQL
+- Symfony Serializer
+- Symfony Security
+- Nelmio ApiDoc Bundle `5.9`
+- Swagger-PHP `5.8`
+- Pagerfanta `4.8`
+- Gedmo Doctrine Extensions `3.22`
+- StofDoctrineExtensionsBundle `1.15`
+- FakerPHP Faker `1.24`
+- Docker Compose
+
+## Задачи
+
+- `Task 1` - done
+- Файл задачи: [symfony/docs/task-1.md](symfony/docs/task-1.md)
+- Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
+
 ## Запуск через Docker Compose
 
 Запускайте контейнер из корня репозитория:
@@ -113,6 +250,29 @@ docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
 ```
 
+## Настройка Doctrine и базы данных
+
+Поднимите PostgreSQL и создайте базу, если она еще не существует:
+
+```bash
+docker compose -f app/docker-compose.yml up -d database
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:database:create --if-not-exists
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:status
+```
+
+Сгенерируйте и примените миграции:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console make:migration
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:migrate --no-interaction
+```
+
+Быстрая проверка подключения к базе:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console dbal:run-sql "SELECT 1"
+```
+
 Запуск локального Symfony-сервера:
 
 ```bash
@@ -124,6 +284,40 @@ docker compose up --build symfony-web
 ```text
 http://localhost:8000
 ```
+
+## Документация API
+
+Документация для `api/v1` генерируется приложением Symfony автоматически во время запроса.
+
+- Формат спецификации OpenAPI: `3.0.0`
+- Symfony bundle: `nelmio/api-doc-bundle` `v5.9.5`
+- Парсер атрибутов: `zircote/swagger-php` `5.8.3`
+- UI для отображения: `Swagger UI` `v7.0.0`
+
+Доступные адреса:
+
+```text
+http://localhost:8000/api/v1/doc
+http://localhost:8000/api/v1/doc.json
+```
+
+В документацию попадают только маршруты, которые соответствуют шаблону `^/api/v1`.
+
+## Changelog
+
+### 2026-04-16
+
+- Добавлен endpoint `GET /api/v1/news` со списком новостей, пагинацией и сортировкой
+- Добавлен `ListQueryDto` для маппинга query-параметров и описания схемы в Swagger
+- Подключен `Pagerfanta` для пагинированного ответа списка News
+- Обновлен запрос News: добавлен join автора и сериализация полей через группы `news:read` и `user:read`
+- Расширена Swagger-документация для query-параметров и структуры ответа списка News
+
+### 2026-04-10
+
+- Добавлена поддержка Swagger/OpenAPI для `api/v1`
+- Текущий стек API-документации зафиксирован в этом README
+- Добавлено описание задачи по запуску Swagger и подготовке базового News API
 
 ## Каталог исходников
 
