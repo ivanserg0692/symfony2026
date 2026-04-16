@@ -188,6 +188,18 @@ curl -i -X POST http://localhost:8000/api/v1/auth/refresh \
   -H 'Cookie: refresh_token=<refresh_token>'
 ```
 
+Cleanup invalid refresh tokens:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console gesdinet:jwt:clear
+```
+
+Example cron entry for periodic cleanup:
+
+```cron
+0 * * * * cd /home/ivan/symfony2026 && docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console gesdinet:jwt:clear
+```
+
 Cross-origin CORS preflight example:
 
 ```bash
@@ -200,6 +212,7 @@ curl -i -X OPTIONS http://localhost:8000/api/v1/auth/login \
 What to verify:
 - the login response includes `Set-Cookie` for both `AUTH_TOKEN` and the refresh token cookie
 - the refresh response issues a new access token and rotates the refresh token
+- expired and invalid refresh tokens can be removed with `gesdinet:jwt:clear`
 - cross-origin responses include `Access-Control-Allow-Origin` with the exact frontend origin
 - cross-origin responses include `Access-Control-Allow-Credentials: true`
 - browser requests use `credentials: 'include'`
@@ -437,6 +450,18 @@ curl -i -X POST http://localhost:8000/api/v1/auth/refresh \
   -H 'Cookie: refresh_token=<refresh_token>'
 ```
 
+Очистка невалидных refresh token:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console gesdinet:jwt:clear
+```
+
+Пример cron для периодической очистки:
+
+```cron
+0 * * * * cd /home/ivan/symfony2026 && docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console gesdinet:jwt:clear
+```
+
 Пример CORS preflight для cross-origin сценария:
 
 ```bash
@@ -449,6 +474,7 @@ curl -i -X OPTIONS http://localhost:8000/api/v1/auth/login \
 Что проверять:
 - в ответе логина есть `Set-Cookie` для `AUTH_TOKEN` и refresh cookie
 - refresh-ответ перевыпускает access token и ротирует refresh token
+- истекшие и невалидные refresh token можно очистить командой `gesdinet:jwt:clear`
 - в cross-origin ответах есть `Access-Control-Allow-Origin` с точным origin фронта
 - в cross-origin ответах есть `Access-Control-Allow-Credentials: true`
 - браузерные запросы идут с `credentials: 'include'`

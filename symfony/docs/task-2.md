@@ -50,6 +50,7 @@
 - проверить, что ответы API содержат `Access-Control-Allow-Credentials: true`
 - убедиться, что access cookie выставляется с `HttpOnly`, `Secure`, `SameSite=None`
 - убедиться, что refresh cookie выставляется как `HttpOnly` и доступна для маршрута refresh
+- проверить, что истекшие refresh token очищаются отдельной консольной командой
 
 #### Примеры запросов
 Логин:
@@ -74,6 +75,18 @@ curl -i -X POST http://localhost:8000/api/v1/auth/refresh \
   -H 'Cookie: refresh_token=<refresh_token>'
 ```
 
+Очистка невалидных refresh token:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console gesdinet:jwt:clear
+```
+
+Пример cron для периодической очистки:
+
+```cron
+0 * * * * cd /home/ivan/symfony2026 && docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console gesdinet:jwt:clear
+```
+
 Проверка CORS-заголовков для cross-origin запроса:
 
 ```bash
@@ -86,6 +99,7 @@ curl -i -X OPTIONS http://localhost:8000/api/v1/auth/login \
 ### Ограничения и замечания
 - для cross-origin cookie-сценария `SameSite=None` требует `Secure=true`
 - refresh token должен храниться на сервере, поэтому после установки `gesdinet/jwt-refresh-token-bundle` нужно создать и применить Doctrine migration
+- таблицу refresh token нужно периодически чистить командой `gesdinet:jwt:clear`, иначе она будет расти
 - на локальном `http` браузер может не принять такую cookie, поэтому полноценную проверку лучше выполнять на `https` или в окружении, которое браузер считает secure
 - отсутствие CORS-заголовков в same-origin Swagger-сценарии не считается ошибкой
 
@@ -139,6 +153,7 @@ Establish a baseline API authorization mechanism so that upcoming business endpo
 - verify that API responses contain `Access-Control-Allow-Credentials: true`
 - verify that the access cookie is issued with `HttpOnly`, `Secure`, and `SameSite=None`
 - verify that the refresh cookie is `HttpOnly` and scoped for the refresh route
+- verify that expired refresh tokens can be cleaned up with a dedicated console command
 
 #### Request Examples
 Login:
@@ -163,6 +178,18 @@ curl -i -X POST http://localhost:8000/api/v1/auth/refresh \
   -H 'Cookie: refresh_token=<refresh_token>'
 ```
 
+Clear invalid refresh tokens:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console gesdinet:jwt:clear
+```
+
+Example cron entry for periodic cleanup:
+
+```cron
+0 * * * * cd /home/ivan/symfony2026 && docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console gesdinet:jwt:clear
+```
+
 Cross-origin CORS preflight check:
 
 ```bash
@@ -175,5 +202,6 @@ curl -i -X OPTIONS http://localhost:8000/api/v1/auth/login \
 ### Notes
 - for a cross-origin cookie flow, `SameSite=None` requires `Secure=true`
 - because refresh tokens are stored through Doctrine, a migration must be created and applied after installing `gesdinet/jwt-refresh-token-bundle`
+- the refresh token table should be cleaned periodically with `gesdinet:jwt:clear`, otherwise it will keep growing over time
 - on local plain `http`, browsers may reject such cookies, so full verification is better done over `https` or another browser-secure local setup
 - missing CORS headers in a same-origin Swagger flow is expected and not an error
