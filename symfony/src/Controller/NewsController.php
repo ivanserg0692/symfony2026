@@ -9,6 +9,7 @@ use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
 use Pagerfanta\Pagerfanta;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -72,6 +73,35 @@ final class NewsController extends AbstractController
                 'direction' => $repository->normalizeDirection($query->direction),
             ],
         ], context: [
+            'groups' => ['news:read', 'user:read'],
+        ]);
+    }
+
+    #[Route('/api/v1/news/{slug}', name: 'app_news_show', methods: ['GET'])]
+    #[OA\Tag(name: 'News')]
+    #[OA\Parameter(
+        name: 'slug',
+        in: 'path',
+        required: true,
+        description: 'News slug.',
+        schema: new OA\Schema(type: 'string', example: 'news-title'),
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'News item.',
+        content: new OA\JsonContent(
+            ref: new Model(type: News::class, groups: ['news:read', 'user:read'])
+        ),
+    )]
+    #[OA\Response(
+        response: 404,
+        description: 'News not found.',
+    )]
+    public function show(
+        #[MapEntity(mapping: ['slug' => 'slug'])] News $news,
+    ): JsonResponse
+    {
+        return $this->json($news, context: [
             'groups' => ['news:read', 'user:read'],
         ]);
     }
