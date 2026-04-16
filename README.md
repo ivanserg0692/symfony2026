@@ -145,10 +145,18 @@ JWT authentication is configured for the API and uses key files stored in `symfo
 
 Login attempts are rate-limited: up to `5` failed requests per `15 minutes` for `POST /api/v1/auth/login`.
 
+Browser clients can also receive the JWT in an `HttpOnly` cookie. The frontend origin for cross-origin requests is configured through `FRONTEND_ORIGIN`.
+
 Before generating the keypair, set `JWT_PASSPHRASE` in `app/.env.local`:
 
 ```env
 JWT_PASSPHRASE=!ChangeMe!
+```
+
+For cross-origin frontend requests, also set:
+
+```env
+FRONTEND_ORIGIN=http://localhost:3000
 ```
 
 Then initialize the JWT keypair:
@@ -171,6 +179,23 @@ curl -X POST http://localhost:8000/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"user@example.com","password":"password123"}'
 ```
+
+Cross-origin CORS preflight example:
+
+```bash
+curl -i -X OPTIONS http://localhost:8000/api/v1/auth/login \
+  -H 'Origin: http://localhost:3000' \
+  -H 'Access-Control-Request-Method: POST' \
+  -H 'Access-Control-Request-Headers: content-type'
+```
+
+What to verify:
+- the login response includes `Set-Cookie` for `AUTH_TOKEN`
+- cross-origin responses include `Access-Control-Allow-Origin` with the exact frontend origin
+- cross-origin responses include `Access-Control-Allow-Credentials: true`
+- browser requests use `credentials: 'include'`
+- same-origin Swagger requests may work without any CORS headers, which is expected
+- on local plain `http`, browsers may reject `SameSite=None` + `Secure` cookies
 
 ## Changelog
 
@@ -360,10 +385,18 @@ JWT-аутентификация настроена для API и использ
 
 Для логина включено ограничение запросов: не более `5` неуспешных попыток за `15 минут` на `POST /api/v1/auth/login`.
 
+Для браузерных клиентов JWT также может выдаваться через `HttpOnly` cookie. Origin фронта для cross-origin запросов задается через `FRONTEND_ORIGIN`.
+
 Перед генерацией ключей задайте `JWT_PASSPHRASE` в `app/.env.local`:
 
 ```env
 JWT_PASSPHRASE=!ChangeMe!
+```
+
+Для фронта на другом домене также задайте:
+
+```env
+FRONTEND_ORIGIN=http://localhost:3000
 ```
 
 Затем инициализируйте JWT keypair:
@@ -386,6 +419,23 @@ curl -X POST http://localhost:8000/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"user@example.com","password":"password123"}'
 ```
+
+Пример CORS preflight для cross-origin сценария:
+
+```bash
+curl -i -X OPTIONS http://localhost:8000/api/v1/auth/login \
+  -H 'Origin: http://localhost:3000' \
+  -H 'Access-Control-Request-Method: POST' \
+  -H 'Access-Control-Request-Headers: content-type'
+```
+
+Что проверять:
+- в ответе логина есть `Set-Cookie` для `AUTH_TOKEN`
+- в cross-origin ответах есть `Access-Control-Allow-Origin` с точным origin фронта
+- в cross-origin ответах есть `Access-Control-Allow-Credentials: true`
+- браузерные запросы идут с `credentials: 'include'`
+- same-origin запросы из Swagger могут работать без CORS-заголовков, это нормально
+- на локальном plain `http` браузер может отклонять cookie с `SameSite=None` и `Secure`
 
 ## История изменений
 
