@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ -z "${JWT_PASSPHRASE:-}" ]]; then
+    echo "JWT_PASSPHRASE is not set. Configure it in the environment before running bin/init-jwt." >&2
+    exit 1
+fi
+
+mkdir -p config/jwt
+php bin/console lexik:jwt:generate-keypair --skip-if-exists

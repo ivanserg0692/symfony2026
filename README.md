@@ -22,7 +22,7 @@ The current implementation path is:
 - Docker-based local environment is configured
 - Swagger UI is available for `api/v1`
 - OpenAPI specification is generated automatically at runtime
-- The next planned step is the baseline News API
+- Baseline JWT authentication endpoints are prepared
 
 ## Tech Stack
 
@@ -47,6 +47,8 @@ The current implementation path is:
 - `Task 1` - done
 - Task file: [symfony/docs/task-1.md](symfony/docs/task-1.md)
 - Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
+- `Task 2` - in progress
+- Task file: [symfony/docs/task-2.md](symfony/docs/task-2.md)
 
 ## Run With Docker Compose
 
@@ -76,6 +78,12 @@ Run common project commands:
 docker compose run --rm symfony-cli composer install
 docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
+```
+
+Initialize JWT keys after dependencies are installed:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
 ```
 
 ## Doctrine Database Setup
@@ -131,6 +139,37 @@ http://localhost:8000/api/v1/doc.json
 
 The documentation includes only routes that match `^/api/v1`.
 
+## JWT Authentication
+
+JWT authentication is configured for the API and uses key files stored in `symfony/config/jwt`.
+
+Before generating the keypair, set `JWT_PASSPHRASE` in `app/.env.local`:
+
+```env
+JWT_PASSPHRASE=!ChangeMe!
+```
+
+Then initialize the JWT keypair:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
+```
+
+Available authentication endpoints:
+
+```text
+POST http://localhost:8000/api/v1/auth/login
+GET  http://localhost:8000/api/v1/auth/me
+```
+
+Login request example:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@example.com","password":"password123"}'
+```
+
 ## Changelog
 
 ### 2026-04-16
@@ -140,6 +179,8 @@ The documentation includes only routes that match `^/api/v1`.
 - Added `Pagerfanta` for paginated News list responses
 - Updated News query to join author data and serialize fields with `news:read` and `user:read` groups
 - Expanded Swagger documentation for News list query parameters and response structure
+- Added JWT authentication configuration and `/api/v1/auth/login`, `/api/v1/auth/me` endpoints
+- Added `bin/init-jwt` bootstrap command for JWT key generation
 
 ### 2026-04-10
 
@@ -194,7 +235,7 @@ GIT_COMMITTER_EMAIL="you@example.com"
 - Настроено локальное окружение на Docker
 - Swagger UI доступен для `api/v1`
 - OpenAPI-спецификация генерируется автоматически во время запроса
-- Следующий шаг по плану: базовая News API
+- Подготовлены базовые JWT-ручки авторизации
 
 ## Технологический стек
 
@@ -219,6 +260,8 @@ GIT_COMMITTER_EMAIL="you@example.com"
 - `Task 1` - done
 - Файл задачи: [symfony/docs/task-1.md](symfony/docs/task-1.md)
 - Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
+- `Task 2` - in progress
+- Файл задачи: [symfony/docs/task-2.md](symfony/docs/task-2.md)
 
 ## Запуск через Docker Compose
 
@@ -250,6 +293,12 @@ docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
 ```
 
+После установки зависимостей инициализируйте JWT-ключи:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
+```
+
 ## Настройка Doctrine и базы данных
 
 Поднимите PostgreSQL и создайте базу, если она еще не существует:
@@ -273,7 +322,7 @@ docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doc
 docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console dbal:run-sql "SELECT 1"
 ```
 
-Запуск локального Symfony-сервера:
+Запустите локальный Symfony web server:
 
 ```bash
 docker compose up --build symfony-web
@@ -285,25 +334,56 @@ docker compose up --build symfony-web
 http://localhost:8000
 ```
 
-## Документация API
+## API Documentation
 
-Документация для `api/v1` генерируется приложением Symfony автоматически во время запроса.
+Документация API для `api/v1` генерируется автоматически во время выполнения Symfony-приложения.
 
-- Формат спецификации OpenAPI: `3.0.0`
+- Формат OpenAPI: `3.0.0`
 - Symfony bundle: `nelmio/api-doc-bundle` `v5.9.5`
 - Парсер атрибутов: `zircote/swagger-php` `5.8.3`
-- UI для отображения: `Swagger UI` `v7.0.0`
+- UI renderer: `Swagger UI` `v7.0.0`
 
-Доступные адреса:
+Доступные endpoints:
 
 ```text
 http://localhost:8000/api/v1/doc
 http://localhost:8000/api/v1/doc.json
 ```
 
-В документацию попадают только маршруты, которые соответствуют шаблону `^/api/v1`.
+В документацию попадают только маршруты, соответствующие `^/api/v1`.
 
-## Changelog
+## JWT Authentication
+
+JWT-аутентификация настроена для API и использует файлы ключей в `symfony/config/jwt`.
+
+Перед генерацией ключей задайте `JWT_PASSPHRASE` в `app/.env.local`:
+
+```env
+JWT_PASSPHRASE=!ChangeMe!
+```
+
+Затем инициализируйте JWT keypair:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
+```
+
+Доступные ручки авторизации:
+
+```text
+POST http://localhost:8000/api/v1/auth/login
+GET  http://localhost:8000/api/v1/auth/me
+```
+
+Пример запроса на логин:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@example.com","password":"password123"}'
+```
+
+## История изменений
 
 ### 2026-04-16
 
