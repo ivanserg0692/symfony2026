@@ -78,6 +78,21 @@ final class AuthController extends AbstractController
         throw new \LogicException('This code should never be reached because the route is handled by the security firewall.');
     }
 
+    #[Route('/logout', name: 'logout', methods: ['POST'])]
+    #[OA\Post(
+        summary: 'Logout current user',
+        description: 'Logs out the current user through the security firewall, clears authentication cookies, and invalidates the refresh token when it is available to the logout request.'
+    )]
+    #[OA\Tag(name: 'Auth')]
+    #[OA\Response(
+        response: 204,
+        description: 'Logout completed successfully.',
+    )]
+    public function logout(): never
+    {
+        throw new \LogicException('This code should never be reached because the route is handled by the security firewall.');
+    }
+
     #[Route('/me', name: 'me', methods: ['GET'])]
     #[OA\Get(
         summary: 'Get current authenticated user',

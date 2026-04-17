@@ -26,11 +26,18 @@ security:
             custom_authenticators:
                 - App\Security\JwtLoginAuthenticator
         token_refresh:
-            pattern: ^/api/v1/auth/refresh$
+            pattern: ^/api/v1/auth/(refresh|logout)$
             stateless: true
             provider: app_user_provider
             refresh_jwt:
                 check_path: api_v1_auth_refresh
+            logout:
+                path: api_v1_auth_logout
+                delete_cookies:
+                    AUTH_TOKEN:
+                        path: /
+                    refresh_token:
+                        path: /api/v1/auth
         api:
             pattern: ^/api/v1
             stateless: true
@@ -50,6 +57,7 @@ security:
     access_control:
         - { path: ^/api/v1/auth/login$, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/auth/refresh$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/auth/logout$, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/ping$, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/auth/me$, roles: IS_AUTHENTICATED_FULLY }
 
