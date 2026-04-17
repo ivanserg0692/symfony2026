@@ -91,6 +91,12 @@ Initialize JWT keys after dependencies are installed:
 docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
 ```
 
+Sync the bootstrap admin user from environment variables:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console app:user:sync-admin
+```
+
 ## Doctrine Database Setup
 
 Start PostgreSQL and create the database if it does not exist yet:
@@ -173,6 +179,24 @@ For cross-origin frontend requests, also set:
 ```env
 FRONTEND_ORIGIN=http://localhost:3000
 ```
+
+For the first admin bootstrap, set:
+
+```env
+APP_ADMIN_LOGIN=admin@example.com
+APP_ADMIN_PASSWORD=!ChangeMeAdmin!
+```
+
+Then synchronize the admin user:
+
+```bash
+docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console app:user:sync-admin
+```
+
+How it works:
+- if the user with `APP_ADMIN_LOGIN` does not exist, the command creates it with `ROLE_ADMIN`
+- if the user already exists, the command keeps the account and resets the password from `APP_ADMIN_PASSWORD`
+- the login value is stored in the `email` field because the current security flow authenticates by email and password
 
 Then initialize the JWT keypair:
 
