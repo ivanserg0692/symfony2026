@@ -16,7 +16,7 @@ final class AuthController extends AbstractController
     #[Route('/login', name: 'login', methods: ['POST'])]
     #[OA\Post(
         summary: 'Authenticate user and issue JWT token',
-        description: 'Authenticates a user by email and password, returns a JWT bearer token, and sets HttpOnly access and refresh cookies for browser clients.'
+        description: 'Authenticates a user by email, password, and Cloudflare Turnstile token, returns a JWT bearer token, and sets HttpOnly access and refresh cookies for browser clients.'
     )]
     #[OA\Tag(name: 'Auth')]
     #[OA\RequestBody(
@@ -36,7 +36,7 @@ final class AuthController extends AbstractController
     )]
     #[OA\Response(
         response: 401,
-        description: 'Invalid credentials.',
+        description: 'Invalid credentials or invalid Turnstile token.',
         content: new OA\JsonContent(
             properties: [
                 new OA\Property(property: 'code', type: 'integer', example: 401),

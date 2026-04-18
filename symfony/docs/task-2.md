@@ -30,12 +30,13 @@
 - `gesdinet/jwt-refresh-token-bundle` `v2.0.0` для refresh token, их ротации и хранения через Doctrine
 - `symfony/rate-limiter` `v8.0.8` для ограничения неуспешных попыток логина
 - `symfony/validator` для валидации DTO логина
+- `pixelopen/cloudflare-turnstile-bundle` для проверки Cloudflare Turnstile token на логине
 - `nelmio/cors-bundle` `v2.6.1` для cross-origin cookie и CORS-заголовков
 - `doctrine/orm` для хранения refresh token в БД
 - `nelmio/api-doc-bundle` и `zircote/swagger-php` для Swagger/OpenAPI документации auth-ручек
 
 ### Критерии приемки
-- `POST /api/v1/auth/login` принимает `email` и `password`
+- `POST /api/v1/auth/login` принимает `email`, `password` и `turnstileToken`
 - `POST /api/v1/auth/refresh` перевыпускает access token по refresh token
 - при успешной аутентификации сервер выдает access JWT и refresh token
 - access JWT доступен для API как через `Authorization: Bearer <token>`, так и через `HttpOnly` cookie
@@ -48,7 +49,7 @@
 ### Как тестировать
 #### Same-Origin
 - открыть Swagger UI на том же origin, что и API
-- выполнить `POST /api/v1/auth/login`
+- выполнить `POST /api/v1/auth/login` с валидным `turnstileToken`
 - убедиться, что ответ успешный и содержит `Set-Cookie` для access token и refresh token
 - выполнить `POST /api/v1/auth/refresh` и убедиться, что access token перевыпускается
 - выполнить `GET /api/v1/auth/me` и убедиться, что пользователь определяется корректно
@@ -68,7 +69,7 @@
 ```bash
 curl -i -X POST http://localhost:8000/api/v1/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"user@example.com","password":"password123"}'
+  -d '{"email":"user@example.com","password":"password123","turnstileToken":"<turnstile_token>"}'
 ```
 
 Проверка текущего пользователя по bearer token:
@@ -143,12 +144,13 @@ Establish a baseline API authorization mechanism so that upcoming business endpo
 - `gesdinet/jwt-refresh-token-bundle` `v2.0.0` for refresh tokens, token rotation, and Doctrine-backed storage
 - `symfony/rate-limiter` `v8.0.8` for failed-login throttling
 - `symfony/validator` for login DTO validation
+- `pixelopen/cloudflare-turnstile-bundle` for Cloudflare Turnstile token validation on login
 - `nelmio/cors-bundle` `v2.6.1` for cross-origin cookie delivery and CORS headers
 - `doctrine/orm` for refresh-token persistence
 - `nelmio/api-doc-bundle` and `zircote/swagger-php` for Swagger/OpenAPI documentation of the auth endpoints
 
 ### Acceptance Criteria
-- `POST /api/v1/auth/login` accepts `email` and `password`
+- `POST /api/v1/auth/login` accepts `email`, `password`, and `turnstileToken`
 - `POST /api/v1/auth/refresh` issues a new access token using a refresh token
 - a successful login issues both an access JWT and a refresh token
 - the access JWT can be used both through `Authorization: Bearer <token>` and an `HttpOnly` cookie
@@ -161,7 +163,7 @@ Establish a baseline API authorization mechanism so that upcoming business endpo
 ### How To Test
 #### Same-Origin
 - open Swagger UI on the same origin as the API
-- execute `POST /api/v1/auth/login`
+- execute `POST /api/v1/auth/login` with a valid `turnstileToken`
 - verify that the response is successful and includes `Set-Cookie` for both access and refresh tokens
 - execute `POST /api/v1/auth/refresh` and verify that the access token is re-issued
 - execute `GET /api/v1/auth/me` and verify that the current user is resolved correctly
@@ -181,7 +183,7 @@ Login:
 ```bash
 curl -i -X POST http://localhost:8000/api/v1/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"user@example.com","password":"password123"}'
+  -d '{"email":"user@example.com","password":"password123","turnstileToken":"<turnstile_token>"}'
 ```
 
 Current user with a bearer token:

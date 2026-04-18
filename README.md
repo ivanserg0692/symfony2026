@@ -163,7 +163,8 @@ Authentication stack used in this project:
 - `lexik/jwt-authentication-bundle` `v3.2.0` issues and validates access JWTs, reads them from the `Authorization` header or `AUTH_TOKEN` cookie, and can automatically set the access-token cookie
 - `gesdinet/jwt-refresh-token-bundle` `v2.0.0` implements the refresh-token flow, stores refresh tokens through Doctrine, rotates them, and exposes console commands for cleanup and revoke
 - `symfony/rate-limiter` `v8.0.8` is used by `login_throttling` to limit failed login attempts
-- `symfony/validator` validates the login DTO fields such as `email` and `password`
+- `symfony/validator` validates the login DTO fields such as `email`, `password`, and `turnstileToken`
+- `pixelopen/cloudflare-turnstile-bundle` validates the Cloudflare Turnstile token before password authentication continues
 - `nelmio/cors-bundle` `v2.6.1` adds CORS headers for cross-origin frontend requests with `credentials: include`
 - `doctrine/orm` persists refresh tokens in the database and lets them be managed through migrations and cleanup commands
 - `nelmio/api-doc-bundle` and `zircote/swagger-php` document the authentication endpoints in Swagger/OpenAPI
@@ -217,7 +218,7 @@ Login request example:
 ```bash
 curl -X POST http://localhost:8000/api/v1/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"user@example.com","password":"password123"}'
+  -d '{"email":"user@example.com","password":"password123","turnstileToken":"<turnstile_token>"}'
 ```
 
 Refresh request example:
@@ -249,6 +250,7 @@ curl -i -X OPTIONS http://localhost:8000/api/v1/auth/login \
 ```
 
 What to verify:
+- the login request includes a valid `turnstileToken` obtained from Cloudflare Turnstile on the frontend
 - the login response includes `Set-Cookie` for both `AUTH_TOKEN` and the refresh token cookie
 - the refresh response issues a new access token and rotates the refresh token
 - expired and invalid refresh tokens can be removed with `gesdinet:jwt:clear`
@@ -458,7 +460,8 @@ JWT-аутентификация настроена для API и использ
 - `lexik/jwt-authentication-bundle` `v3.2.0` отвечает за выпуск и проверку access JWT, чтение токена из `Authorization` header или `AUTH_TOKEN` cookie, а также за автоматическую установку access-cookie
 - `gesdinet/jwt-refresh-token-bundle` `v2.0.0` реализует refresh-flow, хранит refresh token через Doctrine, делает ротацию токенов и дает консольные команды для очистки и revoke
 - `symfony/rate-limiter` `v8.0.8` используется через `login_throttling` для ограничения неуспешных попыток логина
-- `symfony/validator` валидирует DTO логина по полям `email` и `password`
+- `symfony/validator` валидирует DTO логина по полям `email`, `password` и `turnstileToken`
+- `pixelopen/cloudflare-turnstile-bundle` проверяет Cloudflare Turnstile token до перехода к проверке пароля
 - `nelmio/cors-bundle` `v2.6.1` добавляет CORS-заголовки для cross-origin фронта с `credentials: include`
 - `doctrine/orm` хранит refresh token в базе и позволяет управлять ими через миграции и cleanup-команды
 - `nelmio/api-doc-bundle` и `zircote/swagger-php` документируют auth-ручки в Swagger/OpenAPI
@@ -494,7 +497,7 @@ GET  http://localhost:8000/api/v1/auth/me
 ```bash
 curl -X POST http://localhost:8000/api/v1/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"user@example.com","password":"password123"}'
+  -d '{"email":"user@example.com","password":"password123","turnstileToken":"<turnstile_token>"}'
 ```
 
 Пример refresh-запроса:
