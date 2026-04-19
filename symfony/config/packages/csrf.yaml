@@ -5,6 +5,8 @@ framework:
             token_id: submit
 
     csrf_protection:
+        check_header: true
+        cookie_name: csrf-token
         stateless_token_ids:
             - submit
             - authenticate

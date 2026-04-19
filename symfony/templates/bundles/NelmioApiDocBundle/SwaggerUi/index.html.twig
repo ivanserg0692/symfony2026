@@ -89,7 +89,8 @@
             <p>
                 Complete the captcha before sending <code>POST /api/v1/auth/login</code>.
                 Copy the generated token from the field below and paste it into the request body field
-                <code>turnstileToken</code>.
+                <code>turnstileToken</code>. Send the CSRF token separately in the
+                <code>X-CSRF-Token</code> header.
             </p>
             <div
                 id="swagger-turnstile"

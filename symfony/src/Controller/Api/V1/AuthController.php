@@ -19,6 +19,14 @@ final class AuthController extends AbstractController
         description: 'Authenticates a user by email, password, and Cloudflare Turnstile token, returns a JWT bearer token, and sets HttpOnly access and refresh cookies for browser clients.'
     )]
     #[OA\Tag(name: 'Auth')]
+    #[OA\Parameter(
+        name: 'X-CSRF-Token',
+        in: 'header',
+        required: true,
+        description: 'CSRF token for the authenticate token id.',
+        schema: new OA\Schema(type: 'string'),
+        example: 'ea9f28f0d5e34ce3b0900fca1e5b7d8e.authenticate'
+    )]
     #[OA\RequestBody(
         required: true,
         content: new OA\JsonContent(ref: new Model(type: AuthLoginRequestDto::class))
