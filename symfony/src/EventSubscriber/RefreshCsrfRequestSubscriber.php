@@ -12,7 +12,6 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 final class RefreshCsrfRequestSubscriber implements EventSubscriberInterface
 {
-    private const CSRF_HEADER = 'X-CSRF-Token';
     private const PROTECTED_ENDPOINTS = [
         'api_v1_auth_refresh' => 'refresh',
         'api_v1_auth_logout' => 'logout',
@@ -22,6 +21,7 @@ final class RefreshCsrfRequestSubscriber implements EventSubscriberInterface
 
     public function __construct(
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
+        private readonly string $csrfHeaderName,
     ) {
     }
 
@@ -52,10 +52,10 @@ final class RefreshCsrfRequestSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $tokenValue = $request->headers->get(self::CSRF_HEADER);
+        $tokenValue = $request->headers->get($this->csrfHeaderName);
 
         if (!\is_string($tokenValue) || '' === trim($tokenValue)) {
-            throw new BadRequestException(sprintf('Missing "%s" header.', self::CSRF_HEADER));
+            throw new BadRequestException(sprintf('Missing "%s" header.', $this->csrfHeaderName));
         }
 
         if (!$this->csrfTokenManager->isTokenValid(new CsrfToken($tokenId, $tokenValue))) {

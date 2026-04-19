@@ -4,28 +4,64 @@ namespace App\Controller\Api\V1;
 
 use App\Dto\AuthLoginRequestDto;
 use App\Entity\User;
+use App\Security\Csrf\EnvAwareStatelessCsrfTokenManager;
 use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api/v1/auth', name: 'api_v1_auth_')]
 final class AuthController extends AbstractController
 {
+    #[Route('/csrf', name: 'csrf', methods: ['GET'])]
+    #[OA\Get(
+        summary: 'Issue CSRF token for auth endpoints',
+        description: 'Generates a stateless CSRF token for authentication endpoints, stores its companion cookie on the API domain, and returns the token that must be sent in the configured CSRF header.'
+    )]
+    #[OA\Tag(name: 'Auth')]
+    #[OA\Response(
+        response: 200,
+        description: 'CSRF token issued successfully.',
+        content: new OA\JsonContent(
+            required: ['token', 'header_name', 'cookie_name'],
+            properties: [
+                new OA\Property(property: 'token', type: 'string', example: 'ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c'),
+                new OA\Property(property: 'header_name', type: 'string', example: 'X-CSRF-Token'),
+                new OA\Property(property: 'cookie_name', type: 'string', example: 'csrf-token'),
+            ],
+            type: 'object',
+        )
+    )]
+    public function csrf(Request $request, EnvAwareStatelessCsrfTokenManager $csrfTokenManager): JsonResponse
+    {
+        $token = $csrfTokenManager->refreshToken('authenticate')->getValue();
+        $response = $this->json([
+            'token' => $token,
+            'header_name' => $csrfTokenManager->getHeaderName(),
+            'cookie_name' => $csrfTokenManager->getCookieName(),
+        ]);
+
+        $csrfTokenManager->clearTokenCookies($request, $response);
+        $response->headers->setCookie($csrfTokenManager->createTokenCookie($request, $token));
+
+        return $response;
+    }
+
     #[Route('/login', name: 'login', methods: ['POST'])]
     #[OA\Post(
         summary: 'Authenticate user and issue JWT token',
-        description: 'Authenticates a user by email, password, and Cloudflare Turnstile token, returns a JWT bearer token, and sets HttpOnly access and refresh cookies for browser clients.'
+        description: 'Authenticates a user by email, password, and Cloudflare Turnstile token, returns a JWT bearer token, and sets HttpOnly access and refresh cookies for browser clients. Call GET /api/v1/auth/csrf first and send the returned token in the CSRF header.'
     )]
     #[OA\Tag(name: 'Auth')]
     #[OA\Parameter(
         name: 'X-CSRF-Token',
         in: 'header',
         required: true,
-        description: 'CSRF token for the authenticate token id.',
+        description: 'CSRF token returned by GET /api/v1/auth/csrf.',
         schema: new OA\Schema(type: 'string'),
-        example: 'ea9f28f0d5e34ce3b0900fca1e5b7d8e.authenticate'
+        example: 'ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c'
     )]
     #[OA\RequestBody(
         required: true,
@@ -61,16 +97,16 @@ final class AuthController extends AbstractController
     #[Route('/refresh', name: 'refresh', methods: ['POST'])]
     #[OA\Post(
         summary: 'Refresh JWT access token',
-        description: 'Uses the refresh token from an HttpOnly cookie or request payload and issues a new access JWT. When cookie mode is enabled, the refreshed access token is also returned via Set-Cookie.'
+        description: 'Uses the refresh token from an HttpOnly cookie or request payload and issues a new access JWT. Call GET /api/v1/auth/csrf first and send the returned token in the CSRF header.'
     )]
     #[OA\Tag(name: 'Auth')]
     #[OA\Parameter(
         name: 'X-CSRF-Token',
         in: 'header',
         required: true,
-        description: 'CSRF token for the refresh token id.',
+        description: 'CSRF token returned by GET /api/v1/auth/csrf.',
         schema: new OA\Schema(type: 'string'),
-        example: 'ea9f28f0d5e34ce3b0900fca1e5b7d8e.refresh'
+        example: 'ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c'
     )]
     #[OA\Response(
         response: 200,
@@ -97,16 +133,16 @@ final class AuthController extends AbstractController
     #[Route('/logout', name: 'logout', methods: ['POST'])]
     #[OA\Post(
         summary: 'Logout current user',
-        description: 'Logs out the current user through the security firewall, clears authentication cookies, and invalidates the refresh token when it is available to the logout request.'
+        description: 'Logs out the current user through the security firewall, clears authentication cookies, and invalidates the refresh token when it is available to the logout request. Call GET /api/v1/auth/csrf first and send the returned token in the CSRF header.'
     )]
     #[OA\Tag(name: 'Auth')]
     #[OA\Parameter(
         name: 'X-CSRF-Token',
         in: 'header',
         required: true,
-        description: 'CSRF token for the logout token id.',
+        description: 'CSRF token returned by GET /api/v1/auth/csrf.',
         schema: new OA\Schema(type: 'string'),
-        example: 'ea9f28f0d5e34ce3b0900fca1e5b7d8e.logout'
+        example: 'ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c'
     )]
     #[OA\Response(
         response: 204,

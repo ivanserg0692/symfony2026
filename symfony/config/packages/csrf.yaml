@@ -1,14 +1,5 @@
-# Enable stateless CSRF protection for forms and logins/logouts
 framework:
     form:
         csrf_protection:
             token_id: submit
-
-    csrf_protection:
-        check_header: true
-        cookie_name: csrf-token
-        stateless_token_ids:
-            - submit
-            - authenticate
-            - refresh
-            - logout
+    csrf_protection: true

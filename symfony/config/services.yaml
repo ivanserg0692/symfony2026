@@ -8,17 +8,41 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     app.turnstile_site_key: '%env(TURNSTILE_KEY)%'
+    app.csrf.stateless_token_ids: '%env(csv:CSRF_STATELESS_TOKEN_IDS)%'
+    app.csrf.trusted_origins: '%env(csv:CSRF_TRUSTED_ORIGINS)%'
+    app.csrf.cookie_name: '%env(CSRF_COOKIE_NAME)%'
+    app.csrf.header_name: '%env(CSRF_HEADER_NAME)%'
+    app.csrf.cookie_path: '%env(CSRF_COOKIE_PATH)%'
+    app.csrf.cookie_samesite: '%env(CSRF_COOKIE_SAMESITE)%'
 
 services:
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        bind:
+            $csrfHeaderName: '%app.csrf.header_name%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+
+    App\Security\Csrf\EnvAwareStatelessCsrfTokenManager:
+        arguments:
+            $statelessTokenIds: '%app.csrf.stateless_token_ids%'
+            $trustedOrigins: '%app.csrf.trusted_origins%'
+            $cookieName: '%app.csrf.cookie_name%'
+            $headerName: '%app.csrf.header_name%'
+            $cookiePath: '%app.csrf.cookie_path%'
+            $cookieSameSite: '%app.csrf.cookie_samesite%'
+
+    App\Security\Csrf\DelegatingCsrfTokenManager:
+        decorates: security.csrf.token_manager
+        decoration_inner_name: app.security.csrf.default_token_manager.inner
+        arguments:
+            $defaultTokenManager: '@app.security.csrf.default_token_manager.inner'
+            $statelessTokenIds: '%app.csrf.stateless_token_ids%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

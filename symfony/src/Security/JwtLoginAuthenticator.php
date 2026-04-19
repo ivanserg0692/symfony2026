@@ -23,13 +23,12 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class JwtLoginAuthenticator extends AbstractAuthenticator
 {
-    private const CSRF_HEADER = 'X-CSRF-Token';
-
     public function __construct(
         private readonly AuthenticationSuccessHandler $successHandler,
         private readonly AuthenticationFailureHandler $failureHandler,
         private readonly SerializerInterface $serializer,
         private readonly ValidatorInterface $validator,
+        private readonly string $csrfHeaderName,
     ) {
     }
 
@@ -59,7 +58,7 @@ final class JwtLoginAuthenticator extends AbstractAuthenticator
             new UserBadge($payload->email),
             new PasswordCredentials($payload->password),
             [
-                new CsrfTokenBadge('authenticate', $request->headers->get(self::CSRF_HEADER, '')),
+                new CsrfTokenBadge('authenticate', $request->headers->get($this->csrfHeaderName, '')),
             ],
         );
     }
