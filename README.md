@@ -52,7 +52,8 @@ The current implementation path is:
 - `Task 1` - done
 - Task file: [symfony/docs/task-1.md](symfony/docs/task-1.md)
 - Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
-- `Task 2` - in progress
+- `Task 2` - done
+- Merge Request 2: <https://github.com/ivanserg0692/symfony2026/pull/2>
 - Task file: [symfony/docs/task-2.md](symfony/docs/task-2.md)
 
 ## Run With Docker Compose
@@ -355,7 +356,8 @@ GIT_COMMITTER_EMAIL="you@example.com"
 - `Task 1` - done
 - Файл задачи: [symfony/docs/task-1.md](symfony/docs/task-1.md)
 - Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
-- `Task 2` - in progress
+- `Task 2` - done
+-  Merge Request 2: <https://github.com/ivanserg0692/symfony2026/pull/2>
 - Файл задачи: [symfony/docs/task-2.md](symfony/docs/task-2.md)
 
 ## Запуск через Docker Compose
