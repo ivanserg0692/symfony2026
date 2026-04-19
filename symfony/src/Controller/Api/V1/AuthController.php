@@ -64,6 +64,14 @@ final class AuthController extends AbstractController
         description: 'Uses the refresh token from an HttpOnly cookie or request payload and issues a new access JWT. When cookie mode is enabled, the refreshed access token is also returned via Set-Cookie.'
     )]
     #[OA\Tag(name: 'Auth')]
+    #[OA\Parameter(
+        name: 'X-CSRF-Token',
+        in: 'header',
+        required: true,
+        description: 'CSRF token for the refresh token id.',
+        schema: new OA\Schema(type: 'string'),
+        example: 'ea9f28f0d5e34ce3b0900fca1e5b7d8e.refresh'
+    )]
     #[OA\Response(
         response: 200,
         description: 'Access token refreshed successfully.',
@@ -92,6 +100,14 @@ final class AuthController extends AbstractController
         description: 'Logs out the current user through the security firewall, clears authentication cookies, and invalidates the refresh token when it is available to the logout request.'
     )]
     #[OA\Tag(name: 'Auth')]
+    #[OA\Parameter(
+        name: 'X-CSRF-Token',
+        in: 'header',
+        required: true,
+        description: 'CSRF token for the logout token id.',
+        schema: new OA\Schema(type: 'string'),
+        example: 'ea9f28f0d5e34ce3b0900fca1e5b7d8e.logout'
+    )]
     #[OA\Response(
         response: 204,
         description: 'Logout completed successfully.',
