@@ -47,6 +47,32 @@
             "migrations/.gitignore"
         ]
     },
+    "gesdinet/jwt-refresh-token-bundle": {
+        "version": "2.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "1.0",
+            "ref": "2390b4ed5c195e0b3f6dea45221f3b7c0af523a0"
+        },
+        "files": [
+            "config/packages/gesdinet_jwt_refresh_token.yaml",
+            "config/routes/gesdinet_jwt_refresh_token.yaml",
+            "src/Entity/RefreshToken.php"
+        ]
+    },
+    "lexik/jwt-authentication-bundle": {
+        "version": "3.2",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "2.5",
+            "ref": "e9481b233a11ef7e15fe055a2b21fd3ac1aa2bb7"
+        },
+        "files": [
+            "config/packages/lexik_jwt_authentication.yaml"
+        ]
+    },
     "nelmio/api-doc-bundle": {
         "version": "5.9",
         "recipe": {
@@ -55,6 +81,30 @@
             "version": "3.0",
             "ref": "c8e0c38e1a280ab9e37587a8fa32b251d5bc1c94"
         }
+    },
+    "nelmio/cors-bundle": {
+        "version": "2.6",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "1.5",
+            "ref": "6bea22e6c564fba3a1391615cada1437d0bde39c"
+        },
+        "files": [
+            "config/packages/nelmio_cors.yaml"
+        ]
+    },
+    "pixelopen/cloudflare-turnstile-bundle": {
+        "version": "0.5",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "6173b9aff0056dd99ca70a2caa940cc7bcac0b4b"
+        },
+        "files": [
+            "config/packages/pixel_open_cloudflare_turnstile.yaml"
+        ]
     },
     "stof/doctrine-extensions-bundle": {
         "version": "1.15",
@@ -103,6 +153,18 @@
         "files": [
             ".env",
             ".env.dev"
+        ]
+    },
+    "symfony/form": {
+        "version": "8.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "7.2",
+            "ref": "7d86a6723f4a623f59e2bf966b6aad2fc461d36b"
+        },
+        "files": [
+            "config/packages/csrf.yaml"
         ]
     },
     "symfony/framework-bundle": {
@@ -195,6 +257,18 @@
         "files": [
             "config/packages/twig.yaml",
             "templates/base.html.twig"
+        ]
+    },
+    "symfony/validator": {
+        "version": "8.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "7.0",
+            "ref": "8c1c4e28d26a124b0bb273f537ca8ce443472bfd"
+        },
+        "files": [
+            "config/packages/validator.yaml"
         ]
     },
     "symfony/web-profiler-bundle": {

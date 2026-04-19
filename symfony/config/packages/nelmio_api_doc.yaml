@@ -6,6 +6,12 @@ nelmio_api_doc:
             title: Symfony2026 API
             description: API documentation for version 1 endpoints.
             version: 1.0.0
+        components:
+            securitySchemes:
+                bearerAuth:
+                    type: http
+                    scheme: bearer
+                    bearerFormat: JWT
     areas:
         default:
             path_patterns:

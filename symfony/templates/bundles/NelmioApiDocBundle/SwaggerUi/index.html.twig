@@ -1,0 +1,135 @@
+{% extends '@!NelmioApiDoc/SwaggerUi/index.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .swagger-turnstile-panel {
+            max-width: 1460px;
+            margin: 0 auto;
+            padding: 16px 20px 0;
+            box-sizing: border-box;
+        }
+
+        .swagger-turnstile-card {
+            border: 1px solid #d9e2f1;
+            border-radius: 10px;
+            background: #f7f9fc;
+            padding: 16px;
+        }
+
+        .swagger-turnstile-card h2 {
+            margin: 0 0 8px;
+            font-size: 16px;
+        }
+
+        .swagger-turnstile-card p {
+            margin: 0 0 12px;
+            color: #4a5568;
+            line-height: 1.5;
+        }
+
+        .swagger-turnstile-status {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        .swagger-turnstile-token {
+            width: 100%;
+            min-height: 88px;
+            margin-top: 12px;
+            padding: 10px 12px;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            background: #fff;
+            color: #1a202c;
+            font: 13px/1.5 monospace;
+            resize: vertical;
+        }
+
+        .swagger-turnstile-actions {
+            margin-top: 12px;
+        }
+
+        .swagger-turnstile-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 9px 14px;
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            background: #fff;
+            color: #1d4ed8;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .swagger-turnstile-button:hover {
+            background: #eff6ff;
+        }
+
+        .swagger-turnstile-status[data-state="ready"] {
+            color: #1f7a1f;
+        }
+
+        .swagger-turnstile-status[data-state="error"] {
+            color: #b42318;
+        }
+    </style>
+{% endblock stylesheets %}
+
+{% block swagger_ui %}
+
+    {{ parent() }}
+    <section class="swagger-turnstile-panel">
+        <div class="swagger-turnstile-card">
+            <h2>Cloudflare Turnstile</h2>
+            <p>
+                Complete the captcha before sending <code>POST /api/v1/auth/login</code>.
+                Copy the generated token from the field below and paste it into the request body field
+                <code>turnstileToken</code>. Send the CSRF token separately in the
+                <code>X-CSRF-Token</code> header.
+            </p>
+            <div
+                id="swagger-turnstile"
+                class="cf-turnstile"
+                data-sitekey="{{ turnstile_site_key }}"
+                data-theme="light"
+            ></div>
+            <textarea
+                id="swagger-turnstile-token"
+                class="swagger-turnstile-token"
+                readonly
+                placeholder="Turnstile token will appear here after captcha completion."
+            ></textarea>
+            <div class="swagger-turnstile-actions">
+                <button id="swagger-turnstile-reset" class="swagger-turnstile-button" type="button">
+                    Reset captcha
+                </button>
+            </div>
+            <div id="swagger-turnstile-status" class="swagger-turnstile-status" data-state="idle">
+                Waiting for captcha completion.
+            </div>
+        </div>
+    </section>
+
+{% endblock swagger_ui %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+    <script src="{{ asset('js/swagger-turnstile.js') }}"></script>
+{% endblock javascripts %}
+
+{% block swagger_initialization %}
+    <script type="text/javascript">
+        window.onload = () => {
+            loadSwaggerUI({{ swagger_ui_config|json_encode(65)|raw }});
+            window.initializeSwaggerTurnstile({
+                siteKey: {{ turnstile_site_key|json_encode|raw }}
+            });
+        };
+    </script>
+{% endblock swagger_initialization %}

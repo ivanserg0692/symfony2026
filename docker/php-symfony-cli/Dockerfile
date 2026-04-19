@@ -22,6 +22,9 @@ RUN docker-php-ext-install \
     pdo_pgsql \
     zip
 
+RUN pecl install xdebug \
+    && docker-php-ext-enable xdebug
+
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 RUN wget https://get.symfony.com/cli/installer -O - | bash
@@ -29,4 +32,5 @@ RUN wget https://get.symfony.com/cli/installer -O - | bash
 WORKDIR /workspace
 
 COPY docker/php-symfony-cli/entrypoint.sh /usr/local/bin/symfony-entrypoint
+COPY docker/php-symfony-cli/xdebug.ini /usr/local/etc/php/conf.d/99-xdebug.ini
 RUN chmod +x /usr/local/bin/symfony-entrypoint

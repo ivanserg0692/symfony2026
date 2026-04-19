@@ -1,5 +1,7 @@
 twig:
     file_name_pattern: '*.twig'
+    globals:
+        turnstile_site_key: '%app.turnstile_site_key%'
 
 when@test:
     twig:
