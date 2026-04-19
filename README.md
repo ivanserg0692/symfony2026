@@ -55,6 +55,9 @@ The current implementation path is:
 - `Task 2` - done
 - Merge Request 2: <https://github.com/ivanserg0692/symfony2026/pull/2>
 - Task file: [symfony/docs/task-2.md](symfony/docs/task-2.md)
+- `Task 3` - done
+- Merge Request 3: <https://github.com/ivanserg0692/symfony2026/pull/3>
+- Task file: [symfony/docs/task-3.md](symfony/docs/task-3.md)
 
 ## Run With Docker Compose
 
