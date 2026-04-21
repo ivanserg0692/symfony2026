@@ -53,11 +53,11 @@ security:
         main:
             lazy: true
             provider: app_user_provider
-            form_login:
-                login_path: app_login
-                check_path: app_login
-                enable_csrf: true
-                csrf_token_id: authenticate_form
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
+            custom_authenticators:
+                - App\Security\AdminLoginFormAuthenticator
             logout:
                 path: app_logout
                 enable_csrf: true
