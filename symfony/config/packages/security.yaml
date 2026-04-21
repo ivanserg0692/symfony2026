@@ -3,6 +3,13 @@ security:
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
+    role_hierarchy:
+        # Base application role for any authenticated user
+        ROLE_USER: ~
+
+        # Administrative role with all user permissions included
+        ROLE_ADMIN: [ROLE_USER]
+
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
         # used to reload user from session & other features (e.g. switch_user)
