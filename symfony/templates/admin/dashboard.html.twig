@@ -1,0 +1,14 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}Workspace{% endblock %}
+
+{% block main %}
+    <div class="content-panel">
+        <p>You are logged in to the admin dashboard.</p>
+
+        <form method="post" action="{{ path('app_logout') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout_form') }}">
+            <button class="btn btn-danger" type="submit">Logout</button>
+        </form>
+    </div>
+{% endblock %}
