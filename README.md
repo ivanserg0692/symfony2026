@@ -136,6 +136,12 @@ Open the app in your browser:
 http://localhost:8000
 ```
 
+To stream production-mode logs from the Symfony local web server inside `symfony-web`, use:
+
+```bash
+docker compose -f app/docker-compose.yml exec -it symfony-web sh -lc "/root/.symfony5/bin/symfony server:log"
+```
+
 ## API Documentation
 
 API documentation for `api/v1` is generated automatically at runtime by the Symfony app.
@@ -432,6 +438,12 @@ docker compose up --build symfony-web
 
 ```text
 http://localhost:8000
+```
+
+Чтобы смотреть логи production-режима из локального Symfony web server внутри `symfony-web`, используйте:
+
+```bash
+docker compose -f app/docker-compose.yml exec -it symfony-web sh -lc "/root/.symfony5/bin/symfony server:log"
 ```
 
 ## API Documentation
