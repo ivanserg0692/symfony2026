@@ -9,6 +9,7 @@ The work shown here covers:
 - admin login form setup
 - admin dashboard availability
 - user list management in EasyAdmin
+- filtering users by groups
 - JWT authentication endpoints in Swagger UI
 
 ## Screenshots
@@ -36,6 +37,12 @@ The admin dashboard is accessible after successful authentication and provides t
 ![User list in EasyAdmin](images/user-list.png)
 
 The user list page is available in EasyAdmin and shows the configured columns for identifiers, email, names, and roles together with search and filtering controls.
+
+### User Group Filter
+
+![User group filter in EasyAdmin](images/user-group-filter.png)
+
+The user list now includes a group filter. This makes it possible to quickly narrow the list to administrative and other working groups directly in the EasyAdmin interface.
 
 ### JWT Auth Endpoints
 
