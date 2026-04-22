@@ -53,9 +53,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $secondName = null;
 
+    /**
+     * @var Collection<int, UserGroups>
+     */
+    #[ORM\ManyToMany(targetEntity: UserGroups::class, inversedBy: 'users')]
+    private Collection $Groups;
+
     public function __construct()
     {
         $this->news = new ArrayCollection();
+        $this->Groups = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -190,5 +197,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __toString(): string
     {
         return $this->email ?? sprintf('User #%d', $this->id ?? 0);
+    }
+
+    /**
+     * @return Collection<int, UserGroups>
+     */
+    public function getGroups(): Collection
+    {
+        return $this->Groups;
+    }
+
+    public function addGroup(UserGroups $group): static
+    {
+        if (!$this->Groups->contains($group)) {
+            $this->Groups->add($group);
+        }
+
+        return $this;
+    }
+
+    public function removeGroup(UserGroups $group): static
+    {
+        $this->Groups->removeElement($group);
+
+        return $this;
     }
 }
