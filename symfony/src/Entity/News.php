@@ -43,6 +43,10 @@ class News
     #[ORM\Column(type: Types::TEXT)]
     private ?string $brief = null;
 
+    #[ORM\ManyToOne(inversedBy: 'news')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?NewsStatuses $status = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -135,6 +139,18 @@ class News
     public function setBrief(string $brief): static
     {
         $this->brief = $brief;
+
+        return $this;
+    }
+
+    public function getStatus(): ?NewsStatuses
+    {
+        return $this->status;
+    }
+
+    public function setStatus(?NewsStatuses $status): static
+    {
+        $this->status = $status;
 
         return $this;
     }
