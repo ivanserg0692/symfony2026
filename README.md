@@ -49,15 +49,18 @@ The current implementation path is:
 
 ## Tasks
 
-- `Task 1` - done
+### `Task 1` - done
 - Task file: [symfony/docs/task-1.md](symfony/docs/task-1.md)
 - Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
-- `Task 2` - done
+### `Task 2` - done
 - Merge Request 2: <https://github.com/ivanserg0692/symfony2026/pull/2>
 - Task file: [symfony/docs/task-2.md](symfony/docs/task-2.md)
-- `Task 3` - done
+- MR result: [symfony/docs/mr-task-2.md](symfony/docs/mr-task-2.md)
+### `Task 3` - done
 - Merge Request 3: <https://github.com/ivanserg0692/symfony2026/pull/3>
 - Task file: [symfony/docs/task-3.md](symfony/docs/task-3.md)
+- MR result (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
+- MR result (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
 
 ## Run With Docker Compose
 
@@ -362,12 +365,18 @@ GIT_COMMITTER_EMAIL="you@example.com"
 
 ## Задачи
 
-- `Task 1` - done
+### `Task 1` - done
 - Файл задачи: [symfony/docs/task-1.md](symfony/docs/task-1.md)
 - Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
-- `Task 2` - done
+### `Task 2` - done
 -  Merge Request 2: <https://github.com/ivanserg0692/symfony2026/pull/2>
 - Файл задачи: [symfony/docs/task-2.md](symfony/docs/task-2.md)
+- Результат MR: [symfony/docs/mr-task-2.md](symfony/docs/mr-task-2.md)
+### `Task 3` - done
+- Merge Request 3: <https://github.com/ivanserg0692/symfony2026/pull/3>
+- Файл задачи: [symfony/docs/task-3.md](symfony/docs/task-3.md)
+- Результат MR (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
 
 ## Запуск через Docker Compose
 
