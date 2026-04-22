@@ -64,6 +64,11 @@ class UserGroups
         return $this->users;
     }
 
+    public function getUsersCount(): int
+    {
+        return $this->users->count();
+    }
+
     public function addUser(User $user): static
     {
         if (!$this->users->contains($user)) {

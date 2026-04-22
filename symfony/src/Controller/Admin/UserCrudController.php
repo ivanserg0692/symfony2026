@@ -14,6 +14,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ArrayFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 
 final class UserCrudController extends AbstractCrudController
@@ -38,7 +39,8 @@ final class UserCrudController extends AbstractCrudController
             ->add(TextFilter::new('email'))
             ->add(TextFilter::new('firstName'))
             ->add(TextFilter::new('secondName'))
-            ->add(ArrayFilter::new('roles'));
+            ->add(ArrayFilter::new('roles'))
+            ->add(EntityFilter::new('groups'));
     }
 
     public function configureActions(Actions $actions): Actions
