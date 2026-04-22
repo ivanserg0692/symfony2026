@@ -1,0 +1,236 @@
+{% extends '@EasyAdmin/crud/index.html.twig' %}
+{% set default_hidden_columns = default_hidden_columns|default([]) %}
+
+{% block global_actions %}
+    <div class="news-column-picker" data-news-column-picker>
+        <button type="button" class="btn btn-secondary" data-news-columns-toggle aria-expanded="false" aria-controls="news-columns-panel">
+            <i class="fas fa-gear" aria-hidden="true"></i>
+            <span>Columns</span>
+        </button>
+
+        <div id="news-columns-panel" class="news-column-picker__panel" data-news-columns-panel hidden>
+            <div class="news-column-picker__title">Visible columns</div>
+            <div class="news-column-picker__options" data-news-columns-options></div>
+            <button type="button" class="btn btn-link btn-sm news-column-picker__reset" data-news-columns-reset>
+                Reset defaults
+            </button>
+        </div>
+    </div>
+
+    {{ parent() }}
+{% endblock %}
+
+{% block configured_stylesheets %}
+    {{ parent() }}
+    <style>
+        .news-column-picker {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            margin-right: .75rem;
+        }
+
+        .news-column-picker__panel {
+            position: absolute;
+            top: calc(100% + .5rem);
+            right: 0;
+            z-index: 1000;
+            min-width: 16rem;
+            padding: 1rem;
+            background: #fff;
+            border: 1px solid rgba(15, 23, 42, .12);
+            border-radius: .75rem;
+            box-shadow: 0 1rem 2rem rgba(15, 23, 42, .15);
+        }
+
+        .news-column-picker__title {
+            margin-bottom: .75rem;
+            font-size: .875rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .news-column-picker__options {
+            display: grid;
+            gap: .5rem;
+        }
+
+        .news-column-picker__option {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-size: .875rem;
+        }
+
+        .news-column-picker__option input {
+            margin: 0;
+        }
+
+        .news-column-picker__reset {
+            margin-top: .75rem;
+            padding-left: 0;
+        }
+    </style>
+{% endblock %}
+
+{% block configured_javascripts %}
+    {{ parent() }}
+    <script>
+        (() => {
+            const storageKey = 'ea.news.index.columns.v1';
+            const defaultHiddenColumns = new Set({{ default_hidden_columns|json_encode|raw }});
+
+            const init = () => {
+                const picker = document.querySelector('[data-news-column-picker]');
+                const table = document.querySelector('table.datagrid');
+
+                if (!picker || !table) {
+                    return;
+                }
+
+                const toggleButton = picker.querySelector('[data-news-columns-toggle]');
+                const panel = picker.querySelector('[data-news-columns-panel]');
+                const options = picker.querySelector('[data-news-columns-options]');
+                const resetButton = picker.querySelector('[data-news-columns-reset]');
+                const headers = Array.from(table.querySelectorAll('thead th[data-column]'));
+                const columns = headers
+                    .map((header) => ({
+                        name: header.dataset.column,
+                        label: header.textContent.replace(/\s+/g, ' ').trim(),
+                    }))
+                    .filter((column, index, items) => column.name && items.findIndex((item) => item.name === column.name) === index);
+
+                if (columns.length === 0) {
+                    picker.hidden = true;
+                    return;
+                }
+
+                const getDefaultVisibleColumns = () => columns
+                    .map((column) => column.name)
+                    .filter((name) => !defaultHiddenColumns.has(name));
+
+                const getStoredVisibleColumns = () => {
+                    try {
+                        const parsed = JSON.parse(window.localStorage.getItem(storageKey) || '[]');
+
+                        if (!Array.isArray(parsed)) {
+                            return null;
+                        }
+
+                        const allowedColumns = new Set(columns.map((column) => column.name));
+                        const visibleColumns = parsed.filter((name) => allowedColumns.has(name));
+
+                        return visibleColumns.length > 0 ? visibleColumns : null;
+                    } catch (error) {
+                        return null;
+                    }
+                };
+
+                const saveVisibleColumns = (visibleColumns) => {
+                    window.localStorage.setItem(storageKey, JSON.stringify(visibleColumns));
+                };
+
+                const applyVisibleColumns = (visibleColumns) => {
+                    const visible = new Set(visibleColumns);
+
+                    columns.forEach((column) => {
+                        table.querySelectorAll(`[data-column="${column.name}"]`).forEach((cell) => {
+                            cell.style.display = visible.has(column.name) ? '' : 'none';
+                        });
+                    });
+                };
+
+                const syncControls = (visibleColumns) => {
+                    const visible = new Set(visibleColumns);
+
+                    options.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+                        input.checked = visible.has(input.value);
+                    });
+                };
+
+                const renderOptions = (visibleColumns) => {
+                    const visible = new Set(visibleColumns);
+
+                    options.innerHTML = '';
+
+                    columns.forEach((column) => {
+                        const option = document.createElement('label');
+                        option.className = 'news-column-picker__option';
+
+                        const input = document.createElement('input');
+                        input.type = 'checkbox';
+                        input.value = column.name;
+                        input.checked = visible.has(column.name);
+
+                        input.addEventListener('change', () => {
+                            const nextVisibleColumns = columns
+                                .map((item) => item.name)
+                                .filter((name) => {
+                                    const checkbox = options.querySelector(`input[value="${name}"]`);
+
+                                    return checkbox ? checkbox.checked : false;
+                                });
+
+                            if (nextVisibleColumns.length === 0) {
+                                input.checked = true;
+                                return;
+                            }
+
+                            applyVisibleColumns(nextVisibleColumns);
+                            saveVisibleColumns(nextVisibleColumns);
+                        });
+
+                        const text = document.createElement('span');
+                        text.textContent = column.label;
+
+                        option.append(input, text);
+                        options.append(option);
+                    });
+                };
+
+                let visibleColumns = getStoredVisibleColumns() || getDefaultVisibleColumns();
+
+                renderOptions(visibleColumns);
+                applyVisibleColumns(visibleColumns);
+
+                toggleButton.addEventListener('click', () => {
+                    const isOpen = !panel.hidden;
+
+                    panel.hidden = isOpen;
+                    toggleButton.setAttribute('aria-expanded', String(!isOpen));
+                });
+
+                resetButton.addEventListener('click', () => {
+                    visibleColumns = getDefaultVisibleColumns();
+                    applyVisibleColumns(visibleColumns);
+                    syncControls(visibleColumns);
+                    window.localStorage.removeItem(storageKey);
+                });
+
+                document.addEventListener('click', (event) => {
+                    if (picker.contains(event.target)) {
+                        return;
+                    }
+
+                    panel.hidden = true;
+                    toggleButton.setAttribute('aria-expanded', 'false');
+                });
+
+                document.addEventListener('keydown', (event) => {
+                    if (event.key !== 'Escape') {
+                        return;
+                    }
+
+                    panel.hidden = true;
+                    toggleButton.setAttribute('aria-expanded', 'false');
+                });
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init, { once: true });
+            } else {
+                init();
+            }
+        })();
+    </script>
+{% endblock %}
