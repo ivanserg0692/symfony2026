@@ -21,7 +21,7 @@ class UserGroups
     /**
      * @var Collection<int, User>
      */
-    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'Groups')]
+    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'groups')]
     private Collection $users;
 
     #[ORM\Column]
@@ -93,5 +93,10 @@ class UserGroups
         $this->isAdmin = $isAdmin;
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->name ?? sprintf('Group #%d', $this->id ?? 0);
     }
 }

@@ -8,6 +8,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
@@ -61,5 +62,9 @@ final class UserCrudController extends AbstractCrudController
         yield TextField::new('secondName');
 
         yield ArrayField::new('roles');
+
+        yield AssociationField::new('groups')
+            ->setFormTypeOption('by_reference', false)
+            ->setFormTypeOption('choice_label', 'name');
     }
 }

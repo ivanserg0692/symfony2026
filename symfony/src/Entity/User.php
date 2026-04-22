@@ -57,12 +57,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, UserGroups>
      */
     #[ORM\ManyToMany(targetEntity: UserGroups::class, inversedBy: 'users')]
-    private Collection $Groups;
+    private Collection $groups;
 
     public function __construct()
     {
         $this->news = new ArrayCollection();
-        $this->Groups = new ArrayCollection();
+        $this->groups = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -204,13 +204,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getGroups(): Collection
     {
-        return $this->Groups;
+        return $this->groups;
     }
 
     public function addGroup(UserGroups $group): static
     {
-        if (!$this->Groups->contains($group)) {
-            $this->Groups->add($group);
+        if (!$this->groups->contains($group)) {
+            $this->groups->add($group);
         }
 
         return $this;
@@ -218,7 +218,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function removeGroup(UserGroups $group): static
     {
-        $this->Groups->removeElement($group);
+        $this->groups->removeElement($group);
 
         return $this;
     }
