@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\NewsRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -35,6 +36,12 @@ class News
     #[ORM\JoinColumn(nullable: false)]
     #[Gedmo\Blameable(on: 'create')] // Эту строку добавьте вручную
     private ?User $createdBy = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $description = null;
+
+    #[ORM\Column(type: Types::TEXT)]
+    private ?string $brief = null;
 
     public function getId(): ?int
     {
@@ -104,6 +111,30 @@ class News
     public function setCreatedBy(?User $createdBy): static
     {
         $this->createdBy = $createdBy;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): static
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    public function getBrief(): ?string
+    {
+        return $this->brief;
+    }
+
+    public function setBrief(string $brief): static
+    {
+        $this->brief = $brief;
 
         return $this;
     }

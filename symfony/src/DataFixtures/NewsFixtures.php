@@ -34,6 +34,8 @@ class NewsFixtures extends Fixture implements DependentFixtureInterface
             $news->setCreatedAt($createdAt);
             $news->setUpdatedAt($updatedAt);
             $news->setCreatedBy($author);
+            $news->setBrief($faker->sentence($faker->numberBetween(12, 20)));
+            $news->setDescription($faker->paragraphs($faker->numberBetween(2, 4), true));
 
             $manager->persist($news);
         }
