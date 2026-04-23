@@ -2,13 +2,13 @@
 
 namespace App\Entity;
 
-use App\Repository\NewsStatusesRepository;
+use App\Repository\NewsStatusRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: NewsStatusesRepository::class)]
-class NewsStatuses
+#[ORM\Entity(repositoryClass: NewsStatusRepository::class)]
+class NewsStatus
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -27,6 +27,11 @@ class NewsStatuses
     public function __construct()
     {
         $this->news = new ArrayCollection();
+    }
+
+    public function __toString(): string
+    {
+        return $this->name ?? sprintf('Status #%d', $this->id ?? 0);
     }
 
     public function getId(): ?int
@@ -74,7 +79,6 @@ class NewsStatuses
     public function removeNews(News $news): static
     {
         if ($this->news->removeElement($news)) {
-            // set the owning side to null (unless already changed)
             if ($news->getStatus() === $this) {
                 $news->setStatus(null);
             }

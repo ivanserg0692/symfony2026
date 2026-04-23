@@ -54,6 +54,8 @@ class NewsCrudController extends AbstractCrudController
                 ->setTargetFieldName('name')
                 ->setUnlockConfirmationMessage('Edit slug manually?')
                 ->setHelp('Slug will be generated automatically'),
+            AssociationField::new('status')
+                ->setFormTypeOption('choice_label', 'name'),
             $this->createCreatedByField($pageName),
             TextEditorField::new('brief'),
             TextEditorField::new('description'),

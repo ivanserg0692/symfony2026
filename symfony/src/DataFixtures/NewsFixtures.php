@@ -3,7 +3,7 @@
 namespace App\DataFixtures;
 
 use App\Entity\News;
-use App\Entity\NewsStatuses;
+use App\Entity\NewsStatus;
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -29,8 +29,8 @@ class NewsFixtures extends Fixture implements DependentFixtureInterface
                 User::class,
             );
             $status = $this->getReference(
-                NewsStatusesFixtures::STATUS_REFERENCE_PREFIX.$faker->numberBetween(0, NewsStatusesFixtures::getStatusesCount() - 1),
-                NewsStatuses::class,
+                NewsStatusFixtures::STATUS_REFERENCE_PREFIX.$faker->numberBetween(0, NewsStatusFixtures::getStatusesCount() - 1),
+                NewsStatus::class,
             );
 
             $news = new News();
@@ -52,7 +52,7 @@ class NewsFixtures extends Fixture implements DependentFixtureInterface
     public function getDependencies(): array
     {
         return [
-            NewsStatusesFixtures::class,
+            NewsStatusFixtures::class,
             UserFixtures::class,
         ];
     }

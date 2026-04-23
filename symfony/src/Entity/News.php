@@ -45,7 +45,7 @@ class News
 
     #[ORM\ManyToOne(inversedBy: 'news')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?NewsStatuses $status = null;
+    private ?NewsStatus $status = null;
 
     public function getId(): ?int
     {
@@ -143,12 +143,12 @@ class News
         return $this;
     }
 
-    public function getStatus(): ?NewsStatuses
+    public function getStatus(): ?NewsStatus
     {
         return $this->status;
     }
 
-    public function setStatus(?NewsStatuses $status): static
+    public function setStatus(?NewsStatus $status): static
     {
         $this->status = $status;
 

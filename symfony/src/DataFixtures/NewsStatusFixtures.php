@@ -2,11 +2,11 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\NewsStatuses;
+use App\Entity\NewsStatus;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
-class NewsStatusesFixtures extends Fixture
+class NewsStatusFixtures extends Fixture
 {
     public const STATUS_REFERENCE_PREFIX = 'news_status_';
 
@@ -20,7 +20,7 @@ class NewsStatusesFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         foreach (self::STATUSES as $index => $name) {
-            $status = new NewsStatuses();
+            $status = new NewsStatus();
             $status->setName($name);
 
             $manager->persist($status);
