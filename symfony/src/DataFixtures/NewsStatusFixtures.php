@@ -3,6 +3,7 @@
 namespace App\DataFixtures;
 
 use App\Entity\NewsStatus;
+use App\Enum\NewsStatusCode;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
@@ -11,17 +12,20 @@ class NewsStatusFixtures extends Fixture
     public const STATUS_REFERENCE_PREFIX = 'news_status_';
 
     private const STATUSES = [
-        'public',
-        'internal',
-        'on moderation',
-        'drafted',
+        ['code' => NewsStatusCode::PUBLIC, 'name' => 'Public'],
+        ['code' => NewsStatusCode::INTERNAL, 'name' => 'Internal'],
+        ['code' => NewsStatusCode::ON_MODERATION, 'name' => 'On moderation'],
+        ['code' => NewsStatusCode::MODERATION_REJECTED, 'name' => 'Moderation rejected'],
+        ['code' => NewsStatusCode::DRAFTED, 'name' => 'Drafted'],
     ];
 
     public function load(ObjectManager $manager): void
     {
-        foreach (self::STATUSES as $index => $name) {
+        foreach (self::STATUSES as $index => $statusData) {
             $status = new NewsStatus();
-            $status->setName($name);
+            $status
+                ->setCode($statusData['code'])
+                ->setName($statusData['name']);
 
             $manager->persist($status);
             $this->addReference(self::STATUS_REFERENCE_PREFIX.$index, $status);

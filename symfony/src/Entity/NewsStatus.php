@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\NewsStatusCode;
 use App\Repository\NewsStatusRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -17,6 +18,9 @@ class NewsStatus
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
+
+    #[ORM\Column(length: 255, unique: true, enumType: NewsStatusCode::class)]
+    private ?NewsStatusCode $code = null;
 
     /**
      * @var Collection<int, News>
@@ -54,6 +58,18 @@ class NewsStatus
     public function setName(string $name): static
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getCode(): ?NewsStatusCode
+    {
+        return $this->code;
+    }
+
+    public function setCode(NewsStatusCode $code): static
+    {
+        $this->code = $code;
 
         return $this;
     }
