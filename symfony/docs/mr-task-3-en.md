@@ -49,3 +49,12 @@ The user list now includes a group filter. This makes it possible to quickly nar
 ![JWT auth endpoints in Swagger](images/jwt-auth-endpoints.png)
 
 Swagger UI exposes the main JWT authentication endpoints for login, refresh, logout, and current user retrieval.
+
+## Updates for 2026-04-23
+
+- password change was added to the admin user form
+- the new password is hashed before saving and is never stored in plain text
+- the `User::isAdmin()` logic was updated to recognize both the `admin` group and groups with the `isAdmin = true` flag
+- `NewsVoter` was added to centralize API access checks for viewing news items
+- `NewsVoter` evaluates both the news status and the current user: `public` news is available to everyone, `internal` news is available to authenticated users, and non-public news is also available to administrators and the news author
+- when access is denied, the API hides the item and returns `404`
