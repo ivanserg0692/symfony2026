@@ -3,6 +3,7 @@
 namespace App\Security\Voter;
 
 use App\Entity\News;
+use App\Entity\User;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
@@ -36,10 +37,19 @@ final class NewsVoter extends Voter
             return true;
         }
 
-        if (!$user instanceof UserInterface) {
+        if (!$user instanceof User) {
             return false;
         }
 
-        return true;
+        if($user->isAdmin() || $news->getCreatedBy()?->getId() === $user->getId()) {
+            return true;
+        }
+
+
+        if ($news->getStatus()?->isInternal()) {
+            return true;
+        }
+
+        return false;
     }
 }

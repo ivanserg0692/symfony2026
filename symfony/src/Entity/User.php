@@ -59,6 +59,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\ManyToMany(targetEntity: UserGroups::class, inversedBy: 'users')]
     private Collection $groups;
 
+    private ?string $plainPassword = null;
+
     public function __construct()
     {
         $this->news = new ArrayCollection();
@@ -125,6 +127,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPassword(string $password): static
     {
         $this->password = $password;
+
+        return $this;
+    }
+
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    public function setPlainPassword(?string $plainPassword): static
+    {
+        $this->plainPassword = $plainPassword;
 
         return $this;
     }
@@ -221,5 +235,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->groups->removeElement($group);
 
         return $this;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->groups->exists(
+            static fn (int|string $key, UserGroups $group): bool =>
+                $group->getName() === UserGroups::ADMIN || $group->isAdmin() === true
+        );
     }
 }

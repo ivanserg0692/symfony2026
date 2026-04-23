@@ -110,4 +110,9 @@ class NewsStatus
     {
         return $this->code === NewsStatusCode::PUBLIC;
     }
+
+    public function isInternal(): bool
+    {
+        return $this->code === NewsStatusCode::INTERNAL;
+    }
 }
