@@ -7,6 +7,7 @@ use App\Repository\NewsStatusRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: NewsStatusRepository::class)]
 class NewsStatus
@@ -16,9 +17,11 @@ class NewsStatus
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Groups(['status:read'])]
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
+    #[Groups(['status:read'])]
     #[ORM\Column(length: 255, unique: true, enumType: NewsStatusCode::class)]
     private ?NewsStatusCode $code = null;
 
@@ -101,5 +104,10 @@ class NewsStatus
         }
 
         return $this;
+    }
+
+    public function isPublic(): bool
+    {
+        return $this->code === NewsStatusCode::PUBLIC;
     }
 }

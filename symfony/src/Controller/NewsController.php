@@ -10,10 +10,12 @@ use OpenApi\Attributes as OA;
 use Pagerfanta\Pagerfanta;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Security\Voter\PublicNewsVoter;
 
 final class NewsController extends AbstractController
 {
@@ -28,7 +30,7 @@ final class NewsController extends AbstractController
                 new OA\Property(
                     property: 'items',
                     type: 'array',
-                    items: new OA\Items(ref: new Model(type: News::class, groups: ['news:read', 'user:read'])),
+                    items: new OA\Items(ref: new Model(type: News::class, groups: ['news:read', 'user:read', 'status:read'])),
                 ),
                 new OA\Property(
                     property: 'pagination',
@@ -73,7 +75,7 @@ final class NewsController extends AbstractController
                 'direction' => $repository->normalizeDirection($query->direction),
             ],
         ], context: [
-            'groups' => ['news:read', 'user:read'],
+            'groups' => ['news:read', 'user:read', 'status:read'],
         ]);
     }
 
@@ -90,19 +92,24 @@ final class NewsController extends AbstractController
         response: 200,
         description: 'News item.',
         content: new OA\JsonContent(
-            ref: new Model(type: News::class, groups: ['news:read', 'user:read'])
+            ref: new Model(type: News::class, groups: ['news:read', 'user:read', 'status:read'])
         ),
     )]
     #[OA\Response(
         response: 404,
         description: 'News not found.',
     )]
+    #[OA\Response(
+        response: 403,
+        description: 'Access denied.',
+    )]
+    #[IsGranted(PublicNewsVoter::VIEW, subject: 'news')]
     public function show(
         #[MapEntity(mapping: ['slug' => 'slug'])] News $news,
     ): JsonResponse
     {
         return $this->json($news, context: [
-            'groups' => ['news:read', 'user:read'],
+            'groups' => ['news:read', 'user:read', 'status:read'],
         ]);
     }
 }

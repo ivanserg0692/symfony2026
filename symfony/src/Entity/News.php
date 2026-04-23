@@ -37,12 +37,15 @@ class News
     #[Gedmo\Blameable(on: 'create')] // Эту строку добавьте вручную
     private ?User $createdBy = null;
 
+    #[Groups(['news:read'])]
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
+    #[Groups(['news:read'])]
     #[ORM\Column(type: Types::TEXT)]
     private ?string $brief = null;
 
+    #[Groups(['news:read'])]
     #[ORM\ManyToOne(inversedBy: 'news')]
     #[ORM\JoinColumn(nullable: false)]
     private ?NewsStatus $status = null;
