@@ -5,17 +5,16 @@ namespace App\Controller;
 use App\Dto\ListQueryDto;
 use App\Entity\News;
 use App\Repository\NewsRepository;
+use App\Security\Voter\NewsVoter;
 use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
 use Pagerfanta\Pagerfanta;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Attribute\Route;
-use App\Security\Voter\PublicNewsVoter;
 
 final class NewsController extends AbstractController
 {
@@ -103,11 +102,14 @@ final class NewsController extends AbstractController
         response: 403,
         description: 'Access denied.',
     )]
-    #[IsGranted(PublicNewsVoter::VIEW, subject: 'news')]
     public function show(
         #[MapEntity(mapping: ['slug' => 'slug'])] News $news,
     ): JsonResponse
     {
+        if (!$this->isGranted(NewsVoter::VIEW, $news)) {
+            throw $this->createNotFoundException();
+        }
+
         return $this->json($news, context: [
             'groups' => ['news:read', 'user:read', 'status:read'],
         ]);
