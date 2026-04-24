@@ -94,7 +94,7 @@ class NewsCrudController extends AbstractCrudController
         $queryBuilder = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
         $currentUser = $this->getUser();
 
-        $this->newsRepository->addListRelations($queryBuilder, 'entity');
+        $this->newsRepository->ensureListRelations($queryBuilder);
         $this->newsRepository->applyVisibility($queryBuilder, $currentUser instanceof User ? $currentUser : null);
 
         return $queryBuilder;

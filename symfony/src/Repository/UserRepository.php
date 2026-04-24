@@ -24,6 +24,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 
     public function applyVisibility(QueryBuilder $queryBuilder, ?User $user): QueryBuilder
     {
+        $this->ensureListRelations($queryBuilder);
         $rootAlias = $this->getRootAlias($queryBuilder);
 
         if (!$user instanceof User) {
@@ -36,6 +37,11 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
                 ->setParameter('user', $user);
         }
 
+        return $queryBuilder;
+    }
+
+    public function ensureListRelations(QueryBuilder $queryBuilder): QueryBuilder
+    {
         return $queryBuilder;
     }
 

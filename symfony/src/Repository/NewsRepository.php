@@ -47,7 +47,7 @@ class NewsRepository extends ServiceEntityRepository
         return $queryBuilder;
     }
 
-    public function addListRelations(QueryBuilder $queryBuilder, string $rootAlias): QueryBuilder
+    public function ensureListRelations(QueryBuilder $queryBuilder): QueryBuilder
     {
         $this->ensureJoinAlias($queryBuilder, self::CREATED_BY_ASSOCIATION);
         $this->ensureJoinAlias($queryBuilder, self::STATUS_ASSOCIATION);
@@ -61,8 +61,7 @@ class NewsRepository extends ServiceEntityRepository
 
     public function applyVisibility(QueryBuilder $queryBuilder, ?User $user): QueryBuilder
     {
-        $rootAlias = $this->getRootAlias($queryBuilder);
-        $this->addListRelations($queryBuilder, $rootAlias);
+        $this->ensureListRelations($queryBuilder);
 
         if (!$user instanceof User) {
             return $queryBuilder
