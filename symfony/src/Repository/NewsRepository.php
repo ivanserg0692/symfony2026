@@ -15,8 +15,12 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class NewsRepository extends ServiceEntityRepository
 {
+    private const ROOT_ALIAS = 'news';
+    private const CREATED_BY_ASSOCIATION = 'createdBy';
+    private const STATUS_ASSOCIATION = 'status';
+    private const DEFAULT_SORT = 'createdAt';
     private const ALLOWED_SORTS = ['id', 'slug', 'createdAt'];
-    private const AUTHOR_ALIAS = 'author';
+    private const CREATED_BY_ALIAS = self::CREATED_BY_ASSOCIATION;
     private const STATUS_ALIAS = 'status';
 
     public function __construct(ManagerRegistry $registry)
@@ -29,16 +33,15 @@ class NewsRepository extends ServiceEntityRepository
         $queryBuilder = $this->createVisibleQueryBuilder($user);
 
         return $queryBuilder->orderBy(
-            'news.' . $this->normalizeSort($query->sort),
+            self::ROOT_ALIAS . '.' . $this->normalizeSort($query->sort),
             $this->normalizeDirection($query->direction)
         );
     }
 
     public function createVisibleQueryBuilder(?User $user): QueryBuilder
     {
-        $queryBuilder = $this->createQueryBuilder('news');
+        $queryBuilder = $this->createQueryBuilder(self::ROOT_ALIAS);
 
-        $this->addListRelations($queryBuilder, 'news');
         $this->applyVisibility($queryBuilder, $user);
 
         return $queryBuilder;
@@ -46,25 +49,21 @@ class NewsRepository extends ServiceEntityRepository
 
     public function addListRelations(QueryBuilder $queryBuilder, string $rootAlias): QueryBuilder
     {
-        $aliases = $queryBuilder->getAllAliases();
+        $this->ensureJoinAlias($queryBuilder, self::CREATED_BY_ASSOCIATION);
+        $this->ensureJoinAlias($queryBuilder, self::STATUS_ASSOCIATION);
 
-        if (!in_array(self::AUTHOR_ALIAS, $aliases, true)) {
-            $queryBuilder
-                ->leftJoin($rootAlias . '.createdBy', self::AUTHOR_ALIAS)
-                ->addSelect(self::AUTHOR_ALIAS);
-        }
-
-        if (!in_array(self::STATUS_ALIAS, $aliases, true)) {
-            $queryBuilder
-                ->leftJoin($rootAlias . '.status', self::STATUS_ALIAS)
-                ->addSelect(self::STATUS_ALIAS);
-        }
+        $queryBuilder
+            ->addSelect(self::CREATED_BY_ALIAS)
+            ->addSelect(self::STATUS_ALIAS);
 
         return $queryBuilder;
     }
 
     public function applyVisibility(QueryBuilder $queryBuilder, ?User $user): QueryBuilder
     {
+        $rootAlias = $this->getRootAlias($queryBuilder);
+        $this->addListRelations($queryBuilder, $rootAlias);
+
         if (!$user instanceof User) {
             return $queryBuilder
                 ->andWhere(self::STATUS_ALIAS . '.code = :publicStatus')
@@ -76,9 +75,23 @@ class NewsRepository extends ServiceEntityRepository
         }
 
         return $queryBuilder
-            ->andWhere(sprintf('(%s.code IN (:visibleStatuses) OR %s = :user)', self::STATUS_ALIAS, self::AUTHOR_ALIAS))
+            ->andWhere(sprintf('(%s.code IN (:visibleStatuses) OR %s = :user)', self::STATUS_ALIAS, self::CREATED_BY_ALIAS))
             ->setParameter('visibleStatuses', [NewsStatusCode::PUBLIC, NewsStatusCode::INTERNAL])
             ->setParameter('user', $user);
+    }
+
+    private function ensureJoinAlias(QueryBuilder $queryBuilder, string $association): void
+    {
+        if (in_array($association, $queryBuilder->getAllAliases(), true)) {
+            return;
+        }
+
+        $queryBuilder->leftJoin($this->getRootAlias($queryBuilder) . '.' . $association, $association);
+    }
+
+    private function getRootAlias(QueryBuilder $queryBuilder): string
+    {
+        return $queryBuilder->getRootAliases()[0] ?? self::ROOT_ALIAS;
     }
 
     public function normalizePage(int $page): int
@@ -93,7 +106,7 @@ class NewsRepository extends ServiceEntityRepository
 
     public function normalizeSort(string $sort): string
     {
-        return in_array($sort, self::ALLOWED_SORTS, true) ? $sort : 'createdAt';
+        return in_array($sort, self::ALLOWED_SORTS, true) ? $sort : self::DEFAULT_SORT;
     }
 
     public function normalizeDirection(string $direction): string
