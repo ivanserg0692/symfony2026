@@ -18,43 +18,43 @@ The work shown here covers:
 
 ![EasyAdmin 5 installed](images/easyadmin-success.png)
 
-The screenshot shows the default EasyAdmin 5 page after the bundle installation was completed successfully.
+EasyAdmin 5 was added to the project as part of this merge request. The screenshot confirms that the bundle was installed correctly and that the admin area is now connected.
 
 ### Admin Login Form
 
 ![Admin login form](images/login-form.png)
 
-The login page is available for the admin area and includes the email field, password field, and Cloudflare Turnstile verification.
+A dedicated login form for the admin area was added in this merge request. The screenshot confirms that the page is available and includes the email field, password field, and Cloudflare Turnstile verification.
 
 ### Admin Dashboard
 
 ![EasyAdmin dashboard](images/easy-admin-dashboard.png)
 
-The admin dashboard is accessible after successful authentication and provides the initial workspace entry point for further admin features.
+An administrative panel based on EasyAdmin was added to the project. The screenshot shows the dashboard that opens after successful authentication and serves as the entry point for the admin sections.
 
 ### User List
 
 ![User list in EasyAdmin](images/user-list.png)
 
-The user list page is available in EasyAdmin and shows the configured columns for identifiers, email, names, and roles together with search and filtering controls.
+A CRUD interface for users was added to the admin area. The screenshot shows the user list page with configured columns, search, and filtering controls.
 
 ### User Group Filter
 
 ![User group filter in EasyAdmin](images/user-group-filter.png)
 
-The user list now includes a group filter. This makes it possible to quickly narrow the list to administrative and other working groups directly in the EasyAdmin interface.
+A group filter was added to the user list. The screenshot confirms that users can now be filtered by administrative and other working groups directly in the EasyAdmin interface.
 
 ### Filtered User List
 
 ![Filtered user list in EasyAdmin](images/filtered-user-list.png)
 
-The screenshot shows the restricted user list for a regular user. In this mode the list only exposes the current user account, which matches the visibility rules and ensures that editing is limited to the user's own profile.
+User visibility rules were added in this merge request. The screenshot shows the result of that change: a regular user only sees their own account in the list and can therefore edit only their own profile, while an administrator keeps access to view and edit all users.
 
 ### JWT Auth Endpoints
 
 ![JWT auth endpoints in Swagger](images/jwt-auth-endpoints.png)
 
-Swagger UI exposes the main JWT authentication endpoints for login, refresh, logout, and current user retrieval.
+JWT authentication endpoints were added and documented in the API. The screenshot confirms that Swagger UI now exposes the endpoints for login, token refresh, logout, and current user retrieval.
 
 ## Updates for 2026-04-23
 
