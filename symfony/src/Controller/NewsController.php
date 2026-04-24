@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Dto\ListQueryDto;
 use App\Entity\News;
+use App\Entity\User;
 use App\Repository\NewsRepository;
 use App\Security\Voter\NewsVoter;
 use Nelmio\ApiDocBundle\Attribute\Model;
@@ -57,7 +58,11 @@ final class NewsController extends AbstractController
         NewsRepository $repository,
     ): JsonResponse
     {
-        $pager = new Pagerfanta(new QueryAdapter($repository->createListQueryBuilder($query)));
+        $currentUser = $this->getUser();
+        $pager = new Pagerfanta(new QueryAdapter($repository->createListQueryBuilder(
+            $query,
+            $currentUser instanceof User ? $currentUser : null,
+        )));
         $pager->setMaxPerPage($repository->normalizeLimit($query->limit));
         $pager->setCurrentPage($repository->normalizePage($query->page));
 

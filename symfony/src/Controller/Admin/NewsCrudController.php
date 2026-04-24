@@ -3,10 +3,17 @@
 namespace App\Controller\Admin;
 
 use App\Entity\News;
+use App\Entity\User;
+use App\Repository\NewsRepository;
+use Doctrine\ORM\QueryBuilder;
+use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
+use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
@@ -24,6 +31,7 @@ class NewsCrudController extends AbstractCrudController
 
     public function __construct(
         private readonly AdminUrlGenerator $adminUrlGenerator,
+        private readonly NewsRepository $newsRepository,
     )
     {
     }
@@ -76,6 +84,17 @@ class NewsCrudController extends AbstractCrudController
                 ->setFormTypeOption('disabled', true)
                 ->setFormat('dd.MM.yyyy HH:mm'),
         ];
+    }
+
+    public function createIndexQueryBuilder(SearchDto $searchDto, EntityDto $entityDto, FieldCollection $fields, FilterCollection $filters): QueryBuilder
+    {
+        $queryBuilder = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
+        $currentUser = $this->getUser();
+
+        $this->newsRepository->addListRelations($queryBuilder, 'entity');
+        $this->newsRepository->applyVisibility($queryBuilder, $currentUser instanceof User ? $currentUser : null);
+
+        return $queryBuilder;
     }
 
     private function createCreatedByField(string $pageName): AssociationField|TextField

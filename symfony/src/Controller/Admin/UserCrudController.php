@@ -70,11 +70,12 @@ final class UserCrudController extends AbstractCrudController
 
         yield TextField::new('secondName');
 
-        yield TextField::new('plainPassword', 'New password')
-            ->onlyOnForms()
-            ->setFormType(PasswordType::class)
-            ->setRequired(Crud::PAGE_NEW === $pageName)
-            ->setHelp(Crud::PAGE_EDIT === $pageName ? 'Leave empty to keep the current password.' : null);
+        if (in_array($pageName, [Crud::PAGE_NEW, Crud::PAGE_EDIT], true)) {
+            yield TextField::new('plainPassword', 'New password')
+                ->setFormType(PasswordType::class)
+                ->setRequired(Crud::PAGE_NEW === $pageName)
+                ->setHelp(Crud::PAGE_EDIT === $pageName ? 'Leave empty to keep the current password.' : null);
+        }
 
         yield ArrayField::new('roles');
 
