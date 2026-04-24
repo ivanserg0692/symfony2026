@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\News;
 use App\Entity\User;
 use App\Repository\NewsRepository;
+use App\Security\Voter\NewsVoter;
 use Doctrine\ORM\QueryBuilder;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
@@ -12,6 +13,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
@@ -24,6 +26,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use Symfony\Component\HttpFoundation\Response;
 
 class NewsCrudController extends AbstractCrudController
 {
@@ -97,6 +100,20 @@ class NewsCrudController extends AbstractCrudController
         return $queryBuilder;
     }
 
+    public function detail(AdminContext $context): KeyValueStore|Response
+    {
+        $this->denyAccessToNews($context);
+
+        return parent::detail($context);
+    }
+
+    public function edit(AdminContext $context): KeyValueStore|Response
+    {
+        $this->denyAccessToNews($context);
+
+        return parent::edit($context);
+    }
+
     private function createCreatedByField(string $pageName): AssociationField|TextField
     {
         if (Crud::PAGE_INDEX === $pageName || Crud::PAGE_DETAIL === $pageName) {
@@ -131,6 +148,15 @@ class NewsCrudController extends AbstractCrudController
         return $createdByField
             ->setHelp(sprintf('<a href="%s">See user</a>', $userEditUrl))
             ->setFormTypeOption('help_html', true);
+    }
+
+    private function denyAccessToNews(AdminContext $context): void
+    {
+        $news = $context->getEntity()->getInstance();
+
+        if ($news instanceof News) {
+            $this->denyAccessUnlessGranted(NewsVoter::VIEW, $news);
+        }
     }
 
     private function createCreatedByLinkField(): TextField
