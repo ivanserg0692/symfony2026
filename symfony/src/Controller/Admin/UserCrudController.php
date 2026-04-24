@@ -3,11 +3,14 @@
 namespace App\Controller\Admin;
 
 use App\Entity\User;
+use App\Security\Voter\UsersVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
+use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
@@ -18,6 +21,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\ArrayFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final class UserCrudController extends AbstractCrudController
@@ -98,6 +102,13 @@ final class UserCrudController extends AbstractCrudController
         parent::updateEntity($entityManager, $entityInstance);
     }
 
+    public function edit(AdminContext $context): KeyValueStore|Response
+    {
+        $this->denyAccessToUser($context);
+
+        return parent::edit($context);
+    }
+
     private function hashPlainPassword(object $entityInstance): void
     {
         if (!$entityInstance instanceof User) {
@@ -111,5 +122,14 @@ final class UserCrudController extends AbstractCrudController
 
         $entityInstance->setPassword($this->passwordHasher->hashPassword($entityInstance, $plainPassword));
         $entityInstance->setPlainPassword(null);
+    }
+
+    private function denyAccessToUser(AdminContext $context): void
+    {
+        $user = $context->getEntity()->getInstance();
+
+        if ($user instanceof User) {
+            $this->denyAccessUnlessGranted(UsersVoter::EDIT, $user);
+        }
     }
 }

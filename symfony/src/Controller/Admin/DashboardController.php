@@ -2,6 +2,7 @@
 
 namespace App\Controller\Admin;
 
+use App\Security\Voter\UserGroupsVoter;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
@@ -9,7 +10,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[IsGranted('ROLE_ADMIN')]
 #[AdminDashboard(routePath: '/admin', routeName: 'admin')]
 class DashboardController extends AbstractDashboardController
 {
@@ -41,15 +41,20 @@ class DashboardController extends AbstractDashboardController
 
     public function configureMenuItems(): iterable
     {
+        $userMenuItems = [
+            MenuItem::linkTo(UserCrudController::class, 'Users', 'fas fa-user'),
+        ];
+
+        if ($this->isGranted(UserGroupsVoter::INDEX)) {
+            $userMenuItems[] = MenuItem::linkTo(UserGroupsCrudController::class, 'Groups', 'fas fa-users-cog');
+        }
+
         yield MenuItem::linkToDashboard('Dashboard', 'fa fa-home');
 
         yield MenuItem::section('Content');
         yield MenuItem::linkTo(NewsCrudController::class, 'News', 'fas fa-newspaper');
 
         yield MenuItem::section('Access');
-        yield MenuItem::subMenu('Users', 'fas fa-users')->setSubItems([
-            MenuItem::linkTo(UserCrudController::class, 'Users', 'fas fa-user'),
-            MenuItem::linkTo(UserGroupsCrudController::class, 'Groups', 'fas fa-users-cog'),
-        ]);
+        yield MenuItem::subMenu('Users', 'fas fa-users')->setSubItems($userMenuItems);
     }
 }
