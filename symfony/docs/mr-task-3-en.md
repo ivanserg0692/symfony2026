@@ -44,6 +44,12 @@ The user list page is available in EasyAdmin and shows the configured columns fo
 
 The user list now includes a group filter. This makes it possible to quickly narrow the list to administrative and other working groups directly in the EasyAdmin interface.
 
+### Filtered User List
+
+![Filtered user list in EasyAdmin](images/filtered-user-list.png)
+
+The screenshot shows the restricted user list for a regular user. In this mode the list only exposes the current user account, which matches the visibility rules and ensures that editing is limited to the user's own profile.
+
 ### JWT Auth Endpoints
 
 ![JWT auth endpoints in Swagger](images/jwt-auth-endpoints.png)
@@ -58,3 +64,12 @@ Swagger UI exposes the main JWT authentication endpoints for login, refresh, log
 - `NewsVoter` was added to centralize API access checks for viewing news items
 - `NewsVoter` evaluates both the news status and the current user: `public` news is available to everyone, `internal` news is available to authenticated users, and non-public news is also available to administrators and the news author
 - when access is denied, the API hides the item and returns `404`
+
+## Updates for 2026-04-24
+
+- user access rules were aligned across the admin area and the API so regular users can safely access the related sections and endpoints and only receive data they are allowed to see
+- `UsersVoter` now allows administrators to view and edit any user, while non-admin users can only view and edit their own profile
+- the admin user edit page now explicitly checks the voter before opening the form
+- access to user groups is now centralized through `UserGroupsVoter` and is restricted to administrators only
+- the `Groups` menu item in EasyAdmin is hidden when the current user has no access to the groups index page
+- `UserRepository` and `NewsRepository` visibility methods were cleaned up and made more consistent around root alias handling and visibility filtering
