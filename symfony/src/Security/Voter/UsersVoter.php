@@ -10,8 +10,8 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 final class UsersVoter extends Voter
 {
-    public const EDIT = 'POST_EDIT';
-    public const VIEW = 'POST_VIEW';
+    public const string EDIT = 'USER_EDIT';
+    public const string VIEW = 'USER_VIEW';
 
     protected function supports(string $attribute, mixed $subject): bool
     {
@@ -37,12 +37,18 @@ final class UsersVoter extends Voter
         }
 
         return match ($attribute) {
-            self::EDIT, self::VIEW => $this->canAccessUser($subject, $user),
+            self::VIEW => $this->canView($subject, $user),
+            self::EDIT => $this->canEdit($subject, $user),
             default => false,
         };
     }
 
-    private function canAccessUser(User $subject, User $user): bool
+    private function canView(User $subject, User $user): bool
+    {
+        return true;
+    }
+
+    private function canEdit(User $subject, User $user): bool
     {
         return $user->isAdmin() || $subject->getId() === $user->getId();
     }

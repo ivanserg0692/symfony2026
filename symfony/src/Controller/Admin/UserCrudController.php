@@ -52,13 +52,6 @@ final class UserCrudController extends AbstractCrudController
             ->setSearchFields(['id', 'email', 'firstName', 'secondName']);
     }
 
-    public function createIndexQueryBuilder(SearchDto $searchDto, EntityDto $entityDto, FieldCollection $fields, FilterCollection $filters): QueryBuilder
-    {
-        $query = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
-        $this->userRepository->applyVisibility($query, $this->getUser());
-        return $query;
-    }
-
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
@@ -74,6 +67,22 @@ final class UserCrudController extends AbstractCrudController
             ->linkToCrudAction(Action::INDEX);
 
         return $actions
+            ->add(Crud::PAGE_INDEX, Action::DETAIL)
+            ->update(Crud::PAGE_INDEX, Action::DETAIL, fn (Action $action): Action =>
+                $action->displayIf(fn (User $user): bool => $this->isGranted(UsersVoter::VIEW, $user))
+            )
+            ->update(Crud::PAGE_INDEX, Action::EDIT, fn (Action $action): Action =>
+                $action->displayIf(fn (User $user): bool => $this->isGranted(UsersVoter::EDIT, $user))
+            )
+            ->update(Crud::PAGE_INDEX, Action::DELETE, fn (Action $action): Action =>
+                $action->displayIf(fn (User $user): bool => $this->isGranted(UsersVoter::EDIT, $user))
+            )
+            ->update(Crud::PAGE_DETAIL, Action::EDIT, fn (Action $action): Action =>
+                $action->displayIf(fn (User $user): bool => $this->isGranted(UsersVoter::EDIT, $user))
+            )
+            ->update(Crud::PAGE_DETAIL, Action::DELETE, fn (Action $action): Action =>
+                $action->displayIf(fn (User $user): bool => $this->isGranted(UsersVoter::EDIT, $user))
+            )
             ->add(Crud::PAGE_EDIT, $backToList);
     }
 
@@ -111,16 +120,31 @@ final class UserCrudController extends AbstractCrudController
 
     public function updateEntity(EntityManagerInterface $entityManager, $entityInstance): void
     {
+        $this->denyAccessUnlessGranted(UsersVoter::EDIT, $entityInstance);
         $this->hashPlainPassword($entityInstance);
 
         parent::updateEntity($entityManager, $entityInstance);
     }
 
+    public function detail(AdminContext $context): KeyValueStore|Response
+    {
+        $this->denyAccessToUser($context, UsersVoter::VIEW);
+
+        return parent::detail($context);
+    }
+
     public function edit(AdminContext $context): KeyValueStore|Response
     {
-        $this->denyAccessToUser($context);
+        $this->denyAccessToUser($context, UsersVoter::EDIT);
 
         return parent::edit($context);
+    }
+
+    public function delete(AdminContext $context): Response
+    {
+        $this->denyAccessToUser($context, UsersVoter::EDIT);
+
+        return parent::delete($context);
     }
 
     private function hashPlainPassword(object $entityInstance): void
@@ -138,12 +162,12 @@ final class UserCrudController extends AbstractCrudController
         $entityInstance->setPlainPassword(null);
     }
 
-    private function denyAccessToUser(AdminContext $context): void
+    private function denyAccessToUser(AdminContext $context, string $attribute): void
     {
         $user = $context->getEntity()->getInstance();
 
         if ($user instanceof User) {
-            $this->denyAccessUnlessGranted(UsersVoter::EDIT, $user);
+            $this->denyAccessUnlessGranted($attribute, $user);
         }
     }
 }

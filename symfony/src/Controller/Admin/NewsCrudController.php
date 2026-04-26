@@ -189,7 +189,7 @@ class NewsCrudController extends AbstractCrudController
             return $createdByField;
         }
 
-        $userEditUrl = $this->getUserEditUrl($news);
+        $userEditUrl = $this->getUserDetailUrl($news);
 
         if (null === $userEditUrl) {
             return $createdByField;
@@ -223,7 +223,7 @@ class NewsCrudController extends AbstractCrudController
         return TextField::new('createdBy', 'Created by')
             ->formatValue(function ($value, News $news): string {
                 $user = $news->getCreatedBy();
-                $userEditUrl = $this->getUserEditUrl($news);
+                $userEditUrl = $this->getUserDetailUrl($news);
 
                 if (null === $user || null === $userEditUrl) {
                     return '';
@@ -234,7 +234,7 @@ class NewsCrudController extends AbstractCrudController
             ->renderAsHtml();
     }
 
-    private function getUserEditUrl(News $news): ?string
+    private function getUserDetailUrl(News $news): ?string
     {
         $user = $news->getCreatedBy();
 
@@ -245,7 +245,7 @@ class NewsCrudController extends AbstractCrudController
         return $this->adminUrlGenerator
             ->unsetAll()
             ->setController(UserCrudController::class)
-            ->setAction(Action::EDIT)
+            ->setAction(Action::DETAIL)
             ->setEntityId($user->getId())
             ->generateUrl();
     }
