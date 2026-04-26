@@ -127,6 +127,7 @@ The current implementation path is:
 - MR result (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - MR result (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
 ### `Task 4` - planned
+- Merge Request 4: <https://github.com/ivanserg0692/symfony2026/pull/4>
 - Task file: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 
 ### Run With Docker Compose
@@ -466,6 +467,7 @@ GIT_COMMITTER_EMAIL="you@example.com"
 - Результат MR (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
 ### `Task 4` - planned
+- Merge Request 4: <https://github.com/ivanserg0692/symfony2026/pull/4>
 - Файл задачи: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 
 ### Запуск через Docker Compose
