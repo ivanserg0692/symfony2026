@@ -5,7 +5,9 @@ namespace App\Controller\Admin;
 use App\Entity\News;
 use App\Entity\User;
 use App\Repository\NewsRepository;
+use App\Repository\NewsStatusRepository;
 use App\Security\Voter\NewsVoter;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
@@ -78,6 +80,9 @@ class NewsCrudController extends AbstractCrudController
                 ->setHelp('Slug will be generated automatically'),
             AssociationField::new('status')
                 ->setFormTypeOption('choice_label', 'name')
+                ->setFormTypeOption('query_builder', fn (NewsStatusRepository $repository): QueryBuilder =>
+                    $repository->createAvailableForUserQueryBuilder($this->getCurrentUser())
+                )
                 ->renderAsNativeWidget(),
             $this->createCreatedByField($pageName),
             TextEditorField::new('brief'),
@@ -112,6 +117,20 @@ class NewsCrudController extends AbstractCrudController
         $this->denyAccessToNews($context);
 
         return parent::edit($context);
+    }
+
+    public function persistEntity(EntityManagerInterface $entityManager, $entityInstance): void
+    {
+        $this->denyAccessUnlessGranted(NewsVoter::CHANGE_STATUS, $entityInstance);
+
+        parent::persistEntity($entityManager, $entityInstance);
+    }
+
+    public function updateEntity(EntityManagerInterface $entityManager, $entityInstance): void
+    {
+        $this->denyAccessUnlessGranted(NewsVoter::CHANGE_STATUS, $entityInstance);
+
+        parent::updateEntity($entityManager, $entityInstance);
     }
 
     private function createCreatedByField(string $pageName): AssociationField|TextField
@@ -189,5 +208,12 @@ class NewsCrudController extends AbstractCrudController
             ->setAction(Action::EDIT)
             ->setEntityId($user->getId())
             ->generateUrl();
+    }
+
+    private function getCurrentUser(): ?User
+    {
+        $user = $this->getUser();
+
+        return $user instanceof User ? $user : null;
     }
 }
