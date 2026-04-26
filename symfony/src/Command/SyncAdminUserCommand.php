@@ -3,6 +3,8 @@
 namespace App\Command;
 
 use App\Entity\User;
+use App\Entity\UserGroups;
+use App\Repository\UserGroupsRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -25,6 +27,7 @@ class SyncAdminUserCommand extends Command
 
     public function __construct(
         private readonly UserRepository $userRepository,
+        private readonly UserGroupsRepository $userGroupsRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly UserPasswordHasherInterface $passwordHasher,
         #[Autowire('%env(string:APP_ADMIN_LOGIN)%')]
@@ -62,9 +65,20 @@ class SyncAdminUserCommand extends Command
                 ->setEmail($adminLogin);
         }
 
+        $adminGroup = $this->userGroupsRepository->findOneBy(['name' => 'admin']);
+
+        if ($adminGroup === null) {
+            $adminGroup = (new UserGroups())
+                ->setName('admin')
+                ->setIsAdmin(true);
+
+            $this->entityManager->persist($adminGroup);
+        }
+
         $user
             ->setRoles(self::DEFAULT_ADMIN_ROLES)
-            ->setPassword($this->passwordHasher->hashPassword($user, $adminPassword));
+            ->setPassword($this->passwordHasher->hashPassword($user, $adminPassword))
+            ->addGroup($adminGroup);
 
         $this->entityManager->persist($user);
         $this->entityManager->flush();

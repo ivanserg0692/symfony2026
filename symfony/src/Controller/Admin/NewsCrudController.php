@@ -1,0 +1,259 @@
+<?php
+
+namespace App\Controller\Admin;
+
+use App\Entity\News;
+use App\Entity\User;
+use App\Repository\NewsRepository;
+use App\Repository\NewsStatusRepository;
+use App\Security\Voter\NewsVoter;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\QueryBuilder;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
+use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
+use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
+use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\SlugField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\TextEditorField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use Symfony\Component\HttpFoundation\Response;
+
+class NewsCrudController extends AbstractCrudController
+{
+    private const DEFAULT_HIDDEN_INDEX_COLUMNS = ['brief', 'description'];
+
+    public function __construct(
+        private readonly AdminUrlGenerator $adminUrlGenerator,
+        private readonly NewsRepository $newsRepository,
+    )
+    {
+    }
+
+    public static function getEntityFqcn(): string
+    {
+        return News::class;
+    }
+
+    public function configureCrud(Crud $crud): Crud
+    {
+        return $crud
+            ->overrideTemplate('crud/index', 'admin/news/index.html.twig');
+    }
+
+    public function configureResponseParameters(KeyValueStore $responseParameters): KeyValueStore
+    {
+        if (Crud::PAGE_INDEX === $responseParameters->get('pageName')) {
+            $responseParameters->set('default_hidden_columns', self::DEFAULT_HIDDEN_INDEX_COLUMNS);
+        }
+
+        return $responseParameters;
+    }
+
+    public function configureFilters(Filters $filters): Filters
+    {
+        return $filters
+            ->add(EntityFilter::new('status')->canSelectMultiple())
+            ->add(EntityFilter::new('createdBy'))
+            ->add(DateTimeFilter::new('createdAt'));
+    }
+
+    public function configureActions(Actions $actions): Actions
+    {
+        return $actions
+            ->add(Crud::PAGE_INDEX, Action::DETAIL)
+            ->update(Crud::PAGE_INDEX, Action::DETAIL, fn (Action $action): Action =>
+                $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::VIEW, $news))
+            )
+            ->update(Crud::PAGE_INDEX, Action::EDIT, fn (Action $action): Action =>
+                $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::EDIT, $news))
+            )
+            ->update(Crud::PAGE_INDEX, Action::DELETE, fn (Action $action): Action =>
+                $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::EDIT, $news))
+            )
+            ->update(Crud::PAGE_DETAIL, Action::EDIT, fn (Action $action): Action =>
+                $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::EDIT, $news))
+            )
+            ->update(Crud::PAGE_DETAIL, Action::DELETE, fn (Action $action): Action =>
+                $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::EDIT, $news))
+            );
+    }
+
+    public function configureFields(string $pageName): iterable
+    {
+        return [
+            IdField::new('id')->setDisabled(true),
+            TextField::new('name'),
+            SlugField::new('slug')
+                ->setTargetFieldName('name')
+                ->setUnlockConfirmationMessage('Edit slug manually?')
+                ->setHelp('Slug will be generated automatically'),
+            AssociationField::new('status')
+                ->setFormTypeOption('choice_label', 'name')
+                ->setFormTypeOption('query_builder', fn (NewsStatusRepository $repository): QueryBuilder =>
+                    $repository->createAvailableForUserQueryBuilder($this->getCurrentUser())
+                )
+                ->renderAsNativeWidget(),
+            $this->createCreatedByField($pageName),
+            TextEditorField::new('brief'),
+            TextEditorField::new('description'),
+            DateTimeField::new('createdAt', 'Created at')
+                ->hideWhenCreating()
+                ->setFormTypeOption('disabled', true)
+                ->setFormat('dd.MM.yyyy HH:mm'),
+        ];
+    }
+
+    public function createIndexQueryBuilder(SearchDto $searchDto, EntityDto $entityDto, FieldCollection $fields, FilterCollection $filters): QueryBuilder
+    {
+        $queryBuilder = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
+        $currentUser = $this->getUser();
+
+        $this->newsRepository->ensureListRelations($queryBuilder);
+        $this->newsRepository->applyVisibility($queryBuilder, $currentUser instanceof User ? $currentUser : null);
+
+        return $queryBuilder;
+    }
+
+    public function detail(AdminContext $context): KeyValueStore|Response
+    {
+        $this->denyAccessToViewNews($context);
+
+        return parent::detail($context);
+    }
+
+    public function edit(AdminContext $context): KeyValueStore|Response
+    {
+        $this->denyAccessToViewNews($context);
+        $this->denyAccessToEditNews($context);
+
+        return parent::edit($context);
+    }
+
+    public function persistEntity(EntityManagerInterface $entityManager, $entityInstance): void
+    {
+        $this->denyAccessUnlessGranted(NewsVoter::CHANGE_STATUS, $entityInstance);
+
+        parent::persistEntity($entityManager, $entityInstance);
+    }
+
+    public function updateEntity(EntityManagerInterface $entityManager, $entityInstance): void
+    {
+        $this->denyAccessUnlessGranted(NewsVoter::CHANGE_STATUS, $entityInstance);
+        $this->denyAccessUnlessGranted(NewsVoter::EDIT, $entityInstance);
+
+        parent::updateEntity($entityManager, $entityInstance);
+    }
+
+    public function delete(AdminContext $context): Response
+    {
+        $this->denyAccessToEditNews($context);
+
+        return parent::delete($context);
+    }
+
+    private function createCreatedByField(string $pageName): AssociationField|TextField
+    {
+        if (Crud::PAGE_INDEX === $pageName || Crud::PAGE_DETAIL === $pageName) {
+            return $this->createCreatedByLinkField();
+        }
+
+        return $this->createCreatedByFormField($pageName);
+    }
+
+    private function createCreatedByFormField(string $pageName): AssociationField
+    {
+        $createdByField = AssociationField::new('createdBy')
+            ->setFormTypeOption('choice_label', 'email')
+            ->setDisabled(true);
+
+        if (Crud::PAGE_EDIT !== $pageName) {
+            return $createdByField;
+        }
+
+        $news = $this->getContext()?->getEntity()?->getInstance();
+
+        if (!$news instanceof News) {
+            return $createdByField;
+        }
+
+        $userEditUrl = $this->getUserDetailUrl($news);
+
+        if (null === $userEditUrl) {
+            return $createdByField;
+        }
+
+        return $createdByField
+            ->setHelp(sprintf('<a href="%s">See user</a>', $userEditUrl))
+            ->setFormTypeOption('help_html', true);
+    }
+
+    private function denyAccessToViewNews(AdminContext $context): void
+    {
+        $news = $context->getEntity()->getInstance();
+
+        if ($news instanceof News) {
+            $this->denyAccessUnlessGranted(NewsVoter::VIEW, $news);
+        }
+    }
+
+    private function denyAccessToEditNews(AdminContext $context): void
+    {
+        $news = $context->getEntity()->getInstance();
+
+        if ($news instanceof News) {
+            $this->denyAccessUnlessGranted(NewsVoter::EDIT, $news);
+        }
+    }
+
+    private function createCreatedByLinkField(): TextField
+    {
+        return TextField::new('createdBy', 'Created by')
+            ->formatValue(function ($value, News $news): string {
+                $user = $news->getCreatedBy();
+                $userEditUrl = $this->getUserDetailUrl($news);
+
+                if (null === $user || null === $userEditUrl) {
+                    return '';
+                }
+
+                return sprintf('<a href="%s">%s</a>', $userEditUrl, $user->getEmail());
+            })
+            ->renderAsHtml();
+    }
+
+    private function getUserDetailUrl(News $news): ?string
+    {
+        $user = $news->getCreatedBy();
+
+        if (null === $user || null === $user->getId()) {
+            return null;
+        }
+
+        return $this->adminUrlGenerator
+            ->unsetAll()
+            ->setController(UserCrudController::class)
+            ->setAction(Action::DETAIL)
+            ->setEntityId($user->getId())
+            ->generateUrl();
+    }
+
+    private function getCurrentUser(): ?User
+    {
+        $user = $this->getUser();
+
+        return $user instanceof User ? $user : null;
+    }
+}

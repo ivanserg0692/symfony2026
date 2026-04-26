@@ -53,9 +53,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $secondName = null;
 
+    /**
+     * @var Collection<int, UserGroups>
+     */
+    #[ORM\ManyToMany(targetEntity: UserGroups::class, inversedBy: 'users')]
+    private Collection $groups;
+
+    private ?string $plainPassword = null;
+
     public function __construct()
     {
         $this->news = new ArrayCollection();
+        $this->groups = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -118,6 +127,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPassword(string $password): static
     {
         $this->password = $password;
+
+        return $this;
+    }
+
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    public function setPlainPassword(?string $plainPassword): static
+    {
+        $this->plainPassword = $plainPassword;
 
         return $this;
     }
@@ -185,5 +206,42 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->secondName = $secondName;
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->email ?? sprintf('User #%d', $this->id ?? 0);
+    }
+
+    /**
+     * @return Collection<int, UserGroups>
+     */
+    public function getGroups(): Collection
+    {
+        return $this->groups;
+    }
+
+    public function addGroup(UserGroups $group): static
+    {
+        if (!$this->groups->contains($group)) {
+            $this->groups->add($group);
+        }
+
+        return $this;
+    }
+
+    public function removeGroup(UserGroups $group): static
+    {
+        $this->groups->removeElement($group);
+
+        return $this;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->groups->exists(
+            static fn (int|string $key, UserGroups $group): bool =>
+                $group->getName() === UserGroups::ADMIN || $group->isAdmin() === true
+        );
     }
 }
