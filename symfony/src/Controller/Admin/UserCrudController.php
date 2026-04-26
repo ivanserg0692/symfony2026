@@ -104,11 +104,13 @@ final class UserCrudController extends AbstractCrudController
                 ->setHelp(Crud::PAGE_EDIT === $pageName ? 'Leave empty to keep the current password.' : null);
         }
 
-        yield ArrayField::new('roles');
+        if ($this->isGranted(UsersVoter::ADMINISTER, new User())) {
+            yield ArrayField::new('roles');
 
-        yield AssociationField::new('groups')
-            ->setFormTypeOption('by_reference', false)
-            ->setFormTypeOption('choice_label', 'name');
+            yield AssociationField::new('groups')
+                ->setFormTypeOption('by_reference', false)
+                ->setFormTypeOption('choice_label', 'name');
+        }
     }
 
     public function persistEntity(EntityManagerInterface $entityManager, $entityInstance): void

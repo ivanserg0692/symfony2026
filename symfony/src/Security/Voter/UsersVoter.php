@@ -12,10 +12,11 @@ final class UsersVoter extends Voter
 {
     public const string EDIT = 'USER_EDIT';
     public const string VIEW = 'USER_VIEW';
+    public const string ADMINISTER = 'USER_ADMINISTER';
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute, [self::EDIT, self::VIEW], true)
+        return in_array($attribute, [self::EDIT, self::VIEW, self::ADMINISTER], true)
             && $subject instanceof User;
     }
 
@@ -39,6 +40,7 @@ final class UsersVoter extends Voter
         return match ($attribute) {
             self::VIEW => $this->canView($subject, $user),
             self::EDIT => $this->canEdit($subject, $user),
+            self::ADMINISTER => $this->canAdminister($user),
             default => false,
         };
     }
@@ -51,5 +53,10 @@ final class UsersVoter extends Voter
     private function canEdit(User $subject, User $user): bool
     {
         return $user->isAdmin() || $subject->getId() === $user->getId();
+    }
+
+    private function canAdminister(User $user): bool
+    {
+        return $user->isAdmin() ;
     }
 }
