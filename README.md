@@ -8,6 +8,37 @@ The Symfony codebase itself lives in `symfony`.
 
 ![Hello in Symfony](symfony/docs/images/hello-in-symfony.png)
 
+## Quick Navigation
+
+- [English](#english)
+  - [Overview](#overview)
+  - [Current Status](#current-status)
+  - [Tech Stack and Component Roles](#tech-stack-and-component-roles)
+  - [Tasks](#tasks)
+  - [Run With Docker Compose](#run-with-docker-compose)
+  - [Doctrine Database Setup](#doctrine-database-setup)
+  - [API Documentation](#api-documentation)
+  - [JWT Authentication](#jwt-authentication)
+  - [Changelog](#changelog)
+  - [Source Directory](#source-directory)
+  - [Project Structure](#project-structure)
+  - [Included Tools](#included-tools)
+  - [Git Identity](#git-identity)
+- [Русский](#русский)
+  - [Обзор](#обзор)
+  - [Текущий статус](#текущий-статус)
+  - [Технологический стек и назначение компонентов](#технологический-стек-и-назначение-компонентов)
+  - [Задачи](#задачи)
+  - [Запуск через Docker Compose](#запуск-через-docker-compose)
+  - [Настройка Doctrine и базы данных](#настройка-doctrine-и-базы-данных)
+  - [API Documentation](#api-documentation-1)
+  - [JWT Authentication](#jwt-authentication-1)
+  - [История изменений](#история-изменений)
+  - [Каталог исходников](#каталог-исходников)
+  - [Структура проекта](#структура-проекта)
+  - [Включенные инструменты](#включенные-инструменты)
+  - [Git-идентичность](#git-идентичность)
+
 ## Overview
 
 The project is currently focused on setting up the API foundation in Symfony.
