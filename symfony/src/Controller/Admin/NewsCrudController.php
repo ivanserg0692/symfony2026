@@ -9,6 +9,7 @@ use App\Repository\NewsStatusRepository;
 use App\Security\Voter\NewsVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
@@ -69,6 +70,27 @@ class NewsCrudController extends AbstractCrudController
             ->add(DateTimeFilter::new('createdAt'));
     }
 
+    public function configureActions(Actions $actions): Actions
+    {
+        return $actions
+            ->add(Crud::PAGE_INDEX, Action::DETAIL)
+            ->update(Crud::PAGE_INDEX, Action::DETAIL, fn (Action $action): Action =>
+                $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::VIEW, $news))
+            )
+            ->update(Crud::PAGE_INDEX, Action::EDIT, fn (Action $action): Action =>
+                $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::EDIT, $news))
+            )
+            ->update(Crud::PAGE_INDEX, Action::DELETE, fn (Action $action): Action =>
+                $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::EDIT, $news))
+            )
+            ->update(Crud::PAGE_DETAIL, Action::EDIT, fn (Action $action): Action =>
+                $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::EDIT, $news))
+            )
+            ->update(Crud::PAGE_DETAIL, Action::DELETE, fn (Action $action): Action =>
+                $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::EDIT, $news))
+            );
+    }
+
     public function configureFields(string $pageName): iterable
     {
         return [
@@ -107,14 +129,15 @@ class NewsCrudController extends AbstractCrudController
 
     public function detail(AdminContext $context): KeyValueStore|Response
     {
-        $this->denyAccessToNews($context);
+        $this->denyAccessToViewNews($context);
 
         return parent::detail($context);
     }
 
     public function edit(AdminContext $context): KeyValueStore|Response
     {
-        $this->denyAccessToNews($context);
+        $this->denyAccessToViewNews($context);
+        $this->denyAccessToEditNews($context);
 
         return parent::edit($context);
     }
@@ -129,8 +152,16 @@ class NewsCrudController extends AbstractCrudController
     public function updateEntity(EntityManagerInterface $entityManager, $entityInstance): void
     {
         $this->denyAccessUnlessGranted(NewsVoter::CHANGE_STATUS, $entityInstance);
+        $this->denyAccessUnlessGranted(NewsVoter::EDIT, $entityInstance);
 
         parent::updateEntity($entityManager, $entityInstance);
+    }
+
+    public function delete(AdminContext $context): Response
+    {
+        $this->denyAccessToEditNews($context);
+
+        return parent::delete($context);
     }
 
     private function createCreatedByField(string $pageName): AssociationField|TextField
@@ -169,12 +200,21 @@ class NewsCrudController extends AbstractCrudController
             ->setFormTypeOption('help_html', true);
     }
 
-    private function denyAccessToNews(AdminContext $context): void
+    private function denyAccessToViewNews(AdminContext $context): void
     {
         $news = $context->getEntity()->getInstance();
 
         if ($news instanceof News) {
             $this->denyAccessUnlessGranted(NewsVoter::VIEW, $news);
+        }
+    }
+
+    private function denyAccessToEditNews(AdminContext $context): void
+    {
+        $news = $context->getEntity()->getInstance();
+
+        if ($news instanceof News) {
+            $this->denyAccessUnlessGranted(NewsVoter::EDIT, $news);
         }
     }
 

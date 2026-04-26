@@ -15,9 +15,11 @@ final class NewsVoter extends Voter
     public const string VIEW = 'NEWS_VIEW';
     public const string CHANGE_STATUS = 'CHANGE_NEWS_STATUS';
 
+    public const string EDIT = 'NEWS_EDIT';
+
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute, [self::VIEW, self::CHANGE_STATUS], true)
+        return in_array($attribute, [self::VIEW, self::CHANGE_STATUS, self::EDIT], true)
             && $subject instanceof News;
     }
 
@@ -30,8 +32,17 @@ final class NewsVoter extends Voter
         return match ($attribute) {
             self::VIEW => $this->canView($subject, $token->getUser()),
             self::CHANGE_STATUS => $this->canChangeStatus($subject, $token->getUser(), $vote),
+            self::EDIT => $this->canEdit($subject, $token->getUser()),
             default => false,
         };
+    }
+
+    private function canEdit(News $news, UserInterface|null $user): bool
+    {
+        if(!$user instanceof User) {
+            return false;
+        }
+        return $user->isAdmin() || $news->getCreatedBy()?->getId() === $user->getId();
     }
 
     private function canView(News $news, UserInterface|null $user): bool
