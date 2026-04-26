@@ -1,12 +1,50 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Symfony](#symfony)
+  - [English](#english)
+  - [Overview](#overview)
+  - [Current Status](#current-status)
+  - [Tech Stack and Component Roles](#tech-stack-and-component-roles)
+  - [Tasks](#tasks)
+    - [`Task 1` - done](#task-1---done)
+    - [`Task 2` - done](#task-2---done)
+    - [`Task 3` - done](#task-3---done)
+  - [Run With Docker Compose](#run-with-docker-compose)
+  - [Doctrine Database Setup](#doctrine-database-setup)
+  - [API Documentation](#api-documentation)
+  - [JWT Authentication](#jwt-authentication)
+  - [Changelog](#changelog)
+    - [2026-04-16](#2026-04-16)
+    - [2026-04-10](#2026-04-10)
+  - [Source Directory](#source-directory)
+  - [Project Structure](#project-structure)
+  - [Included Tools](#included-tools)
+  - [Git Identity](#git-identity)
+  - [Русский](#%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9)
+  - [Обзор](#%D0%BE%D0%B1%D0%B7%D0%BE%D1%80)
+  - [Текущий статус](#%D1%82%D0%B5%D0%BA%D1%83%D1%89%D0%B8%D0%B9-%D1%81%D1%82%D0%B0%D1%82%D1%83%D1%81)
+  - [Технологический стек и назначение компонентов](#%D1%82%D0%B5%D1%85%D0%BD%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9-%D1%81%D1%82%D0%B5%D0%BA-%D0%B8-%D0%BD%D0%B0%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BA%D0%BE%D0%BC%D0%BF%D0%BE%D0%BD%D0%B5%D0%BD%D1%82%D0%BE%D0%B2)
+  - [Задачи](#%D0%B7%D0%B0%D0%B4%D0%B0%D1%87%D0%B8)
+    - [`Task 1` - done](#task-1---done-1)
+    - [`Task 2` - done](#task-2---done-1)
+    - [`Task 3` - done](#task-3---done-1)
+  - [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
+  - [Настройка Doctrine и базы данных](#%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-doctrine-%D0%B8-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85)
+  - [API Documentation](#api-documentation-1)
+  - [JWT Authentication](#jwt-authentication-1)
+  - [История изменений](#%D0%B8%D1%81%D1%82%D0%BE%D1%80%D0%B8%D1%8F-%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B9)
+    - [2026-04-16](#2026-04-16-1)
+    - [2026-04-10](#2026-04-10-1)
+  - [Каталог исходников](#%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3-%D0%B8%D1%81%D1%85%D0%BE%D0%B4%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2)
+  - [Структура проекта](#%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%82%D1%83%D1%80%D0%B0-%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0)
+  - [Включенные инструменты](#%D0%B2%D0%BA%D0%BB%D1%8E%D1%87%D0%B5%D0%BD%D0%BD%D1%8B%D0%B5-%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D1%8B)
+  - [Git-идентичность](#git-%D0%B8%D0%B4%D0%B5%D0%BD%D1%82%D0%B8%D1%87%D0%BD%D0%BE%D1%81%D1%82%D1%8C)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Symfony
-
-## English
-
-This is my Symfony learning project.
-
-The Symfony codebase itself lives in `symfony`.
-
-![Hello in Symfony](symfony/docs/images/hello-in-symfony.png)
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -52,6 +90,16 @@ The Symfony codebase itself lives in `symfony`.
 - [Git-идентичность](#git-%D0%B8%D0%B4%D0%B5%D0%BD%D1%82%D0%B8%D1%87%D0%BD%D0%BE%D1%81%D1%82%D1%8C)
 
   <!-- END doctoc -->
+
+
+## English
+
+This is my Symfony learning project.
+
+The Symfony codebase itself lives in `symfony`.
+
+![Hello in Symfony](symfony/docs/images/hello-in-symfony.png)
+
 
 ## Overview
 
