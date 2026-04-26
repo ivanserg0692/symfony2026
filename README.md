@@ -24,28 +24,49 @@ The current implementation path is:
 - OpenAPI specification is generated automatically at runtime
 - Baseline JWT authentication endpoints are prepared
 
-## Tech Stack
+## Tech Stack and Component Roles
 
-- PHP `8.4+`
-- Symfony Framework Bundle `8.0.8`
-- Doctrine ORM `3.6.3`
-- Doctrine Migrations Bundle `4.0.0`
-- Doctrine Fixtures Bundle `4.3.1`
-- PostgreSQL
-- Symfony Serializer `8.0.8`
-- Symfony Security Bundle `8.0.8`
-- Symfony Validator
-- Symfony Rate Limiter `8.0.8`
-- LexikJWTAuthenticationBundle `3.2.0`
-- GesdinetJWTRefreshTokenBundle `2.0.0`
-- NelmioCorsBundle `2.6.1`
-- Nelmio ApiDoc Bundle `5.9.5`
-- Swagger-PHP `5.8.3`
-- Pagerfanta `4.8.0`
-- Gedmo Doctrine Extensions `3.22.0`
-- StofDoctrineExtensionsBundle `1.15.3`
-- FakerPHP Faker `1.24.1`
-- Docker Compose
+| Component | Purpose |
+| --- | --- |
+| PHP `8.4+` | Runtime for the Symfony application. |
+| Symfony Framework Bundle `8.0.8` | Core application framework, service container integration, routing, and configuration. |
+| Symfony Runtime `8.0.8` | Boots the application through Symfony Runtime and keeps entry points consistent. |
+| Symfony Console `8.0.8` | Provides CLI commands for maintenance, migrations, fixtures, and project tooling. |
+| Symfony Asset `8.0.8` | Generates paths for static assets used by the admin UI and documentation pages. |
+| Symfony Dotenv `8.0.8` | Loads local environment variables from `.env` files. |
+| Symfony YAML `8.0.8` | Reads YAML configuration files. |
+| Symfony Security Bundle `8.0.8` | Provides firewalls, access control, authenticators, voters, and user authorization. |
+| Symfony Validator `8.0.8` | Validates request DTOs and entity/form input. |
+| Symfony Serializer `8.0.8` | Serializes API responses and controls output through serialization groups. |
+| Symfony Rate Limiter `8.0.8` | Limits repeated login attempts. |
+| Symfony Property Access `8.0.8` | Reads and writes object properties for forms, serializers, and framework integrations. |
+| Symfony Property Info `8.0.8` | Extracts property type metadata for serializers, validators, and API documentation. |
+| Symfony Monolog Bundle `4.0.2` | Integrates Monolog logging with Symfony. |
+| Doctrine ORM `3.6.3` | Maps entities and persists application data. |
+| Doctrine Bundle `3.2.2` | Integrates Doctrine ORM and DBAL into Symfony. |
+| Doctrine Migrations Bundle `4.0.0` | Manages database schema migrations. |
+| Doctrine Fixtures Bundle `4.3.1` | Loads development and test seed data. |
+| PostgreSQL | Main relational database. |
+| EasyAdmin Bundle `5.0.6` | Provides the admin panel for users, groups, news, statuses, and related entities. |
+| LexikJWTAuthenticationBundle `3.2.0` | Issues and validates access JWTs for the API. |
+| GesdinetJWTRefreshTokenBundle `2.0.0` | Stores, rotates, refreshes, revokes, and cleans up refresh tokens. |
+| PixelOpen Cloudflare Turnstile Bundle `0.5.0` | Validates Cloudflare Turnstile tokens before login continues. |
+| NelmioCorsBundle `2.6.1` | Adds CORS headers for browser clients using cross-origin API requests. |
+| Nelmio ApiDoc Bundle `5.9.5` | Generates API documentation from routes, attributes, and schemas. |
+| Swagger-PHP `5.8.3` | Provides OpenAPI attributes used by the API documentation. |
+| Pagerfanta `4.8.0` | Handles paginated API responses. |
+| Pagerfanta Doctrine ORM Adapter `4.7+` | Connects Doctrine queries to Pagerfanta pagination. |
+| Gedmo Doctrine Extensions `3.22.0` | Provides reusable Doctrine behaviors. |
+| StofDoctrineExtensionsBundle `1.15.3` | Integrates Gedmo Doctrine Extensions with Symfony. |
+| phpDocumentor Reflection DocBlock `6.0.3` | Reads PHPDoc metadata used by framework and documentation tooling. |
+| PHPStan PHPDoc Parser `2.3.2` | Parses PHPDoc types for metadata and documentation support. |
+| FakerPHP Faker `1.24.1` | Generates fake data for fixtures and local development. |
+| Symfony Maker Bundle `1.67.0` | Generates Symfony boilerplate during development. |
+| Symfony Debug Bundle `8.0.8` | Adds debugging helpers in development. |
+| Symfony Web Profiler Bundle `8.0.8` | Provides the Symfony profiler toolbar and request diagnostics in development. |
+| Symfony Stopwatch `8.0.8` | Measures code execution time for profiling and diagnostics. |
+| Symfony Flex `2.10.0` | Manages Symfony recipes during dependency installation and updates. |
+| Docker Compose | Runs the local development services. |
 
 ## Tasks
 
@@ -340,28 +361,49 @@ GIT_COMMITTER_EMAIL="you@example.com"
 - OpenAPI-спецификация генерируется автоматически во время запроса
 - Подготовлены базовые JWT-ручки авторизации
 
-## Технологический стек
+## Технологический стек и назначение компонентов
 
-- PHP `8.4+`
-- Symfony Framework Bundle `8.0.8`
-- Doctrine ORM `3.6.3`
-- Doctrine Migrations Bundle `4.0.0`
-- Doctrine Fixtures Bundle `4.3.1`
-- PostgreSQL
-- Symfony Serializer `8.0.8`
-- Symfony Security Bundle `8.0.8`
-- Symfony Validator
-- Symfony Rate Limiter `8.0.8`
-- LexikJWTAuthenticationBundle `3.2.0`
-- GesdinetJWTRefreshTokenBundle `2.0.0`
-- NelmioCorsBundle `2.6.1`
-- Nelmio ApiDoc Bundle `5.9.5`
-- Swagger-PHP `5.8.3`
-- Pagerfanta `4.8.0`
-- Gedmo Doctrine Extensions `3.22.0`
-- StofDoctrineExtensionsBundle `1.15.3`
-- FakerPHP Faker `1.24.1`
-- Docker Compose
+| Компонент | Назначение |
+| --- | --- |
+| PHP `8.4+` | Среда выполнения Symfony-приложения. |
+| Symfony Framework Bundle `8.0.8` | Ядро приложения, контейнер сервисов, маршрутизация и конфигурация. |
+| Symfony Runtime `8.0.8` | Загружает приложение через Symfony Runtime и выравнивает точки входа. |
+| Symfony Console `8.0.8` | Дает CLI-команды для обслуживания проекта, миграций, фикстур и служебных задач. |
+| Symfony Asset `8.0.8` | Генерирует пути к статическим ресурсам для админки и страниц документации. |
+| Symfony Dotenv `8.0.8` | Загружает локальные переменные окружения из `.env` файлов. |
+| Symfony YAML `8.0.8` | Читает YAML-конфигурацию. |
+| Symfony Security Bundle `8.0.8` | Отвечает за firewalls, access control, authenticators, voters и авторизацию пользователей. |
+| Symfony Validator `8.0.8` | Валидирует DTO запросов и данные entity/form. |
+| Symfony Serializer `8.0.8` | Сериализует API-ответы и управляет выводом через serialization groups. |
+| Symfony Rate Limiter `8.0.8` | Ограничивает повторные попытки логина. |
+| Symfony Property Access `8.0.8` | Читает и записывает свойства объектов для форм, сериализаторов и интеграций Symfony. |
+| Symfony Property Info `8.0.8` | Извлекает информацию о типах свойств для сериализации, валидации и API-документации. |
+| Symfony Monolog Bundle `4.0.2` | Интегрирует Monolog-логирование в Symfony. |
+| Doctrine ORM `3.6.3` | Маппит entity и сохраняет данные приложения. |
+| Doctrine Bundle `3.2.2` | Интегрирует Doctrine ORM и DBAL в Symfony. |
+| Doctrine Migrations Bundle `4.0.0` | Управляет миграциями схемы базы данных. |
+| Doctrine Fixtures Bundle `4.3.1` | Загружает seed-данные для разработки и тестов. |
+| PostgreSQL | Основная реляционная база данных. |
+| EasyAdmin Bundle `5.0.6` | Дает административную панель для пользователей, групп, новостей, статусов и связанных сущностей. |
+| LexikJWTAuthenticationBundle `3.2.0` | Выпускает и проверяет access JWT для API. |
+| GesdinetJWTRefreshTokenBundle `2.0.0` | Хранит, ротирует, обновляет, отзывает и очищает refresh tokens. |
+| PixelOpen Cloudflare Turnstile Bundle `0.5.0` | Проверяет Cloudflare Turnstile token перед продолжением логина. |
+| NelmioCorsBundle `2.6.1` | Добавляет CORS-заголовки для браузерных клиентов с cross-origin API запросами. |
+| Nelmio ApiDoc Bundle `5.9.5` | Генерирует API-документацию из маршрутов, атрибутов и схем. |
+| Swagger-PHP `5.8.3` | Дает OpenAPI-атрибуты, используемые в API-документации. |
+| Pagerfanta `4.8.0` | Отвечает за пагинированные API-ответы. |
+| Pagerfanta Doctrine ORM Adapter `4.7+` | Связывает Doctrine-запросы с пагинацией Pagerfanta. |
+| Gedmo Doctrine Extensions `3.22.0` | Дает переиспользуемые Doctrine-поведения. |
+| StofDoctrineExtensionsBundle `1.15.3` | Интегрирует Gedmo Doctrine Extensions в Symfony. |
+| phpDocumentor Reflection DocBlock `6.0.3` | Читает PHPDoc-метаданные для framework- и documentation-инструментов. |
+| PHPStan PHPDoc Parser `2.3.2` | Парсит PHPDoc-типы для метаданных и поддержки документации. |
+| FakerPHP Faker `1.24.1` | Генерирует фейковые данные для фикстур и локальной разработки. |
+| Symfony Maker Bundle `1.67.0` | Генерирует Symfony boilerplate во время разработки. |
+| Symfony Debug Bundle `8.0.8` | Добавляет отладочные инструменты в dev-окружении. |
+| Symfony Web Profiler Bundle `8.0.8` | Дает Symfony profiler toolbar и диагностику запросов в dev-окружении. |
+| Symfony Stopwatch `8.0.8` | Измеряет время выполнения кода для профилирования и диагностики. |
+| Symfony Flex `2.10.0` | Управляет Symfony recipes при установке и обновлении зависимостей. |
+| Docker Compose | Запускает локальные сервисы разработки. |
 
 ## Задачи
 

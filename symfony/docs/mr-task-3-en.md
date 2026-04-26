@@ -73,3 +73,14 @@ JWT authentication endpoints were added and documented in the API. The screensho
 - access to user groups is now centralized through `UserGroupsVoter` and is restricted to administrators only
 - the `Groups` menu item in EasyAdmin is hidden when the current user has no access to the groups index page
 - `UserRepository` and `NewsRepository` visibility methods were cleaned up and made more consistent around root alias handling and visibility filtering
+
+## Updates for 2026-04-26
+
+- EasyAdmin news access checks for viewing, editing, and deleting are now handled through `NewsVoter`
+- regular users no longer see edit and delete actions for news items they cannot edit
+- the news list link now opens the detail page when the current user has no edit access
+- news saving now additionally checks whether the current user may change the status
+- the list of available news statuses in the admin form is restricted through an allow-list for non-admin users
+- matching EasyAdmin action checks were added for user viewing, editing, and deletion through `UsersVoter`
+- a separate user view policy was added
+- user role and group fields are only available in the form for administrators
