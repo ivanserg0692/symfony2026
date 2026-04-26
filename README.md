@@ -3,43 +3,43 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 - [English](#english)
-- [Overview](#overview)
-- [Current Status](#current-status)
-- [Tech Stack and Component Roles](#tech-stack-and-component-roles)
-- [Tasks](#tasks)
-  - [`Task 1` - done](#task-1---done)
-  - [`Task 2` - done](#task-2---done)
-  - [`Task 3` - done](#task-3---done)
-- [Run With Docker Compose](#run-with-docker-compose)
-- [Doctrine Database Setup](#doctrine-database-setup)
-- [API Documentation](#api-documentation)
-- [JWT Authentication](#jwt-authentication)
-- [Changelog](#changelog)
-  - [2026-04-16](#2026-04-16)
-  - [2026-04-10](#2026-04-10)
-- [Source Directory](#source-directory)
-- [Project Structure](#project-structure)
-- [Included Tools](#included-tools)
-- [Git Identity](#git-identity)
+  - [Overview](#overview)
+  - [Current Status](#current-status)
+  - [Tech Stack and Component Roles](#tech-stack-and-component-roles)
+  - [Tasks](#tasks)
+    - [`Task 1` - done](#task-1---done)
+    - [`Task 2` - done](#task-2---done)
+    - [`Task 3` - done](#task-3---done)
+  - [Run With Docker Compose](#run-with-docker-compose)
+  - [Doctrine Database Setup](#doctrine-database-setup)
+  - [API Documentation](#api-documentation)
+  - [JWT Authentication](#jwt-authentication)
+  - [Changelog](#changelog)
+    - [2026-04-16](#2026-04-16)
+    - [2026-04-10](#2026-04-10)
+  - [Source Directory](#source-directory)
+  - [Project Structure](#project-structure)
+  - [Included Tools](#included-tools)
+  - [Git Identity](#git-identity)
 - [Русский](#%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9)
-- [Обзор](#%D0%BE%D0%B1%D0%B7%D0%BE%D1%80)
-- [Текущий статус](#%D1%82%D0%B5%D0%BA%D1%83%D1%89%D0%B8%D0%B9-%D1%81%D1%82%D0%B0%D1%82%D1%83%D1%81)
-- [Технологический стек и назначение компонентов](#%D1%82%D0%B5%D1%85%D0%BD%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9-%D1%81%D1%82%D0%B5%D0%BA-%D0%B8-%D0%BD%D0%B0%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BA%D0%BE%D0%BC%D0%BF%D0%BE%D0%BD%D0%B5%D0%BD%D1%82%D0%BE%D0%B2)
-- [Задачи](#%D0%B7%D0%B0%D0%B4%D0%B0%D1%87%D0%B8)
-  - [`Task 1` - done](#task-1---done-1)
-  - [`Task 2` - done](#task-2---done-1)
-  - [`Task 3` - done](#task-3---done-1)
-- [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
-- [Настройка Doctrine и базы данных](#%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-doctrine-%D0%B8-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85)
-- [API Documentation](#api-documentation-1)
-- [JWT Authentication](#jwt-authentication-1)
-- [История изменений](#%D0%B8%D1%81%D1%82%D0%BE%D1%80%D0%B8%D1%8F-%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B9)
-  - [2026-04-16](#2026-04-16-1)
-  - [2026-04-10](#2026-04-10-1)
-- [Каталог исходников](#%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3-%D0%B8%D1%81%D1%85%D0%BE%D0%B4%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2)
-- [Структура проекта](#%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%82%D1%83%D1%80%D0%B0-%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0)
-- [Включенные инструменты](#%D0%B2%D0%BA%D0%BB%D1%8E%D1%87%D0%B5%D0%BD%D0%BD%D1%8B%D0%B5-%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D1%8B)
-- [Git-идентичность](#git-%D0%B8%D0%B4%D0%B5%D0%BD%D1%82%D0%B8%D1%87%D0%BD%D0%BE%D1%81%D1%82%D1%8C)
+  - [Обзор](#%D0%BE%D0%B1%D0%B7%D0%BE%D1%80)
+  - [Текущий статус](#%D1%82%D0%B5%D0%BA%D1%83%D1%89%D0%B8%D0%B9-%D1%81%D1%82%D0%B0%D1%82%D1%83%D1%81)
+  - [Технологический стек и назначение компонентов](#%D1%82%D0%B5%D1%85%D0%BD%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9-%D1%81%D1%82%D0%B5%D0%BA-%D0%B8-%D0%BD%D0%B0%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BA%D0%BE%D0%BC%D0%BF%D0%BE%D0%BD%D0%B5%D0%BD%D1%82%D0%BE%D0%B2)
+  - [Задачи](#%D0%B7%D0%B0%D0%B4%D0%B0%D1%87%D0%B8)
+    - [`Task 1` - done](#task-1---done-1)
+    - [`Task 2` - done](#task-2---done-1)
+    - [`Task 3` - done](#task-3---done-1)
+  - [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
+  - [Настройка Doctrine и базы данных](#%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-doctrine-%D0%B8-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85)
+  - [API Documentation](#api-documentation-1)
+  - [JWT Authentication](#jwt-authentication-1)
+  - [История изменений](#%D0%B8%D1%81%D1%82%D0%BE%D1%80%D0%B8%D1%8F-%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B9)
+    - [2026-04-16](#2026-04-16-1)
+    - [2026-04-10](#2026-04-10-1)
+  - [Каталог исходников](#%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3-%D0%B8%D1%81%D1%85%D0%BE%D0%B4%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2)
+  - [Структура проекта](#%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%82%D1%83%D1%80%D0%B0-%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0)
+  - [Включенные инструменты](#%D0%B2%D0%BA%D0%BB%D1%8E%D1%87%D0%B5%D0%BD%D0%BD%D1%8B%D0%B5-%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D1%8B)
+  - [Git-идентичность](#git-%D0%B8%D0%B4%D0%B5%D0%BD%D1%82%D0%B8%D1%87%D0%BD%D0%BE%D1%81%D1%82%D1%8C)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -52,7 +52,7 @@ The Symfony codebase itself lives in `symfony`.
 ![Hello in Symfony](symfony/docs/images/hello-in-symfony.png)
 
 
-## Overview
+### Overview
 
 The project is currently focused on setting up the API foundation in Symfony.
 
@@ -61,14 +61,14 @@ The current implementation path is:
 - stabilize the API entry point and documentation
 - build a baseline API for working with news
 
-## Current Status
+### Current Status
 
 - Docker-based local environment is configured
 - Swagger UI is available for `api/v1`
 - OpenAPI specification is generated automatically at runtime
 - Baseline JWT authentication endpoints are prepared
 
-## Tech Stack and Component Roles
+### Tech Stack and Component Roles
 
 | Component | Purpose |
 | --- | --- |
@@ -112,22 +112,22 @@ The current implementation path is:
 | Symfony Flex `2.10.0` | Manages Symfony recipes during dependency installation and updates. |
 | Docker Compose | Runs the local development services. |
 
-## Tasks
+### Tasks
 
-### `Task 1` - done
+#### `Task 1` - done
 - Task file: [symfony/docs/task-1.md](symfony/docs/task-1.md)
 - Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
-### `Task 2` - done
+#### `Task 2` - done
 - Merge Request 2: <https://github.com/ivanserg0692/symfony2026/pull/2>
 - Task file: [symfony/docs/task-2.md](symfony/docs/task-2.md)
 - MR result: [symfony/docs/mr-task-2.md](symfony/docs/mr-task-2.md)
-### `Task 3` - done
+#### `Task 3` - done
 - Merge Request 3: <https://github.com/ivanserg0692/symfony2026/pull/3>
 - Task file: [symfony/docs/task-3.md](symfony/docs/task-3.md)
 - MR result (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - MR result (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
 
-## Run With Docker Compose
+### Run With Docker Compose
 
 Start the runner from the repository root.
 
@@ -169,7 +169,7 @@ Sync the bootstrap admin user from environment variables:
 docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console app:user:sync-admin
 ```
 
-## Doctrine Database Setup
+### Doctrine Database Setup
 
 Start PostgreSQL and create the database if it does not exist yet:
 
@@ -210,7 +210,7 @@ To stream production-mode logs from the Symfony local web server inside `symfony
 docker compose -f app/docker-compose.yml exec -it symfony-web sh -lc "/root/.symfony5/bin/symfony server:log"
 ```
 
-## API Documentation
+### API Documentation
 
 API documentation for `api/v1` is generated automatically at runtime by the Symfony app.
 
@@ -228,7 +228,7 @@ http://localhost:8000/api/v1/doc.json
 
 The documentation includes only routes that match `^/api/v1`.
 
-## JWT Authentication
+### JWT Authentication
 
 JWT authentication is configured for the API and uses key files stored in `symfony/config/jwt`.
 
@@ -338,9 +338,9 @@ What to verify:
 - same-origin Swagger requests may work without any CORS headers, which is expected
 - on local plain `http`, browsers may reject `SameSite=None` + `Secure` cookies
 
-## Changelog
+### Changelog
 
-### 2026-04-16
+#### 2026-04-16
 
 - Added `GET /api/v1/news` list endpoint with pagination and sorting
 - Added `ListQueryDto` for query mapping and Swagger schema description
@@ -350,27 +350,27 @@ What to verify:
 - Added JWT authentication configuration and `/api/v1/auth/login`, `/api/v1/auth/me` endpoints
 - Added `bin/init-jwt` bootstrap command for JWT key generation
 
-### 2026-04-10
+#### 2026-04-10
 
 - Added Swagger/OpenAPI support for `api/v1`
 - Fixed the current API documentation stack in this README
 - Added task description for Swagger launch and baseline News API preparation
 
-## Source Directory
+### Source Directory
 
 Project files are mounted from `symfony` into `/workspace` inside the container.
 
-## Project Structure
+### Project Structure
 
 - `symfony` contains the Symfony application codebase
 - `docker` stores Docker-related files
 - `docker-compose.yml` defines the local development container setup
 
-## Included Tools
+### Included Tools
 
 The runner image includes `symfony`, `php`, and `composer`.
 
-## Git Identity
+### Git Identity
 
 Set your git identity in `.env` for git operations inside the container:
 
@@ -389,7 +389,7 @@ GIT_COMMITTER_EMAIL="you@example.com"
 
 ![Hello in Symfony](symfony/docs/images/hello-in-symfony.png)
 
-## Обзор
+### Обзор
 
 Сейчас проект сфокусирован на подготовке базового API-слоя на Symfony.
 
@@ -398,14 +398,14 @@ GIT_COMMITTER_EMAIL="you@example.com"
 - зафиксировать и стабилизировать точку входа в API и документацию
 - реализовать базовую API для работы с новостями
 
-## Текущий статус
+### Текущий статус
 
 - Настроено локальное окружение на Docker
 - Swagger UI доступен для `api/v1`
 - OpenAPI-спецификация генерируется автоматически во время запроса
 - Подготовлены базовые JWT-ручки авторизации
 
-## Технологический стек и назначение компонентов
+### Технологический стек и назначение компонентов
 
 | Компонент | Назначение |
 | --- | --- |
@@ -449,22 +449,22 @@ GIT_COMMITTER_EMAIL="you@example.com"
 | Symfony Flex `2.10.0` | Управляет Symfony recipes при установке и обновлении зависимостей. |
 | Docker Compose | Запускает локальные сервисы разработки. |
 
-## Задачи
+### Задачи
 
-### `Task 1` - done
+#### `Task 1` - done
 - Файл задачи: [symfony/docs/task-1.md](symfony/docs/task-1.md)
 - Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
-### `Task 2` - done
+#### `Task 2` - done
 -  Merge Request 2: <https://github.com/ivanserg0692/symfony2026/pull/2>
 - Файл задачи: [symfony/docs/task-2.md](symfony/docs/task-2.md)
 - Результат MR: [symfony/docs/mr-task-2.md](symfony/docs/mr-task-2.md)
-### `Task 3` - done
+#### `Task 3` - done
 - Merge Request 3: <https://github.com/ivanserg0692/symfony2026/pull/3>
 - Файл задачи: [symfony/docs/task-3.md](symfony/docs/task-3.md)
 - Результат MR (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
 
-## Запуск через Docker Compose
+### Запуск через Docker Compose
 
 Запускайте контейнер из корня репозитория:
 
@@ -500,7 +500,7 @@ docker compose run --rm symfony-cli php bin/console cache:clear
 docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
 ```
 
-## Настройка Doctrine и базы данных
+### Настройка Doctrine и базы данных
 
 Поднимите PostgreSQL и создайте базу, если она еще не существует:
 
@@ -541,7 +541,7 @@ http://localhost:8000
 docker compose -f app/docker-compose.yml exec -it symfony-web sh -lc "/root/.symfony5/bin/symfony server:log"
 ```
 
-## API Documentation
+### API Documentation
 
 Документация API для `api/v1` генерируется автоматически во время выполнения Symfony-приложения.
 
@@ -559,7 +559,7 @@ http://localhost:8000/api/v1/doc.json
 
 В документацию попадают только маршруты, соответствующие `^/api/v1`.
 
-## JWT Authentication
+### JWT Authentication
 
 JWT-аутентификация настроена для API и использует файлы ключей в `symfony/config/jwt`.
 
@@ -650,9 +650,9 @@ curl -i -X OPTIONS http://localhost:8000/api/v1/auth/login \
 - same-origin запросы из Swagger могут работать без CORS-заголовков, это нормально
 - на локальном plain `http` браузер может отклонять cookie с `SameSite=None` и `Secure`
 
-## История изменений
+### История изменений
 
-### 2026-04-16
+#### 2026-04-16
 
 - Добавлен endpoint `GET /api/v1/news` со списком новостей, пагинацией и сортировкой
 - Добавлен `ListQueryDto` для маппинга query-параметров и описания схемы в Swagger
@@ -661,27 +661,27 @@ curl -i -X OPTIONS http://localhost:8000/api/v1/auth/login \
 - Расширена Swagger-документация для query-параметров и структуры ответа списка News
 - Добавлен rate limit на `POST /api/v1/auth/login`
 
-### 2026-04-10
+#### 2026-04-10
 
 - Добавлена поддержка Swagger/OpenAPI для `api/v1`
 - Текущий стек API-документации зафиксирован в этом README
 - Добавлено описание задачи по запуску Swagger и подготовке базового News API
 
-## Каталог исходников
+### Каталог исходников
 
 Файлы проекта монтируются из каталога `symfony` в `/workspace` внутри контейнера.
 
-## Структура проекта
+### Структура проекта
 
 - `symfony` содержит кодовую базу приложения Symfony
 - `docker` хранит Docker-файлы проекта
 - `docker-compose.yml` описывает локальную контейнерную среду разработки
 
-## Включенные инструменты
+### Включенные инструменты
 
 Образ содержит `symfony`, `php` и `composer`.
 
-## Git-идентичность
+### Git-идентичность
 
 Укажите git-идентичность в `.env`, если планируете git-операции внутри контейнера:
 
