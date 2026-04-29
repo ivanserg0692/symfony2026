@@ -53,5 +53,11 @@ services:
     stdin_open: false
     tty: false
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: symfony-mailpit
+    ports:
+      - "8025:8025"
+
 volumes:
   database_data:
