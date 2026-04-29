@@ -244,6 +244,18 @@
             "config/packages/monolog.yaml"
         ]
     },
+    "symfony/notifier": {
+        "version": "8.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "5.0",
+            "ref": "178877daf79d2dbd62129dd03612cb1a2cb407cc"
+        },
+        "files": [
+            "config/packages/notifier.yaml"
+        ]
+    },
     "symfony/property-info": {
         "version": "8.0",
         "recipe": {
