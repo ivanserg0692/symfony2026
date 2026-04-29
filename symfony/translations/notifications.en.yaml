@@ -1,0 +1,4 @@
+news:
+    on_moderation:
+        subject: 'News "%name%" is waiting for moderation'
+        content: 'News "%name%" has been moved to moderation. Slug: %slug%'
