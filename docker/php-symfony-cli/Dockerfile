@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libpq-dev \
     librabbitmq-dev \
+    libxslt1-dev \
     libzip-dev \
     unzip \
     wget \
@@ -21,6 +22,7 @@ RUN docker-php-ext-install \
     intl \
     mbstring \
     pdo_pgsql \
+    xsl \
     zip
 
 RUN pecl install amqp xdebug \

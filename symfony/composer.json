@@ -40,7 +40,9 @@
         "symfony/security-bundle": "8.0.*",
         "symfony/serializer": "8.0.*",
         "symfony/validator": "8.0.*",
-        "symfony/yaml": "8.0.*"
+        "symfony/yaml": "8.0.*",
+        "twig/cssinliner-extra": "^3.24",
+        "twig/inky-extra": "^3.24"
     },
     "config": {
         "allow-plugins": {
