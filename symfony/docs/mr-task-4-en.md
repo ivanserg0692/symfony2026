@@ -67,3 +67,16 @@ This merge request added:
 Notification endpoints are available only to authenticated users. Access to a specific notification is checked through `NotificationsVoter`, so a user can view, mark as read, and delete only their own notifications.
 
 DELETE requests are additionally protected by a CSRF token from the `X-CSRF-Token` header, issued by `GET /api/v1/auth/csrf?id=api_mutation`.
+
+### Symfony Notifier Channel for Entity Notifications
+
+This merge request adds a dedicated Symfony Notifier channel named `notifications`, allowing notifications to be delivered into the `Notifications` entity through the standard `NotifierInterface` flow.
+
+The channel:
+- is registered as a `notifier.channel` through `AutoconfigureTag`
+- uses `UserRecipient` to keep the notification linked to a concrete `User`
+- does not create the entity directly, but dispatches `CreateNotificationMessage` to Symfony Messenger
+- routes `CreateNotificationMessage` to the async transport
+- creates the `Notifications` record in `CreateNotificationMessageHandler`
+
+This keeps the integration aligned with Symfony Notifier while moving database persistence to the Messenger worker instead of doing heavy work inside the channel.

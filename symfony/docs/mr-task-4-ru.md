@@ -67,3 +67,16 @@
 Endpoints уведомлений доступны только авторизованным пользователям. Доступ к конкретному уведомлению проверяется через `NotificationsVoter`, поэтому пользователь может просматривать, отмечать прочитанным и удалять только собственные уведомления.
 
 DELETE-запросы дополнительно защищены CSRF-токеном из header `X-CSRF-Token`, который выдается endpoint `GET /api/v1/auth/csrf?id=api_mutation`.
+
+### Канал Symfony Notifier для entity-уведомлений
+
+В рамках MR добавлен отдельный канал Symfony Notifier `notifications`, который позволяет отправлять уведомления в entity `Notifications` через стандартный механизм `NotifierInterface`.
+
+Канал:
+- регистрируется как `notifier.channel` через `AutoconfigureTag`
+- работает с `UserRecipient`, чтобы сохранить связь уведомления с конкретным `User`
+- не создает entity напрямую, а отправляет задачу `CreateNotificationMessage` в Symfony Messenger
+- маршрутизирует `CreateNotificationMessage` в async transport
+- создает запись `Notifications` в `CreateNotificationMessageHandler`
+
+Такой подход сохраняет интеграцию с Symfony Notifier, но переносит запись уведомлений в БД в Messenger worker и не выполняет тяжелую работу внутри канала.
