@@ -30,7 +30,7 @@ class NotificationsRepository extends ServiceEntityRepository
     public function createListQueryBuilder(ListQueryDto $query, User $user): QueryBuilder
     {
         $queryBuilder = $this->createQueryBuilder(self::ROOT_ALIAS);
-        $queryBuilder->andWhere(self::ROOT_ALIAS . '.user = :user');
+        $queryBuilder->andWhere(self::ROOT_ALIAS . '.recipient = :user');
         $queryBuilder->setParameter('user', $user);
 
         return $queryBuilder->orderBy(

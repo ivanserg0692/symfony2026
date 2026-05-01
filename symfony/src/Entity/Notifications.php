@@ -5,10 +5,10 @@ namespace App\Entity;
 use App\Repository\NotificationsRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Gedmo\Mapping\Annotation as Gedmo;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: NotificationsRepository::class)]
-#[ORM\HasLifecycleCallbacks]
 class Notifications
 {
     #[ORM\Id]
@@ -18,6 +18,7 @@ class Notifications
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Gedmo\Timestampable(on: 'create')]
     #[Groups(['notification:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
@@ -48,19 +49,6 @@ class Notifications
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    #[ORM\PrePersist]
-    public function setCreatedAtValue(): void
-    {
-        $this->createdAt ??= new \DateTimeImmutable();
     }
 
     public function getRecipient(): ?User
