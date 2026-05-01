@@ -18,6 +18,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
@@ -141,7 +142,21 @@ final class NotificationController extends AbstractController
     }
 
     #[Route('/notification/{id}', name: 'delete', methods: ['DELETE'])]
+    #[IsCsrfTokenValid(
+        id: 'api_mutation',
+        tokenKey: 'X-CSRF-Token',
+        methods: ['DELETE'],
+        tokenSource: IsCsrfTokenValid::SOURCE_HEADER,
+    )]
     #[OA\Tag(name: 'Notifications')]
+    #[OA\Parameter(
+        name: 'X-CSRF-Token',
+        in: 'header',
+        required: true,
+        description: 'CSRF token returned by GET /api/v1/auth/csrf?id=api_mutation.',
+        schema: new OA\Schema(type: 'string'),
+        example: 'ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c',
+    )]
     #[OA\Parameter(
         name: 'id',
         in: 'path',
@@ -175,10 +190,28 @@ final class NotificationController extends AbstractController
     }
 
     #[Route('/notification', name: 'delete_all', methods: ['DELETE'])]
+    #[IsCsrfTokenValid(
+        id: 'api_mutation',
+        tokenKey: 'X-CSRF-Token',
+        methods: ['DELETE'],
+        tokenSource: IsCsrfTokenValid::SOURCE_HEADER,
+    )]
     #[OA\Tag(name: 'Notifications')]
+    #[OA\Parameter(
+        name: 'X-CSRF-Token',
+        in: 'header',
+        required: true,
+        description: 'CSRF token returned by GET /api/v1/auth/csrf?id=api_mutation.',
+        schema: new OA\Schema(type: 'string'),
+        example: 'ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c',
+    )]
     #[OA\Response(
         response: 204,
         description: 'Current user notifications deleted.',
+    )]
+    #[OA\Response(
+        response: 403,
+        description: 'Access denied or invalid CSRF token.',
     )]
     public function deleteAll(NotificationsRepository $notificationsRepository): Response
     {

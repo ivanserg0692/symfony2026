@@ -10,6 +10,7 @@ use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api/v1/auth', name: 'api_v1_auth_')]
@@ -18,27 +19,47 @@ final class AuthController extends AbstractController
     #[Route('/csrf', name: 'csrf', methods: ['GET'])]
     #[OA\Get(
         summary: 'Issue CSRF token for auth endpoints',
-        description: 'Generates a stateless CSRF token for authentication endpoints, stores its companion cookie on the API domain, and returns the token that must be sent in the configured CSRF header.'
+        description: 'Generates a stateless CSRF token, stores its companion cookie on the API domain, and returns the token that must be sent in the configured CSRF header. Use id=api_mutation for unsafe API methods such as DELETE.'
     )]
     #[OA\Tag(name: 'Auth')]
+    #[OA\Parameter(
+        name: 'id',
+        in: 'query',
+        required: false,
+        description: 'CSRF token id. Defaults to authenticate.',
+        schema: new OA\Schema(type: 'string', enum: ['authenticate', 'api_mutation']),
+        example: 'api_mutation',
+    )]
     #[OA\Response(
         response: 200,
         description: 'CSRF token issued successfully.',
         content: new OA\JsonContent(
-            required: ['token', 'header_name', 'cookie_name'],
+            required: ['token', 'token_id', 'header_name', 'cookie_name'],
             properties: [
                 new OA\Property(property: 'token', type: 'string', example: 'ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c'),
+                new OA\Property(property: 'token_id', type: 'string', example: 'api_mutation'),
                 new OA\Property(property: 'header_name', type: 'string', example: 'X-CSRF-Token'),
                 new OA\Property(property: 'cookie_name', type: 'string', example: 'csrf-token'),
             ],
             type: 'object',
         )
     )]
+    #[OA\Response(
+        response: 400,
+        description: 'Unsupported CSRF token id.',
+    )]
     public function csrf(Request $request, EnvAwareStatelessCsrfTokenManager $csrfTokenManager): JsonResponse
     {
-        $token = $csrfTokenManager->refreshToken('authenticate')->getValue();
+        $tokenId = $request->query->getString('id', 'authenticate');
+
+        if (!\in_array($tokenId, ['authenticate', 'api_mutation'], true)) {
+            throw new BadRequestHttpException('Unsupported CSRF token id.');
+        }
+
+        $token = $csrfTokenManager->refreshToken($tokenId)->getValue();
         $response = $this->json([
             'token' => $token,
+            'token_id' => $tokenId,
             'header_name' => $csrfTokenManager->getHeaderName(),
             'cookie_name' => $csrfTokenManager->getCookieName(),
         ]);
