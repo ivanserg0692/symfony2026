@@ -103,7 +103,21 @@ final class NotificationController extends AbstractController
     }
 
     #[Route('/notification/{id}/read', name: 'mark_as_read', methods: ['PATCH'])]
+    #[IsCsrfTokenValid(
+        id: 'api_mutation',
+        tokenKey: 'X-CSRF-Token',
+        methods: ['PATCH'],
+        tokenSource: IsCsrfTokenValid::SOURCE_HEADER,
+    )]
     #[OA\Tag(name: 'Notifications')]
+    #[OA\Parameter(
+        name: 'X-CSRF-Token',
+        in: 'header',
+        required: true,
+        description: 'CSRF token returned by GET /api/v1/auth/csrf?id=api_mutation.',
+        schema: new OA\Schema(type: 'string'),
+        example: 'ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c',
+    )]
     #[OA\Parameter(
         name: 'id',
         in: 'path',
