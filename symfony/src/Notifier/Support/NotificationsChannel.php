@@ -2,9 +2,9 @@
 
 namespace App\Notifier\Support;
 
-use App\Entity\Notifications;
-use App\Repository\NotificationsRepository;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Symfony\Component\Messenger\Exception\ExceptionInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Notifier\Channel\ChannelInterface;
 use Symfony\Component\Notifier\Notification\Notification;
 use Symfony\Component\Notifier\Recipient\RecipientInterface;
@@ -13,10 +13,13 @@ use Symfony\Component\Notifier\Recipient\RecipientInterface;
 final readonly class NotificationsChannel implements ChannelInterface
 {
     public function __construct(
-        private NotificationsRepository $notificationsRepository,
+        private MessageBusInterface $messageBus,
     ) {
     }
 
+    /**
+     * @throws ExceptionInterface
+     */
     public function notify(Notification $notification, RecipientInterface $recipient, ?string $transportName = null): void
     {
         if (!$recipient instanceof UserRecipient) {
@@ -31,13 +34,20 @@ final readonly class NotificationsChannel implements ChannelInterface
         return $recipient instanceof UserRecipient;
     }
 
+    /**
+     * @throws ExceptionInterface
+     */
     private function send(Notification $notification, UserRecipient $recipient): void
     {
-        $entity = new Notifications()
-            ->setRecipient($recipient->getUser())
-            ->setMessage($notification->getContent() ?: $notification->getSubject());
+        $recipientId = $recipient->getUser()->getId();
 
-        $this->notificationsRepository->save($entity);
+        if (null === $recipientId) {
+            return;
+        }
 
+        $this->messageBus->dispatch(new CreateNotificationMessage(
+            $recipientId,
+            $notification->getContent() ?: $notification->getSubject(),
+        ));
     }
 }

@@ -25,10 +25,10 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     public function createAdminsQueryBuilder(): QueryBuilder
     {
         return $this->createQueryBuilder('users')
-            ->distinct()
             ->innerJoin('users.groups', 'groups')
             ->andWhere('groups.name = :adminGroupName OR groups.isAdmin = true')
             ->setParameter('adminGroupName', UserGroups::ADMIN)
+            ->groupBy('users.id')
             ->orderBy('users.email', 'ASC');
     }
 

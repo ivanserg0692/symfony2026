@@ -8,10 +8,10 @@ use App\Enum\NewsStatusCode;
 use App\Notifier\NewsNotifier;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
-use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 #[AsEntityListener(event: Events::postPersist, method: 'postPersist', entity: News::class)]
 #[AsEntityListener(event: Events::preUpdate, method: 'preUpdate', entity: News::class)]
@@ -22,8 +22,6 @@ final class NewsNotificationListener
      * @var array<int, News>
      */
     private array $queuedNews = [];
-
-    private bool $isFlushingNotifications = false;
 
     public function __construct(
         private readonly LoggerInterface $logger,
@@ -72,25 +70,20 @@ final class NewsNotificationListener
         ]);
     }
 
-    public function postFlush(PostFlushEventArgs $event): void
+    /**
+     * @throws TransportExceptionInterface
+     */
+    public function postFlush(): void
     {
-        //recurse protection since $this->newsNotifier->notifyOnModeration($news); causes infinite loop
-        if ([] === $this->queuedNews || $this->isFlushingNotifications) {
+        if ([] === $this->queuedNews) {
             return;
         }
 
         $queuedNews = $this->queuedNews;
         $this->queuedNews = [];
-        $this->isFlushingNotifications = true;
 
-        try {
-            foreach ($queuedNews as $news) {
-                $this->newsNotifier->notifyOnModeration($news);
-            }
-
-            $event->getObjectManager()->flush();
-        } finally {
-            $this->isFlushingNotifications = false;
+        foreach ($queuedNews as $news) {
+            $this->newsNotifier->notifyOnModeration($news);
         }
     }
 
