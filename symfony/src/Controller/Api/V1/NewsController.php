@@ -2,7 +2,8 @@
 
 namespace App\Controller\Api\V1;
 
-use App\Dto\ListQueryDto;
+use App\Dto\Listing\ListResponseDto;
+use App\Dto\Sorting\ListQueryDto;
 use App\Entity\News;
 use App\Entity\User;
 use App\Repository\NewsRepository;
@@ -25,29 +26,16 @@ final class NewsController extends AbstractController
         response: 200,
         description: 'Paginated list of news.',
         content: new OA\JsonContent(
-            type: 'object',
-            properties: [
-                new OA\Property(
-                    property: 'items',
-                    type: 'array',
-                    items: new OA\Items(ref: new Model(type: News::class, groups: ['news:read', 'user:read', 'status:read'])),
-                ),
-                new OA\Property(
-                    property: 'pagination',
+            allOf: [
+                new OA\Schema(ref: new Model(type: ListResponseDto::class)),
+                new OA\Schema(
                     type: 'object',
                     properties: [
-                        new OA\Property(property: 'page', type: 'integer', example: 1),
-                        new OA\Property(property: 'limit', type: 'integer', example: 10),
-                        new OA\Property(property: 'total', type: 'integer', example: 42),
-                        new OA\Property(property: 'pages', type: 'integer', example: 5),
-                    ],
-                ),
-                new OA\Property(
-                    property: 'sorting',
-                    type: 'object',
-                    properties: [
-                        new OA\Property(property: 'sort', type: 'string', example: 'createdAt'),
-                        new OA\Property(property: 'direction', type: 'string', example: 'DESC'),
+                        new OA\Property(
+                            property: 'items',
+                            type: 'array',
+                            items: new OA\Items(ref: new Model(type: News::class, groups: ['news:read', 'user:read', 'status:read'])),
+                        ),
                     ],
                 ),
             ],
@@ -66,19 +54,11 @@ final class NewsController extends AbstractController
         $pager->setMaxPerPage($repository->normalizeLimit($query->limit));
         $pager->setCurrentPage($repository->normalizePage($query->page));
 
-        return $this->json([
-            'items' => iterator_to_array($pager->getCurrentPageResults()),
-            'pagination' => [
-                'page' => $pager->getCurrentPage(),
-                'limit' => $pager->getMaxPerPage(),
-                'total' => $pager->getNbResults(),
-                'pages' => $pager->getNbPages(),
-            ],
-            'sorting' => [
-                'sort' => $repository->normalizeSort($query->sort),
-                'direction' => $repository->normalizeDirection($query->direction),
-            ],
-        ], context: [
+        return $this->json(ListResponseDto::fromPager(
+            $pager,
+            $repository->normalizeSort($query->sort),
+            $repository->normalizeDirection($query->direction),
+        ), context: [
             'groups' => ['news:read', 'user:read', 'status:read'],
         ]);
     }

@@ -2,7 +2,7 @@
 
 namespace App\Repository;
 
-use App\Dto\ListQueryDto;
+use App\Dto\Sorting\ListQueryDto;
 use App\Entity\News;
 use App\Entity\User;
 use App\Enum\NewsStatusCode;

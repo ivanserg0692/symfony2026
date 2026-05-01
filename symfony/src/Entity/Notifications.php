@@ -7,6 +7,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: NotificationsRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Notifications
 {
     #[ORM\Id]
@@ -23,6 +24,9 @@ class Notifications
 
     #[ORM\Column(type: Types::TEXT)]
     private ?string $message = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $readAt = null;
 
 
     public function getId(): ?int
@@ -49,6 +53,12 @@ class Notifications
         return $this;
     }
 
+    #[ORM\PrePersist]
+    public function setCreatedAtValue(): void
+    {
+        $this->createdAt ??= new \DateTimeImmutable();
+    }
+
     public function getRecipient(): ?User
     {
         return $this->recipient;
@@ -69,6 +79,30 @@ class Notifications
     public function setMessage(string $message): static
     {
         $this->message = $message;
+
+        return $this;
+    }
+
+    public function getReadAt(): ?\DateTimeImmutable
+    {
+        return $this->readAt;
+    }
+
+    public function isRead(): bool
+    {
+        return null !== $this->readAt;
+    }
+
+    public function markAsRead(): static
+    {
+        $this->readAt ??= new \DateTimeImmutable();
+
+        return $this;
+    }
+
+    public function markAsUnread(): static
+    {
+        $this->readAt = null;
 
         return $this;
     }

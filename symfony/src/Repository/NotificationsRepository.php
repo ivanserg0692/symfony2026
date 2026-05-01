@@ -2,8 +2,11 @@
 
 namespace App\Repository;
 
+use App\Dto\Sorting\ListQueryDto;
 use App\Entity\Notifications;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -11,33 +14,23 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class NotificationsRepository extends ServiceEntityRepository
 {
+    private const ROOT_ALIAS = 'notifications';
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Notifications::class);
     }
 
-    //    /**
-    //     * @return Notifications[] Returns an array of Notifications objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('n')
-    //            ->andWhere('n.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('n.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
 
-    //    public function findOneBySomeField($value): ?Notifications
-    //    {
-    //        return $this->createQueryBuilder('n')
-    //            ->andWhere('n.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    public function createListQueryBuilder(ListQueryDto $query, User $user): QueryBuilder
+    {
+        $queryBuilder = $this->createQueryBuilder(self::ROOT_ALIAS);
+        $queryBuilder->andWhere(self::ROOT_ALIAS . '.user = :user');
+        $queryBuilder->setParameter('user', $user);
+
+        return $queryBuilder->orderBy(
+            self::ROOT_ALIAS . '.' . $this->normalizeSort($query->sort),
+            $this->normalizeDirection($query->direction)
+        );
+    }
 }
