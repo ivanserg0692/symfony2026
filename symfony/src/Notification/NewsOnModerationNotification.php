@@ -10,7 +10,7 @@ final class NewsOnModerationNotification extends Notification
         private readonly string $emailSubject,
         private readonly string $emailContent,
     ) {
-        parent::__construct($emailSubject, []);
+        parent::__construct($emailSubject, ['notifications']);
 
         $this->content($emailContent);
     }

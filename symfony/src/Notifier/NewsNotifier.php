@@ -5,6 +5,7 @@ namespace App\Notifier;
 use App\Controller\Admin\NewsCrudController;
 use App\Entity\News;
 use App\Notification\NewsOnModerationNotification;
+use App\Notifier\Support\UserRecipient;
 use App\Repository\UserRepository;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
@@ -12,12 +13,14 @@ use Symfony\Bridge\Twig\Mime\NotificationEmail;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Notifier\NotifierInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class NewsNotifier
 {
     public function __construct(
+        private NotifierInterface   $notifier,
         private MailerInterface     $mailer,
         private TranslatorInterface $translator,
         private UserRepository      $userRepository,
@@ -33,21 +36,32 @@ final readonly class NewsNotifier
      */
     public function notifyOnModeration(News $news): void
     {
-        $adminEmails = $this->userRepository
+        $admins = $this->userRepository
             ->createAdminsQueryBuilder()
-            ->select('users.email')
             ->getQuery()
-            ->getSingleColumnResult();
+            ->getResult();
 
-        if ([] === $adminEmails) {
+        if ([] === $admins) {
             return;
         }
 
-        $this->sendEmailToAdmins($this->createOnModerationNotification($news), $adminEmails, $news);
+        $notification = $this->createOnModerationNotification($news);
+
+        $emails = [];
+        $recipients = [];
+
+        foreach ($admins as $admin) {
+            $emails[] = (string) $admin->getEmail();
+            $recipients[] = new UserRecipient($admin);
+        }
+
+        $this->sendEmailToAdmins($notification, $emails, $news);
+
+        $this->notifier->send($notification, ...$recipients);
     }
 
     /**
-     * @param list<string> $adminEmails
+     * @param string[] $adminEmails
      * @throws TransportExceptionInterface
      */
     private function sendEmailToAdmins(NewsOnModerationNotification $notification, array $adminEmails, News $news): void

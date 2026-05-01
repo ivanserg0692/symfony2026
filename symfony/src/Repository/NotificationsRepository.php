@@ -26,6 +26,10 @@ class NotificationsRepository extends ServiceEntityRepository
         parent::__construct($registry, Notifications::class);
     }
 
+    public function save(Notifications $notification): void
+    {
+        $this->getEntityManager()->persist($notification);
+    }
 
     public function createListQueryBuilder(ListQueryDto $query, User $user): QueryBuilder
     {
