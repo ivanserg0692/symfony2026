@@ -56,6 +56,7 @@ services:
   mailpit:
     image: axllent/mailpit:latest
     container_name: symfony-mailpit
+    command: ["--smtp-max-recipients", "1000"]
     ports:
       - "8025:8025"
 

@@ -2,3 +2,4 @@ news:
     on_moderation:
         subject: 'Новость "%name%" ожидает модерации'
         content: 'Новость "%name%" переведена на модерацию. Slug: %slug%'
+        action: 'Открыть новость'

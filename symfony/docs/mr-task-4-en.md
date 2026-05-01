@@ -34,3 +34,19 @@ RabbitMQ with the management UI was added to the project as part of this merge r
 - Messenger now has an asynchronous `async` transport configured through an AMQP DSN
 - `Symfony\Component\Mailer\Messenger\SendEmailMessage` is routed to `async`
 - the baseline infrastructure check can be done with `mailer:test` and `messenger:consume async`
+
+## Updates for 2026-05-01
+
+### News Moderation Email Notification
+
+![Email notification in Mailpit](images/email-notification.png)
+
+The screenshot confirms that the notification for moving a news item to moderation is successfully delivered to Mailpit and rendered as an HTML email based on `NotificationEmail`.
+
+The email includes:
+- a subject with the news title
+- notification text explaining that the news item was moved to moderation
+- the news slug
+- an `Open news` action button that links to the news item in the admin panel
+
+This result captures the full local flow: a news status change event creates the notification, Symfony Mailer sends the email, Messenger and RabbitMQ process the delivery asynchronously, and Mailpit provides the final verification point.

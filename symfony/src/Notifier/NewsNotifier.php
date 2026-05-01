@@ -2,13 +2,17 @@
 
 namespace App\Notifier;
 
+use App\Controller\Admin\NewsCrudController;
 use App\Entity\News;
 use App\Notification\NewsOnModerationNotification;
 use App\Repository\UserRepository;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
+use Symfony\Bridge\Twig\Mime\NotificationEmail;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class NewsNotifier
@@ -17,6 +21,7 @@ final readonly class NewsNotifier
         private MailerInterface     $mailer,
         private TranslatorInterface $translator,
         private UserRepository      $userRepository,
+        private UrlGeneratorInterface $urlGenerator,
         #[Autowire('%env(string:MAILER_FROM)%')]
         private string              $mailerFrom,
     )
@@ -38,22 +43,48 @@ final readonly class NewsNotifier
             return;
         }
 
-        $this->sendEmailToAdmins($this->createOnModerationNotification($news), $adminEmails);
+        $this->sendEmailToAdmins($this->createOnModerationNotification($news), $adminEmails, $news);
     }
 
     /**
      * @param list<string> $adminEmails
      * @throws TransportExceptionInterface
      */
-    private function sendEmailToAdmins(NewsOnModerationNotification $notification, array $adminEmails): void
+    private function sendEmailToAdmins(NewsOnModerationNotification $notification, array $adminEmails, News $news): void
     {
-        $email = new Email()
+        $email = new NotificationEmail()
             ->from($this->mailerFrom)
-            ->bcc(...$adminEmails)
+            ->to(...$adminEmails)
             ->subject($notification->getEmailSubject())
-            ->text($notification->getEmailContent());
+            ->content($notification->getEmailContent());
+
+        $adminNewsUrl = $this->createAdminNewsUrl($news);
+
+        if (null !== $adminNewsUrl) {
+            $email->action(
+                $this->translator->trans('news.on_moderation.action', [], 'notifications'),
+                $adminNewsUrl,
+            );
+        }
 
         $this->mailer->send($email);
+    }
+
+    private function createAdminNewsUrl(News $news): ?string
+    {
+        if (null === $news->getId()) {
+            return null;
+        }
+
+        return $this->urlGenerator->generate(
+            'admin',
+            [
+                EA::CRUD_CONTROLLER_FQCN => NewsCrudController::class,
+                EA::CRUD_ACTION => Action::EDIT,
+                EA::ENTITY_ID => $news->getId(),
+            ],
+            UrlGeneratorInterface::ABSOLUTE_URL,
+        );
     }
 
     private function createOnModerationNotification(News $news): NewsOnModerationNotification
