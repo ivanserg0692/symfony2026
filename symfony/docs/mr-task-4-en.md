@@ -50,3 +50,20 @@ The email includes:
 - an `Open news` action button that links to the news item in the admin panel
 
 This result captures the full local flow: a news status change event creates the notification, Symfony Mailer sends the email, Messenger and RabbitMQ process the delivery asynchronously, and Mailpit provides the final verification point.
+
+### Notification API Endpoints
+
+![Notification endpoints in Swagger](images/notification-endpoints.png)
+
+The screenshot captures the Swagger description for the endpoints used to work with notifications of the current user.
+
+This merge request added:
+- listing notifications of the current user
+- viewing a notification detail
+- marking a notification as read
+- deleting a single notification
+- deleting all notifications of the current user
+
+Notification endpoints are available only to authenticated users. Access to a specific notification is checked through `NotificationsVoter`, so a user can view, mark as read, and delete only their own notifications.
+
+DELETE requests are additionally protected by a CSRF token from the `X-CSRF-Token` header, issued by `GET /api/v1/auth/csrf?id=api_mutation`.
