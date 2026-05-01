@@ -5,38 +5,55 @@ namespace App\Notifier;
 use App\Entity\News;
 use App\Notification\NewsOnModerationNotification;
 use App\Repository\UserRepository;
-use Symfony\Component\Notifier\NotifierInterface;
-use Symfony\Component\Notifier\Recipient\Recipient;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class NewsNotifier
 {
     public function __construct(
-        private NotifierInterface $notifier,
+        private MailerInterface     $mailer,
         private TranslatorInterface $translator,
-        private UserRepository $userRepository,
-    ) {
+        private UserRepository      $userRepository,
+        #[Autowire('%env(string:MAILER_FROM)%')]
+        private string              $mailerFrom,
+    )
+    {
     }
 
+    /**
+     * @throws TransportExceptionInterface
+     */
     public function notifyOnModeration(News $news): void
     {
-        $recipients = array_map(
-            static fn (string $email): Recipient => new Recipient((string) $email),
-            $this->userRepository
-                ->createAdminsQueryBuilder()
-                ->select('users.email')
-                ->getQuery()
-                ->getSingleColumnResult(),
-        );
+        $adminEmails = $this->userRepository
+            ->createAdminsQueryBuilder()
+            ->select('users.email')
+            ->getQuery()
+            ->getSingleColumnResult();
 
-        if ([] === $recipients) {
+        if ([] === $adminEmails) {
             return;
         }
 
-        $this->notifier->send(
-            $this->createOnModerationNotification($news),
-            ...$recipients,
-        );
+        $this->sendEmailToAdmins($this->createOnModerationNotification($news), $adminEmails);
+    }
+
+    /**
+     * @param list<string> $adminEmails
+     * @throws TransportExceptionInterface
+     */
+    private function sendEmailToAdmins(NewsOnModerationNotification $notification, array $adminEmails): void
+    {
+        $email = new Email()
+            ->from($this->mailerFrom)
+            ->bcc(...$adminEmails)
+            ->subject($notification->getEmailSubject())
+            ->text($notification->getEmailContent());
+
+        $this->mailer->send($email);
     }
 
     private function createOnModerationNotification(News $news): NewsOnModerationNotification

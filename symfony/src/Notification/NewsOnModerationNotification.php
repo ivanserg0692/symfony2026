@@ -6,10 +6,22 @@ use Symfony\Component\Notifier\Notification\Notification;
 
 final class NewsOnModerationNotification extends Notification
 {
-    public function __construct(string $subject, string $content)
-    {
-        parent::__construct($subject, ['email']);
+    public function __construct(
+        private readonly string $emailSubject,
+        private readonly string $emailContent,
+    ) {
+        parent::__construct($emailSubject, []);
 
-        $this->content($content);
+        $this->content($emailContent);
+    }
+
+    public function getEmailSubject(): string
+    {
+        return $this->emailSubject;
+    }
+
+    public function getEmailContent(): string
+    {
+        return $this->emailContent;
     }
 }
