@@ -31,6 +31,7 @@ class Notifications
     private ?string $message = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['notification:read'])]
     private ?\DateTimeImmutable $readAt = null;
 
 

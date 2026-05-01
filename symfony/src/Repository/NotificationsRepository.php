@@ -30,8 +30,8 @@ class NotificationsRepository extends ServiceEntityRepository
     public function createListQueryBuilder(ListQueryDto $query, User $user): QueryBuilder
     {
         $queryBuilder = $this->createQueryBuilder(self::ROOT_ALIAS);
-        $queryBuilder->andWhere(self::ROOT_ALIAS . '.recipient = :user');
-        $queryBuilder->setParameter('user', $user);
+        $queryBuilder->andWhere(self::ROOT_ALIAS . '.recipient = :recipient');
+        $queryBuilder->setParameter('recipient', $user);
 
         return $queryBuilder->orderBy(
             self::ROOT_ALIAS . '.' . $this->listQueryNormalizer->normalizeSort(
@@ -41,5 +41,15 @@ class NotificationsRepository extends ServiceEntityRepository
             ),
             $this->listQueryNormalizer->normalizeDirection($query->direction)
         );
+    }
+
+    public function deleteByRecipient(User $recipient): int
+    {
+        return $this->createQueryBuilder(self::ROOT_ALIAS)
+            ->delete()
+            ->andWhere(self::ROOT_ALIAS . '.recipient = :recipient')
+            ->setParameter('recipient', $recipient)
+            ->getQuery()
+            ->execute();
     }
 }
