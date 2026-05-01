@@ -6,6 +6,7 @@ use App\Dto\Sorting\ListQueryDto;
 use App\Entity\News;
 use App\Entity\User;
 use App\Enum\NewsStatusCode;
+use App\Repository\Services\ListQueryNormalizer;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -18,13 +19,15 @@ class NewsRepository extends ServiceEntityRepository
     private const ROOT_ALIAS = 'news';
     private const CREATED_BY_ASSOCIATION = 'createdBy';
     private const STATUS_ASSOCIATION = 'status';
-    private const DEFAULT_SORT = 'createdAt';
-    private const ALLOWED_SORTS = ['id', 'slug', 'createdAt'];
+    public const DEFAULT_SORT = 'createdAt';
+    public const ALLOWED_SORTS = ['id', 'slug', 'createdAt'];
     private const CREATED_BY_ALIAS = self::CREATED_BY_ASSOCIATION;
     private const STATUS_ALIAS = 'status';
 
-    public function __construct(ManagerRegistry $registry)
-    {
+    public function __construct(
+        ManagerRegistry $registry,
+        private readonly ListQueryNormalizer $listQueryNormalizer,
+    ) {
         parent::__construct($registry, News::class);
     }
 
@@ -33,8 +36,12 @@ class NewsRepository extends ServiceEntityRepository
         $queryBuilder = $this->createVisibleQueryBuilder($user);
 
         return $queryBuilder->orderBy(
-            self::ROOT_ALIAS . '.' . $this->normalizeSort($query->sort),
-            $this->normalizeDirection($query->direction)
+            self::ROOT_ALIAS . '.' . $this->listQueryNormalizer->normalizeSort(
+                $query->sort,
+                self::ALLOWED_SORTS,
+                self::DEFAULT_SORT,
+            ),
+            $this->listQueryNormalizer->normalizeDirection($query->direction)
         );
     }
 
@@ -93,23 +100,4 @@ class NewsRepository extends ServiceEntityRepository
         return $queryBuilder->getRootAliases()[0] ?? self::ROOT_ALIAS;
     }
 
-    public function normalizePage(int $page): int
-    {
-        return max(1, $page);
-    }
-
-    public function normalizeLimit(int $limit): int
-    {
-        return min(100, max(1, $limit));
-    }
-
-    public function normalizeSort(string $sort): string
-    {
-        return in_array($sort, self::ALLOWED_SORTS, true) ? $sort : self::DEFAULT_SORT;
-    }
-
-    public function normalizeDirection(string $direction): string
-    {
-        return strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC';
-    }
 }

@@ -7,6 +7,7 @@ use App\Dto\Sorting\ListQueryDto;
 use App\Entity\News;
 use App\Entity\User;
 use App\Repository\NewsRepository;
+use App\Repository\Services\ListQueryNormalizer;
 use App\Security\Voter\NewsVoter;
 use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
@@ -44,6 +45,7 @@ final class NewsController extends AbstractController
     public function index(
         #[MapQueryString] ListQueryDto $query,
         NewsRepository $repository,
+        ListQueryNormalizer $listQueryNormalizer,
     ): JsonResponse
     {
         $currentUser = $this->getUser();
@@ -51,13 +53,17 @@ final class NewsController extends AbstractController
             $query,
             $currentUser instanceof User ? $currentUser : null,
         )));
-        $pager->setMaxPerPage($repository->normalizeLimit($query->limit));
-        $pager->setCurrentPage($repository->normalizePage($query->page));
+        $pager->setMaxPerPage($listQueryNormalizer->normalizeLimit($query->limit));
+        $pager->setCurrentPage($listQueryNormalizer->normalizePage($query->page));
 
         return $this->json(ListResponseDto::fromPager(
             $pager,
-            $repository->normalizeSort($query->sort),
-            $repository->normalizeDirection($query->direction),
+            $listQueryNormalizer->normalizeSort(
+                $query->sort,
+                NewsRepository::ALLOWED_SORTS,
+                NewsRepository::DEFAULT_SORT,
+            ),
+            $listQueryNormalizer->normalizeDirection($query->direction),
         ), context: [
             'groups' => ['news:read', 'user:read', 'status:read'],
         ]);

@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\NotificationsRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: NotificationsRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -13,15 +14,18 @@ class Notifications
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['notification:read'])]
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Groups(['notification:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'notifications')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $recipient = null;
 
+    #[Groups(['notification:read'])]
     #[ORM\Column(type: Types::TEXT)]
     private ?string $message = null;
 
