@@ -89,21 +89,23 @@ The API exposes news, authentication, current-user, and notification operations 
 
 ### API Endpoints
 
-| Method | Path | Auth | Purpose |
-| --- | --- | --- | --- |
-| `GET` | `/api/v1/ping` | Public | Health check for the API entry point. |
-| `GET` | `/api/v1/auth/csrf` | Public | Issues a CSRF token for login, refresh, logout, and unsafe API mutations. |
-| `POST` | `/api/v1/auth/login` | Public + CSRF | Authenticates by email, password, and Turnstile token; returns an access JWT and can set auth cookies. |
-| `POST` | `/api/v1/auth/refresh` | Refresh token + CSRF | Issues a new access JWT and rotates the refresh token. |
-| `POST` | `/api/v1/auth/logout` | Refresh token + CSRF | Clears authentication cookies and invalidates the refresh token when available. |
-| `GET` | `/api/v1/auth/me` | Access token | Returns the current authenticated user. |
-| `GET` | `/api/v1/news` | Public or access token | Returns a paginated news list. Authenticated users can see additional allowed statuses. |
-| `GET` | `/api/v1/news/{slug}` | Public or access token | Returns one news item when its status is visible to the current user. |
-| `GET` | `/api/v1/notification` | Access token | Returns the current user's paginated notifications. |
-| `GET` | `/api/v1/notification/{id}` | Access token | Returns one notification if it belongs to the current user. |
-| `PATCH` | `/api/v1/notification/{id}/read` | Access token + CSRF | Marks one notification as read. |
-| `DELETE` | `/api/v1/notification/{id}` | Access token + CSRF | Deletes one notification. |
-| `DELETE` | `/api/v1/notification` | Access token + CSRF | Deletes all notifications of the current user. |
+<!-- START api-endpoints-en generated from OpenAPI -->
+| Method | Path | Summary |
+| --- | --- | --- |
+| `GET` | `/api/v1/auth/csrf` | Issue CSRF token for auth endpoints |
+| `POST` | `/api/v1/auth/login` | Authenticate user and issue JWT token |
+| `POST` | `/api/v1/auth/logout` | Logout current user |
+| `GET` | `/api/v1/auth/me` | Get current authenticated user |
+| `POST` | `/api/v1/auth/refresh` | Refresh JWT access token |
+| `GET` | `/api/v1/news` | Paginated list of news. |
+| `GET` | `/api/v1/news/{slug}` | News item. |
+| `GET` | `/api/v1/notification` | Paginated list of current user notifications. |
+| `DELETE` | `/api/v1/notification` | Current user notifications deleted. |
+| `GET` | `/api/v1/notification/{id}` | Notification item. |
+| `DELETE` | `/api/v1/notification/{id}` | Notification deleted. |
+| `PATCH` | `/api/v1/notification/{id}/read` | Notification marked as read. |
+| `GET` | `/api/v1/ping` | Ping API v1 |
+<!-- END api-endpoints-en generated from OpenAPI -->
 
 ### Admin Moderation and Notifications
 
@@ -482,21 +484,23 @@ API отдает новости, аутентификацию, текущего 
 
 ### API Endpoints
 
-| Method | Path | Auth | Назначение |
-| --- | --- | --- | --- |
-| `GET` | `/api/v1/ping` | Public | Health check для точки входа API. |
-| `GET` | `/api/v1/auth/csrf` | Public | Выдает CSRF token для login, refresh, logout и небезопасных API mutations. |
-| `POST` | `/api/v1/auth/login` | Public + CSRF | Аутентифицирует по email, password и Turnstile token; возвращает access JWT и может установить auth cookies. |
-| `POST` | `/api/v1/auth/refresh` | Refresh token + CSRF | Выпускает новый access JWT и ротирует refresh token. |
-| `POST` | `/api/v1/auth/logout` | Refresh token + CSRF | Очищает auth cookies и инвалидирует refresh token, если он доступен в запросе. |
-| `GET` | `/api/v1/auth/me` | Access token | Возвращает текущего аутентифицированного пользователя. |
-| `GET` | `/api/v1/news` | Public или access token | Возвращает пагинированный список новостей. Аутентифицированные пользователи могут видеть дополнительные разрешенные статусы. |
-| `GET` | `/api/v1/news/{slug}` | Public или access token | Возвращает одну новость, если ее статус видим текущему пользователю. |
-| `GET` | `/api/v1/notification` | Access token | Возвращает пагинированные уведомления текущего пользователя. |
-| `GET` | `/api/v1/notification/{id}` | Access token | Возвращает одно уведомление, если оно принадлежит текущему пользователю. |
-| `PATCH` | `/api/v1/notification/{id}/read` | Access token + CSRF | Помечает одно уведомление прочитанным. |
-| `DELETE` | `/api/v1/notification/{id}` | Access token + CSRF | Удаляет одно уведомление. |
-| `DELETE` | `/api/v1/notification` | Access token + CSRF | Удаляет все уведомления текущего пользователя. |
+<!-- START api-endpoints-ru generated from OpenAPI -->
+| Method | Path | Описание из OpenAPI |
+| --- | --- | --- |
+| `GET` | `/api/v1/auth/csrf` | Issue CSRF token for auth endpoints |
+| `POST` | `/api/v1/auth/login` | Authenticate user and issue JWT token |
+| `POST` | `/api/v1/auth/logout` | Logout current user |
+| `GET` | `/api/v1/auth/me` | Get current authenticated user |
+| `POST` | `/api/v1/auth/refresh` | Refresh JWT access token |
+| `GET` | `/api/v1/news` | Paginated list of news. |
+| `GET` | `/api/v1/news/{slug}` | News item. |
+| `GET` | `/api/v1/notification` | Paginated list of current user notifications. |
+| `DELETE` | `/api/v1/notification` | Current user notifications deleted. |
+| `GET` | `/api/v1/notification/{id}` | Notification item. |
+| `DELETE` | `/api/v1/notification/{id}` | Notification deleted. |
+| `PATCH` | `/api/v1/notification/{id}/read` | Notification marked as read. |
+| `GET` | `/api/v1/ping` | Ping API v1 |
+<!-- END api-endpoints-ru generated from OpenAPI -->
 
 ### Модерация в админке и уведомления
 
