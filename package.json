@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "readme:api": "node scripts/readme-api-table.mjs README.md",
+    "readme:toc": "doctoc README.md",
+    "readme:update": "npm run readme:api && npm run readme:toc"
+  },
   "devDependencies": {
     "doctoc": "^2.4.1"
   }

@@ -1,5 +1,8 @@
+parameters:
+    app.default_locale: en
+
 framework:
-    default_locale: en
+    default_locale: '%env(default:app.default_locale:APP_LOCALE)%'
     translator:
         default_path: '%kernel.project_dir%/translations'
         providers:

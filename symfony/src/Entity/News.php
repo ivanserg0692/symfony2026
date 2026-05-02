@@ -26,9 +26,11 @@ class News
 
     #[Groups(['news:read'])]
     #[ORM\Column]
+    #[Gedmo\Timestampable(on: 'create')]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[Gedmo\Timestampable(on: 'update')]
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[Groups(['news:read'])]

@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     libonig-dev \
     libpq-dev \
+    librabbitmq-dev \
+    libxslt1-dev \
     libzip-dev \
     unzip \
     wget \
@@ -20,10 +22,11 @@ RUN docker-php-ext-install \
     intl \
     mbstring \
     pdo_pgsql \
+    xsl \
     zip
 
-RUN pecl install xdebug \
-    && docker-php-ext-enable xdebug
+RUN pecl install amqp xdebug \
+    && docker-php-ext-enable amqp xdebug
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 

@@ -53,5 +53,23 @@ services:
     stdin_open: false
     tty: false
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: symfony-mailpit
+    command: ["--smtp-max-recipients", "1000"]
+    ports:
+      - "8025:8025"
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: symfony-rabbitmq
+    env_file:
+      - .env.local
+    ports:
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
 volumes:
   database_data:
+  rabbitmq_data:

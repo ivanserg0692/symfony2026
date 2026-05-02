@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\User;
+use App\Entity\UserGroups;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -20,6 +21,17 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     {
         parent::__construct($registry, User::class);
     }
+
+    public function createAdminsQueryBuilder(): QueryBuilder
+    {
+        return $this->createQueryBuilder('users')
+            ->innerJoin('users.groups', 'groups')
+            ->andWhere('groups.name = :adminGroupName OR groups.isAdmin = true')
+            ->setParameter('adminGroupName', UserGroups::ADMIN)
+            ->groupBy('users.id')
+            ->orderBy('users.email', 'ASC');
+    }
+
     /**
      * Used to upgrade (rehash) the user's password automatically over time.
      */

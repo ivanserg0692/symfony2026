@@ -4,12 +4,17 @@
 
 - [English](#english)
   - [Overview](#overview)
+  - [Project Features](#project-features)
+  - [Application Areas](#application-areas)
+  - [API Endpoints](#api-endpoints)
+  - [Admin Moderation and Notifications](#admin-moderation-and-notifications)
   - [Current Status](#current-status)
   - [Tech Stack and Component Roles](#tech-stack-and-component-roles)
   - [Tasks](#tasks)
     - [`Task 1` - done](#task-1---done)
     - [`Task 2` - done](#task-2---done)
     - [`Task 3` - done](#task-3---done)
+    - [`Task 4` - done](#task-4---done)
   - [Run With Docker Compose](#run-with-docker-compose)
   - [Doctrine Database Setup](#doctrine-database-setup)
   - [API Documentation](#api-documentation)
@@ -23,12 +28,17 @@
   - [Git Identity](#git-identity)
 - [Русский](#%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9)
   - [Обзор](#%D0%BE%D0%B1%D0%B7%D0%BE%D1%80)
+  - [Возможности проекта](#%D0%B2%D0%BE%D0%B7%D0%BC%D0%BE%D0%B6%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0)
+  - [Области приложения](#%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F)
+  - [API Endpoints](#api-endpoints-1)
+  - [Модерация в админке и уведомления](#%D0%BC%D0%BE%D0%B4%D0%B5%D1%80%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2-%D0%B0%D0%B4%D0%BC%D0%B8%D0%BD%D0%BA%D0%B5-%D0%B8-%D1%83%D0%B2%D0%B5%D0%B4%D0%BE%D0%BC%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F)
   - [Текущий статус](#%D1%82%D0%B5%D0%BA%D1%83%D1%89%D0%B8%D0%B9-%D1%81%D1%82%D0%B0%D1%82%D1%83%D1%81)
   - [Технологический стек и назначение компонентов](#%D1%82%D0%B5%D1%85%D0%BD%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9-%D1%81%D1%82%D0%B5%D0%BA-%D0%B8-%D0%BD%D0%B0%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BA%D0%BE%D0%BC%D0%BF%D0%BE%D0%BD%D0%B5%D0%BD%D1%82%D0%BE%D0%B2)
   - [Задачи](#%D0%B7%D0%B0%D0%B4%D0%B0%D1%87%D0%B8)
     - [`Task 1` - done](#task-1---done-1)
     - [`Task 2` - done](#task-2---done-1)
     - [`Task 3` - done](#task-3---done-1)
+    - [`Task 4` - done](#task-4---done-1)
   - [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
   - [Настройка Doctrine и базы данных](#%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-doctrine-%D0%B8-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85)
   - [API Documentation](#api-documentation-1)
@@ -45,7 +55,7 @@
 
 ## English
 
-This is my Symfony learning project.
+This is a Symfony learning project that implements a small news platform with an API, an EasyAdmin back office, JWT authentication, news moderation, and administrator notifications.
 
 The Symfony codebase itself lives in `symfony`.
 
@@ -54,19 +64,66 @@ The Symfony codebase itself lives in `symfony`.
 
 ### Overview
 
-The project is currently focused on setting up the API foundation in Symfony.
+The project demonstrates how the public API, the admin UI, and internal application workflows can work together in a Symfony application.
 
-The current implementation path is:
-- launch Swagger/OpenAPI for `api/v1`
-- stabilize the API entry point and documentation
-- build a baseline API for working with news
+The API exposes news, authentication, current-user, and notification operations under `api/v1`. The EasyAdmin back office manages users, groups, news, statuses, and other administrative data. News moderation is performed in the admin UI, and moving a news item to `on_moderation` creates notifications for administrators.
+
+### Project Features
+
+- JWT authentication with access tokens, refresh tokens, HttpOnly cookies, CSRF protection for unsafe API methods, login throttling, and Cloudflare Turnstile validation.
+- News API with list/detail endpoints, pagination, sorting, serialization groups, and visibility rules based on the current user.
+- Notification API for reading, marking as read, and deleting the current user's notifications.
+- EasyAdmin back office for managing users, groups, news, statuses, and related data.
+- Moderation workflow where news entering the `on_moderation` status notifies administrators by email and by internal notifications.
+- Docker Compose environment with PostgreSQL, Symfony CLI tooling, Swagger UI, migrations, fixtures, and local development commands.
+
+### Application Areas
+
+| Area | Purpose |
+| --- | --- |
+| Public API | JSON endpoints under `api/v1` for authentication, news, and notifications. |
+| Swagger/OpenAPI | Runtime API contract for routes that match `^/api/v1`. |
+| EasyAdmin | Back-office UI for administrators. It is not represented as API endpoints in Swagger. |
+| Internal workflows | Doctrine listeners, Messenger messages, Mailer, and Notifier logic that react to application state changes. |
+| Console tooling | Bootstrap and maintenance commands such as JWT key initialization, admin sync, migrations, fixtures, and refresh-token cleanup. |
+
+### API Endpoints
+
+<!-- START api-endpoints-en generated from OpenAPI -->
+| Method | Path | Summary |
+| --- | --- | --- |
+| `GET` | `/api/v1/auth/csrf` | Issue CSRF token for auth endpoints |
+| `POST` | `/api/v1/auth/login` | Authenticate user and issue JWT token |
+| `POST` | `/api/v1/auth/logout` | Logout current user |
+| `GET` | `/api/v1/auth/me` | Get current authenticated user |
+| `POST` | `/api/v1/auth/refresh` | Refresh JWT access token |
+| `GET` | `/api/v1/news` | Paginated list of news. |
+| `GET` | `/api/v1/news/{slug}` | News item. |
+| `GET` | `/api/v1/notification` | Paginated list of current user notifications. |
+| `DELETE` | `/api/v1/notification` | Current user notifications deleted. |
+| `GET` | `/api/v1/notification/{id}` | Notification item. |
+| `DELETE` | `/api/v1/notification/{id}` | Notification deleted. |
+| `PATCH` | `/api/v1/notification/{id}/read` | Notification marked as read. |
+| `GET` | `/api/v1/ping` | Ping API v1 |
+<!-- END api-endpoints-en generated from OpenAPI -->
+
+### Admin Moderation and Notifications
+
+News status changes are managed through EasyAdmin, not through a public API endpoint. Because of that, the status-change workflow is described here instead of being modeled as a Swagger operation.
+
+When a news item is created with the `on_moderation` status, or when an existing news item changes from another status to `on_moderation`, a Doctrine listener queues that news item until the database flush is complete. After the flush, the notifier loads administrators, builds a moderation notification, sends an email with a link to the EasyAdmin edit page, and dispatches internal notifications through Symfony Notifier and Messenger.
+
+The notification recipients are administrators resolved by the application, not recipients supplied by an API request. The notification API only lets authenticated users read, mark as read, and delete notifications that already belong to them.
 
 ### Current Status
 
 - Docker-based local environment is configured
 - Swagger UI is available for `api/v1`
 - OpenAPI specification is generated automatically at runtime
-- Baseline JWT authentication endpoints are prepared
+- JWT authentication, refresh tokens, logout, and CSRF support are prepared
+- News list/detail API endpoints are available
+- Notification API endpoints are available for authenticated users
+- EasyAdmin-driven news moderation can notify administrators
 
 ### Tech Stack and Component Roles
 
@@ -86,6 +143,10 @@ The current implementation path is:
 | Symfony Property Access `8.0.8` | Reads and writes object properties for forms, serializers, and framework integrations. |
 | Symfony Property Info `8.0.8` | Extracts property type metadata for serializers, validators, and API documentation. |
 | Symfony Monolog Bundle `4.0.2` | Integrates Monolog logging with Symfony. |
+| Symfony Messenger `8.0.8` | Handles application messages and asynchronous processing. |
+| Symfony AMQP Messenger `8.0.6` | Adds AMQP transport support for Messenger queues. |
+| Symfony Mailer `8.0.8` | Sends application email messages. |
+| Symfony Notifier `8.0.8` | Sends notifications through configured channels. |
 | Doctrine ORM `3.6.3` | Maps entities and persists application data. |
 | Doctrine Bundle `3.2.2` | Integrates Doctrine ORM and DBAL into Symfony. |
 | Doctrine Migrations Bundle `4.0.0` | Manages database schema migrations. |
@@ -104,6 +165,8 @@ The current implementation path is:
 | StofDoctrineExtensionsBundle `1.15.3` | Integrates Gedmo Doctrine Extensions with Symfony. |
 | phpDocumentor Reflection DocBlock `6.0.3` | Reads PHPDoc metadata used by framework and documentation tooling. |
 | PHPStan PHPDoc Parser `2.3.2` | Parses PHPDoc types for metadata and documentation support. |
+| Twig CSS Inliner Extra `3.24.0` | Inlines CSS in Twig-rendered HTML, mainly for email templates. |
+| Twig Inky Extra `3.24.0` | Adds Inky email markup support to Twig templates. |
 | FakerPHP Faker `1.24.1` | Generates fake data for fixtures and local development. |
 | Symfony Maker Bundle `1.67.0` | Generates Symfony boilerplate during development. |
 | Symfony Debug Bundle `8.0.8` | Adds debugging helpers in development. |
@@ -126,6 +189,11 @@ The current implementation path is:
 - Task file: [symfony/docs/task-3.md](symfony/docs/task-3.md)
 - MR result (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - MR result (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
+#### `Task 4` - done
+- Merge Request 4: <https://github.com/ivanserg0692/symfony2026/pull/4>
+- Task file: [symfony/docs/task-4.md](symfony/docs/task-4.md)
+- MR result (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
+- MR result (RU): [symfony/docs/mr-task-4-ru.md](symfony/docs/mr-task-4-ru.md)
 
 ### Run With Docker Compose
 
@@ -226,7 +294,7 @@ http://localhost:8000/api/v1/doc
 http://localhost:8000/api/v1/doc.json
 ```
 
-The documentation includes only routes that match `^/api/v1`.
+The documentation includes only routes that match `^/api/v1`. EasyAdmin screens and internal side effects, such as the news moderation notification workflow, are not separate Swagger operations.
 
 ### JWT Authentication
 
@@ -383,7 +451,7 @@ GIT_COMMITTER_EMAIL="you@example.com"
 
 ## Русский
 
-Это мой учебный проект на Symfony.
+Это учебный проект на Symfony: небольшая новостная платформа с API, админкой EasyAdmin, JWT-аутентификацией, модерацией новостей и уведомлениями для администраторов.
 
 Исходный код проекта Symfony находится в каталоге `symfony`.
 
@@ -391,19 +459,66 @@ GIT_COMMITTER_EMAIL="you@example.com"
 
 ### Обзор
 
-Сейчас проект сфокусирован на подготовке базового API-слоя на Symfony.
+Проект показывает, как в Symfony-приложении вместе работают публичное API, административный интерфейс и внутренние процессы.
 
-Текущий план реализации:
-- запустить Swagger/OpenAPI для `api/v1`
-- зафиксировать и стабилизировать точку входа в API и документацию
-- реализовать базовую API для работы с новостями
+API отдает новости, аутентификацию, текущего пользователя и уведомления в зоне `api/v1`. Админка EasyAdmin управляет пользователями, группами, новостями, статусами и другими административными данными. Модерация новостей выполняется через админку, а перевод новости в статус `on_moderation` создает уведомления для администраторов.
+
+### Возможности проекта
+
+- JWT-аутентификация с access tokens, refresh tokens, HttpOnly cookie, CSRF-защитой для небезопасных API-методов, ограничением попыток логина и проверкой Cloudflare Turnstile.
+- API новостей со списком и детальной ручкой, пагинацией, сортировкой, serialization groups и правилами видимости по текущему пользователю.
+- API уведомлений для чтения, отметки прочитанными и удаления уведомлений текущего пользователя.
+- Админка EasyAdmin для управления пользователями, группами, новостями, статусами и связанными данными.
+- Процесс модерации, где новость при переходе в статус `on_moderation` уведомляет администраторов по email и через внутренние уведомления.
+- Docker Compose окружение с PostgreSQL, Symfony CLI, Swagger UI, миграциями, фикстурами и командами для локальной разработки.
+
+### Области приложения
+
+| Область | Назначение |
+| --- | --- |
+| Public API | JSON-ручки в зоне `api/v1` для аутентификации, новостей и уведомлений. |
+| Swagger/OpenAPI | Runtime API-контракт для маршрутов, соответствующих `^/api/v1`. |
+| EasyAdmin | Back-office интерфейс для администраторов. Он не представлен в Swagger как API-ручки. |
+| Internal workflows | Doctrine listeners, Messenger messages, Mailer и Notifier logic, которые реагируют на изменения состояния приложения. |
+| Console tooling | Bootstrap- и maintenance-команды: JWT keys, admin sync, migrations, fixtures и cleanup refresh tokens. |
+
+### API Endpoints
+
+<!-- START api-endpoints-ru generated from OpenAPI -->
+| Method | Path | Описание из OpenAPI |
+| --- | --- | --- |
+| `GET` | `/api/v1/auth/csrf` | Issue CSRF token for auth endpoints |
+| `POST` | `/api/v1/auth/login` | Authenticate user and issue JWT token |
+| `POST` | `/api/v1/auth/logout` | Logout current user |
+| `GET` | `/api/v1/auth/me` | Get current authenticated user |
+| `POST` | `/api/v1/auth/refresh` | Refresh JWT access token |
+| `GET` | `/api/v1/news` | Paginated list of news. |
+| `GET` | `/api/v1/news/{slug}` | News item. |
+| `GET` | `/api/v1/notification` | Paginated list of current user notifications. |
+| `DELETE` | `/api/v1/notification` | Current user notifications deleted. |
+| `GET` | `/api/v1/notification/{id}` | Notification item. |
+| `DELETE` | `/api/v1/notification/{id}` | Notification deleted. |
+| `PATCH` | `/api/v1/notification/{id}/read` | Notification marked as read. |
+| `GET` | `/api/v1/ping` | Ping API v1 |
+<!-- END api-endpoints-ru generated from OpenAPI -->
+
+### Модерация в админке и уведомления
+
+Статусы новостей меняются через EasyAdmin, а не через публичную API-ручку. Поэтому процесс смены статуса описан здесь, а не как отдельная операция Swagger.
+
+Когда новость создается в статусе `on_moderation` или существующая новость переходит из другого статуса в `on_moderation`, Doctrine listener ставит эту новость в очередь до завершения database flush. После flush notifier находит администраторов, собирает moderation notification, отправляет email со ссылкой на страницу редактирования в EasyAdmin и отправляет внутренние уведомления через Symfony Notifier и Messenger.
+
+Получатели уведомлений определяются приложением среди администраторов, а не передаются через API-запрос. API уведомлений только позволяет аутентифицированным пользователям читать, помечать прочитанными и удалять уже созданные для них уведомления.
 
 ### Текущий статус
 
 - Настроено локальное окружение на Docker
 - Swagger UI доступен для `api/v1`
 - OpenAPI-спецификация генерируется автоматически во время запроса
-- Подготовлены базовые JWT-ручки авторизации
+- Подготовлены JWT-аутентификация, refresh tokens, logout и CSRF
+- Доступны API-ручки списка и детальной страницы новости
+- Доступны API-ручки уведомлений для аутентифицированных пользователей
+- Модерация новостей через EasyAdmin может уведомлять администраторов
 
 ### Технологический стек и назначение компонентов
 
@@ -423,6 +538,10 @@ GIT_COMMITTER_EMAIL="you@example.com"
 | Symfony Property Access `8.0.8` | Читает и записывает свойства объектов для форм, сериализаторов и интеграций Symfony. |
 | Symfony Property Info `8.0.8` | Извлекает информацию о типах свойств для сериализации, валидации и API-документации. |
 | Symfony Monolog Bundle `4.0.2` | Интегрирует Monolog-логирование в Symfony. |
+| Symfony Messenger `8.0.8` | Обрабатывает сообщения приложения и асинхронные задачи. |
+| Symfony AMQP Messenger `8.0.6` | Добавляет AMQP-транспорт для очередей Messenger. |
+| Symfony Mailer `8.0.8` | Отправляет email-сообщения приложения. |
+| Symfony Notifier `8.0.8` | Отправляет уведомления через настроенные каналы. |
 | Doctrine ORM `3.6.3` | Маппит entity и сохраняет данные приложения. |
 | Doctrine Bundle `3.2.2` | Интегрирует Doctrine ORM и DBAL в Symfony. |
 | Doctrine Migrations Bundle `4.0.0` | Управляет миграциями схемы базы данных. |
@@ -441,6 +560,8 @@ GIT_COMMITTER_EMAIL="you@example.com"
 | StofDoctrineExtensionsBundle `1.15.3` | Интегрирует Gedmo Doctrine Extensions в Symfony. |
 | phpDocumentor Reflection DocBlock `6.0.3` | Читает PHPDoc-метаданные для framework- и documentation-инструментов. |
 | PHPStan PHPDoc Parser `2.3.2` | Парсит PHPDoc-типы для метаданных и поддержки документации. |
+| Twig CSS Inliner Extra `3.24.0` | Встраивает CSS в HTML, отрендеренный Twig, в основном для email-шаблонов. |
+| Twig Inky Extra `3.24.0` | Добавляет поддержку Inky-разметки для email-шаблонов Twig. |
 | FakerPHP Faker `1.24.1` | Генерирует фейковые данные для фикстур и локальной разработки. |
 | Symfony Maker Bundle `1.67.0` | Генерирует Symfony boilerplate во время разработки. |
 | Symfony Debug Bundle `8.0.8` | Добавляет отладочные инструменты в dev-окружении. |
@@ -463,6 +584,11 @@ GIT_COMMITTER_EMAIL="you@example.com"
 - Файл задачи: [symfony/docs/task-3.md](symfony/docs/task-3.md)
 - Результат MR (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
+#### `Task 4` - done
+- Merge Request 4: <https://github.com/ivanserg0692/symfony2026/pull/4>
+- Файл задачи: [symfony/docs/task-4.md](symfony/docs/task-4.md)
+- Результат MR (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-4-ru.md](symfony/docs/mr-task-4-ru.md)
 
 ### Запуск через Docker Compose
 
@@ -557,7 +683,7 @@ http://localhost:8000/api/v1/doc
 http://localhost:8000/api/v1/doc.json
 ```
 
-В документацию попадают только маршруты, соответствующие `^/api/v1`.
+В документацию попадают только маршруты, соответствующие `^/api/v1`. Экраны EasyAdmin и внутренние побочные эффекты, например процесс уведомлений при модерации новости, не являются отдельными операциями Swagger.
 
 ### JWT Authentication
 

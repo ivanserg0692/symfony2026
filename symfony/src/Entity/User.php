@@ -61,10 +61,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     private ?string $plainPassword = null;
 
+    /**
+     * @var Collection<int, Notifications>
+     */
+    #[ORM\OneToMany(targetEntity: Notifications::class, mappedBy: 'recipient')]
+    private Collection $notifications;
+
     public function __construct()
     {
         $this->news = new ArrayCollection();
         $this->groups = new ArrayCollection();
+        $this->notifications = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -243,5 +250,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             static fn (int|string $key, UserGroups $group): bool =>
                 $group->getName() === UserGroups::ADMIN || $group->isAdmin() === true
         );
+    }
+
+    /**
+     * @return Collection<int, Notifications>
+     */
+    public function getNotifications(): Collection
+    {
+        return $this->notifications;
+    }
+
+    public function addNotification(Notifications $notification): static
+    {
+        if (!$this->notifications->contains($notification)) {
+            $this->notifications->add($notification);
+            $notification->setRecipient($this);
+        }
+
+        return $this;
+    }
+
+    public function removeNotification(Notifications $notification): static
+    {
+        if ($this->notifications->removeElement($notification)) {
+            // set the owning side to null (unless already changed)
+            if ($notification->getRecipient() === $this) {
+                $notification->setRecipient(null);
+            }
+        }
+
+        return $this;
     }
 }
