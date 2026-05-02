@@ -70,6 +70,36 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: symfony-minio
+    env_file:
+      - .env.local
+    command: server /data --console-address ":9001"
+    ports:
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - minio_data:/data
+
+  minio-client:
+    image: quay.io/minio/mc:latest
+    env_file:
+      - .env.local
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint:
+      - sh
+      - -lc
+      - mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" >/dev/null && exec mc "$$@"
+      - mc
+
 volumes:
   database_data:
   rabbitmq_data:
+  minio_data:
