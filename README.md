@@ -10,7 +10,7 @@
     - [`Task 1` - done](#task-1---done)
     - [`Task 2` - done](#task-2---done)
     - [`Task 3` - done](#task-3---done)
-    - [`Task 4` - planned](#task-4---planned)
+    - [`Task 4` - done](#task-4---done)
   - [Run With Docker Compose](#run-with-docker-compose)
   - [Doctrine Database Setup](#doctrine-database-setup)
   - [API Documentation](#api-documentation)
@@ -30,7 +30,7 @@
     - [`Task 1` - done](#task-1---done-1)
     - [`Task 2` - done](#task-2---done-1)
     - [`Task 3` - done](#task-3---done-1)
-    - [`Task 4` - planned](#task-4---planned-1)
+    - [`Task 4` - done](#task-4---done-1)
   - [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
   - [Настройка Doctrine и базы данных](#%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-doctrine-%D0%B8-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85)
   - [API Documentation](#api-documentation-1)
@@ -88,6 +88,10 @@ The current implementation path is:
 | Symfony Property Access `8.0.8` | Reads and writes object properties for forms, serializers, and framework integrations. |
 | Symfony Property Info `8.0.8` | Extracts property type metadata for serializers, validators, and API documentation. |
 | Symfony Monolog Bundle `4.0.2` | Integrates Monolog logging with Symfony. |
+| Symfony Messenger `8.0.8` | Handles application messages and asynchronous processing. |
+| Symfony AMQP Messenger `8.0.6` | Adds AMQP transport support for Messenger queues. |
+| Symfony Mailer `8.0.8` | Sends application email messages. |
+| Symfony Notifier `8.0.8` | Sends notifications through configured channels. |
 | Doctrine ORM `3.6.3` | Maps entities and persists application data. |
 | Doctrine Bundle `3.2.2` | Integrates Doctrine ORM and DBAL into Symfony. |
 | Doctrine Migrations Bundle `4.0.0` | Manages database schema migrations. |
@@ -106,6 +110,8 @@ The current implementation path is:
 | StofDoctrineExtensionsBundle `1.15.3` | Integrates Gedmo Doctrine Extensions with Symfony. |
 | phpDocumentor Reflection DocBlock `6.0.3` | Reads PHPDoc metadata used by framework and documentation tooling. |
 | PHPStan PHPDoc Parser `2.3.2` | Parses PHPDoc types for metadata and documentation support. |
+| Twig CSS Inliner Extra `3.24.0` | Inlines CSS in Twig-rendered HTML, mainly for email templates. |
+| Twig Inky Extra `3.24.0` | Adds Inky email markup support to Twig templates. |
 | FakerPHP Faker `1.24.1` | Generates fake data for fixtures and local development. |
 | Symfony Maker Bundle `1.67.0` | Generates Symfony boilerplate during development. |
 | Symfony Debug Bundle `8.0.8` | Adds debugging helpers in development. |
@@ -128,7 +134,7 @@ The current implementation path is:
 - Task file: [symfony/docs/task-3.md](symfony/docs/task-3.md)
 - MR result (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - MR result (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
-### `Task 4` - planned
+### `Task 4` - done
 - Merge Request 4: <https://github.com/ivanserg0692/symfony2026/pull/4>
 - Task file: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 - MR result (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
@@ -430,6 +436,10 @@ GIT_COMMITTER_EMAIL="you@example.com"
 | Symfony Property Access `8.0.8` | Читает и записывает свойства объектов для форм, сериализаторов и интеграций Symfony. |
 | Symfony Property Info `8.0.8` | Извлекает информацию о типах свойств для сериализации, валидации и API-документации. |
 | Symfony Monolog Bundle `4.0.2` | Интегрирует Monolog-логирование в Symfony. |
+| Symfony Messenger `8.0.8` | Обрабатывает сообщения приложения и асинхронные задачи. |
+| Symfony AMQP Messenger `8.0.6` | Добавляет AMQP-транспорт для очередей Messenger. |
+| Symfony Mailer `8.0.8` | Отправляет email-сообщения приложения. |
+| Symfony Notifier `8.0.8` | Отправляет уведомления через настроенные каналы. |
 | Doctrine ORM `3.6.3` | Маппит entity и сохраняет данные приложения. |
 | Doctrine Bundle `3.2.2` | Интегрирует Doctrine ORM и DBAL в Symfony. |
 | Doctrine Migrations Bundle `4.0.0` | Управляет миграциями схемы базы данных. |
@@ -448,6 +458,8 @@ GIT_COMMITTER_EMAIL="you@example.com"
 | StofDoctrineExtensionsBundle `1.15.3` | Интегрирует Gedmo Doctrine Extensions в Symfony. |
 | phpDocumentor Reflection DocBlock `6.0.3` | Читает PHPDoc-метаданные для framework- и documentation-инструментов. |
 | PHPStan PHPDoc Parser `2.3.2` | Парсит PHPDoc-типы для метаданных и поддержки документации. |
+| Twig CSS Inliner Extra `3.24.0` | Встраивает CSS в HTML, отрендеренный Twig, в основном для email-шаблонов. |
+| Twig Inky Extra `3.24.0` | Добавляет поддержку Inky-разметки для email-шаблонов Twig. |
 | FakerPHP Faker `1.24.1` | Генерирует фейковые данные для фикстур и локальной разработки. |
 | Symfony Maker Bundle `1.67.0` | Генерирует Symfony boilerplate во время разработки. |
 | Symfony Debug Bundle `8.0.8` | Добавляет отладочные инструменты в dev-окружении. |
@@ -470,7 +482,7 @@ GIT_COMMITTER_EMAIL="you@example.com"
 - Файл задачи: [symfony/docs/task-3.md](symfony/docs/task-3.md)
 - Результат MR (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
-### `Task 4` - planned
+### `Task 4` - done
 - Merge Request 4: <https://github.com/ivanserg0692/symfony2026/pull/4>
 - Файл задачи: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 - Результат MR (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
