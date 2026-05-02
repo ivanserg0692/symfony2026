@@ -15,6 +15,7 @@
     - [`Task 2` - done](#task-2---done)
     - [`Task 3` - done](#task-3---done)
     - [`Task 4` - done](#task-4---done)
+    - [`Task 5` - in progress](#task-5---in-progress)
   - [Run With Docker Compose](#run-with-docker-compose)
   - [Doctrine Database Setup](#doctrine-database-setup)
   - [API Documentation](#api-documentation)
@@ -39,6 +40,7 @@
     - [`Task 2` - done](#task-2---done-1)
     - [`Task 3` - done](#task-3---done-1)
     - [`Task 4` - done](#task-4---done-1)
+    - [`Task 5` - in progress](#task-5---in-progress-1)
   - [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
   - [Настройка Doctrine и базы данных](#%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-doctrine-%D0%B8-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85)
   - [API Documentation](#api-documentation-1)
@@ -194,6 +196,11 @@ The notification recipients are administrators resolved by the application, not 
 - Task file: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 - MR result (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
 - MR result (RU): [symfony/docs/mr-task-4-ru.md](symfony/docs/mr-task-4-ru.md)
+#### `Task 5` - in progress
+- Merge Request 5: <https://github.com/ivanserg0692/symfony2026/pull/5>
+- Task file: [symfony/docs/task-5.md](symfony/docs/task-5.md)
+- MR result (EN): [symfony/docs/mr-task-5-en.md](symfony/docs/mr-task-5-en.md)
+- MR result (RU): [symfony/docs/mr-task-5-ru.md](symfony/docs/mr-task-5-ru.md)
 
 ### Run With Docker Compose
 
@@ -589,6 +596,11 @@ API отдает новости, аутентификацию, текущего 
 - Файл задачи: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 - Результат MR (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-4-ru.md](symfony/docs/mr-task-4-ru.md)
+#### `Task 5` - in progress
+- Merge Request 5: <https://github.com/ivanserg0692/symfony2026/pull/5>
+- Файл задачи: [symfony/docs/task-5.md](symfony/docs/task-5.md)
+- Результат MR (EN): [symfony/docs/mr-task-5-en.md](symfony/docs/mr-task-5-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-5-ru.md](symfony/docs/mr-task-5-ru.md)
 
 ### Запуск через Docker Compose
 
