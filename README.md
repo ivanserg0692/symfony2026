@@ -4,6 +4,10 @@
 
 - [English](#english)
   - [Overview](#overview)
+  - [Project Features](#project-features)
+  - [Application Areas](#application-areas)
+  - [API Endpoints](#api-endpoints)
+  - [Admin Moderation and Notifications](#admin-moderation-and-notifications)
   - [Current Status](#current-status)
   - [Tech Stack and Component Roles](#tech-stack-and-component-roles)
   - [Tasks](#tasks)
@@ -24,6 +28,10 @@
   - [Git Identity](#git-identity)
 - [Русский](#%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9)
   - [Обзор](#%D0%BE%D0%B1%D0%B7%D0%BE%D1%80)
+  - [Возможности проекта](#%D0%B2%D0%BE%D0%B7%D0%BC%D0%BE%D0%B6%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0)
+  - [Области приложения](#%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F)
+  - [API Endpoints](#api-endpoints-1)
+  - [Модерация в админке и уведомления](#%D0%BC%D0%BE%D0%B4%D0%B5%D1%80%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2-%D0%B0%D0%B4%D0%BC%D0%B8%D0%BD%D0%BA%D0%B5-%D0%B8-%D1%83%D0%B2%D0%B5%D0%B4%D0%BE%D0%BC%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F)
   - [Текущий статус](#%D1%82%D0%B5%D0%BA%D1%83%D1%89%D0%B8%D0%B9-%D1%81%D1%82%D0%B0%D1%82%D1%83%D1%81)
   - [Технологический стек и назначение компонентов](#%D1%82%D0%B5%D1%85%D0%BD%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9-%D1%81%D1%82%D0%B5%D0%BA-%D0%B8-%D0%BD%D0%B0%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BA%D0%BE%D0%BC%D0%BF%D0%BE%D0%BD%D0%B5%D0%BD%D1%82%D0%BE%D0%B2)
   - [Задачи](#%D0%B7%D0%B0%D0%B4%D0%B0%D1%87%D0%B8)
@@ -47,7 +55,7 @@
 
 ## English
 
-This is my Symfony learning project.
+This is a Symfony learning project that implements a small news platform with an API, an EasyAdmin back office, JWT authentication, news moderation, and administrator notifications.
 
 The Symfony codebase itself lives in `symfony`.
 
@@ -56,19 +64,64 @@ The Symfony codebase itself lives in `symfony`.
 
 ### Overview
 
-The project is currently focused on setting up the API foundation in Symfony.
+The project demonstrates how the public API, the admin UI, and internal application workflows can work together in a Symfony application.
 
-The current implementation path is:
-- launch Swagger/OpenAPI for `api/v1`
-- stabilize the API entry point and documentation
-- build a baseline API for working with news
+The API exposes news, authentication, current-user, and notification operations under `api/v1`. The EasyAdmin back office manages users, groups, news, statuses, and other administrative data. News moderation is performed in the admin UI, and moving a news item to `on_moderation` creates notifications for administrators.
+
+### Project Features
+
+- JWT authentication with access tokens, refresh tokens, HttpOnly cookies, CSRF protection for unsafe API methods, login throttling, and Cloudflare Turnstile validation.
+- News API with list/detail endpoints, pagination, sorting, serialization groups, and visibility rules based on the current user.
+- Notification API for reading, marking as read, and deleting the current user's notifications.
+- EasyAdmin back office for managing users, groups, news, statuses, and related data.
+- Moderation workflow where news entering the `on_moderation` status notifies administrators by email and by internal notifications.
+- Docker Compose environment with PostgreSQL, Symfony CLI tooling, Swagger UI, migrations, fixtures, and local development commands.
+
+### Application Areas
+
+| Area | Purpose |
+| --- | --- |
+| Public API | JSON endpoints under `api/v1` for authentication, news, and notifications. |
+| Swagger/OpenAPI | Runtime API contract for routes that match `^/api/v1`. |
+| EasyAdmin | Back-office UI for administrators. It is not represented as API endpoints in Swagger. |
+| Internal workflows | Doctrine listeners, Messenger messages, Mailer, and Notifier logic that react to application state changes. |
+| Console tooling | Bootstrap and maintenance commands such as JWT key initialization, admin sync, migrations, fixtures, and refresh-token cleanup. |
+
+### API Endpoints
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/v1/ping` | Public | Health check for the API entry point. |
+| `GET` | `/api/v1/auth/csrf` | Public | Issues a CSRF token for login, refresh, logout, and unsafe API mutations. |
+| `POST` | `/api/v1/auth/login` | Public + CSRF | Authenticates by email, password, and Turnstile token; returns an access JWT and can set auth cookies. |
+| `POST` | `/api/v1/auth/refresh` | Refresh token + CSRF | Issues a new access JWT and rotates the refresh token. |
+| `POST` | `/api/v1/auth/logout` | Refresh token + CSRF | Clears authentication cookies and invalidates the refresh token when available. |
+| `GET` | `/api/v1/auth/me` | Access token | Returns the current authenticated user. |
+| `GET` | `/api/v1/news` | Public or access token | Returns a paginated news list. Authenticated users can see additional allowed statuses. |
+| `GET` | `/api/v1/news/{slug}` | Public or access token | Returns one news item when its status is visible to the current user. |
+| `GET` | `/api/v1/notification` | Access token | Returns the current user's paginated notifications. |
+| `GET` | `/api/v1/notification/{id}` | Access token | Returns one notification if it belongs to the current user. |
+| `PATCH` | `/api/v1/notification/{id}/read` | Access token + CSRF | Marks one notification as read. |
+| `DELETE` | `/api/v1/notification/{id}` | Access token + CSRF | Deletes one notification. |
+| `DELETE` | `/api/v1/notification` | Access token + CSRF | Deletes all notifications of the current user. |
+
+### Admin Moderation and Notifications
+
+News status changes are managed through EasyAdmin, not through a public API endpoint. Because of that, the status-change workflow is described here instead of being modeled as a Swagger operation.
+
+When a news item is created with the `on_moderation` status, or when an existing news item changes from another status to `on_moderation`, a Doctrine listener queues that news item until the database flush is complete. After the flush, the notifier loads administrators, builds a moderation notification, sends an email with a link to the EasyAdmin edit page, and dispatches internal notifications through Symfony Notifier and Messenger.
+
+The notification recipients are administrators resolved by the application, not recipients supplied by an API request. The notification API only lets authenticated users read, mark as read, and delete notifications that already belong to them.
 
 ### Current Status
 
 - Docker-based local environment is configured
 - Swagger UI is available for `api/v1`
 - OpenAPI specification is generated automatically at runtime
-- Baseline JWT authentication endpoints are prepared
+- JWT authentication, refresh tokens, logout, and CSRF support are prepared
+- News list/detail API endpoints are available
+- Notification API endpoints are available for authenticated users
+- EasyAdmin-driven news moderation can notify administrators
 
 ### Tech Stack and Component Roles
 
@@ -134,7 +187,7 @@ The current implementation path is:
 - Task file: [symfony/docs/task-3.md](symfony/docs/task-3.md)
 - MR result (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - MR result (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
-### `Task 4` - done
+#### `Task 4` - done
 - Merge Request 4: <https://github.com/ivanserg0692/symfony2026/pull/4>
 - Task file: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 - MR result (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
@@ -239,7 +292,7 @@ http://localhost:8000/api/v1/doc
 http://localhost:8000/api/v1/doc.json
 ```
 
-The documentation includes only routes that match `^/api/v1`.
+The documentation includes only routes that match `^/api/v1`. EasyAdmin screens and internal side effects, such as the news moderation notification workflow, are not separate Swagger operations.
 
 ### JWT Authentication
 
@@ -396,7 +449,7 @@ GIT_COMMITTER_EMAIL="you@example.com"
 
 ## Русский
 
-Это мой учебный проект на Symfony.
+Это учебный проект на Symfony: небольшая новостная платформа с API, админкой EasyAdmin, JWT-аутентификацией, модерацией новостей и уведомлениями для администраторов.
 
 Исходный код проекта Symfony находится в каталоге `symfony`.
 
@@ -404,19 +457,64 @@ GIT_COMMITTER_EMAIL="you@example.com"
 
 ### Обзор
 
-Сейчас проект сфокусирован на подготовке базового API-слоя на Symfony.
+Проект показывает, как в Symfony-приложении вместе работают публичное API, административный интерфейс и внутренние процессы.
 
-Текущий план реализации:
-- запустить Swagger/OpenAPI для `api/v1`
-- зафиксировать и стабилизировать точку входа в API и документацию
-- реализовать базовую API для работы с новостями
+API отдает новости, аутентификацию, текущего пользователя и уведомления в зоне `api/v1`. Админка EasyAdmin управляет пользователями, группами, новостями, статусами и другими административными данными. Модерация новостей выполняется через админку, а перевод новости в статус `on_moderation` создает уведомления для администраторов.
+
+### Возможности проекта
+
+- JWT-аутентификация с access tokens, refresh tokens, HttpOnly cookie, CSRF-защитой для небезопасных API-методов, ограничением попыток логина и проверкой Cloudflare Turnstile.
+- API новостей со списком и детальной ручкой, пагинацией, сортировкой, serialization groups и правилами видимости по текущему пользователю.
+- API уведомлений для чтения, отметки прочитанными и удаления уведомлений текущего пользователя.
+- Админка EasyAdmin для управления пользователями, группами, новостями, статусами и связанными данными.
+- Процесс модерации, где новость при переходе в статус `on_moderation` уведомляет администраторов по email и через внутренние уведомления.
+- Docker Compose окружение с PostgreSQL, Symfony CLI, Swagger UI, миграциями, фикстурами и командами для локальной разработки.
+
+### Области приложения
+
+| Область | Назначение |
+| --- | --- |
+| Public API | JSON-ручки в зоне `api/v1` для аутентификации, новостей и уведомлений. |
+| Swagger/OpenAPI | Runtime API-контракт для маршрутов, соответствующих `^/api/v1`. |
+| EasyAdmin | Back-office интерфейс для администраторов. Он не представлен в Swagger как API-ручки. |
+| Internal workflows | Doctrine listeners, Messenger messages, Mailer и Notifier logic, которые реагируют на изменения состояния приложения. |
+| Console tooling | Bootstrap- и maintenance-команды: JWT keys, admin sync, migrations, fixtures и cleanup refresh tokens. |
+
+### API Endpoints
+
+| Method | Path | Auth | Назначение |
+| --- | --- | --- | --- |
+| `GET` | `/api/v1/ping` | Public | Health check для точки входа API. |
+| `GET` | `/api/v1/auth/csrf` | Public | Выдает CSRF token для login, refresh, logout и небезопасных API mutations. |
+| `POST` | `/api/v1/auth/login` | Public + CSRF | Аутентифицирует по email, password и Turnstile token; возвращает access JWT и может установить auth cookies. |
+| `POST` | `/api/v1/auth/refresh` | Refresh token + CSRF | Выпускает новый access JWT и ротирует refresh token. |
+| `POST` | `/api/v1/auth/logout` | Refresh token + CSRF | Очищает auth cookies и инвалидирует refresh token, если он доступен в запросе. |
+| `GET` | `/api/v1/auth/me` | Access token | Возвращает текущего аутентифицированного пользователя. |
+| `GET` | `/api/v1/news` | Public или access token | Возвращает пагинированный список новостей. Аутентифицированные пользователи могут видеть дополнительные разрешенные статусы. |
+| `GET` | `/api/v1/news/{slug}` | Public или access token | Возвращает одну новость, если ее статус видим текущему пользователю. |
+| `GET` | `/api/v1/notification` | Access token | Возвращает пагинированные уведомления текущего пользователя. |
+| `GET` | `/api/v1/notification/{id}` | Access token | Возвращает одно уведомление, если оно принадлежит текущему пользователю. |
+| `PATCH` | `/api/v1/notification/{id}/read` | Access token + CSRF | Помечает одно уведомление прочитанным. |
+| `DELETE` | `/api/v1/notification/{id}` | Access token + CSRF | Удаляет одно уведомление. |
+| `DELETE` | `/api/v1/notification` | Access token + CSRF | Удаляет все уведомления текущего пользователя. |
+
+### Модерация в админке и уведомления
+
+Статусы новостей меняются через EasyAdmin, а не через публичную API-ручку. Поэтому процесс смены статуса описан здесь, а не как отдельная операция Swagger.
+
+Когда новость создается в статусе `on_moderation` или существующая новость переходит из другого статуса в `on_moderation`, Doctrine listener ставит эту новость в очередь до завершения database flush. После flush notifier находит администраторов, собирает moderation notification, отправляет email со ссылкой на страницу редактирования в EasyAdmin и отправляет внутренние уведомления через Symfony Notifier и Messenger.
+
+Получатели уведомлений определяются приложением среди администраторов, а не передаются через API-запрос. API уведомлений только позволяет аутентифицированным пользователям читать, помечать прочитанными и удалять уже созданные для них уведомления.
 
 ### Текущий статус
 
 - Настроено локальное окружение на Docker
 - Swagger UI доступен для `api/v1`
 - OpenAPI-спецификация генерируется автоматически во время запроса
-- Подготовлены базовые JWT-ручки авторизации
+- Подготовлены JWT-аутентификация, refresh tokens, logout и CSRF
+- Доступны API-ручки списка и детальной страницы новости
+- Доступны API-ручки уведомлений для аутентифицированных пользователей
+- Модерация новостей через EasyAdmin может уведомлять администраторов
 
 ### Технологический стек и назначение компонентов
 
@@ -482,7 +580,7 @@ GIT_COMMITTER_EMAIL="you@example.com"
 - Файл задачи: [symfony/docs/task-3.md](symfony/docs/task-3.md)
 - Результат MR (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
-### `Task 4` - done
+#### `Task 4` - done
 - Merge Request 4: <https://github.com/ivanserg0692/symfony2026/pull/4>
 - Файл задачи: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 - Результат MR (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
@@ -581,7 +679,7 @@ http://localhost:8000/api/v1/doc
 http://localhost:8000/api/v1/doc.json
 ```
 
-В документацию попадают только маршруты, соответствующие `^/api/v1`.
+В документацию попадают только маршруты, соответствующие `^/api/v1`. Экраны EasyAdmin и внутренние побочные эффекты, например процесс уведомлений при модерации новости, не являются отдельными операциями Swagger.
 
 ### JWT Authentication
 
