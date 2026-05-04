@@ -16,6 +16,10 @@ return [
         'path' => './assets/app.js',
         'entrypoint' => true,
     ],
+    'admin-news-export' => [
+        'path' => './assets/admin/news-export-modal.js',
+        'entrypoint' => true,
+    ],
     'dompurify' => [
         'version' => '3.4.2',
     ],

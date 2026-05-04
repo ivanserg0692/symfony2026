@@ -53,6 +53,7 @@ class DashboardController extends AbstractDashboardController
 
         yield MenuItem::section('Content');
         yield MenuItem::linkTo(NewsCrudController::class, 'News', 'fas fa-newspaper');
+        yield MenuItem::linkTo(NewsExportCrudController::class, 'News exports', 'fas fa-file-export');
 
         yield MenuItem::section('Access');
         yield MenuItem::subMenu('Users', 'fas fa-users')->setSubItems($userMenuItems);

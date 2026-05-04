@@ -1,0 +1,70 @@
+<form method="post" action="{{ startExportUrl }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('start_news_export') }}">
+    <input type="hidden" name="return_url" value="{{ returnUrl }}">
+
+    <div class="modal-header">
+        <h5 id="news-export-modal-title" class="modal-title">Start news export</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+
+    <div class="modal-body">
+        <table class="table datagrid">
+            <thead>
+                <tr>
+                    <th class="field-checkbox">
+                        <input type="checkbox" data-news-export-select-all>
+                    </th>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Slug</th>
+                    <th>Status</th>
+                    <th>Created by</th>
+                    <th>Created at</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in news %}
+                    <tr>
+                        <td class="field-checkbox">
+                            <input type="checkbox" name="news_ids[]" value="{{ item.id }}">
+                        </td>
+                        <td>{{ item.id }}</td>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.slug }}</td>
+                        <td>{{ item.status }}</td>
+                        <td>{{ item.createdBy.email|default('') }}</td>
+                        <td>{{ item.createdAt ? item.createdAt|date('d.m.Y H:i') : '' }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7">No news found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal-footer justify-content-between">
+        <div class="news-export-pagination">
+            <span class="text-muted">Page {{ currentPage }} of {{ totalPages }}, {{ totalItems }} total</span>
+            <div class="btn-group">
+                {% if previousPageUrl %}
+                    <a href="{{ previousPageUrl }}" class="btn btn-secondary" data-news-export-page-link>Previous</a>
+                {% else %}
+                    <button type="button" class="btn btn-secondary disabled">Previous</button>
+                {% endif %}
+
+                {% if nextPageUrl %}
+                    <a href="{{ nextPageUrl }}" class="btn btn-secondary" data-news-export-page-link>Next</a>
+                {% else %}
+                    <button type="button" class="btn btn-secondary disabled">Next</button>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Start export</button>
+        </div>
+    </div>
+</form>
