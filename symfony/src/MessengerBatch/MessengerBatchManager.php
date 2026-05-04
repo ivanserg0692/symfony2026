@@ -34,19 +34,21 @@ final readonly class MessengerBatchManager
         $this->batchRepository->start($batchId);
     }
 
-    public function markJobProcessed(int $batchId): void
+    public function markJobProcessed(int $batchId): bool
     {
-        $this->entityManager->getConnection()->transactional(function () use ($batchId): void {
+        return (bool) $this->entityManager->getConnection()->transactional(function () use ($batchId): bool {
             $this->batchRepository->incrementProcessedJobs($batchId);
-            $this->batchRepository->finishIfComplete($batchId);
+
+            return 1 === $this->batchRepository->finishIfComplete($batchId);
         });
     }
 
-    public function markJobFailed(int $batchId): void
+    public function markJobFailed(int $batchId): bool
     {
-        $this->entityManager->getConnection()->transactional(function () use ($batchId): void {
+        return (bool) $this->entityManager->getConnection()->transactional(function () use ($batchId): bool {
             $this->batchRepository->incrementFailedJobs($batchId);
-            $this->batchRepository->finishIfComplete($batchId);
+
+            return 1 === $this->batchRepository->finishIfComplete($batchId);
         });
     }
 

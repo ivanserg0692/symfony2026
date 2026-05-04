@@ -13,6 +13,8 @@ framework:
             # Route your messages to the transports
             Symfony\Component\Mailer\Messenger\SendEmailMessage: async
             App\Notifier\Support\CreateNotificationMessage: async
+            App\News\Message\ExportNewsMessage: async
+            App\News\Message\FinalizeNewsExportMessage: async
 
 # when@test:
 #    framework:

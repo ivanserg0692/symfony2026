@@ -5,11 +5,13 @@ namespace App\MessengerBatch;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Messenger\Event\WorkerMessageFailedEvent;
 use Symfony\Component\Messenger\Event\WorkerMessageHandledEvent;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 final readonly class MessengerBatchMessageSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private MessengerBatchManager $batchManager,
+        private MessageBusInterface $messageBus,
     ) {
     }
 
@@ -29,7 +31,17 @@ final readonly class MessengerBatchMessageSubscriber implements EventSubscriberI
             return;
         }
 
-        $this->batchManager->markJobProcessed($message->getBatchId());
+        if ($message instanceof MessengerBatchHandledManuallyInterface) {
+            return;
+        }
+
+        if (!$this->batchManager->markJobProcessed($message->getBatchId())) {
+            return;
+        }
+
+        if ($message instanceof MessengerBatchFinalizableMessageInterface) {
+            $this->messageBus->dispatch($message->createFinalizeMessage());
+        }
     }
 
     public function onMessageFailed(WorkerMessageFailedEvent $event): void
@@ -44,6 +56,12 @@ final readonly class MessengerBatchMessageSubscriber implements EventSubscriberI
             return;
         }
 
-        $this->batchManager->markJobFailed($message->getBatchId());
+        if (!$this->batchManager->markJobFailed($message->getBatchId())) {
+            return;
+        }
+
+        if ($message instanceof MessengerBatchFinalizableMessageInterface) {
+            $this->messageBus->dispatch($message->createFinalizeMessage());
+        }
     }
 }
