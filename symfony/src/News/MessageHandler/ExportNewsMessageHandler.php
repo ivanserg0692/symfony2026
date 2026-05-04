@@ -2,9 +2,11 @@
 
 namespace App\News\MessageHandler;
 
+use App\Entity\News;
 use App\MessengerBatch\MessengerBatchManager;
-use App\MessengerBatch\MessengerBatchFinalizableMessageInterface;
 use App\News\Message\ExportNewsMessage;
+use App\Repository\NewsRepository;
+use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
 use Symfony\Component\Messenger\Handler\Acknowledger;
 use Symfony\Component\Messenger\Handler\BatchHandlerInterface;
 use Symfony\Component\Messenger\Handler\BatchHandlerTrait;
@@ -18,6 +20,7 @@ final class ExportNewsMessageHandler implements BatchHandlerInterface
 
     public function __construct(
         private readonly MessengerBatchManager $batchManager,
+        private readonly NewsRepository $newsRepository,
         private readonly MessageBusInterface $messageBus,
     ) {
     }
@@ -35,11 +38,32 @@ final class ExportNewsMessageHandler implements BatchHandlerInterface
 
     private function process(array $jobs): void
     {
+        $newsIds = [];
+
+        foreach ($jobs as [$message]) {
+            \assert($message instanceof ExportNewsMessage);
+
+            $newsIds[$message->newsId] = $message->newsId;
+        }
+
+        $newsById = $this->findNewsByIds($newsIds);
+
         foreach ($jobs as [$message, $ack]) {
             \assert($message instanceof ExportNewsMessage);
 
+            $news = $newsById[$message->newsId] ?? null;
+
+            if (null === $news) {
+                $ack->nack(new UnrecoverableMessageHandlingException(sprintf(
+                    'News "%d" was not found.',
+                    $message->newsId,
+                )));
+
+                continue;
+            }
+
             try {
-                $this->exportNews($message);
+                $this->exportNews($news);
                 $this->finalizeBatchIfComplete($message);
                 $ack->ack();
             } catch (\Throwable $exception) {
@@ -53,13 +77,44 @@ final class ExportNewsMessageHandler implements BatchHandlerInterface
         return self::BATCH_SIZE;
     }
 
+    /**
+     * @param array<int, int> $newsIds
+     *
+     * @return array<int, News>
+     */
+    private function findNewsByIds(array $newsIds): array
+    {
+        $newsById = [];
+
+        foreach ($this->newsRepository->findBy(['id' => array_values($newsIds)]) as $news) {
+            $newsId = $news->getId();
+
+            if (null === $newsId) {
+                continue;
+            }
+
+            $newsById[$newsId] = $news;
+        }
+
+        return $newsById;
+    }
+
     private function handleSynchronously(ExportNewsMessage $message): void
     {
-        $this->exportNews($message);
+        $news = $this->newsRepository->find($message->newsId);
+
+        if (null === $news) {
+            throw new UnrecoverableMessageHandlingException(sprintf(
+                'News "%d" was not found.',
+                $message->newsId,
+            ));
+        }
+
+        $this->exportNews($news);
         $this->finalizeBatchIfComplete($message);
     }
 
-    private function exportNews(ExportNewsMessage $message): void
+    private function exportNews(News $news): void
     {
         throw new \LogicException('News export implementation is not configured.');
     }
@@ -70,8 +125,6 @@ final class ExportNewsMessageHandler implements BatchHandlerInterface
             return;
         }
 
-        if ($message instanceof MessengerBatchFinalizableMessageInterface) {
-            $this->messageBus->dispatch($message->createFinalizeMessage());
-        }
+        $this->messageBus->dispatch($message->createFinalizeMessage());
     }
 }
