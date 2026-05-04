@@ -4,22 +4,25 @@ namespace App\Controller\Admin;
 
 use App\Entity\News;
 use App\Entity\User;
+use App\News\NewsExportStarter;
 use App\Repository\NewsRepository;
 use App\Repository\NewsStatusRepository;
 use App\Security\Voter\NewsVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
-use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
+use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\BatchActionDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
-use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
@@ -29,6 +32,8 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class NewsCrudController extends AbstractCrudController
@@ -72,7 +77,18 @@ class NewsCrudController extends AbstractCrudController
 
     public function configureActions(Actions $actions): Actions
     {
+        $exportSelected = Action::new('exportSelectedNews', 'Start export', 'fas fa-play')
+            ->linkToCrudAction('startSelectedNewsExport')
+            ->addCssClass('btn btn-primary');
+
+        $exportAll = Action::new('exportAllNews', 'Export all', 'fas fa-file-export')
+            ->createAsGlobalAction()
+            ->linkToCrudAction('startAllNewsExport')
+            ->askConfirmation('Start export for all news?');
+
         return $actions
+            ->addBatchAction($exportSelected)
+            ->add(Crud::PAGE_INDEX, $exportAll)
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->update(Crud::PAGE_INDEX, Action::DETAIL, fn (Action $action): Action =>
                 $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::VIEW, $news))
@@ -89,6 +105,35 @@ class NewsCrudController extends AbstractCrudController
             ->update(Crud::PAGE_DETAIL, Action::DELETE, fn (Action $action): Action =>
                 $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::EDIT, $news))
             );
+    }
+
+    #[AdminRoute]
+    public function startSelectedNewsExport(
+        BatchActionDto $batchActionDto,
+        NewsExportStarter $newsExportStarter,
+        Request $request,
+    ): RedirectResponse {
+        $newsIds = array_map('intval', $batchActionDto->getEntityIds());
+
+        if ([] === $newsIds) {
+            $this->addFlash('warning', 'Select news to export first.');
+
+            return $this->redirectToReferrer($request);
+        }
+
+        $this->startNewsExport($newsExportStarter, $newsIds);
+
+        return $this->redirectToReferrer($request);
+    }
+
+    #[AdminRoute]
+    public function startAllNewsExport(
+        NewsExportStarter $newsExportStarter,
+        Request $request,
+    ): RedirectResponse {
+        $this->startNewsExport($newsExportStarter);
+
+        return $this->redirectToReferrer($request);
     }
 
     public function configureFields(string $pageName): iterable
@@ -255,5 +300,23 @@ class NewsCrudController extends AbstractCrudController
         $user = $this->getUser();
 
         return $user instanceof User ? $user : null;
+    }
+
+    private function redirectToReferrer(Request $request): RedirectResponse
+    {
+        return $this->redirect($request->headers->get('referer') ?? $this->generateUrl('admin'));
+    }
+
+    /**
+     * @param list<int> $newsIds
+     */
+    private function startNewsExport(NewsExportStarter $newsExportStarter, array $newsIds = []): void
+    {
+        try {
+            $newsExport = $newsExportStarter->start($newsIds);
+            $this->addFlash('success', sprintf('News export #%d has been started.', $newsExport->getId()));
+        } catch (\RuntimeException $exception) {
+            $this->addFlash('warning', $exception->getMessage());
+        }
     }
 }
