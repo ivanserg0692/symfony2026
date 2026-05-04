@@ -16,4 +16,7 @@ return [
         'path' => './assets/app.js',
         'entrypoint' => true,
     ],
+    'dompurify' => [
+        'version' => '3.4.2',
+    ],
 ];
