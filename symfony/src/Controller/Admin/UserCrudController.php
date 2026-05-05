@@ -104,7 +104,7 @@ final class UserCrudController extends AbstractCrudController
                 ->setHelp(Crud::PAGE_EDIT === $pageName ? 'Leave empty to keep the current password.' : null);
         }
 
-        if ($this->isGranted(UsersVoter::ADMINISTER, new User())) {
+        if ($this->isGranted(UsersVoter::ADMINISTER)) {
             yield ArrayField::new('roles');
 
             yield AssociationField::new('groups')

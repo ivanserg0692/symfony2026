@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Security\Voter\UserGroupsVoter;
+use App\Security\Voter\UsersVoter;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
@@ -68,6 +69,14 @@ class DashboardController extends AbstractDashboardController
 
     public function configureMenuItems(): iterable
     {
+        $newsMenuItems = [
+            MenuItem::linkTo(NewsCrudController::class, 'admin.menu.news', 'fas fa-list'),
+        ];
+
+        if ($this->isGranted(UsersVoter::ADMINISTER)) {
+            $newsMenuItems[] = MenuItem::linkTo(NewsExportCrudController::class, 'admin.menu.news_exports', 'fas fa-file-export');
+        }
+
         $userMenuItems = [
             MenuItem::linkTo(UserCrudController::class, 'admin.menu.users', 'fas fa-user'),
         ];
@@ -79,10 +88,7 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToDashboard('admin.menu.dashboard', 'fa fa-home');
 
         yield MenuItem::section('admin.menu.content');
-        yield MenuItem::subMenu('admin.menu.news_group', 'fas fa-newspaper')->setSubItems([
-            MenuItem::linkTo(NewsCrudController::class, 'admin.menu.news', 'fas fa-list'),
-            MenuItem::linkTo(NewsExportCrudController::class, 'admin.menu.news_exports', 'fas fa-file-export'),
-        ]);
+        yield MenuItem::subMenu('admin.menu.news_group', 'fas fa-newspaper')->setSubItems($newsMenuItems);
 
         yield MenuItem::section('admin.menu.access');
         yield MenuItem::subMenu('admin.menu.users', 'fas fa-users')->setSubItems($userMenuItems);

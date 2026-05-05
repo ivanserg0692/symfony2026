@@ -8,6 +8,7 @@ use App\News\NewsExportStarter;
 use App\Repository\NewsRepository;
 use App\Repository\NewsStatusRepository;
 use App\Security\Voter\NewsVoter;
+use App\Security\Voter\UsersVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
@@ -79,18 +80,7 @@ class NewsCrudController extends AbstractCrudController
 
     public function configureActions(Actions $actions): Actions
     {
-        $exportSelected = Action::new('exportSelectedNews', 'admin.news.action.start_export', 'fas fa-play')
-            ->linkToCrudAction('startSelectedNewsExport')
-            ->addCssClass('btn btn-primary');
-
-        $exportAll = Action::new('exportAllNews', 'admin.news.action.export_all.label', 'fas fa-file-export')
-            ->createAsGlobalAction()
-            ->linkToCrudAction('startAllNewsExport')
-            ->askConfirmation('admin.news.action.export_all.confirmation');
-
-        return $actions
-            ->addBatchAction($exportSelected)
-            ->add(Crud::PAGE_INDEX, $exportAll)
+        $actions = $actions
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->update(Crud::PAGE_INDEX, Action::DETAIL, fn (Action $action): Action =>
                 $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::VIEW, $news))
@@ -107,6 +97,23 @@ class NewsCrudController extends AbstractCrudController
             ->update(Crud::PAGE_DETAIL, Action::DELETE, fn (Action $action): Action =>
                 $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::EDIT, $news))
             );
+
+        if (!$this->isGranted(UsersVoter::ADMINISTER)) {
+            return $actions;
+        }
+
+        $exportSelected = Action::new('exportSelectedNews', 'admin.news.action.start_export', 'fas fa-play')
+            ->linkToCrudAction('startSelectedNewsExport')
+            ->addCssClass('btn btn-primary');
+
+        $exportAll = Action::new('exportAllNews', 'admin.news.action.export_all.label', 'fas fa-file-export')
+            ->createAsGlobalAction()
+            ->linkToCrudAction('startAllNewsExport')
+            ->askConfirmation('admin.news.action.export_all.confirmation');
+
+        return $actions
+            ->addBatchAction($exportSelected)
+            ->add(Crud::PAGE_INDEX, $exportAll);
     }
 
     #[AdminRoute]
@@ -116,6 +123,8 @@ class NewsCrudController extends AbstractCrudController
         Request $request,
         TranslatorInterface $translator,
     ): RedirectResponse {
+        $this->denyAccessUnlessGranted(UsersVoter::ADMINISTER);
+
         $newsIds = array_map('intval', $batchActionDto->getEntityIds());
 
         if ([] === $newsIds) {
@@ -135,6 +144,8 @@ class NewsCrudController extends AbstractCrudController
         Request $request,
         TranslatorInterface $translator,
     ): RedirectResponse {
+        $this->denyAccessUnlessGranted(UsersVoter::ADMINISTER);
+
         $this->startNewsExport($newsExportStarter, $translator);
 
         return $this->redirectToReferrer($request);

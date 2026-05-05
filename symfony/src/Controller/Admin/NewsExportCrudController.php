@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Entity\NewsExport;
+use App\Security\Voter\UsersVoter;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
@@ -19,8 +20,10 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[IsGranted(UsersVoter::ADMINISTER)]
 class NewsExportCrudController extends AbstractCrudController
 {
     public function __construct(

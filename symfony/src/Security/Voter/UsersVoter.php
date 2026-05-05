@@ -16,17 +16,17 @@ final class UsersVoter extends Voter
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute, [self::EDIT, self::VIEW, self::ADMINISTER], true)
+        if (self::ADMINISTER === $attribute) {
+            return null === $subject || $subject instanceof User;
+        }
+
+        return in_array($attribute, [self::EDIT, self::VIEW], true)
             && $subject instanceof User;
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool
     {
         $user = $token->getUser();
-
-        if (!$subject instanceof User) {
-            return false;
-        }
 
         if (!$user instanceof UserInterface) {
             $vote?->addReason('The user must be logged in to access this resource.');
@@ -38,9 +38,9 @@ final class UsersVoter extends Voter
         }
 
         return match ($attribute) {
-            self::VIEW => $this->canView($subject, $user),
-            self::EDIT => $this->canEdit($subject, $user),
             self::ADMINISTER => $this->canAdminister($user),
+            self::VIEW => $subject instanceof User && $this->canView($subject, $user),
+            self::EDIT => $subject instanceof User && $this->canEdit($subject, $user),
             default => false,
         };
     }
