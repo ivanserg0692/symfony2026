@@ -13,15 +13,17 @@ import { dirname, extname, relative, resolve, sep } from 'node:path';
 
 const MARKDOWN_EXTENSIONS = new Set(['.md', '.markdown']);
 const IGNORED_DIRS = new Set(['vendor', 'var', 'node_modules', '.git']);
-const TARGET_PATH = process.argv[2] ?? 'symfony/docs';
+const TARGET_PATHS = process.argv.slice(2);
 const PLANTUML_SERVICE = process.env.PLANTUML_SERVICE ?? 'plantuml';
 
 async function main() {
-  const targetPath = resolve(process.cwd(), TARGET_PATH);
-  const markdownFiles = collectMarkdownFiles(targetPath);
+  const targetPaths = TARGET_PATHS.length > 0 ? TARGET_PATHS : ['symfony/docs'];
+  const markdownFiles = targetPaths
+    .flatMap((targetPath) => collectMarkdownFiles(resolve(process.cwd(), targetPath)))
+    .sort((left, right) => left.localeCompare(right));
 
   if (markdownFiles.length === 0) {
-    throw new Error(`No Markdown files found in ${targetPath}`);
+    throw new Error(`No Markdown files found in ${targetPaths.join(', ')}`);
   }
 
   let renderedCount = 0;
