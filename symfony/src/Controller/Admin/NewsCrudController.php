@@ -4,22 +4,26 @@ namespace App\Controller\Admin;
 
 use App\Entity\News;
 use App\Entity\User;
+use App\News\NewsExportStarter;
 use App\Repository\NewsRepository;
 use App\Repository\NewsStatusRepository;
 use App\Security\Voter\NewsVoter;
+use App\Security\Voter\UsersVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
-use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
+use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\BatchActionDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
-use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
@@ -29,7 +33,10 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class NewsCrudController extends AbstractCrudController
 {
@@ -38,6 +45,7 @@ class NewsCrudController extends AbstractCrudController
     public function __construct(
         private readonly AdminUrlGenerator $adminUrlGenerator,
         private readonly NewsRepository $newsRepository,
+        private readonly TranslatorInterface $translator,
     )
     {
     }
@@ -72,7 +80,7 @@ class NewsCrudController extends AbstractCrudController
 
     public function configureActions(Actions $actions): Actions
     {
-        return $actions
+        $actions = $actions
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->update(Crud::PAGE_INDEX, Action::DETAIL, fn (Action $action): Action =>
                 $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::VIEW, $news))
@@ -89,27 +97,79 @@ class NewsCrudController extends AbstractCrudController
             ->update(Crud::PAGE_DETAIL, Action::DELETE, fn (Action $action): Action =>
                 $action->displayIf(fn (News $news): bool => $this->isGranted(NewsVoter::EDIT, $news))
             );
+
+        if (!$this->isGranted(UsersVoter::ADMINISTER)) {
+            return $actions;
+        }
+
+        $exportSelected = Action::new('exportSelectedNews', 'admin.news.action.start_export', 'fas fa-play')
+            ->linkToCrudAction('startSelectedNewsExport')
+            ->addCssClass('btn btn-primary');
+
+        $exportAll = Action::new('exportAllNews', 'admin.news.action.export_all.label', 'fas fa-file-export')
+            ->createAsGlobalAction()
+            ->linkToCrudAction('startAllNewsExport')
+            ->askConfirmation('admin.news.action.export_all.confirmation');
+
+        return $actions
+            ->addBatchAction($exportSelected)
+            ->add(Crud::PAGE_INDEX, $exportAll);
+    }
+
+    #[AdminRoute]
+    public function startSelectedNewsExport(
+        BatchActionDto $batchActionDto,
+        NewsExportStarter $newsExportStarter,
+        Request $request,
+        TranslatorInterface $translator,
+    ): RedirectResponse {
+        $this->denyAccessUnlessGranted(UsersVoter::ADMINISTER);
+
+        $newsIds = array_map('intval', $batchActionDto->getEntityIds());
+
+        if ([] === $newsIds) {
+            $this->addFlash('warning', $translator->trans('admin.news_export.flash.select_news'));
+
+            return $this->redirectToReferrer($request);
+        }
+
+        $this->startNewsExport($newsExportStarter, $translator, $newsIds);
+
+        return $this->redirectToReferrer($request);
+    }
+
+    #[AdminRoute]
+    public function startAllNewsExport(
+        NewsExportStarter $newsExportStarter,
+        Request $request,
+        TranslatorInterface $translator,
+    ): RedirectResponse {
+        $this->denyAccessUnlessGranted(UsersVoter::ADMINISTER);
+
+        $this->startNewsExport($newsExportStarter, $translator);
+
+        return $this->redirectToReferrer($request);
     }
 
     public function configureFields(string $pageName): iterable
     {
         return [
             IdField::new('id')->setDisabled(true),
-            TextField::new('name'),
+            TextField::new('name', 'admin.news.field.name'),
             SlugField::new('slug')
                 ->setTargetFieldName('name')
-                ->setUnlockConfirmationMessage('Edit slug manually?')
-                ->setHelp('Slug will be generated automatically'),
-            AssociationField::new('status')
+                ->setUnlockConfirmationMessage('admin.news.field.slug.unlock_confirmation')
+                ->setHelp('admin.news.field.slug.help'),
+            AssociationField::new('status', 'admin.news.field.status')
                 ->setFormTypeOption('choice_label', 'name')
                 ->setFormTypeOption('query_builder', fn (NewsStatusRepository $repository): QueryBuilder =>
                     $repository->createAvailableForUserQueryBuilder($this->getCurrentUser())
                 )
                 ->renderAsNativeWidget(),
             $this->createCreatedByField($pageName),
-            TextEditorField::new('brief'),
-            TextEditorField::new('description'),
-            DateTimeField::new('createdAt', 'Created at')
+            TextEditorField::new('brief', 'admin.news.field.brief'),
+            TextEditorField::new('description', 'admin.news.field.description'),
+            DateTimeField::new('createdAt', 'admin.news.field.created_at')
                 ->hideWhenCreating()
                 ->setFormTypeOption('disabled', true)
                 ->setFormat('dd.MM.yyyy HH:mm'),
@@ -196,7 +256,7 @@ class NewsCrudController extends AbstractCrudController
         }
 
         return $createdByField
-            ->setHelp(sprintf('<a href="%s">See user</a>', $userEditUrl))
+            ->setHelp(sprintf('<a href="%s">%s</a>', $userEditUrl, $this->translator->trans('admin.news.field.created_by_see_user')))
             ->setFormTypeOption('help_html', true);
     }
 
@@ -220,7 +280,7 @@ class NewsCrudController extends AbstractCrudController
 
     private function createCreatedByLinkField(): TextField
     {
-        return TextField::new('createdBy', 'Created by')
+        return TextField::new('createdBy', 'admin.news.field.created_by')
             ->formatValue(function ($value, News $news): string {
                 $user = $news->getCreatedBy();
                 $userEditUrl = $this->getUserDetailUrl($news);
@@ -255,5 +315,27 @@ class NewsCrudController extends AbstractCrudController
         $user = $this->getUser();
 
         return $user instanceof User ? $user : null;
+    }
+
+    private function redirectToReferrer(Request $request): RedirectResponse
+    {
+        return $this->redirect($request->headers->get('referer') ?? $this->generateUrl('admin', [
+            '_locale' => $request->getLocale(),
+        ]));
+    }
+
+    /**
+     * @param list<int> $newsIds
+     */
+    private function startNewsExport(NewsExportStarter $newsExportStarter, TranslatorInterface $translator, array $newsIds = []): void
+    {
+        try {
+            $newsExport = $newsExportStarter->start($newsIds);
+            $this->addFlash('success', $translator->trans('admin.news_export.flash.started', [
+                '%id%' => $newsExport->getId(),
+            ]));
+        } catch (\RuntimeException $exception) {
+            $this->addFlash('warning', $translator->trans($exception->getMessage()));
+        }
     }
 }

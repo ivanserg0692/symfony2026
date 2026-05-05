@@ -1,4 +1,5 @@
 services:
+  # PostgreSQL database used by the Symfony application.
   database:
     image: postgres:16-alpine
     container_name: symfony-db
@@ -14,6 +15,11 @@ services:
     volumes:
       - database_data:/var/lib/postgresql/data
 
+  # CLI PHP workspace for running Symfony, Composer, console commands, and tests.
+  # Usage examples:
+  # docker compose run --rm symfony-cli php bin/console
+  # docker compose run --rm symfony-cli composer install
+  # docker compose run --rm symfony-cli php bin/phpunit
   symfony-cli: &symfony-base
     build:
       context: .
@@ -41,6 +47,7 @@ services:
     stdin_open: true
     tty: true
 
+  # Local Symfony web server for browser/API access during development.
   symfony-web:
     <<: *symfony-base
     container_name: symfony-web
@@ -53,6 +60,7 @@ services:
     stdin_open: false
     tty: false
 
+  # Local SMTP catcher and web UI for inspecting outgoing development emails.
   mailpit:
     image: axllent/mailpit:latest
     container_name: symfony-mailpit
@@ -60,6 +68,7 @@ services:
     ports:
       - "8025:8025"
 
+  # RabbitMQ broker for Symfony Messenger async jobs.
   rabbitmq:
     image: rabbitmq:4-management
     container_name: symfony-rabbitmq
@@ -70,6 +79,51 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
+  # S3-compatible object storage for development file uploads and exports.
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: symfony-minio
+    env_file:
+      - .env.local
+    command: server /data --console-address ":9001"
+    ports:
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - minio_data:/data
+
+  # MinIO command-line client for bucket setup and storage maintenance commands.
+  # Usage examples:
+  # docker compose run --rm minio-client ls local
+  # docker compose run --rm minio-client mb local/app --ignore-existing
+  minio-client:
+    image: quay.io/minio/mc:latest
+    env_file:
+      - .env.local
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint:
+      - sh
+      - -lc
+      - mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" >/dev/null && exec mc "$$@"
+      - mc
+
+  # Local PlantUML renderer for documentation diagrams.
+  # Usage examples:
+  # docker compose run --rm plantuml -version
+  # npm run docs:plantuml
+  plantuml:
+    image: plantuml/plantuml:1.2025.2
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+
 volumes:
   database_data:
   rabbitmq_data:
+  minio_data:

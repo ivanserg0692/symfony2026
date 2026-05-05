@@ -1,0 +1,21 @@
+@startuml
+title Admin visibility
+
+actor Admin
+participant "NewsCrudController" as NewsCrud
+participant "NewsExportCrudController" as ExportCrud
+participant "NewsExportStarter" as Starter
+database "NewsExport" as Export
+database "MessengerBatch" as Batch
+
+Admin -> NewsCrud: start export selected/all
+NewsCrud -> Starter: start(ids)
+Starter -> Export: create export journal record
+Starter -> Batch: create and start batch
+
+Admin -> ExportCrud: open exports list
+ExportCrud -> Export: load export records
+ExportCrud -> Batch: show linked batch status/counters
+ExportCrud --> Admin: status + final file path
+
+@enduml

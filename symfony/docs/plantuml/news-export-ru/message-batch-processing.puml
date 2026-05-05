@@ -1,0 +1,28 @@
+@startuml
+title Batch-обработка messages в handler
+
+queue "RabbitMQ" as Rabbit
+participant "ExportNewsMessageHandler" as Handler
+database "NewsRepository" as NewsRepo
+participant "NewsExportCsvStorage" as Storage
+database "MessengerBatch" as Batch
+
+Rabbit -> Handler: process([message, ack] x 50)
+Handler -> Handler: собирает news ids
+Handler -> NewsRepo: ищет новости по ids
+NewsRepo --> Handler: новости, индексированные по id
+Handler -> Handler: собирает messages с отсутствующими новостями
+Handler -> Handler: сортирует найденные новости по id
+Handler -> Storage: writeChunk(batchId, sortedNews)
+
+alt запись chunk упала
+    Handler -> Rabbit: nack всех messages с исходным exception
+else chunk записан
+    Handler -> Rabbit: nack missing-news messages как unrecoverable
+    loop успешные messages
+        Handler -> Batch: markJobProcessed(batchId)
+        Handler -> Rabbit: ack message
+    end
+end
+
+@enduml

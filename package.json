@@ -1,8 +1,13 @@
 {
   "scripts": {
+    "minio": "docker compose run --rm minio-client",
+    "minio:bucket:create": "docker compose run --rm minio-client mb --ignore-existing local/app",
+    "minio:bucket:ls": "docker compose run --rm minio-client ls local/app",
+    "minio:ls": "docker compose run --rm minio-client ls local",
     "readme:api": "node scripts/readme-api-table.mjs README.md",
     "readme:toc": "doctoc README.md",
-    "readme:update": "npm run readme:api && npm run readme:toc"
+    "readme:update": "npm run readme:api && npm run docs:plantuml && npm run readme:toc",
+    "docs:plantuml": "node scripts/render-plantuml.mjs README.md symfony/docs"
   },
   "devDependencies": {
     "doctoc": "^2.4.1"

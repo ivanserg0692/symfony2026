@@ -15,6 +15,8 @@
     - [`Task 2` - done](#task-2---done)
     - [`Task 3` - done](#task-3---done)
     - [`Task 4` - done](#task-4---done)
+    - [`Task 5` - done](#task-5---done)
+  - [News Export and Batch Processing](#news-export-and-batch-processing)
   - [Run With Docker Compose](#run-with-docker-compose)
   - [Doctrine Database Setup](#doctrine-database-setup)
   - [API Documentation](#api-documentation)
@@ -39,6 +41,8 @@
     - [`Task 2` - done](#task-2---done-1)
     - [`Task 3` - done](#task-3---done-1)
     - [`Task 4` - done](#task-4---done-1)
+    - [`Task 5` - done](#task-5---done-1)
+  - [Экспорт новостей и batch-обработка](#%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D1%80%D1%82-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B5%D0%B9-%D0%B8-batch-%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0)
   - [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
   - [Настройка Doctrine и базы данных](#%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-doctrine-%D0%B8-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85)
   - [API Documentation](#api-documentation-1)
@@ -194,6 +198,25 @@ The notification recipients are administrators resolved by the application, not 
 - Task file: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 - MR result (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
 - MR result (RU): [symfony/docs/mr-task-4-ru.md](symfony/docs/mr-task-4-ru.md)
+#### `Task 5` - done
+- Merge Request 5: <https://github.com/ivanserg0692/symfony2026/pull/5>
+- Task file: [symfony/docs/task-5.md](symfony/docs/task-5.md)
+- MR result (EN): [symfony/docs/mr-task-5-en.md](symfony/docs/mr-task-5-en.md)
+- MR result (RU): [symfony/docs/mr-task-5-ru.md](symfony/docs/mr-task-5-ru.md)
+
+### News Export and Batch Processing
+
+Task 5 adds an administrator-driven news export workflow that prepares CSV files through Messenger, RabbitMQ, and S3-compatible storage. Administrators start an export from EasyAdmin for selected news items or for the full news set. The application creates a `MessengerBatch` and a linked `NewsExport`, dispatches one `ExportNewsMessage` per news item, and tracks aggregate progress in the batch table.
+
+The export handler uses Symfony Messenger batch handling so several news messages are processed together. It loads news items in one query per batch chunk, writes ordered CSV chunk files to MinIO/S3, acknowledges successful jobs, and keeps retries meaningful by not increasing the completed counter on retry. When all jobs are completed, the finalization message merges the chunk files into the final CSV export and removes temporary chunks.
+
+<!-- plantuml src="symfony/docs/plantuml/news-export/pipeline.puml" alt="News export batch pipeline" out="symfony/docs/images/plantuml/news-export/pipeline.png" -->
+![News export batch pipeline](symfony/docs/images/plantuml/news-export/pipeline.png)
+<!-- /plantuml -->
+
+<!-- plantuml src="symfony/docs/plantuml/news-export/components.puml" alt="News export components" out="symfony/docs/images/plantuml/news-export/components.png" -->
+![News export components](symfony/docs/images/plantuml/news-export/components.png)
+<!-- /plantuml -->
 
 ### Run With Docker Compose
 
@@ -589,6 +612,25 @@ API отдает новости, аутентификацию, текущего 
 - Файл задачи: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 - Результат MR (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-4-ru.md](symfony/docs/mr-task-4-ru.md)
+#### `Task 5` - done
+- Merge Request 5: <https://github.com/ivanserg0692/symfony2026/pull/5>
+- Файл задачи: [symfony/docs/task-5.md](symfony/docs/task-5.md)
+- Результат MR (EN): [symfony/docs/mr-task-5-en.md](symfony/docs/mr-task-5-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-5-ru.md](symfony/docs/mr-task-5-ru.md)
+
+### Экспорт новостей и batch-обработка
+
+Task 5 добавляет запуск экспорта новостей из админки и подготовку CSV-файлов через Messenger, RabbitMQ и S3-совместимое хранилище. Администратор запускает экспорт для выбранных новостей или для всего списка. Приложение создает `MessengerBatch` и связанный `NewsExport`, отправляет по одному `ExportNewsMessage` на каждую новость и хранит общий прогресс в таблице batch.
+
+Handler экспорта использует batch-обработку Symfony Messenger, поэтому несколько сообщений с новостями обрабатываются одним шагом. Он загружает новости одним запросом на chunk, пишет упорядоченные CSV chunk-файлы в MinIO/S3, подтверждает успешные jobs и сохраняет корректную retry-семантику без повторного увеличения счетчика выполненных задач. Когда все jobs завершены, финальное сообщение объединяет chunk-файлы в итоговый CSV и удаляет временные chunks.
+
+<!-- plantuml src="symfony/docs/plantuml/news-export-ru/pipeline.puml" alt="Пайплайн batch-экспорта новостей" out="symfony/docs/images/plantuml/news-export-ru/pipeline.png" -->
+![Пайплайн batch-экспорта новостей](symfony/docs/images/plantuml/news-export-ru/pipeline.png)
+<!-- /plantuml -->
+
+<!-- plantuml src="symfony/docs/plantuml/news-export-ru/components.puml" alt="Компоненты экспорта новостей" out="symfony/docs/images/plantuml/news-export-ru/components.png" -->
+![Компоненты экспорта новостей](symfony/docs/images/plantuml/news-export-ru/components.png)
+<!-- /plantuml -->
 
 ### Запуск через Docker Compose
 

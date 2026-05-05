@@ -1,0 +1,27 @@
+@startuml
+title Finalize news export
+
+queue "RabbitMQ" as Rabbit
+participant "FinalizeNewsExportMessageHandler" as Finalizer
+database "NewsExportRepository" as ExportRepo
+database "MessengerBatch" as Batch
+participant "NewsExportCsvStorage" as Storage
+participant "MinIO / S3" as S3
+
+Rabbit -> Finalizer: FinalizeNewsExportMessage(batchId)
+Finalizer -> ExportRepo: find NewsExport by batch id
+Finalizer -> Batch: read status
+
+alt batch failed
+    Finalizer -> Storage: deleteChunks(batchId)
+    Storage -> S3: delete temporary chunks
+else batch not finished
+    Finalizer -> Finalizer: skip
+else batch finished
+    Finalizer -> Storage: finalize(batchId)
+    Storage -> S3: merge chunks into final CSV
+    Storage --> Finalizer: final file path
+    Finalizer -> ExportRepo: save filePath
+end
+
+@enduml

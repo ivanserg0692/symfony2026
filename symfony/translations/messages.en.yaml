@@ -1,0 +1,48 @@
+admin:
+    dashboard:
+        title: 'Workspace'
+    menu:
+        dashboard: 'Dashboard'
+        content: 'Content'
+        access: 'Access'
+        users: 'Users'
+        groups: 'Groups'
+        news_group: 'News'
+        news: 'News'
+        news_exports: 'News exports'
+    news:
+        action:
+            start_export: 'Start export'
+            export_all:
+                label: 'Export all'
+                confirmation: 'Start export for all news?'
+        field:
+            name: 'Name'
+            status: 'Status'
+            brief: 'Brief'
+            description: 'Description'
+            created_at: 'Created at'
+            created_by: 'Created by'
+            created_by_see_user: 'See user'
+            slug:
+                help: 'Slug will be generated automatically'
+                unlock_confirmation: 'Edit slug manually?'
+    news_export:
+        action:
+            download: 'Download'
+        field:
+            status: 'Status'
+            total_jobs: 'Total'
+            processed_jobs: 'Processed'
+            failed_jobs: 'Failed'
+            file_path: 'File path'
+            created_at: 'Created at'
+            started_at: 'Started at'
+            finished_at: 'Finished at'
+        flash:
+            select_news: 'Select news to export first.'
+            started: 'News export #%id% has been started.'
+            file_not_ready: 'Export file is not ready yet.'
+            file_not_found: 'Export file was not found in storage.'
+        error:
+            empty: 'There are no news to export.'

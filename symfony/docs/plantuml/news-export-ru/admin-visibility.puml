@@ -1,0 +1,21 @@
+@startuml
+title Видимость результата в админке
+
+actor Администратор
+participant "NewsCrudController" as NewsCrud
+participant "NewsExportCrudController" as ExportCrud
+participant "NewsExportStarter" as Starter
+database "NewsExport" as Export
+database "MessengerBatch" as Batch
+
+Администратор -> NewsCrud: запускает экспорт выбранных или всех новостей
+NewsCrud -> Starter: start(ids)
+Starter -> Export: создает запись журнала экспорта
+Starter -> Batch: создает и запускает batch
+
+Администратор -> ExportCrud: открывает список экспортов
+ExportCrud -> Export: загружает записи экспорта
+ExportCrud -> Batch: показывает status и счетчики связанного batch
+ExportCrud --> Администратор: status и путь итогового файла
+
+@enduml
