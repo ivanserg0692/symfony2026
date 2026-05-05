@@ -34,12 +34,12 @@ class NewsExportCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         yield IdField::new('id');
-        yield TextField::new('messengerBatch.status', 'Status');
-        yield IntegerField::new('messengerBatch.totalJobs', 'Total');
-        yield IntegerField::new('messengerBatch.processedJobs', 'Processed');
-        yield IntegerField::new('messengerBatch.failedJobs', 'Failed');
-        yield DateTimeField::new('messengerBatch.createdAt', 'Created at');
-        yield DateTimeField::new('messengerBatch.startedAt', 'Started at');
-        yield DateTimeField::new('messengerBatch.finishedAt', 'Finished at');
+        yield TextField::new('messengerBatch.status', 'admin.news_export.field.status');
+        yield IntegerField::new('messengerBatch.totalJobs', 'admin.news_export.field.total_jobs');
+        yield IntegerField::new('messengerBatch.processedJobs', 'admin.news_export.field.processed_jobs');
+        yield IntegerField::new('messengerBatch.failedJobs', 'admin.news_export.field.failed_jobs');
+        yield DateTimeField::new('messengerBatch.createdAt', 'admin.news_export.field.created_at');
+        yield DateTimeField::new('messengerBatch.startedAt', 'admin.news_export.field.started_at');
+        yield DateTimeField::new('messengerBatch.finishedAt', 'admin.news_export.field.finished_at');
     }
 }

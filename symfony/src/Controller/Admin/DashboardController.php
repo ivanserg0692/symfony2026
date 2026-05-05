@@ -7,12 +7,38 @@ use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[AdminDashboard(routePath: '/admin', routeName: 'admin')]
+#[AdminDashboard(routePath: '/admin/{_locale<en|ru>}', routeName: 'admin')]
 class DashboardController extends AbstractDashboardController
 {
+    #[Route('/admin', name: 'admin_default_locale')]
+    public function defaultLocale(): RedirectResponse
+    {
+        return $this->redirectToRoute('admin', ['_locale' => 'en']);
+    }
+
+    #[Route(
+        '/admin/{path}',
+        name: 'admin_default_locale_path',
+        requirements: ['path' => '(?!en(?:/|$)|ru(?:/|$)).+'],
+    )]
+    public function defaultLocalePath(string $path, Request $request): RedirectResponse
+    {
+        $queryString = $request->getQueryString();
+        $targetUrl = $request->getBaseUrl().'/admin/en/'.$path;
+
+        if (null !== $queryString) {
+            $targetUrl .= '?'.$queryString;
+        }
+
+        return $this->redirect($targetUrl);
+    }
+
     public function index(): Response
     {
         return $this->render('admin/dashboard.html.twig');
@@ -36,26 +62,27 @@ class DashboardController extends AbstractDashboardController
     public function configureDashboard(): Dashboard
     {
         return Dashboard::new()
-            ->setTitle('Workspace');
+            ->setTitle('admin.dashboard.title')
+            ->setLocales(['en', 'ru']);
     }
 
     public function configureMenuItems(): iterable
     {
         $userMenuItems = [
-            MenuItem::linkTo(UserCrudController::class, 'Users', 'fas fa-user'),
+            MenuItem::linkTo(UserCrudController::class, 'admin.menu.users', 'fas fa-user'),
         ];
 
         if ($this->isGranted(UserGroupsVoter::INDEX)) {
-            $userMenuItems[] = MenuItem::linkTo(UserGroupsCrudController::class, 'Groups', 'fas fa-users-cog');
+            $userMenuItems[] = MenuItem::linkTo(UserGroupsCrudController::class, 'admin.menu.groups', 'fas fa-users-cog');
         }
 
-        yield MenuItem::linkToDashboard('Dashboard', 'fa fa-home');
+        yield MenuItem::linkToDashboard('admin.menu.dashboard', 'fa fa-home');
 
-        yield MenuItem::section('Content');
-        yield MenuItem::linkTo(NewsCrudController::class, 'News', 'fas fa-newspaper');
-        yield MenuItem::linkTo(NewsExportCrudController::class, 'News exports', 'fas fa-file-export');
+        yield MenuItem::section('admin.menu.content');
+        yield MenuItem::linkTo(NewsCrudController::class, 'admin.menu.news', 'fas fa-newspaper');
+        yield MenuItem::linkTo(NewsExportCrudController::class, 'admin.menu.news_exports', 'fas fa-file-export');
 
-        yield MenuItem::section('Access');
-        yield MenuItem::subMenu('Users', 'fas fa-users')->setSubItems($userMenuItems);
+        yield MenuItem::section('admin.menu.access');
+        yield MenuItem::subMenu('admin.menu.users', 'fas fa-users')->setSubItems($userMenuItems);
     }
 }

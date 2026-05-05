@@ -27,7 +27,7 @@ final readonly class NewsExportStarter
         $newsIds = [] === $newsIds ? $this->findNewsIds() : $this->normalizeNewsIds($newsIds);
 
         if ([] === $newsIds) {
-            throw new \RuntimeException('There are no news to export.');
+            throw new \RuntimeException('admin.news_export.error.empty');
         }
 
         $batch = $this->batchManager->create(\count($newsIds));

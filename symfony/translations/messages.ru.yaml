@@ -1,0 +1,42 @@
+admin:
+    dashboard:
+        title: 'Рабочее пространство'
+    menu:
+        dashboard: 'Панель'
+        content: 'Контент'
+        access: 'Доступ'
+        users: 'Пользователи'
+        groups: 'Группы'
+        news: 'Новости'
+        news_exports: 'Экспорты новостей'
+    news:
+        action:
+            start_export: 'Запустить экспорт'
+            export_all:
+                label: 'Экспортировать все'
+                confirmation: 'Запустить экспорт всех новостей?'
+        field:
+            name: 'Название'
+            status: 'Статус'
+            brief: 'Краткое описание'
+            description: 'Описание'
+            created_at: 'Создано'
+            created_by: 'Автор'
+            created_by_see_user: 'Посмотреть пользователя'
+            slug:
+                help: 'Slug будет сгенерирован автоматически'
+                unlock_confirmation: 'Редактировать slug вручную?'
+    news_export:
+        field:
+            status: 'Статус'
+            total_jobs: 'Всего'
+            processed_jobs: 'Обработано'
+            failed_jobs: 'Ошибки'
+            created_at: 'Создано'
+            started_at: 'Запущено'
+            finished_at: 'Завершено'
+        flash:
+            select_news: 'Сначала выберите новости для экспорта.'
+            started: 'Экспорт новостей #%id% запущен.'
+        error:
+            empty: 'Нет новостей для экспорта.'
