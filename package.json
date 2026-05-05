@@ -6,7 +6,8 @@
     "minio:ls": "docker compose run --rm minio-client ls local",
     "readme:api": "node scripts/readme-api-table.mjs README.md",
     "readme:toc": "doctoc README.md",
-    "readme:update": "npm run readme:api && npm run readme:toc"
+    "readme:update": "npm run readme:api && npm run readme:toc",
+    "docs:plantuml": "node scripts/render-plantuml.mjs symfony/docs"
   },
   "devDependencies": {
     "doctoc": "^2.4.1"

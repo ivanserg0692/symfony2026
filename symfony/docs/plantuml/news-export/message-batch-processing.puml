@@ -1,0 +1,28 @@
+@startuml
+title Messenger handler batch processing
+
+queue "RabbitMQ" as Rabbit
+participant "ExportNewsMessageHandler" as Handler
+database "NewsRepository" as NewsRepo
+participant "NewsExportCsvStorage" as Storage
+database "MessengerBatch" as Batch
+
+Rabbit -> Handler: process([message, ack] x 50)
+Handler -> Handler: collect news ids
+Handler -> NewsRepo: find news by ids
+NewsRepo --> Handler: news indexed by id
+Handler -> Handler: collect missing-news messages
+Handler -> Handler: sort found news by id
+Handler -> Storage: writeChunk(batchId, sortedNews)
+
+alt chunk write failed
+    Handler -> Rabbit: nack all messages with original exception
+else chunk written
+    Handler -> Rabbit: nack missing-news messages as unrecoverable
+    loop successful messages
+        Handler -> Batch: markJobProcessed(batchId)
+        Handler -> Rabbit: ack message
+    end
+end
+
+@enduml

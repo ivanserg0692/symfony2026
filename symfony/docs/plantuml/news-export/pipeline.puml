@@ -1,0 +1,34 @@
+@startuml
+title News export batch pipeline
+
+actor Admin
+participant "EasyAdmin" as AdminPanel
+participant "NewsExportStarter" as Starter
+database "Doctrine DB" as DB
+queue "RabbitMQ" as Rabbit
+participant "ExportNewsMessageHandler" as Handler
+participant "NewsExportCsvStorage" as Storage
+participant "MinIO / S3" as S3
+participant "FinalizeNewsExportMessageHandler" as Finalizer
+
+Admin -> AdminPanel: Start export
+AdminPanel -> Starter: start(selectedNewsIds or all)
+Starter -> DB: create MessengerBatch
+Starter -> DB: create NewsExport
+Starter -> Rabbit: dispatch ExportNewsMessage per news
+
+Rabbit -> Handler: deliver messages as Messenger batch
+Handler -> DB: load news by ids in one query
+Handler -> Storage: write CSV chunk
+Storage -> S3: write temporary chunk
+Handler -> DB: update MessengerBatch counters
+Handler -> Rabbit: dispatch FinalizeNewsExportMessage when complete
+
+Rabbit -> Finalizer: deliver finalize message
+Finalizer -> DB: check NewsExport + MessengerBatch status
+Finalizer -> Storage: merge chunks
+Storage -> S3: write final CSV
+Storage -> S3: delete temporary chunks
+Finalizer -> DB: save final file path
+
+@enduml

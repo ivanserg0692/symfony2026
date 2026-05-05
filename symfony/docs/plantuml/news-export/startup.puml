@@ -1,0 +1,29 @@
+@startuml
+title Export startup responsibilities
+
+actor Admin
+participant "NewsExportCrudController / NewsCrudController" as Controller
+participant "NewsExportStarter" as Starter
+database "NewsRepository" as NewsRepo
+database "MessengerBatch" as Batch
+database "NewsExport" as Export
+queue "RabbitMQ" as Rabbit
+
+Admin -> Controller: click start export
+Controller -> Starter: start(newsIds)
+
+alt no news selected
+    Starter -> NewsRepo: load all news ids ordered by id
+else selected news
+    Starter -> NewsRepo: normalize existing selected ids ordered by id
+end
+
+Starter -> Batch: create(totalMessages)
+Starter -> Export: create linked export record
+Starter -> Batch: start(batchId)
+
+loop for each news id
+    Starter -> Rabbit: dispatch ExportNewsMessage(batchId, newsId)
+end
+
+@enduml
