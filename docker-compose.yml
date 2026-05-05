@@ -99,6 +99,12 @@ services:
       - mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" >/dev/null && exec mc "$$@"
       - mc
 
+  plantuml:
+    image: plantuml/plantuml:1.2025.2
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+
 volumes:
   database_data:
   rabbitmq_data:

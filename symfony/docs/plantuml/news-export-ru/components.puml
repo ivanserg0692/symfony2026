@@ -1,0 +1,46 @@
+@startuml
+title Компоненты экспорта новостей
+
+package "Админка" {
+  [NewsCrudController]
+  [NewsExportCrudController]
+}
+
+package "Домен экспорта новостей" {
+  [NewsExportStarter]
+  [ExportNewsMessage]
+  [ExportNewsMessageHandler]
+  [FinalizeNewsExportMessage]
+  [FinalizeNewsExportMessageHandler]
+  [NewsExportCsvStorage]
+  [NewsExport]
+}
+
+package "Generic Messenger Batch" {
+  [MessengerBatch]
+  [MessengerBatchManager]
+  [MessengerBatchMessageSubscriber]
+}
+
+queue "RabbitMQ" as Rabbit
+cloud "MinIO / S3" as S3
+database "Doctrine DB" as DB
+
+[NewsCrudController] --> [NewsExportStarter]
+[NewsExportCrudController] --> [NewsExport]
+[NewsExportStarter] --> [MessengerBatchManager]
+[NewsExportStarter] --> [ExportNewsMessage]
+[ExportNewsMessage] --> Rabbit
+Rabbit --> [ExportNewsMessageHandler]
+[ExportNewsMessageHandler] --> [NewsExportCsvStorage]
+[ExportNewsMessageHandler] --> [MessengerBatchManager]
+[ExportNewsMessageHandler] --> [FinalizeNewsExportMessage]
+[FinalizeNewsExportMessage] --> Rabbit
+Rabbit --> [FinalizeNewsExportMessageHandler]
+[FinalizeNewsExportMessageHandler] --> [NewsExportCsvStorage]
+[NewsExportCsvStorage] --> S3
+[NewsExport] --> [MessengerBatch]
+[MessengerBatch] --> DB
+[NewsExport] --> DB
+
+@enduml

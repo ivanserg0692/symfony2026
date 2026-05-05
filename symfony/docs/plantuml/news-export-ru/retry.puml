@@ -1,0 +1,21 @@
+@startuml
+title Поведение retry
+
+participant "ExportNewsMessageHandler" as Handler
+queue "RabbitMQ" as Rabbit
+participant "MinIO / S3" as S3
+database "NewsRepository" as NewsRepo
+
+alt временная ошибка S3
+    Handler -> S3: пишет chunk
+    S3 --> Handler: выбрасывает runtime/storage exception
+    Handler -> Rabbit: nack всех messages с исходным exception
+    Rabbit -> Rabbit: применяет retry policy
+else новость отсутствует
+    Handler -> NewsRepo: ищет по ids
+    NewsRepo --> Handler: часть ids отсутствует
+    Handler -> Rabbit: nack missing messages с UnrecoverableMessageHandlingException
+    Rabbit -> Rabbit: не делает retry для missing-news messages
+end
+
+@enduml

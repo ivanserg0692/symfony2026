@@ -1,0 +1,25 @@
+@startuml
+title Порядок CSV chunks и финальное объединение
+
+participant "ExportNewsMessageHandler" as Handler
+participant "NewsExportCsvStorage" as Storage
+participant "MinIO / S3" as S3
+
+Handler -> Storage: writeChunk(exportId, sortedNews)
+Storage -> Storage: startNewsId = id первой новости
+Storage -> S3: пишет news-exports/{id}/chunks/{startNewsId с padding}.csv
+
+...
+
+Storage -> S3: читает список news-exports/{id}/chunks
+S3 --> Storage: пути chunk-файлов
+Storage -> Storage: сортирует пути chunks по имени файла
+Storage -> Storage: пишет CSV header
+loop каждый chunk по порядку
+    Storage -> S3: читает chunk
+    Storage -> Storage: добавляет тело chunk
+end
+Storage -> S3: пишет news-exports/{id}/news-export-{id}.csv
+Storage -> S3: удаляет временные chunks
+
+@enduml

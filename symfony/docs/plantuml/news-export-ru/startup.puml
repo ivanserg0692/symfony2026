@@ -1,0 +1,29 @@
+@startuml
+title Ответственность запуска экспорта
+
+actor Администратор
+participant "NewsExportCrudController / NewsCrudController" as Controller
+participant "NewsExportStarter" as Starter
+database "NewsRepository" as NewsRepo
+database "MessengerBatch" as Batch
+database "NewsExport" as Export
+queue "RabbitMQ" as Rabbit
+
+Администратор -> Controller: нажимает запуск экспорта
+Controller -> Starter: start(newsIds)
+
+alt новости не выбраны
+    Starter -> NewsRepo: загружает все ids новостей по id
+else новости выбраны
+    Starter -> NewsRepo: нормализует существующие выбранные ids по id
+end
+
+Starter -> Batch: создает batch(totalMessages)
+Starter -> Export: создает связанную запись экспорта
+Starter -> Batch: запускает batch(batchId)
+
+loop для каждого news id
+    Starter -> Rabbit: отправляет ExportNewsMessage(batchId, newsId)
+end
+
+@enduml
