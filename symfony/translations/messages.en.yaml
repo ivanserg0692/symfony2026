@@ -28,6 +28,8 @@ admin:
                 help: 'Slug will be generated automatically'
                 unlock_confirmation: 'Edit slug manually?'
     news_export:
+        action:
+            download: 'Download'
         field:
             status: 'Status'
             total_jobs: 'Total'
@@ -40,5 +42,7 @@ admin:
         flash:
             select_news: 'Select news to export first.'
             started: 'News export #%id% has been started.'
+            file_not_ready: 'Export file is not ready yet.'
+            file_not_found: 'Export file was not found in storage.'
         error:
             empty: 'There are no news to export.'

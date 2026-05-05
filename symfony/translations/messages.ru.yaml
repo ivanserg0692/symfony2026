@@ -28,6 +28,8 @@ admin:
                 help: 'Slug будет сгенерирован автоматически'
                 unlock_confirmation: 'Редактировать slug вручную?'
     news_export:
+        action:
+            download: 'Скачать'
         field:
             status: 'Статус'
             total_jobs: 'Всего'
@@ -40,5 +42,7 @@ admin:
         flash:
             select_news: 'Сначала выберите новости для экспорта.'
             started: 'Экспорт новостей #%id% запущен.'
+            file_not_ready: 'Файл экспорта еще не готов.'
+            file_not_found: 'Файл экспорта не найден в хранилище.'
         error:
             empty: 'Нет новостей для экспорта.'
