@@ -9,6 +9,9 @@ use App\Repository\NewsRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 
+/**
+ * Creates a news export batch and fills Messenger queue with one message per news item.
+ */
 final readonly class NewsExportStarter
 {
     public function __construct(

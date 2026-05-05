@@ -6,6 +6,9 @@ use App\Entity\News;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 
+/**
+ * Writes temporary CSV chunks to S3-compatible storage and merges them into a final export file.
+ */
 final readonly class NewsExportCsvStorage
 {
     private const array CSV_HEADER = [

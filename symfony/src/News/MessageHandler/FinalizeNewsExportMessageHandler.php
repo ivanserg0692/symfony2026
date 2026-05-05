@@ -10,6 +10,9 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
 
+/**
+ * Finalizes completed news export batches by merging CSV chunks and storing the final file path.
+ */
 #[AsMessageHandler]
 final readonly class FinalizeNewsExportMessageHandler
 {

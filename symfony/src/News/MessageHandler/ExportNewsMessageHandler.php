@@ -13,6 +13,9 @@ use Symfony\Component\Messenger\Handler\BatchHandlerInterface;
 use Symfony\Component\Messenger\Handler\BatchHandlerTrait;
 use Symfony\Component\Messenger\MessageBusInterface;
 
+/**
+ * Processes news export messages in Messenger batches and writes one CSV chunk per handled batch.
+ */
 final class ExportNewsMessageHandler implements BatchHandlerInterface
 {
     use BatchHandlerTrait;
