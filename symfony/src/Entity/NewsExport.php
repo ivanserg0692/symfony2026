@@ -13,6 +13,9 @@ class NewsExport
     #[ORM\JoinColumn(name: 'id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private MessengerBatch $messengerBatch;
 
+    #[ORM\Column(length: 1024, nullable: true)]
+    private ?string $filePath = null;
+
     public function __construct(MessengerBatch $messengerBatch)
     {
         $this->messengerBatch = $messengerBatch;
@@ -31,6 +34,18 @@ class NewsExport
     public function setMessengerBatch(MessengerBatch $messengerBatch): static
     {
         $this->messengerBatch = $messengerBatch;
+
+        return $this;
+    }
+
+    public function getFilePath(): ?string
+    {
+        return $this->filePath;
+    }
+
+    public function setFilePath(?string $filePath): static
+    {
+        $this->filePath = $filePath;
 
         return $this;
     }

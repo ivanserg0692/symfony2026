@@ -5,3 +5,8 @@ flysystem:
             adapter: 'local'
             options:
                 directory: '%kernel.project_dir%/var/storage/default'
+        news_export.storage:
+            adapter: 'aws'
+            options:
+                client: 'Aws\S3\S3Client'
+                bucket: '%env(MINIO_BUCKET)%'

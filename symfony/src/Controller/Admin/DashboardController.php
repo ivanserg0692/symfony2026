@@ -79,8 +79,10 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToDashboard('admin.menu.dashboard', 'fa fa-home');
 
         yield MenuItem::section('admin.menu.content');
-        yield MenuItem::linkTo(NewsCrudController::class, 'admin.menu.news', 'fas fa-newspaper');
-        yield MenuItem::linkTo(NewsExportCrudController::class, 'admin.menu.news_exports', 'fas fa-file-export');
+        yield MenuItem::subMenu('admin.menu.news_group', 'fas fa-newspaper')->setSubItems([
+            MenuItem::linkTo(NewsCrudController::class, 'admin.menu.news', 'fas fa-list'),
+            MenuItem::linkTo(NewsExportCrudController::class, 'admin.menu.news_exports', 'fas fa-file-export'),
+        ]);
 
         yield MenuItem::section('admin.menu.access');
         yield MenuItem::subMenu('admin.menu.users', 'fas fa-users')->setSubItems($userMenuItems);

@@ -7,6 +7,7 @@ admin:
         access: 'Access'
         users: 'Users'
         groups: 'Groups'
+        news_group: 'News'
         news: 'News'
         news_exports: 'News exports'
     news:
@@ -32,6 +33,7 @@ admin:
             total_jobs: 'Total'
             processed_jobs: 'Processed'
             failed_jobs: 'Failed'
+            file_path: 'File path'
             created_at: 'Created at'
             started_at: 'Started at'
             finished_at: 'Finished at'

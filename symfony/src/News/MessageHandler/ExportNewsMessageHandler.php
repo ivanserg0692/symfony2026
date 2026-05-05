@@ -5,6 +5,7 @@ namespace App\News\MessageHandler;
 use App\Entity\News;
 use App\MessengerBatch\MessengerBatchManager;
 use App\News\Message\ExportNewsMessage;
+use App\News\NewsExportCsvStorage;
 use App\Repository\NewsRepository;
 use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
 use Symfony\Component\Messenger\Handler\Acknowledger;
@@ -22,6 +23,7 @@ final class ExportNewsMessageHandler implements BatchHandlerInterface
         private readonly MessengerBatchManager $batchManager,
         private readonly NewsRepository $newsRepository,
         private readonly MessageBusInterface $messageBus,
+        private readonly NewsExportCsvStorage $newsExportCsvStorage,
     ) {
     }
 
@@ -38,6 +40,29 @@ final class ExportNewsMessageHandler implements BatchHandlerInterface
 
     private function process(array $jobs): void
     {
+        $newsById = $this->findNewsByIds($this->collectNewsIds($jobs));
+        $missingNewsJobs = $this->collectMissingNewsJobs($jobs, $newsById);
+
+        try {
+            $this->exportNews($this->getBatchId($jobs), $newsById);
+        } catch (\Throwable $exception) {
+            foreach ($jobs as [$message, $ack]) {
+                \assert($message instanceof ExportNewsMessage);
+
+                $ack->nack($exception);
+            }
+            return;
+        }
+
+        $this->nackMissingNewsJobs($missingNewsJobs);
+        $this->ackSuccessfulJobs($jobs, $newsById);
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function collectNewsIds(array $jobs): array
+    {
         $newsIds = [];
 
         foreach ($jobs as [$message]) {
@@ -46,30 +71,99 @@ final class ExportNewsMessageHandler implements BatchHandlerInterface
             $newsIds[$message->newsId] = $message->newsId;
         }
 
-        $newsById = $this->findNewsByIds($newsIds);
+        return $newsIds;
+    }
+
+    /**
+     * @param array<int, News> $newsById
+     *
+     * @return list<array{0: ExportNewsMessage, 1: Acknowledger, 2: \Throwable}>
+     */
+    private function collectMissingNewsJobs(array $jobs, array $newsById): array
+    {
+        $missingNewsJobs = [];
 
         foreach ($jobs as [$message, $ack]) {
             \assert($message instanceof ExportNewsMessage);
 
-            $news = $newsById[$message->newsId] ?? null;
+            if (isset($newsById[$message->newsId])) {
+                continue;
+            }
 
-            if (null === $news) {
-                $ack->nack(new UnrecoverableMessageHandlingException(sprintf(
-                    'News "%d" was not found.',
-                    $message->newsId,
-                )));
+            $missingNewsJobs[] = [$message, $ack, new UnrecoverableMessageHandlingException(sprintf(
+                'News "%d" was not found.',
+                $message->newsId,
+            ))];
+        }
 
+        return $missingNewsJobs;
+    }
+
+    /**
+     * @param list<array{0: ExportNewsMessage, 1: Acknowledger, 2: \Throwable}> $missingNewsJobs
+     */
+    private function nackMissingNewsJobs(array $missingNewsJobs): void
+    {
+        foreach ($missingNewsJobs as [$message, $ack, $exception]) {
+            \assert($message instanceof ExportNewsMessage);
+
+            $ack->nack($exception);
+        }
+    }
+
+    /**
+     * @param array<int, News> $newsById
+     */
+    private function ackSuccessfulJobs(array $jobs, array $newsById): void
+    {
+        foreach ($jobs as [$message, $ack]) {
+            \assert($message instanceof ExportNewsMessage);
+
+            if (!isset($newsById[$message->newsId])) {
                 continue;
             }
 
             try {
-                $this->exportNews($news);
                 $this->finalizeBatchIfComplete($message);
                 $ack->ack();
             } catch (\Throwable $exception) {
                 $ack->nack($exception);
             }
         }
+    }
+
+    private function getBatchId(array $jobs): int
+    {
+        foreach ($jobs as [$message]) {
+            \assert($message instanceof ExportNewsMessage);
+
+            return $message->getBatchId();
+        }
+
+        throw new \LogicException('Cannot export empty news chunk.');
+    }
+
+    /**
+     * @param array<int, News> $newsById
+     */
+    private function exportNews(int $batchId, array $newsById): void
+    {
+        $exportedNews = [];
+        $newsIds = array_keys($newsById);
+
+        sort($newsIds, SORT_NUMERIC);
+
+        foreach ($newsIds as $newsId) {
+            $news = $newsById[$newsId] ?? null;
+
+            if (null === $news) {
+                continue;
+            }
+
+            $exportedNews[] = $news;
+        }
+
+        $this->newsExportCsvStorage->writeChunk($batchId, $exportedNews);
     }
 
     private function getBatchSize(): int
@@ -110,13 +204,8 @@ final class ExportNewsMessageHandler implements BatchHandlerInterface
             ));
         }
 
-        $this->exportNews($news);
+        $this->exportNews($message->getBatchId(), [$message->newsId => $news]);
         $this->finalizeBatchIfComplete($message);
-    }
-
-    private function exportNews(News $news): void
-    {
-        throw new \LogicException('News export implementation is not configured.');
     }
 
     private function finalizeBatchIfComplete(ExportNewsMessage $message): void

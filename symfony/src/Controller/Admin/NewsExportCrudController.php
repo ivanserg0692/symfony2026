@@ -38,6 +38,7 @@ class NewsExportCrudController extends AbstractCrudController
         yield IntegerField::new('messengerBatch.totalJobs', 'admin.news_export.field.total_jobs');
         yield IntegerField::new('messengerBatch.processedJobs', 'admin.news_export.field.processed_jobs');
         yield IntegerField::new('messengerBatch.failedJobs', 'admin.news_export.field.failed_jobs');
+        yield TextField::new('filePath', 'admin.news_export.field.file_path');
         yield DateTimeField::new('messengerBatch.createdAt', 'admin.news_export.field.created_at');
         yield DateTimeField::new('messengerBatch.startedAt', 'admin.news_export.field.started_at');
         yield DateTimeField::new('messengerBatch.finishedAt', 'admin.news_export.field.finished_at');

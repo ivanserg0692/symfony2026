@@ -53,6 +53,7 @@ final readonly class NewsExportStarter
         $rows = $this->newsRepository
             ->createQueryBuilder('news')
             ->select('news.id')
+            ->orderBy('news.id', 'ASC')
             ->getQuery()
             ->getScalarResult();
 
@@ -77,6 +78,7 @@ final readonly class NewsExportStarter
             ->select('news.id')
             ->andWhere('news.id IN (:newsIds)')
             ->setParameter('newsIds', $newsIds)
+            ->orderBy('news.id', 'ASC')
             ->getQuery()
             ->getScalarResult();
 
