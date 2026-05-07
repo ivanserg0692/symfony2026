@@ -3,7 +3,7 @@
 namespace App\Controller\Api\V1;
 
 use App\Dto\Listing\ListResponseDto;
-use App\Dto\Sorting\ListQueryDto;
+use App\Dto\Sorting\SearchListQueryDto;
 use App\Entity\News;
 use App\Entity\User;
 use App\Repository\NewsRepository;
@@ -43,7 +43,7 @@ final class NewsController extends AbstractController
         ),
     )]
     public function index(
-        #[MapQueryString] ListQueryDto $query,
+        #[MapQueryString] SearchListQueryDto $query,
         NewsRepository $repository,
         ListQueryNormalizer $listQueryNormalizer,
     ): JsonResponse
