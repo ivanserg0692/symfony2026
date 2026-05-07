@@ -2,7 +2,7 @@
 
 namespace App\Repository;
 
-use App\Dto\Sorting\ListQueryDto;
+use App\Dto\Sorting\SearchListQueryDto;
 use App\Entity\News;
 use App\Entity\User;
 use App\Enum\NewsStatusCode;
@@ -31,9 +31,23 @@ class NewsRepository extends ServiceEntityRepository
         parent::__construct($registry, News::class);
     }
 
-    public function createListQueryBuilder(ListQueryDto $query, ?User $user): QueryBuilder
+    public function createListQueryBuilder(SearchListQueryDto $query, ?User $user): QueryBuilder
     {
         $queryBuilder = $this->createVisibleQueryBuilder($user);
+        $searchQuery = trim($query->query);
+
+        if ('' !== $searchQuery) {
+            $expr = $queryBuilder->expr();
+
+            $queryBuilder
+                ->andWhere($expr->orX(
+                    $expr->like('LOWER(' . self::ROOT_ALIAS . '.name)', ':query'),
+                    $expr->like('LOWER(' . self::ROOT_ALIAS . '.slug)', ':query'),
+                    $expr->like('LOWER(' . self::ROOT_ALIAS . '.brief)', ':query'),
+                    $expr->like('LOWER(' . self::ROOT_ALIAS . '.description)', ':query'),
+                ))
+                ->setParameter('query', '%' . mb_strtolower($searchQuery) . '%');
+        }
 
         return $queryBuilder->orderBy(
             self::ROOT_ALIAS . '.' . $this->listQueryNormalizer->normalizeSort(

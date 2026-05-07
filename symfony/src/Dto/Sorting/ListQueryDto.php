@@ -9,7 +9,7 @@ use OpenApi\Attributes as OA;
     type: 'object',
     description: 'Query parameters for paginated lists with sorting.',
 )]
-final readonly class ListQueryDto
+readonly class ListQueryDto
 {
     use ListSortingFieldsTrait;
 
