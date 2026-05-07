@@ -50,7 +50,7 @@ function collectMarkdownFiles(path) {
   const stats = statSync(path);
 
   if (stats.isFile()) {
-    return MARKDOWN_EXTENSIONS.has(extname(path)) ? [path] : [];
+    return MARKDOWN_EXTENSIONS.has(extname(path).toLowerCase()) ? [path] : [];
   }
 
   return readdirSync(path)
