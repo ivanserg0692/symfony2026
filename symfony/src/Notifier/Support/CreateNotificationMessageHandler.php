@@ -26,12 +26,15 @@ final class CreateNotificationMessageHandler implements BatchHandlerInterface
 
     public function __invoke(CreateNotificationMessage $message, ?Acknowledger $ack = null): mixed
     {
+        // Messenger passes an acknowledger only when this handler is executed as a batch handler.
+        // Direct calls and sync transport should still process the message immediately.
         if (null === $ack) {
             $this->handleSynchronously($message);
 
             return null;
         }
 
+        // BatchHandlerTrait stores the message until the batch is ready; process() will ack/nack it.
         return $this->handle($message, $ack);
     }
 
