@@ -1,0 +1,67 @@
+@startuml
+!theme plain
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam componentStyle rectangle
+skinparam wrapWidth 180
+skinparam maxMessageSize 180
+
+title Backend Service Architecture
+
+actor "Frontend / Client" as Client
+
+rectangle "External Boundary" {
+  component "nginx API Gateway\nREST/HTTP entrypoint\nauth check\nreverse proxy" as Nginx
+}
+
+rectangle "Backend Services" {
+  component "Symfony Main Service\nAuth\nAdmin\nNews\nNotifications" as Symfony
+  queue "RabbitMQ\nlocal async messages" as RabbitMQ
+  component "Catalog Service\nREST/HTTP API\nInternal gRPC client/server" as Catalog
+  component "Order/Cart Service\nREST/HTTP API\nInternal gRPC client/server" as Orders
+}
+
+database "Main/Auth/Admin/News DB" as MainDb
+database "Catalog DB" as CatalogDb
+database "Orders DB" as OrdersDb
+
+Client --> Nginx : REST/HTTP
+Nginx --> Symfony : auth check
+Symfony --> Nginx : X-User-Id / X-User-Role
+
+Nginx --> Symfony : REST/HTTP\nAuth/Admin/News
+Nginx --> Catalog : REST/HTTP\ntrusted identity headers
+Nginx --> Orders : REST/HTTP\ntrusted identity headers
+
+Symfony --> MainDb : owns
+Symfony --> RabbitMQ : publish async events/messages
+RabbitMQ --> Symfony : consume async messages
+Catalog --> CatalogDb : owns
+Orders --> OrdersDb : owns
+
+Catalog <--> Orders : internal gRPC
+Orders <--> Symfony : internal gRPC where needed
+Catalog <--> Symfony : internal gRPC where needed
+
+note right of Nginx
+External gateway responsibilities:
+- receive client REST/HTTP
+- validate auth through Symfony
+- overwrite identity headers
+- proxy original REST request
+end note
+
+note bottom of Catalog
+gRPC is internal service-to-service transport only.
+External clients do not call gRPC directly.
+end note
+
+note right of RabbitMQ
+Current scope:
+- local async/event-driven processing
+- inside Symfony Main Service
+- not an inter-service event bus yet
+end note
+
+@enduml
