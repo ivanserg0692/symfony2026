@@ -7,8 +7,10 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Gedmo\Mapping\Annotation as Gedmo;
 
 #[ORM\Entity(repositoryClass: CatalogSectionsRepository::class)]
+#[Gedmo\Tree(type: 'nested')]
 class CatalogSections
 {
     #[ORM\Id]
@@ -32,12 +34,15 @@ class CatalogSections
     private ?string $pictureId = null;
 
     #[ORM\Column]
+    #[Gedmo\TreeLevel]
     private ?int $level = null;
 
     #[ORM\Column]
+    #[Gedmo\TreeLeft]
     private ?int $leftMargin = null;
 
     #[ORM\Column]
+    #[Gedmo\TreeRight]
     private ?int $rightMargin = null;
 
     /**
@@ -47,6 +52,7 @@ class CatalogSections
     private Collection $catalogSections;
 
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'catalogSections')]
+    #[Gedmo\TreeParent]
     private ?self $parent = null;
 
     /**
@@ -141,35 +147,14 @@ class CatalogSections
         return $this->level;
     }
 
-    public function setLevel(int $level): static
-    {
-        $this->level = $level;
-
-        return $this;
-    }
-
     public function getLeftMargin(): ?int
     {
         return $this->leftMargin;
     }
 
-    public function setLeftMargin(int $leftMargin): static
-    {
-        $this->leftMargin = $leftMargin;
-
-        return $this;
-    }
-
     public function getRightMargin(): ?int
     {
         return $this->rightMargin;
-    }
-
-    public function setRightMargin(int $rightMargin): static
-    {
-        $this->rightMargin = $rightMargin;
-
-        return $this;
     }
 
     public function getCatalogSections(): Collection
