@@ -23,7 +23,7 @@ class Stores
     private ?string $slug = null;
 
     #[ORM\Column]
-    private ?bool $acvtive = null;
+    private ?bool $active = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
@@ -75,14 +75,14 @@ class Stores
         return $this;
     }
 
-    public function isAcvtive(): ?bool
+    public function isActive(): ?bool
     {
-        return $this->acvtive;
+        return $this->active;
     }
 
-    public function setAcvtive(bool $acvtive): static
+    public function setActive(bool $active): static
     {
-        $this->acvtive = $acvtive;
+        $this->active = $active;
 
         return $this;
     }
