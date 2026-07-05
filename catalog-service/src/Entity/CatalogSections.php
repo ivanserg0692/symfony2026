@@ -1,0 +1,251 @@
+<?php
+
+namespace App\Entity;
+
+use App\Repository\CatalogSectionsRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
+
+#[ORM\Entity(repositoryClass: CatalogSectionsRepository::class)]
+class CatalogSections
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $name = null;
+
+    #[ORM\Column(length: 255, unique: true)]
+    private ?string $slug = null;
+
+    #[ORM\Column]
+    private ?bool $active = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $description = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $pictureId = null;
+
+    #[ORM\Column]
+    private ?int $level = null;
+
+    #[ORM\Column]
+    private ?int $leftMargin = null;
+
+    #[ORM\Column]
+    private ?int $rightMargin = null;
+
+    /**
+     * @var Collection<int, self>
+     */
+    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parent')]
+    private Collection $catalogSections;
+
+    #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'catalogSections')]
+    private ?self $parent = null;
+
+    /**
+     * @var Collection<int, CatalogElements>
+     */
+    #[ORM\ManyToMany(targetEntity: CatalogElements::class, mappedBy: 'sections')]
+    private Collection $catalogElements;
+
+    #[ORM\Column(options: ["default" => 100])]
+    private ?int $sort = 100;
+
+    public function __construct()
+    {
+        $this->catalogSections = new ArrayCollection();
+        $this->catalogElements = new ArrayCollection();
+    }
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function setName(string $name): static
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(string $slug): static
+    {
+        $this->slug = $slug;
+
+        return $this;
+    }
+
+    public function isActive(): ?bool
+    {
+        return $this->active;
+    }
+
+    public function setActive(bool $active): static
+    {
+        $this->active = $active;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): static
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    public function getPictureId(): ?string
+    {
+        return $this->pictureId;
+    }
+
+    public function setPictureId(?string $pictureId): static
+    {
+        $this->pictureId = $pictureId;
+
+        return $this;
+    }
+
+    public function getLevel(): ?int
+    {
+        return $this->level;
+    }
+
+    public function setLevel(int $level): static
+    {
+        $this->level = $level;
+
+        return $this;
+    }
+
+    public function getLeftMargin(): ?int
+    {
+        return $this->leftMargin;
+    }
+
+    public function setLeftMargin(int $leftMargin): static
+    {
+        $this->leftMargin = $leftMargin;
+
+        return $this;
+    }
+
+    public function getRightMargin(): ?int
+    {
+        return $this->rightMargin;
+    }
+
+    public function setRightMargin(int $rightMargin): static
+    {
+        $this->rightMargin = $rightMargin;
+
+        return $this;
+    }
+
+    public function getCatalogSections(): Collection
+    {
+        return $this->catalogSections;
+    }
+
+    public function addCatalogSection(self $catalogSection): static
+    {
+        if (!$this->catalogSections->contains($catalogSection)) {
+            $this->catalogSections->add($catalogSection);
+            $catalogSection->setParent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCatalogSection(self $catalogSection): static
+    {
+        if ($this->catalogSections->removeElement($catalogSection)) {
+            if ($catalogSection->getParent() === $this) {
+                $catalogSection->setParent(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getParent(): ?self
+    {
+        return $this->parent;
+    }
+
+    public function setParent(?self $parent): static
+    {
+        $this->parent = $parent;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, CatalogElements>
+     */
+    public function getCatalogElements(): Collection
+    {
+        return $this->catalogElements;
+    }
+
+    public function addCatalogElement(CatalogElements $catalogElement): static
+    {
+        if (!$this->catalogElements->contains($catalogElement)) {
+            $this->catalogElements->add($catalogElement);
+            $catalogElement->addSection($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCatalogElement(CatalogElements $catalogElement): static
+    {
+        if ($this->catalogElements->removeElement($catalogElement)) {
+            $catalogElement->removeSection($this);
+        }
+
+        return $this;
+    }
+
+    public function getSort(): ?int
+    {
+        return $this->sort;
+    }
+
+    public function setSort(int $sort): static
+    {
+        $this->sort = $sort;
+
+        return $this;
+    }
+}
