@@ -14,6 +14,10 @@ use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
 use Faker\Generator;
 
+/**
+ * to set up, use this command:
+ * docker compose run --rm catalog-cli php -d memory_limit=512M bin/console doctrine:fixtures:load --no-debug
+ */
 class AppFixtures extends Fixture
 {
     private const PRODUCT_COUNT = 5000;
