@@ -52,10 +52,17 @@ class CatalogElements
     #[ORM\OneToMany(targetEntity: StoresElementsStocks::class, mappedBy: 'element', orphanRemoval: true)]
     private Collection $storeStocks;
 
+    /**
+     * @var Collection<int, ProductPrice>
+     */
+    #[ORM\OneToMany(targetEntity: ProductPrice::class, mappedBy: 'product', orphanRemoval: true)]
+    private Collection $productPrices;
+
     public function __construct()
     {
         $this->sections = new ArrayCollection();
         $this->storeStocks = new ArrayCollection();
+        $this->productPrices = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -243,6 +250,35 @@ class CatalogElements
             // set the owning side to null (unless already changed)
             if ($storeStock->getElement() === $this) {
                 $storeStock->setElement(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ProductPrice>
+     */
+    public function getProductPrices(): Collection
+    {
+        return $this->productPrices;
+    }
+
+    public function addProductPrice(ProductPrice $productPrice): static
+    {
+        if (!$this->productPrices->contains($productPrice)) {
+            $this->productPrices->add($productPrice);
+            $productPrice->setProduct($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProductPrice(ProductPrice $productPrice): static
+    {
+        if ($this->productPrices->removeElement($productPrice)) {
+            if ($productPrice->getProduct() === $this) {
+                $productPrice->setProduct(null);
             }
         }
 
