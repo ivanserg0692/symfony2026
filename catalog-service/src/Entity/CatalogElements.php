@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: CatalogElementsRepository::class)]
 class CatalogElements
@@ -14,36 +15,44 @@ class CatalogElements
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private ?string $name = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private ?bool $active = null;
 
     #[ORM\Column]
     private ?int $createdBy = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private ?string $description = null;
 
     #[ORM\Column(length: 255, unique: true)]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private ?string $slug = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private ?string $pictureId = null;
 
     /**
      * @var Collection<int, CatalogSections>
      */
     #[ORM\ManyToMany(targetEntity: CatalogSections::class, inversedBy: 'catalogElements')]
+    #[Groups(["catalog_element:item"])]
     private Collection $sections;
 
     #[ORM\Column(options: ["default" => 100])]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private ?int $sort = 100;
 
     /**
@@ -56,6 +65,7 @@ class CatalogElements
      * @var Collection<int, ProductPrice>
      */
     #[ORM\OneToMany(targetEntity: ProductPrice::class, mappedBy: 'product', orphanRemoval: true)]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private Collection $productPrices;
 
     public function __construct()
@@ -197,9 +207,7 @@ class CatalogElements
         return $this;
     }
 
-    /**
-     * @return Collection<int, StoresElementsStocks>
-     */
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     public function getTotalStock(): int
     {
         $totalStock = 0;

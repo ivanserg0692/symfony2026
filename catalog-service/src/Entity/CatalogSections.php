@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: CatalogSectionsRepository::class)]
 #[Gedmo\Tree(type: 'nested')]
@@ -16,25 +17,32 @@ class CatalogSections
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["catalog_section:list", "catalog_section:item", "catalog_element:item"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(["catalog_section:list", "catalog_section:item", "catalog_element:item"])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255, unique: true)]
+    #[Groups(["catalog_section:list", "catalog_section:item", "catalog_element:item"])]
     private ?string $slug = null;
 
     #[ORM\Column]
+    #[Groups(["catalog_section:list", "catalog_section:item", "catalog_element:item"])]
     private ?bool $active = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(["catalog_section:list", "catalog_section:item", "catalog_element:item"])]
     private ?string $description = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(["catalog_section:list", "catalog_section:item", "catalog_element:item"])]
     private ?string $pictureId = null;
 
     #[ORM\Column]
     #[Gedmo\TreeLevel]
+    #[Groups(["catalog_section:list", "catalog_section:item", "catalog_element:item"])]
     private ?int $level = null;
 
     #[ORM\Column]
@@ -62,6 +70,7 @@ class CatalogSections
     private Collection $catalogElements;
 
     #[ORM\Column(options: ["default" => 100])]
+    #[Groups(["catalog_section:list", "catalog_section:item", "catalog_element:item"])]
     private ?int $sort = 100;
 
     public function __construct()
@@ -186,6 +195,12 @@ class CatalogSections
     public function getParent(): ?self
     {
         return $this->parent;
+    }
+
+    #[Groups(["catalog_section:list", "catalog_section:item", "catalog_element:item"])]
+    public function getParentId(): ?int
+    {
+        return $this->parent?->getId();
     }
 
     public function setParent(?self $parent): static

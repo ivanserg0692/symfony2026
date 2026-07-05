@@ -11,29 +11,34 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class CatalogSectionsRepository extends ServiceEntityRepository
 {
-    public function __construct(
-        ManagerRegistry $registry,
-        private readonly CatalogElementsRepository $catalogElementsRepository,
-    ) {
+    public function __construct(ManagerRegistry $registry)
+    {
         parent::__construct($registry, CatalogSections::class);
     }
 
     /**
      * @return CatalogSections[]
      */
-    public function findAllWithCatalogElements(): array
+    public function findActiveForPublicList(): array
     {
-        $queryBuilder = $this->createQueryBuilder('section')
-            ->leftJoin('section.catalogElements', 'element')
-            ->addSelect('element');
-
-        $this->catalogElementsRepository->addStoreRelations($queryBuilder, 'element');
-
-        return $queryBuilder
-            ->orderBy('section.leftMargin', 'ASC')
-            ->addOrderBy('section.sort', 'DESC')
-            ->addOrderBy('element.sort', 'DESC')
+        return $this->createQueryBuilder("section")
+            ->leftJoin("section.parent", "parent")
+            ->addSelect("parent")
+            ->andWhere("section.active = :active")
+            ->setParameter("active", true)
+            ->orderBy("section.leftMargin", "ASC")
             ->getQuery()
             ->getResult();
+    }
+
+    public function findOneForPublicApi(int $id): ?CatalogSections
+    {
+        return $this->createQueryBuilder("section")
+            ->leftJoin("section.parent", "parent")
+            ->addSelect("parent")
+            ->andWhere("section.id = :id")
+            ->setParameter("id", $id)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }

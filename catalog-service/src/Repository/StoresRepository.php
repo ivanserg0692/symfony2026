@@ -16,28 +16,21 @@ class StoresRepository extends ServiceEntityRepository
         parent::__construct($registry, Stores::class);
     }
 
-    //    /**
-    //     * @return Stores[] Returns an array of Stores objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('s')
-    //            ->andWhere('s.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('s.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    /**
+     * @return Stores[]
+     */
+    public function findActiveForPublicList(): array
+    {
+        return $this->createQueryBuilder("store")
+            ->andWhere("store.active = :active")
+            ->setParameter("active", true)
+            ->orderBy("store.id", "ASC")
+            ->getQuery()
+            ->getResult();
+    }
 
-    //    public function findOneBySomeField($value): ?Stores
-    //    {
-    //        return $this->createQueryBuilder('s')
-    //            ->andWhere('s.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    public function findOneForPublicApi(int $id): ?Stores
+    {
+        return $this->find($id);
+    }
 }

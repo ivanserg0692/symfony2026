@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ProductPriceRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ProductPriceRepository::class)]
 #[ORM\UniqueConstraint(name: 'uniq_product_price_type', columns: ['product_id', 'price_type_id'])]
@@ -12,6 +13,7 @@ class ProductPrice
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'productPrices')]
@@ -20,21 +22,27 @@ class ProductPrice
 
     #[ORM\ManyToOne(inversedBy: 'productPrices')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private ?PriceType $priceType = null;
 
     #[ORM\Column]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private ?int $price = null;
 
     #[ORM\Column(length: 3)]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private ?string $currency = null;
 
     #[ORM\Column]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private ?bool $active = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private ?\DateTimeImmutable $validFrom = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private ?\DateTimeImmutable $validTo = null;
 
     #[ORM\Column]
