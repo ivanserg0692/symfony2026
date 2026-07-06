@@ -9,6 +9,7 @@ use App\Entity\ProductPrice;
 use App\Entity\Stores;
 use App\Entity\StoresElementsStocks;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
@@ -20,8 +21,13 @@ use Faker\Generator;
  */
 class AppFixtures extends Fixture
 {
-    private const PRODUCT_COUNT = 5000;
+    private const PRODUCT_COUNT = 1000000;
     private const PRODUCT_BATCH_SIZE = 250;
+
+    // When PRODUCT_COUNT reaches this value, products are inserted through DBAL bulk batches.
+    // Keep the default 5000-product local catalog on ORM; raise PRODUCT_COUNT for large load datasets.
+    private const PRODUCT_BULK_THRESHOLD = 50000;
+    private const PRODUCT_BULK_BATCH_SIZE = 1000;
     private const CURRENCY = 'RUB';
 
     /**
@@ -399,6 +405,29 @@ class AppFixtures extends Fixture
         array $storeIds,
         array $priceTypeIds,
     ): void {
+        $this->disableSqlLogger($manager);
+
+        if (self::PRODUCT_COUNT >= self::PRODUCT_BULK_THRESHOLD) {
+            $this->loadProductsWithBulkInsert($manager->getConnection(), $faker, $leafSections, $storeIds, $priceTypeIds);
+
+            return;
+        }
+
+        $this->loadProductsWithOrm($manager, $faker, $leafSections, $storeIds, $priceTypeIds);
+    }
+
+    /**
+     * @param array<int, string> $leafSections
+     * @param array<int, int>    $storeIds
+     * @param array<string, int> $priceTypeIds
+     */
+    private function loadProductsWithOrm(
+        EntityManagerInterface $manager,
+        Generator $faker,
+        array $leafSections,
+        array $storeIds,
+        array $priceTypeIds,
+    ): void {
         for ($i = 1; $i <= self::PRODUCT_COUNT; ++$i) {
             $createdAt = \DateTimeImmutable::createFromMutable($faker->dateTimeBetween('-18 months', '-1 day'));
             // Each product belongs to one to three leaf categories, never to a parent category.
@@ -479,6 +508,227 @@ class AppFixtures extends Fixture
         $manager->clear();
     }
 
+    /**
+     * Fast data-volume mode for large catalogs.
+     * Sections, stores and price types are still created through ORM; generated products, prices, stocks
+     * and product-section links are inserted with DBAL batches because ORM UnitOfWork is too expensive
+     * for hundreds of thousands or millions of rows.
+     *
+     * @param array<int, string> $leafSections
+     * @param array<int, int>    $storeIds
+     * @param array<string, int> $priceTypeIds
+     */
+    private function loadProductsWithBulkInsert(
+        Connection $connection,
+        Generator $faker,
+        array $leafSections,
+        array $storeIds,
+        array $priceTypeIds,
+    ): void {
+        $productIndex = 1;
+
+        while ($productIndex <= self::PRODUCT_COUNT) {
+            $batchLimit = min(self::PRODUCT_COUNT, $productIndex + self::PRODUCT_BULK_BATCH_SIZE - 1);
+            $productRows = [];
+            $generatedProducts = [];
+
+            for (; $productIndex <= $batchLimit; ++$productIndex) {
+                $createdAt = \DateTimeImmutable::createFromMutable($faker->dateTimeBetween('-18 months', '-1 day'));
+                $createdAtValue = $this->formatDateTime($createdAt);
+                $sectionIds = $this->pickRandomIds($faker, array_keys($leafSections), 1, 3);
+                $productName = $this->createProductName($faker, $leafSections[$sectionIds[0]]);
+                $pictureUuid = $faker->uuid();
+                $basePrice = $faker->numberBetween(50000, 50000000);
+
+                $productRows[] = [
+                    'name' => $productName,
+                    'created_at' => $createdAtValue,
+                    'active' => $faker->numberBetween(1, 100) <= 90 ? 1 : 0,
+                    'created_by' => $faker->numberBetween(1, 20),
+                    'description' => $faker->paragraphs($faker->numberBetween(2, 4), true),
+                    'slug' => sprintf('%s-%05d', $this->slugify($productName), $productIndex),
+                    'picture_id' => sprintf('products/%s/main.webp', $pictureUuid),
+                    'sort' => $faker->numberBetween(10, 500),
+                ];
+
+                $generatedProducts[] = [
+                    'created_at' => $createdAtValue,
+                    'section_ids' => $sectionIds,
+                    'base_price' => $basePrice,
+                    'store_ids' => $this->pickRandomIds($faker, $storeIds, 1, 5),
+                    'sale_price' => $faker->numberBetween(1, 100) <= 25
+                        ? $this->calculateLowerPrice($faker, $basePrice, 70, 95)
+                        : null,
+                    'wholesale_price' => $faker->numberBetween(1, 100) <= 40
+                        ? $this->calculateLowerPrice($faker, $basePrice, 60, 90)
+                        : null,
+                    'vip_price' => $faker->numberBetween(1, 100) <= 15
+                        ? $this->calculateVipPrice($faker, $basePrice)
+                        : null,
+                ];
+            }
+
+            $connection->transactional(function () use ($connection, $faker, $productRows, $generatedProducts, $priceTypeIds): void {
+                $productIds = $this->insertRowsReturningIds(
+                    $connection,
+                    'catalog_elements',
+                    ['name', 'created_at', 'active', 'created_by', 'description', 'slug', 'picture_id', 'sort'],
+                    $productRows,
+                );
+
+                $sectionRows = [];
+                $priceRows = [];
+                $stockRows = [];
+
+                foreach ($generatedProducts as $offset => $generatedProduct) {
+                    $productId = $productIds[$offset];
+
+                    foreach ($generatedProduct['section_ids'] as $sectionId) {
+                        $sectionRows[] = [
+                            'catalog_elements_id' => $productId,
+                            'catalog_sections_id' => $sectionId,
+                        ];
+                    }
+
+                    $this->appendBulkPriceRow(
+                        $priceRows,
+                        $productId,
+                        $priceTypeIds['BASE'],
+                        $generatedProduct['base_price'],
+                        $generatedProduct['created_at'],
+                    );
+
+                    if ($generatedProduct['sale_price'] !== null) {
+                        $this->appendBulkPriceRow(
+                            $priceRows,
+                            $productId,
+                            $priceTypeIds['SALE'],
+                            $generatedProduct['sale_price'],
+                            $generatedProduct['created_at'],
+                        );
+                    }
+
+                    if ($generatedProduct['wholesale_price'] !== null) {
+                        $this->appendBulkPriceRow(
+                            $priceRows,
+                            $productId,
+                            $priceTypeIds['WHOLESALE'],
+                            $generatedProduct['wholesale_price'],
+                            $generatedProduct['created_at'],
+                        );
+                    }
+
+                    if ($generatedProduct['vip_price'] !== null) {
+                        $this->appendBulkPriceRow(
+                            $priceRows,
+                            $productId,
+                            $priceTypeIds['VIP'],
+                            $generatedProduct['vip_price'],
+                            $generatedProduct['created_at'],
+                        );
+                    }
+
+                    foreach ($generatedProduct['store_ids'] as $storeId) {
+                        $stockRows[] = [
+                            'stock' => $faker->numberBetween(0, 200),
+                            'store_id' => $storeId,
+                            'element_id' => $productId,
+                        ];
+                    }
+                }
+
+                $this->insertRows($connection, 'catalog_elements_catalog_sections', ['catalog_elements_id', 'catalog_sections_id'], $sectionRows);
+                $this->insertRows(
+                    $connection,
+                    'product_price',
+                    ['product_id', 'price_type_id', 'price', 'currency', 'active', 'valid_from', 'valid_to', 'created_at', 'updated_at'],
+                    $priceRows,
+                );
+                $this->insertRows($connection, 'stores_elements_stocks', ['stock', 'store_id', 'element_id'], $stockRows);
+            });
+
+            unset($productRows, $generatedProducts);
+            gc_collect_cycles();
+        }
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     *
+     * @return array<int, int>
+     */
+    private function insertRowsReturningIds(Connection $connection, string $table, array $columns, array $rows): array
+    {
+        if ($rows === []) {
+            return [];
+        }
+
+        [$valuesSql, $parameters] = $this->createBulkValuesSql($columns, $rows);
+        $sql = sprintf('INSERT INTO %s (%s) VALUES %s RETURNING id', $table, implode(', ', $columns), $valuesSql);
+
+        return array_map('intval', $connection->executeQuery($sql, $parameters)->fetchFirstColumn());
+    }
+
+    /**
+     * @param array<int, string>               $columns
+     * @param array<int, array<string, mixed>> $rows
+     */
+    private function insertRows(Connection $connection, string $table, array $columns, array $rows): void
+    {
+        if ($rows === []) {
+            return;
+        }
+
+        [$valuesSql, $parameters] = $this->createBulkValuesSql($columns, $rows);
+        $sql = sprintf('INSERT INTO %s (%s) VALUES %s', $table, implode(', ', $columns), $valuesSql);
+
+        $connection->executeStatement($sql, $parameters);
+    }
+
+    /**
+     * @param array<int, string>               $columns
+     * @param array<int, array<string, mixed>> $rows
+     *
+     * @return array{0: string, 1: array<int, mixed>}
+     */
+    private function createBulkValuesSql(array $columns, array $rows): array
+    {
+        $rowPlaceholder = sprintf('(%s)', implode(', ', array_fill(0, \count($columns), '?')));
+        $valuesSql = implode(', ', array_fill(0, \count($rows), $rowPlaceholder));
+        $parameters = [];
+
+        foreach ($rows as $row) {
+            foreach ($columns as $column) {
+                $parameters[] = $row[$column];
+            }
+        }
+
+        return [$valuesSql, $parameters];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $priceRows
+     */
+    private function appendBulkPriceRow(
+        array &$priceRows,
+        int $productId,
+        int $priceTypeId,
+        int $price,
+        string $createdAt,
+    ): void {
+        $priceRows[] = [
+            'product_id' => $productId,
+            'price_type_id' => $priceTypeId,
+            'price' => $price,
+            'currency' => self::CURRENCY,
+            'active' => 1,
+            'valid_from' => $createdAt,
+            'valid_to' => null,
+            'created_at' => $createdAt,
+            'updated_at' => $createdAt,
+        ];
+    }
+
     private function persistProductPrice(
         EntityManagerInterface $manager,
         CatalogElements $product,
@@ -499,6 +749,20 @@ class AppFixtures extends Fixture
             ->setUpdatedAt($createdAt);
 
         $manager->persist($productPrice);
+    }
+
+    private function disableSqlLogger(EntityManagerInterface $manager): void
+    {
+        $configuration = $manager->getConnection()->getConfiguration();
+
+        if (method_exists($configuration, 'setSQLLogger')) {
+            $configuration->setSQLLogger(null);
+        }
+    }
+
+    private function formatDateTime(\DateTimeImmutable $dateTime): string
+    {
+        return $dateTime->format('Y-m-d H:i:s');
     }
 
     private function createProductName(Generator $faker, string $categoryName): string
