@@ -80,6 +80,9 @@
     "require-dev": {
         "doctrine/doctrine-fixtures-bundle": "^4.3",
         "fakerphp/faker": "^1.24",
-        "symfony/maker-bundle": "^1.67"
+        "symfony/debug-bundle": "8.1.*",
+        "symfony/maker-bundle": "^1.67",
+        "symfony/stopwatch": "8.1.*",
+        "symfony/web-profiler-bundle": "8.1.*"
     }
 }
