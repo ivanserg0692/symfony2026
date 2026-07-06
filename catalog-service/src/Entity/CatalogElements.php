@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: CatalogElementsRepository::class)]
+#[ORM\Index(name: "idx_catalog_elements_sort_id", fields: ["sort", "id"])]
 class CatalogElements
 {
     #[ORM\Id]

@@ -5,7 +5,6 @@ namespace App\Repository;
 use App\Entity\CatalogElements;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
-use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -32,35 +31,61 @@ class CatalogElementsRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return Paginator<CatalogElements>
+     * @return int[]
      */
-    public function findPaginatedForPublicApi(?int $sectionId, ?bool $active, int $page, int $limit): Paginator
+    public function findPageIds(?int $sectionId, ?bool $active, int $page, int $limit): array
     {
+        $queryBuilder = $this->createQueryBuilder("element")
+            ->select("element.id AS id");
+
+        $this->applyListFilters($queryBuilder, $sectionId, $active);
+
+        $rows = $queryBuilder
+            ->orderBy("element.sort", "DESC")
+            ->addOrderBy("element.id", "ASC")
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_map("intval", array_column($rows, "id"));
+    }
+
+    /**
+     * @param int[] $ids
+     *
+     * @return CatalogElements[]
+     */
+    public function findListByIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
         $queryBuilder = $this->createQueryBuilder("element");
 
         $this->addProductPriceRelations($queryBuilder);
         $this->addStockRowsForTotal($queryBuilder);
 
-        if ($sectionId !== null) {
-            $queryBuilder
-                ->innerJoin("element.sections", "filterSection")
-                ->andWhere("filterSection.id = :sectionId")
-                ->setParameter("sectionId", $sectionId);
-        }
+        $elements = $queryBuilder
+            ->andWhere("element.id IN (:ids)")
+            ->setParameter("ids", $ids)
+            ->getQuery()
+            ->getResult();
 
-        if ($active !== null) {
-            $queryBuilder
-                ->andWhere("element.active = :active")
-                ->setParameter("active", $active);
-        }
+        return $this->sortElementsByIds($elements, $ids);
+    }
 
-        $queryBuilder
-            ->orderBy("element.sort", "DESC")
-            ->addOrderBy("element.id", "ASC")
-            ->setFirstResult(($page - 1) * $limit)
-            ->setMaxResults($limit);
+    public function countMatchingListFilters(?int $sectionId, ?bool $active): int
+    {
+        $queryBuilder = $this->createQueryBuilder("element")
+            ->select("COUNT(element.id)");
 
-        return new Paginator($queryBuilder->getQuery(), true);
+        $this->applyListFilters($queryBuilder, $sectionId, $active);
+
+        return (int) $queryBuilder
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     public function findOneForPublicApi(int $id): ?CatalogElements
@@ -88,6 +113,49 @@ class CatalogElementsRepository extends ServiceEntityRepository
             ->addSelect($sectionAlias)
             ->leftJoin(sprintf("%s.parent", $sectionAlias), "sectionParent")
             ->addSelect("sectionParent");
+    }
+
+    private function applyListFilters(QueryBuilder $queryBuilder, ?int $sectionId, ?bool $active): QueryBuilder
+    {
+        if ($sectionId !== null) {
+            $queryBuilder
+                ->innerJoin("element.sections", "filterSection")
+                ->andWhere("filterSection.id = :sectionId")
+                ->setParameter("sectionId", $sectionId);
+        }
+
+        if ($active !== null) {
+            $queryBuilder
+                ->andWhere("element.active = :active")
+                ->setParameter("active", $active);
+        }
+
+        return $queryBuilder;
+    }
+
+    /**
+     * @param CatalogElements[] $elements
+     * @param int[] $ids
+     *
+     * @return CatalogElements[]
+     */
+    private function sortElementsByIds(array $elements, array $ids): array
+    {
+        $elementsById = [];
+
+        foreach ($elements as $element) {
+            $elementsById[$element->getId()] = $element;
+        }
+
+        $orderedElements = [];
+
+        foreach ($ids as $id) {
+            if (isset($elementsById[$id])) {
+                $orderedElements[] = $elementsById[$id];
+            }
+        }
+
+        return $orderedElements;
     }
 
     private function addProductPriceRelations(

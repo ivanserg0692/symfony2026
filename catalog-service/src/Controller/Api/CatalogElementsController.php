@@ -58,15 +58,17 @@ class CatalogElementsController extends AbstractController
         $sectionId = $request->query->has("sectionId") ? max(1, $request->query->getInt("sectionId")) : null;
         $active = $this->getNullableBooleanQuery($request, "active");
 
-        $paginator = $catalogElementsRepository->findPaginatedForPublicApi($sectionId, $active, $page, $limit);
+        $ids = $catalogElementsRepository->findPageIds($sectionId, $active, $page, $limit);
+        $items = $catalogElementsRepository->findListByIds($ids);
+        $total = $catalogElementsRepository->countMatchingListFilters($sectionId, $active);
 
         return $this->json(
             [
-                "items" => iterator_to_array($paginator->getIterator(), false),
+                "items" => $items,
                 "pagination" => [
                     "page" => $page,
                     "limit" => $limit,
-                    "total" => count($paginator),
+                    "total" => $total,
                 ],
             ],
             context: ["groups" => ["catalog_element:list"]]
