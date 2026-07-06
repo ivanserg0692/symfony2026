@@ -55,7 +55,7 @@ class CatalogElementsRepository extends ServiceEntityRepository
         }
 
         $queryBuilder
-            ->orderBy("element.sort", "ASC")
+            ->orderBy("element.sort", "DESC")
             ->addOrderBy("element.id", "ASC")
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit);

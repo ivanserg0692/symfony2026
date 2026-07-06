@@ -26,7 +26,8 @@ class CatalogSectionsRepository extends ServiceEntityRepository
             ->addSelect("parent")
             ->andWhere("section.active = :active")
             ->setParameter("active", true)
-            ->orderBy("section.leftMargin", "ASC")
+            ->orderBy("section.sort", "DESC")
+            ->addOrderBy("section.id", "ASC")
             ->getQuery()
             ->getResult();
     }

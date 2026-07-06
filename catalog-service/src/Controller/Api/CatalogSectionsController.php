@@ -18,7 +18,7 @@ class CatalogSectionsController extends AbstractController
     #[Route("", name: "api_catalog_sections_list", methods: ["GET"])]
     #[OA\Get(
         summary: "List active catalog sections",
-        description: "Returns a flat list of active catalog sections ordered by left margin ascending.",
+        description: "Returns a flat list of active catalog sections ordered by sort descending.",
         responses: [
             new OA\Response(
                 response: 200,
