@@ -548,13 +548,13 @@ class AppFixtures extends Fixture
                     'description' => $faker->paragraphs($faker->numberBetween(2, 4), true),
                     'slug' => sprintf('%s-%05d', $this->slugify($productName), $productIndex),
                     'picture_id' => sprintf('products/%s/main.webp', $pictureUuid),
-                    'sort' => $faker->numberBetween(10, 500),
                 ];
 
                 $generatedProducts[] = [
                     'created_at' => $createdAtValue,
                     'section_ids' => $sectionIds,
                     'base_price' => $basePrice,
+                    'sort' => $faker->numberBetween(10, 500),
                     'store_ids' => $this->pickRandomIds($faker, $storeIds, 1, 5),
                     'sale_price' => $faker->numberBetween(1, 100) <= 25
                         ? $this->calculateLowerPrice($faker, $basePrice, 70, 95)
@@ -572,14 +572,18 @@ class AppFixtures extends Fixture
                 $productIds = $this->insertRowsReturningIds(
                     $connection,
                     'product',
-                    ['name', 'created_at', 'active', 'created_by', 'description', 'slug', 'picture_id', 'sort'],
+                    ['name', 'created_at', 'active', 'created_by', 'description', 'slug', 'picture_id'],
                     $productRows,
                 );
                 $catalogElementRows = array_map(
-                    static fn (int $productId): array => ['product_id' => $productId],
+                    static fn (int $productId, array $generatedProduct): array => [
+                        'product_id' => $productId,
+                        'sort' => $generatedProduct['sort'],
+                    ],
                     $productIds,
+                    $generatedProducts,
                 );
-                $catalogElementIds = $this->insertRowsReturningIds($connection, 'catalog_elements', ['product_id'], $catalogElementRows);
+                $catalogElementIds = $this->insertRowsReturningIds($connection, 'catalog_elements', ['product_id', 'sort'], $catalogElementRows);
 
                 $sectionRows = [];
                 $priceRows = [];

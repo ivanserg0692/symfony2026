@@ -42,7 +42,7 @@ class CatalogElementsRepository extends ServiceEntityRepository
         $this->applyListFilters($queryBuilder, $sectionId, $active);
 
         $rows = $queryBuilder
-            ->orderBy("product.sort", "DESC")
+            ->orderBy("element.sort", "DESC")
             ->addOrderBy("element.id", "ASC")
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit)
@@ -80,8 +80,7 @@ class CatalogElementsRepository extends ServiceEntityRepository
     public function countMatchingListFilters(?int $sectionId, ?bool $active): int
     {
         $queryBuilder = $this->createQueryBuilder("element")
-            ->select("COUNT(DISTINCT element.id)")
-            ->innerJoin("element.product", "product");
+            ->select("COUNT(element.id)");
 
         $this->applyListFilters($queryBuilder, $sectionId, $active);
 

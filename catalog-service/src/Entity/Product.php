@@ -10,7 +10,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
-#[ORM\Index(name: "idx_product_sort_id", fields: ["sort", "id"])]
 class Product
 {
     #[ORM\Id]
@@ -54,10 +53,6 @@ class Product
     #[ORM\InverseJoinColumn(name: 'catalog_section_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     #[Groups(["catalog_element:item"])]
     private Collection $sections;
-
-    #[ORM\Column(options: ["default" => 100])]
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
-    private ?int $sort = 100;
 
     #[ORM\OneToOne(mappedBy: 'product', targetEntity: CatalogElements::class)]
     private ?CatalogElements $catalogElement = null;
@@ -186,18 +181,6 @@ class Product
         if ($this->sections->removeElement($section)) {
             $section->removeProduct($this);
         }
-
-        return $this;
-    }
-
-    public function getSort(): ?int
-    {
-        return $this->sort;
-    }
-
-    public function setSort(int $sort): static
-    {
-        $this->sort = $sort;
 
         return $this;
     }

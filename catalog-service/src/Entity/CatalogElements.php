@@ -9,6 +9,11 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: CatalogElementsRepository::class)]
+#[ORM\Index(
+    name: "idx_catalog_elements_sort_id",
+    fields: ["sort", "id"],
+    options: ["order" => ["sort" => "DESC"]]
+)]
 class CatalogElements
 {
     #[ORM\Id]
@@ -20,6 +25,10 @@ class CatalogElements
     #[ORM\OneToOne(inversedBy: 'catalogElement', cascade: ['persist'])]
     #[ORM\JoinColumn(name: 'product_id', referencedColumnName: 'id', nullable: false, unique: true, onDelete: 'CASCADE')]
     private ?Product $product = null;
+
+    #[ORM\Column(options: ["default" => 100])]
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
+    private ?int $sort = 100;
 
     /**
      * @var Collection<int, StoresElementsStocks>
@@ -179,12 +188,12 @@ class CatalogElements
     #[Groups(["catalog_element:list", "catalog_element:item"])]
     public function getSort(): ?int
     {
-        return $this->product?->getSort();
+        return $this->sort;
     }
 
     public function setSort(int $sort): static
     {
-        $this->getProductModel()->setSort($sort);
+        $this->sort = $sort;
 
         return $this;
     }
