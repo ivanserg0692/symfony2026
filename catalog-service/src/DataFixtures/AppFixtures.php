@@ -571,10 +571,15 @@ class AppFixtures extends Fixture
             $connection->transactional(function () use ($connection, $faker, $productRows, $generatedProducts, $priceTypeIds): void {
                 $productIds = $this->insertRowsReturningIds(
                     $connection,
-                    'catalog_elements',
+                    'product',
                     ['name', 'created_at', 'active', 'created_by', 'description', 'slug', 'picture_id', 'sort'],
                     $productRows,
                 );
+                $catalogElementRows = array_map(
+                    static fn (int $productId): array => ['product_id' => $productId],
+                    $productIds,
+                );
+                $catalogElementIds = $this->insertRowsReturningIds($connection, 'catalog_elements', ['product_id'], $catalogElementRows);
 
                 $sectionRows = [];
                 $priceRows = [];
@@ -582,17 +587,18 @@ class AppFixtures extends Fixture
 
                 foreach ($generatedProducts as $offset => $generatedProduct) {
                     $productId = $productIds[$offset];
+                    $catalogElementId = $catalogElementIds[$offset];
 
                     foreach ($generatedProduct['section_ids'] as $sectionId) {
                         $sectionRows[] = [
-                            'catalog_elements_id' => $productId,
-                            'catalog_sections_id' => $sectionId,
+                            'product_id' => $productId,
+                            'catalog_section_id' => $sectionId,
                         ];
                     }
 
                     $this->appendBulkPriceRow(
                         $priceRows,
-                        $productId,
+                        $catalogElementId,
                         $priceTypeIds['BASE'],
                         $generatedProduct['base_price'],
                         $generatedProduct['created_at'],
@@ -601,7 +607,7 @@ class AppFixtures extends Fixture
                     if ($generatedProduct['sale_price'] !== null) {
                         $this->appendBulkPriceRow(
                             $priceRows,
-                            $productId,
+                            $catalogElementId,
                             $priceTypeIds['SALE'],
                             $generatedProduct['sale_price'],
                             $generatedProduct['created_at'],
@@ -611,7 +617,7 @@ class AppFixtures extends Fixture
                     if ($generatedProduct['wholesale_price'] !== null) {
                         $this->appendBulkPriceRow(
                             $priceRows,
-                            $productId,
+                            $catalogElementId,
                             $priceTypeIds['WHOLESALE'],
                             $generatedProduct['wholesale_price'],
                             $generatedProduct['created_at'],
@@ -621,7 +627,7 @@ class AppFixtures extends Fixture
                     if ($generatedProduct['vip_price'] !== null) {
                         $this->appendBulkPriceRow(
                             $priceRows,
-                            $productId,
+                            $catalogElementId,
                             $priceTypeIds['VIP'],
                             $generatedProduct['vip_price'],
                             $generatedProduct['created_at'],
@@ -632,12 +638,12 @@ class AppFixtures extends Fixture
                         $stockRows[] = [
                             'stock' => $faker->numberBetween(0, 200),
                             'store_id' => $storeId,
-                            'element_id' => $productId,
+                            'element_id' => $catalogElementId,
                         ];
                     }
                 }
 
-                $this->insertRows($connection, 'catalog_elements_catalog_sections', ['catalog_elements_id', 'catalog_sections_id'], $sectionRows);
+                $this->insertRows($connection, 'product_catalog_sections', ['product_id', 'catalog_section_id'], $sectionRows);
                 $this->insertRows(
                     $connection,
                     'product_price',

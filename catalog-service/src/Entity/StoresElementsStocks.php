@@ -6,16 +6,20 @@ use App\Repository\StoresElementsStocksRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: StoresElementsStocksRepository::class)]
+#[ORM\UniqueConstraint(name: 'uniq_store_element_stock', columns: ['store_id', 'element_id'])]
 class StoresElementsStocks
 {
     #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
     #[ORM\ManyToOne(inversedBy: 'elementStocks')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Stores $store = null;
 
-    #[ORM\Id]
     #[ORM\ManyToOne(inversedBy: 'storeStocks')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(name: 'element_id', referencedColumnName: 'id', nullable: false)]
     private ?CatalogElements $element = null;
 
     #[ORM\Column]

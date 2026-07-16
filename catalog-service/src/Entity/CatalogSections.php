@@ -64,10 +64,10 @@ class CatalogSections
     private ?self $parent = null;
 
     /**
-     * @var Collection<int, CatalogElements>
+     * @var Collection<int, Product>
      */
-    #[ORM\ManyToMany(targetEntity: CatalogElements::class, mappedBy: 'sections')]
-    private Collection $catalogElements;
+    #[ORM\ManyToMany(targetEntity: Product::class, mappedBy: 'sections')]
+    private Collection $products;
 
     #[ORM\Column(options: ["default" => 100])]
     #[Groups(["catalog_section:list", "catalog_section:item", "catalog_element:item"])]
@@ -76,7 +76,7 @@ class CatalogSections
     public function __construct()
     {
         $this->catalogSections = new ArrayCollection();
-        $this->catalogElements = new ArrayCollection();
+        $this->products = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -166,6 +166,9 @@ class CatalogSections
         return $this->rightMargin;
     }
 
+    /**
+     * @return Collection<int, self>
+     */
     public function getCatalogSections(): Collection
     {
         return $this->catalogSections;
@@ -211,28 +214,47 @@ class CatalogSections
     }
 
     /**
-     * @return Collection<int, CatalogElements>
+     * @return Collection<int, Product>
+     */
+    public function getProducts(): Collection
+    {
+        return $this->products;
+    }
+
+    public function addProduct(Product $product): static
+    {
+        if (!$this->products->contains($product)) {
+            $this->products->add($product);
+        }
+
+        return $this;
+    }
+
+    public function removeProduct(Product $product): static
+    {
+        $this->products->removeElement($product);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Product>
      */
     public function getCatalogElements(): Collection
     {
-        return $this->catalogElements;
+        return $this->products;
     }
 
     public function addCatalogElement(CatalogElements $catalogElement): static
     {
-        if (!$this->catalogElements->contains($catalogElement)) {
-            $this->catalogElements->add($catalogElement);
-            $catalogElement->addSection($this);
-        }
+        $catalogElement->addSection($this);
 
         return $this;
     }
 
     public function removeCatalogElement(CatalogElements $catalogElement): static
     {
-        if ($this->catalogElements->removeElement($catalogElement)) {
-            $catalogElement->removeSection($this);
-        }
+        $catalogElement->removeSection($this);
 
         return $this;
     }

@@ -17,7 +17,7 @@ class ProductPrice
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'productPrices')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(name: 'product_id', referencedColumnName: 'id', nullable: false)]
     private ?CatalogElements $product = null;
 
     #[ORM\ManyToOne(inversedBy: 'productPrices')]

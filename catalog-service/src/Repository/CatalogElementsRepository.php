@@ -36,12 +36,13 @@ class CatalogElementsRepository extends ServiceEntityRepository
     public function findPageIds(?int $sectionId, ?bool $active, int $page, int $limit): array
     {
         $queryBuilder = $this->createQueryBuilder("element")
-            ->select("element.id AS id");
+            ->select("element.id AS id")
+            ->innerJoin("element.product", "product");
 
         $this->applyListFilters($queryBuilder, $sectionId, $active);
 
         $rows = $queryBuilder
-            ->orderBy("element.sort", "DESC")
+            ->orderBy("product.sort", "DESC")
             ->addOrderBy("element.id", "ASC")
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit)
@@ -64,14 +65,14 @@ class CatalogElementsRepository extends ServiceEntityRepository
 
         $queryBuilder = $this->createQueryBuilder("element");
 
+        $this->addProductRelation($queryBuilder);
         $this->addProductPriceRelations($queryBuilder);
         $this->addStockRowsForTotal($queryBuilder);
 
         $elements = $queryBuilder
             ->andWhere("element.id IN (:ids)")
             ->setParameter("ids", $ids)
-            ->getQuery()
-            ->getResult();
+            ->getQuery()->getResult();
 
         return $this->sortElementsByIds($elements, $ids);
     }
@@ -79,7 +80,8 @@ class CatalogElementsRepository extends ServiceEntityRepository
     public function countMatchingListFilters(?int $sectionId, ?bool $active): int
     {
         $queryBuilder = $this->createQueryBuilder("element")
-            ->select("COUNT(element.id)");
+            ->select("COUNT(DISTINCT element.id)")
+            ->innerJoin("element.product", "product");
 
         $this->applyListFilters($queryBuilder, $sectionId, $active);
 
@@ -92,6 +94,7 @@ class CatalogElementsRepository extends ServiceEntityRepository
     {
         $queryBuilder = $this->createQueryBuilder("element");
 
+        $this->addProductRelation($queryBuilder);
         $this->addSectionsRelation($queryBuilder);
         $this->addProductPriceRelations($queryBuilder);
         $this->addStockRowsForTotal($queryBuilder);
@@ -103,13 +106,23 @@ class CatalogElementsRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
-    private function addSectionsRelation(
+    private function addProductRelation(
         QueryBuilder $queryBuilder,
         string $elementAlias = "element",
+        string $productAlias = "product",
+    ): QueryBuilder {
+        return $queryBuilder
+            ->innerJoin(sprintf("%s.product", $elementAlias), $productAlias)
+            ->addSelect($productAlias);
+    }
+
+    private function addSectionsRelation(
+        QueryBuilder $queryBuilder,
+        string $productAlias = "product",
         string $sectionAlias = "section",
     ): QueryBuilder {
         return $queryBuilder
-            ->leftJoin(sprintf("%s.sections", $elementAlias), $sectionAlias)
+            ->leftJoin(sprintf("%s.sections", $productAlias), $sectionAlias)
             ->addSelect($sectionAlias)
             ->leftJoin(sprintf("%s.parent", $sectionAlias), "sectionParent")
             ->addSelect("sectionParent");
@@ -119,14 +132,14 @@ class CatalogElementsRepository extends ServiceEntityRepository
     {
         if ($sectionId !== null) {
             $queryBuilder
-                ->innerJoin("element.sections", "filterSection")
+                ->innerJoin("product.sections", "filterSection")
                 ->andWhere("filterSection.id = :sectionId")
                 ->setParameter("sectionId", $sectionId);
         }
 
         if ($active !== null) {
             $queryBuilder
-                ->andWhere("element.active = :active")
+                ->andWhere("product.active = :active")
                 ->setParameter("active", $active);
         }
 

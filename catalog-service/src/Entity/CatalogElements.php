@@ -5,56 +5,21 @@ namespace App\Entity;
 use App\Repository\CatalogElementsRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: CatalogElementsRepository::class)]
-#[ORM\Index(name: "idx_catalog_elements_sort_id", fields: ["sort", "id"])]
 class CatalogElements
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
     private ?int $id = null;
+    // Extension entity for live-catalog relations; Product keeps the base product data.
 
-    #[ORM\Column(length: 255)]
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
-    private ?string $name = null;
-
-    #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
-
-    #[ORM\Column]
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
-    private ?bool $active = null;
-
-    #[ORM\Column]
-    private ?int $createdBy = null;
-
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
-    private ?string $description = null;
-
-    #[ORM\Column(length: 255, unique: true)]
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
-    private ?string $slug = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
-    private ?string $pictureId = null;
-
-    /**
-     * @var Collection<int, CatalogSections>
-     */
-    #[ORM\ManyToMany(targetEntity: CatalogSections::class, inversedBy: 'catalogElements')]
-    #[Groups(["catalog_element:item"])]
-    private Collection $sections;
-
-    #[ORM\Column(options: ["default" => 100])]
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
-    private ?int $sort = 100;
+    #[ORM\OneToOne(inversedBy: 'catalogElement', cascade: ['persist'])]
+    #[ORM\JoinColumn(name: 'product_id', referencedColumnName: 'id', nullable: false, unique: true, onDelete: 'CASCADE')]
+    private ?Product $product = null;
 
     /**
      * @var Collection<int, StoresElementsStocks>
@@ -71,103 +36,119 @@ class CatalogElements
 
     public function __construct()
     {
-        $this->sections = new ArrayCollection();
+        $this->product = new Product();
+        $this->product->setCatalogElement($this);
         $this->storeStocks = new ArrayCollection();
         $this->productPrices = new ArrayCollection();
     }
 
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function setId(int $id): static
+    public function getProduct(): ?Product
     {
-        $this->id = $id;
+        return $this->product;
+    }
+
+    public function setProduct(Product $product): static
+    {
+        $this->product = $product;
+
+        if ($product->getCatalogElement() !== $this) {
+            $product->setCatalogElement($this);
+        }
 
         return $this;
     }
 
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     public function getName(): ?string
     {
-        return $this->name;
+        return $this->product?->getName();
     }
 
     public function setName(string $name): static
     {
-        $this->name = $name;
+        $this->getProductModel()->setName($name);
 
         return $this;
     }
 
     public function getCreatedAt(): ?\DateTimeImmutable
     {
-        return $this->createdAt;
+        return $this->product?->getCreatedAt();
     }
 
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
-        $this->createdAt = $createdAt;
+        $this->getProductModel()->setCreatedAt($createdAt);
 
         return $this;
     }
 
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     public function isActive(): ?bool
     {
-        return $this->active;
+        return $this->product?->isActive();
     }
 
     public function setActive(bool $active): static
     {
-        $this->active = $active;
+        $this->getProductModel()->setActive($active);
 
         return $this;
     }
 
     public function getCreatedBy(): ?int
     {
-        return $this->createdBy;
+        return $this->product?->getCreatedBy();
     }
 
     public function setCreatedBy(int $createdBy): static
     {
-        $this->createdBy = $createdBy;
+        $this->getProductModel()->setCreatedBy($createdBy);
 
         return $this;
     }
 
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     public function getDescription(): ?string
     {
-        return $this->description;
+        return $this->product?->getDescription();
     }
 
     public function setDescription(?string $description): static
     {
-        $this->description = $description;
+        $this->getProductModel()->setDescription($description);
 
         return $this;
     }
 
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     public function getSlug(): ?string
     {
-        return $this->slug;
+        return $this->product?->getSlug();
     }
 
     public function setSlug(string $slug): static
     {
-        $this->slug = $slug;
+        $this->getProductModel()->setSlug($slug);
 
         return $this;
     }
 
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     public function getPictureId(): ?string
     {
-        return $this->pictureId;
+        return $this->product?->getPictureId();
     }
 
     public function setPictureId(?string $pictureId): static
     {
-        $this->pictureId = $pictureId;
+        $this->getProductModel()->setPictureId($pictureId);
 
         return $this;
     }
@@ -175,35 +156,35 @@ class CatalogElements
     /**
      * @return Collection<int, CatalogSections>
      */
+    #[Groups(["catalog_element:item"])]
     public function getSections(): Collection
     {
-        return $this->sections;
+        return $this->getProductModel()->getSections();
     }
 
     public function addSection(CatalogSections $section): static
     {
-        if (!$this->sections->contains($section)) {
-            $this->sections->add($section);
-        }
+        $this->getProductModel()->addSection($section);
 
         return $this;
     }
 
     public function removeSection(CatalogSections $section): static
     {
-        $this->sections->removeElement($section);
+        $this->getProductModel()->removeSection($section);
 
         return $this;
     }
 
+    #[Groups(["catalog_element:list", "catalog_element:item"])]
     public function getSort(): ?int
     {
-        return $this->sort;
+        return $this->product?->getSort();
     }
 
     public function setSort(int $sort): static
     {
-        $this->sort = $sort;
+        $this->getProductModel()->setSort($sort);
 
         return $this;
     }
@@ -238,6 +219,9 @@ class CatalogElements
         return $stores;
     }
 
+    /**
+     * @return Collection<int, StoresElementsStocks>
+     */
     public function getStoreStocks(): Collection
     {
         return $this->storeStocks;
@@ -256,7 +240,6 @@ class CatalogElements
     public function removeStoreStock(StoresElementsStocks $storeStock): static
     {
         if ($this->storeStocks->removeElement($storeStock)) {
-            // set the owning side to null (unless already changed)
             if ($storeStock->getElement() === $this) {
                 $storeStock->setElement(null);
             }
@@ -292,5 +275,15 @@ class CatalogElements
         }
 
         return $this;
+    }
+
+    private function getProductModel(): Product
+    {
+        if ($this->product === null) {
+            $this->product = new Product();
+            $this->product->setCatalogElement($this);
+        }
+
+        return $this->product;
     }
 }
