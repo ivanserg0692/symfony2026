@@ -22,9 +22,7 @@ class CartController extends AbstractController
     #[OA\Get(
         summary: "Get current cart",
         description: "Returns the current user's active cart with local cart item data only.",
-        parameters: [
-            new OA\Parameter(name: "X-User-Id", in: "header", required: true, schema: new OA\Schema(type: "integer", minimum: 1)),
-        ],
+        security: [["XUserId" => []]],
         responses: [
             new OA\Response(
                 response: 200,
@@ -51,9 +49,9 @@ class CartController extends AbstractController
         summary: "Update cart item",
         description: "Updates quantity and sort for an item that belongs to the current user's active cart.",
         parameters: [
-            new OA\Parameter(name: "X-User-Id", in: "header", required: true, schema: new OA\Schema(type: "integer", minimum: 1)),
             new OA\Parameter(name: "itemId", in: "path", required: true, schema: new OA\Schema(type: "integer", minimum: 1)),
         ],
+        security: [["XUserId" => []]],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
@@ -97,9 +95,9 @@ class CartController extends AbstractController
         summary: "Delete cart item",
         description: "Deletes an item from the current user's active cart.",
         parameters: [
-            new OA\Parameter(name: "X-User-Id", in: "header", required: true, schema: new OA\Schema(type: "integer", minimum: 1)),
             new OA\Parameter(name: "itemId", in: "path", required: true, schema: new OA\Schema(type: "integer", minimum: 1)),
         ],
+        security: [["XUserId" => []]],
         responses: [
             new OA\Response(response: 204, description: "Cart item was deleted."),
             new OA\Response(response: 400, description: "X-User-Id header is missing or invalid."),
@@ -121,9 +119,7 @@ class CartController extends AbstractController
     #[OA\Delete(
         summary: "Clear current cart",
         description: "Deletes the current user's active cart and its items. The operation is idempotent.",
-        parameters: [
-            new OA\Parameter(name: "X-User-Id", in: "header", required: true, schema: new OA\Schema(type: "integer", minimum: 1)),
-        ],
+        security: [["XUserId" => []]],
         responses: [
             new OA\Response(response: 204, description: "Cart was deleted or was already absent."),
             new OA\Response(response: 400, description: "X-User-Id header is missing or invalid."),

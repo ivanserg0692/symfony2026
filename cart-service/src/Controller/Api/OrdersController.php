@@ -25,10 +25,10 @@ class OrdersController extends AbstractController
         summary: "List orders",
         description: "Returns the current user's orders with pagination, sorted by createdAt descending and id descending.",
         parameters: [
-            new OA\Parameter(name: "X-User-Id", in: "header", required: true, schema: new OA\Schema(type: "integer", minimum: 1)),
             new OA\Parameter(name: "page", in: "query", required: false, schema: new OA\Schema(type: "integer", minimum: 1, default: 1)),
             new OA\Parameter(name: "limit", in: "query", required: false, schema: new OA\Schema(type: "integer", minimum: 1, maximum: self::MAX_LIMIT, default: self::DEFAULT_LIMIT)),
         ],
+        security: [["XUserId" => []]],
         responses: [
             new OA\Response(
                 response: 200,
@@ -70,9 +70,9 @@ class OrdersController extends AbstractController
         summary: "Get order",
         description: "Returns one current-user order with local order item data only.",
         parameters: [
-            new OA\Parameter(name: "X-User-Id", in: "header", required: true, schema: new OA\Schema(type: "integer", minimum: 1)),
             new OA\Parameter(name: "orderId", in: "path", required: true, schema: new OA\Schema(type: "integer", minimum: 1)),
         ],
+        security: [["XUserId" => []]],
         responses: [
             new OA\Response(
                 response: 200,
