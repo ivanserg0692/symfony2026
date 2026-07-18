@@ -80,7 +80,8 @@ class CatalogElementsRepository extends ServiceEntityRepository
     public function countMatchingListFilters(?int $sectionId, ?bool $active): int
     {
         $queryBuilder = $this->createQueryBuilder("element")
-            ->select("COUNT(element.id)");
+            ->select("COUNT(element.id)")
+            ->innerJoin("element.product", "product");
 
         $this->applyListFilters($queryBuilder, $sectionId, $active);
 

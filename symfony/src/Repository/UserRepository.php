@@ -2,8 +2,10 @@
 
 namespace App\Repository;
 
+use App\Dto\Sorting\SearchListQueryDto;
 use App\Entity\User;
 use App\Entity\UserGroups;
+use App\Repository\Services\ListQueryNormalizer;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -16,10 +18,28 @@ use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
  */
 class UserRepository extends ServiceEntityRepository implements PasswordUpgraderInterface
 {
+    private const ROOT_ALIAS = 'users';
+    public const DEFAULT_SORT = 'id';
+    public const ALLOWED_SORTS = ['id', 'email'];
 
-    public function __construct(ManagerRegistry $registry)
-    {
+    public function __construct(
+        ManagerRegistry $registry,
+        private readonly ListQueryNormalizer $listQueryNormalizer,
+    ) {
         parent::__construct($registry, User::class);
+    }
+
+    public function createListQueryBuilder(SearchListQueryDto $query): QueryBuilder
+    {
+        return $this->createQueryBuilder(self::ROOT_ALIAS)
+            ->orderBy(
+                self::ROOT_ALIAS . '.' . $this->listQueryNormalizer->normalizeSort(
+                    $query->sort,
+                    self::ALLOWED_SORTS,
+                    self::DEFAULT_SORT,
+                ),
+                $this->listQueryNormalizer->normalizeDirection($query->direction),
+            );
     }
 
     public function createAdminsQueryBuilder(): QueryBuilder
