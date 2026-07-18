@@ -7,6 +7,8 @@ nelmio_api_doc:
                   url: /api/v1/doc.json
                 - name: Catalog API
                   url: http://localhost:8010/api/doc.json
+                - name: Cart API
+                  url: http://localhost:8020/api/doc.json
             urls.primaryName: Symfony API
     documentation:
         info:
