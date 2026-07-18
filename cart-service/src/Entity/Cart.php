@@ -6,6 +6,7 @@ use App\Repository\CartRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: CartRepository::class)]
 #[ORM\Table(name: 'carts')]
@@ -15,21 +16,25 @@ class Cart
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["cart:item"])]
     private ?int $id = null;
 
     #[ORM\Column(name: 'owner_id')]
     private ?int $ownerId = null;
 
     #[ORM\Column]
+    #[Groups(["cart:item"])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[Groups(["cart:item"])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     /**
      * @var Collection<int, CartItem>
      */
     #[ORM\OneToMany(targetEntity: CartItem::class, mappedBy: 'cart', cascade: ['persist'], orphanRemoval: true)]
+    #[Groups(["cart:item"])]
     private Collection $items;
 
     public function __construct()
@@ -40,6 +45,12 @@ class Cart
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    #[Groups(["cart:item"])]
+    public function getStatus(): string
+    {
+        return "active";
     }
 
     public function getOwnerId(): ?int

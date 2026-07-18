@@ -15,4 +15,17 @@ class CartItemRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, CartItem::class);
     }
+
+    public function findOneInActiveCartForOwner(int $itemId, int $ownerId): ?CartItem
+    {
+        return $this->createQueryBuilder("item")
+            ->innerJoin("item.cart", "cart")
+            ->addSelect("cart")
+            ->andWhere("item.id = :itemId")
+            ->andWhere("cart.ownerId = :ownerId")
+            ->setParameter("itemId", $itemId)
+            ->setParameter("ownerId", $ownerId)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

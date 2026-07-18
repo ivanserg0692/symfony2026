@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\CartItemRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: CartItemRepository::class)]
 #[ORM\Table(name: 'cart_items')]
@@ -14,6 +15,7 @@ class CartItem
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["cart:item"])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'items')]
@@ -21,18 +23,23 @@ class CartItem
     private ?Cart $cart = null;
 
     #[ORM\Column(name: 'catalog_element_id')]
+    #[Groups(["cart:item"])]
     private ?int $catalogElementId = null;
 
     #[ORM\Column]
+    #[Groups(["cart:item"])]
     private ?int $quantity = null;
 
     #[ORM\Column]
+    #[Groups(["cart:item"])]
     private ?int $sort = null;
 
     #[ORM\Column]
+    #[Groups(["cart:item"])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[Groups(["cart:item"])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     public function getId(): ?int

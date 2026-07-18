@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table(name: 'orders')]
@@ -15,30 +16,37 @@ class Order
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["order:list", "order:item"])]
     private ?int $id = null;
 
     #[ORM\Column(name: 'owner_id')]
     private ?int $ownerId = null;
 
     #[ORM\Column(name: 'total_price', type: Types::DECIMAL, precision: 15, scale: 2)]
+    #[Groups(["order:list", "order:item"])]
     private ?string $totalPrice = null;
 
     #[ORM\Column(name: 'total_discount', type: Types::DECIMAL, precision: 15, scale: 2)]
+    #[Groups(["order:list", "order:item"])]
     private ?string $totalDiscount = null;
 
     #[ORM\Column(name: 'final_price', type: Types::DECIMAL, precision: 15, scale: 2)]
+    #[Groups(["order:list", "order:item"])]
     private ?string $finalPrice = null;
 
     #[ORM\Column]
+    #[Groups(["order:list", "order:item"])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[Groups(["order:list", "order:item"])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     /**
      * @var Collection<int, OrderItem>
      */
     #[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'order', cascade: ['persist'], orphanRemoval: true)]
+    #[Groups(["order:item"])]
     private Collection $items;
 
     public function __construct()

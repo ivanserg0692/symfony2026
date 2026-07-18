@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\OrderItemRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: OrderItemRepository::class)]
 #[ORM\Table(name: 'order_items')]
@@ -14,6 +15,7 @@ class OrderItem
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["order:item"])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'items')]
@@ -21,27 +23,35 @@ class OrderItem
     private ?Order $order = null;
 
     #[ORM\Column(name: 'product_snapshot_id')]
+    #[Groups(["order:item"])]
     private ?int $productSnapshotId = null;
 
     #[ORM\Column]
+    #[Groups(["order:item"])]
     private ?int $quantity = null;
 
     #[ORM\Column]
+    #[Groups(["order:item"])]
     private ?int $sort = null;
 
     #[ORM\Column(name: 'unit_price', type: Types::DECIMAL, precision: 15, scale: 2)]
+    #[Groups(["order:item"])]
     private ?string $unitPrice = null;
 
     #[ORM\Column(name: 'unit_discount', type: Types::DECIMAL, precision: 15, scale: 2)]
+    #[Groups(["order:item"])]
     private ?string $unitDiscount = null;
 
     #[ORM\Column(name: 'final_unit_price', type: Types::DECIMAL, precision: 15, scale: 2)]
+    #[Groups(["order:item"])]
     private ?string $finalUnitPrice = null;
 
     #[ORM\Column(name: 'line_total', type: Types::DECIMAL, precision: 15, scale: 2)]
+    #[Groups(["order:item"])]
     private ?string $lineTotal = null;
 
     #[ORM\Column]
+    #[Groups(["order:item"])]
     private ?\DateTimeImmutable $createdAt = null;
 
     public function getId(): ?int
