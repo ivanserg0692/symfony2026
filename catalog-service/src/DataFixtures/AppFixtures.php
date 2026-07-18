@@ -9,6 +9,7 @@ use App\Entity\ProductPrice;
 use App\Entity\Stores;
 use App\Entity\StoresElementsStocks;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ObjectManager;
@@ -19,7 +20,7 @@ use Faker\Generator;
  * to set up, use this command:
  * docker compose run --rm catalog-cli php -d memory_limit=512M bin/console doctrine:fixtures:load --no-debug
  */
-class AppFixtures extends Fixture
+class AppFixtures extends Fixture implements OrderedFixtureInterface
 {
     private const PRODUCT_COUNT = 1000000;
     private const PRODUCT_BATCH_SIZE = 250;
@@ -277,6 +278,11 @@ class AppFixtures extends Fixture
         'Ultra',
         'Vector',
     ];
+
+    public function getOrder(): int
+    {
+        return 10;
+    }
 
     public function load(ObjectManager $manager): void
     {

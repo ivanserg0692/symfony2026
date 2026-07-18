@@ -15,33 +15,35 @@ class Product
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
+    #[Groups(["catalog_element:list", "catalog_element:item", "product_snapshot:list", "product_snapshot:item"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
+    #[Groups(["catalog_element:list", "catalog_element:item", "product_snapshot:list", "product_snapshot:item"])]
     private ?string $name = null;
 
     #[ORM\Column]
+    #[Groups(["product_snapshot:list", "product_snapshot:item"])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
+    #[Groups(["catalog_element:list", "catalog_element:item", "product_snapshot:list", "product_snapshot:item"])]
     private ?bool $active = null;
 
     #[ORM\Column]
+    #[Groups(["product_snapshot:item"])]
     private ?int $createdBy = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
+    #[Groups(["catalog_element:list", "catalog_element:item", "product_snapshot:list", "product_snapshot:item"])]
     private ?string $description = null;
 
     #[ORM\Column(length: 255, unique: true)]
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
+    #[Groups(["catalog_element:list", "catalog_element:item", "product_snapshot:list", "product_snapshot:item"])]
     private ?string $slug = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
+    #[Groups(["catalog_element:list", "catalog_element:item", "product_snapshot:list", "product_snapshot:item"])]
     private ?string $pictureId = null;
 
     /**

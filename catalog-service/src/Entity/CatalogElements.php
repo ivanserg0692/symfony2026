@@ -51,7 +51,7 @@ class CatalogElements
         $this->productPrices = new ArrayCollection();
     }
 
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
+    #[Groups(["catalog_element:list", "catalog_element:item", "product_snapshot:list", "product_snapshot:item"])]
     public function getId(): ?int
     {
         return $this->id;
@@ -73,7 +73,7 @@ class CatalogElements
         return $this;
     }
 
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
+    #[Groups(["catalog_element:list", "catalog_element:item", "product_snapshot:list", "product_snapshot:item"])]
     public function getName(): ?string
     {
         return $this->product?->getName();
@@ -98,7 +98,7 @@ class CatalogElements
         return $this;
     }
 
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
+    #[Groups(["catalog_element:list", "catalog_element:item", "product_snapshot:list", "product_snapshot:item"])]
     public function isActive(): ?bool
     {
         return $this->product?->isActive();
@@ -123,7 +123,7 @@ class CatalogElements
         return $this;
     }
 
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
+    #[Groups(["catalog_element:list", "catalog_element:item", "product_snapshot:item"])]
     public function getDescription(): ?string
     {
         return $this->product?->getDescription();
@@ -136,7 +136,7 @@ class CatalogElements
         return $this;
     }
 
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
+    #[Groups(["catalog_element:list", "catalog_element:item", "product_snapshot:list", "product_snapshot:item"])]
     public function getSlug(): ?string
     {
         return $this->product?->getSlug();
@@ -149,7 +149,7 @@ class CatalogElements
         return $this;
     }
 
-    #[Groups(["catalog_element:list", "catalog_element:item"])]
+    #[Groups(["catalog_element:list", "catalog_element:item", "product_snapshot:list", "product_snapshot:item"])]
     public function getPictureId(): ?string
     {
         return $this->product?->getPictureId();
