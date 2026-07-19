@@ -10,6 +10,7 @@
         "doctrine/doctrine-bundle": "^3.2",
         "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.6",
+        "google/protobuf": "^5.35",
         "nelmio/api-doc-bundle": "^5.10",
         "nelmio/cors-bundle": "^2.6",
         "stof/doctrine-extensions-bundle": "^1.15",
@@ -35,7 +36,8 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\": "src/"
+            "App\\": "src/",
+            "Grpc\\Catalog\\V1\\": "src/Grpc/Generated/Grpc/Catalog/V1/"
         }
     },
     "autoload-dev": {
