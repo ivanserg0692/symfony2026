@@ -1,0 +1,7 @@
+version: v2
+clean: true
+plugins:
+  - remote: buf.build/protocolbuffers/php
+    out: ../cart-service/src/Grpc/Generated
+  - remote: buf.build/grpc/php
+    out: ../cart-service/src/Grpc/Generated
