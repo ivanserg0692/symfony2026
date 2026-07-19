@@ -22,6 +22,7 @@ RUN docker-php-ext-install \
     intl \
     mbstring \
     pdo_pgsql \
+    sockets \
     xsl \
     zip
 
