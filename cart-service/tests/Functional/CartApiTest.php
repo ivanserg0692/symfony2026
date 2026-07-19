@@ -76,6 +76,42 @@ class CartApiTest extends ApiTestCase
         self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
     }
 
+    public function testRejectsEmptyUpdatePayload(): void
+    {
+        $item = $this->firstItem($this->createCart(123));
+
+        $this->requestJson("PATCH", sprintf("/api/cart/items/%d", $item->getId()), 123, []);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testRejectsNullQuantity(): void
+    {
+        $item = $this->firstItem($this->createCart(123));
+
+        $this->requestJson("PATCH", sprintf("/api/cart/items/%d", $item->getId()), 123, ["quantity" => null]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testRejectsNonIntegerQuantity(): void
+    {
+        $item = $this->firstItem($this->createCart(123));
+
+        $this->requestJson("PATCH", sprintf("/api/cart/items/%d", $item->getId()), 123, ["quantity" => "7"]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testRejectsNonIntegerSort(): void
+    {
+        $item = $this->firstItem($this->createCart(123));
+
+        $this->requestJson("PATCH", sprintf("/api/cart/items/%d", $item->getId()), 123, ["sort" => "999"]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+    }
+
     public function testRejectsCatalogElementChange(): void
     {
         $item = $this->firstItem($this->createCart(123));

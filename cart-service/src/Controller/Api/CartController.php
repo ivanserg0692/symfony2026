@@ -77,8 +77,7 @@ class CartController extends AbstractController
         $ownerId = $currentUserProvider->getRequiredUserId($request);
 
         try {
-            $payload = $this->decodeJsonObject($request);
-            $item = $cartApiService->updateItem($itemId, $ownerId, $payload);
+            $item = $cartApiService->updateItem($itemId, $ownerId, $request->getContent());
         } catch (\InvalidArgumentException $exception) {
             return $this->json(["message" => $exception->getMessage()], Response::HTTP_BAD_REQUEST);
         }
@@ -145,17 +144,5 @@ class CartController extends AbstractController
             "updatedAt" => null,
             "items" => [],
         ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function decodeJsonObject(Request $request): array
-    {
-        try {
-            return $request->toArray();
-        } catch (\JsonException) {
-            throw new \InvalidArgumentException("Request body must contain valid JSON.");
-        }
     }
 }

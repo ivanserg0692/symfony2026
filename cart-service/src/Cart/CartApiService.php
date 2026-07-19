@@ -7,15 +7,19 @@ use App\Entity\CartItem;
 use App\Repository\CartItemRepository;
 use App\Repository\CartRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class CartApiService
 {
-    private const ALLOWED_PATCH_FIELDS = ["quantity", "sort"];
-
     public function __construct(
         private readonly CartRepository $cartRepository,
         private readonly CartItemRepository $cartItemRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly SerializerInterface $serializer,
+        private readonly ValidatorInterface $validator,
     ) {
     }
 
@@ -24,25 +28,22 @@ class CartApiService
         return $this->cartRepository->findActiveForOwnerWithItems($ownerId);
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     */
-    public function updateItem(int $itemId, int $ownerId, array $payload): ?CartItem
+    public function updateItem(int $itemId, int $ownerId, string $payload): ?CartItem
     {
-        $this->validateUpdatePayload($payload);
-
         $item = $this->cartItemRepository->findOneInActiveCartForOwner($itemId, $ownerId);
 
         if ($item === null) {
             return null;
         }
 
-        if (array_key_exists("quantity", $payload)) {
-            $item->setQuantity($payload["quantity"]);
+        $updateRequest = $this->deserializeUpdateRequest($payload);
+
+        if ($updateRequest->hasQuantity() && $updateRequest->getQuantity() !== null) {
+            $item->setQuantity($updateRequest->getQuantity());
         }
 
-        if (array_key_exists("sort", $payload)) {
-            $item->setSort($payload["sort"]);
+        if ($updateRequest->hasSort() && $updateRequest->getSort() !== null) {
+            $item->setSort($updateRequest->getSort());
         }
 
         $item->setUpdatedAt(new \DateTimeImmutable());
@@ -77,30 +78,30 @@ class CartApiService
         $this->entityManager->flush();
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     */
-    private function validateUpdatePayload(array $payload): void
+    private function deserializeUpdateRequest(string $payload): CartItemUpdateRequest
     {
-        if ($payload === []) {
+        if (trim($payload) === "") {
+            throw new \InvalidArgumentException("Request body must contain valid JSON.");
+        }
+
+        try {
+            $updateRequest = $this->serializer->deserialize($payload, CartItemUpdateRequest::class, "json", [
+                AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES => false,
+            ]);
+        } catch (SerializerExceptionInterface $exception) {
+            throw new \InvalidArgumentException($exception->getMessage(), previous: $exception);
+        }
+
+        if (!$updateRequest instanceof CartItemUpdateRequest) {
             throw new \InvalidArgumentException("Request body must contain quantity or sort.");
         }
 
-        $unknownFields = array_diff(array_keys($payload), self::ALLOWED_PATCH_FIELDS);
+        $violations = $this->validator->validate($updateRequest);
 
-        if ($unknownFields !== []) {
-            throw new \InvalidArgumentException(sprintf(
-                "Unsupported field: %s.",
-                implode(", ", $unknownFields),
-            ));
+        if (count($violations) > 0) {
+            throw new \InvalidArgumentException((string) $violations);
         }
 
-        if (array_key_exists("quantity", $payload) && (!\is_int($payload["quantity"]) || $payload["quantity"] <= 0)) {
-            throw new \InvalidArgumentException("Quantity must be a positive integer.");
-        }
-
-        if (array_key_exists("sort", $payload) && !\is_int($payload["sort"])) {
-            throw new \InvalidArgumentException("Sort must be an integer.");
-        }
+        return $updateRequest;
     }
 }
