@@ -4,7 +4,7 @@
 
 This document will describe the visible result of merge request 7.
 
-Merge request: TBD
+Merge request: https://github.com/ivanserg0692/symfony2026/pull/7
 
 Task file: [task-7.md](task-7.md)
 
@@ -35,3 +35,12 @@ Not applicable for this architecture/documentation task.
 ## Updates
 
 Implementation notes will be appended here as dated sections.
+
+### 2026-07-19 - Service Applications Created
+
+The current implementation now includes two separate Symfony service applications that match the Task 7 architecture diagram:
+
+- `catalog-service` for the Catalog Service boundary;
+- `cart-service` for the Order/Cart Service boundary.
+
+At this stage they are recorded as the service-level foundation for later REST/HTTP endpoints, internal gRPC integration, and independent data ownership.

@@ -25,6 +25,12 @@
 - Catalog Service - отдельный backend-сервис каталога.
 - Order/Cart Service - отдельный backend-сервис корзины и заказов.
 
+Текущий статус реализации:
+
+- `catalog-service` создан как отдельное Symfony-приложение для Catalog Service;
+- `cart-service` создан как отдельное Symfony-приложение для Order/Cart Service;
+- оба сервиса пока фиксируются как инфраструктурная основа под дальнейшую реализацию REST/HTTP endpoints, внутренних gRPC-интеграций и собственного владения данными.
+
 nginx API Gateway отвечает за:
 
 - прием REST/HTTP запросов от frontend/client-приложений;
@@ -93,6 +99,7 @@ Order/Cart Service отвечает за:
 
 - Описана роль nginx как внешнего API Gateway для REST/HTTP запросов.
 - Зафиксировано, что основной сервис в папке `symfony` отвечает за Auth, админку, новости и связанные уведомления.
+- Зафиксировано, что `catalog-service` и `cart-service` уже созданы как отдельные service applications для текущего этапа реализации.
 - Описан auth check от nginx к Symfony Main Service перед проксированием request.
 - Зафиксирована передача trusted headers `X-User-Id` и `X-User-Role` от gateway к backend-сервисам.
 - Зафиксировано, что Catalog Service и Order/Cart Service получают внешний трафик от nginx по REST/HTTP.
@@ -158,6 +165,12 @@ The system consists of the following components:
 - Symfony Main Service - the main service under `symfony`, responsible for Auth, admin, and news.
 - Catalog Service - separate catalog backend service.
 - Order/Cart Service - separate cart and order backend service.
+
+Current implementation status:
+
+- `catalog-service` has been created as a separate Symfony application for Catalog Service;
+- `cart-service` has been created as a separate Symfony application for Order/Cart Service;
+- both services are currently captured as the infrastructure foundation for future REST/HTTP endpoints, internal gRPC integrations, and independent data ownership.
 
 nginx API Gateway is responsible for:
 
@@ -227,6 +240,7 @@ Each service owns its own database:
 
 - nginx is documented as the external API Gateway for REST/HTTP requests.
 - The main service under `symfony` is documented as responsible for Auth, admin, news, and related notifications.
+- `catalog-service` and `cart-service` are documented as existing service applications created for the current implementation stage.
 - nginx auth check against Symfony Main Service before request proxying is documented.
 - Trusted `X-User-Id` and `X-User-Role` headers from gateway to backend services are documented.
 - Catalog Service and Order/Cart Service are documented as receiving external traffic from nginx over REST/HTTP.
