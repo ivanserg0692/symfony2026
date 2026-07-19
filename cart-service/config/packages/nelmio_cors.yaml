@@ -11,3 +11,7 @@ nelmio_cors:
             allow_origin: ['*']
             allow_methods: ['GET', 'OPTIONS']
             allow_headers: ['Content-Type', 'Authorization', 'X-User-Id']
+        '^/api/':
+            allow_origin: ['http://localhost:8000']
+            allow_methods: ['GET', 'PATCH', 'DELETE', 'OPTIONS']
+            allow_headers: ['Content-Type', 'Authorization', 'X-User-Id', 'Accept']

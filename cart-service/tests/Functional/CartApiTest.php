@@ -194,6 +194,20 @@ class CartApiTest extends ApiTestCase
         self::assertSame("GET, OPTIONS", $this->client->getResponse()->headers->get("Access-Control-Allow-Methods"));
     }
 
+    public function testCartApiAllowsSwaggerUiCorsPreflight(): void
+    {
+        $this->client->request("OPTIONS", "/api/cart", server: [
+            "HTTP_ORIGIN" => "http://localhost:8000",
+            "HTTP_ACCESS_CONTROL_REQUEST_METHOD" => "GET",
+            "HTTP_ACCESS_CONTROL_REQUEST_HEADERS" => "X-User-Id",
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame("http://localhost:8000", $this->client->getResponse()->headers->get("Access-Control-Allow-Origin"));
+        self::assertStringContainsString("GET", (string) $this->client->getResponse()->headers->get("Access-Control-Allow-Methods"));
+        self::assertStringContainsString("x-user-id", strtolower((string) $this->client->getResponse()->headers->get("Access-Control-Allow-Headers")));
+    }
+
     private function firstItem(Cart $cart): CartItem
     {
         $item = $cart->getItems()->first();
