@@ -21,5 +21,8 @@ services:
         exclude:
             - '../src/Grpc/Generated/'
 
+    Grpc\Catalog\V1\InventoryServiceInterface:
+        alias: App\Grpc\InventoryService
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
