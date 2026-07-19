@@ -136,6 +136,29 @@ services:
     command:
       - bash
 
+  # Local Catalog gRPC server powered by RoadRunner.
+  catalog-grpc:
+    <<: *symfony-base
+    container_name: catalog-grpc
+    volumes:
+      - ./catalog-service:/workspace
+      - ./grpc-contracts:/grpc-contracts:ro
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+    environment:
+      APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
+      DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
+    command:
+      - rr
+      - serve
+      - -c
+      - .rr.yaml
+    ports:
+      - "9011:9001"
+    stdin_open: false
+    tty: false
+
   # Local Cart service web server for REST/API access during development.
   cart-web:
     <<: *symfony-base
