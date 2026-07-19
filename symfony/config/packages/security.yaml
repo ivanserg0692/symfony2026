@@ -80,6 +80,7 @@ security:
         - { path: ^/api/v1/auth/refresh$, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/auth/logout$, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/ping$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/users$, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/auth/me$, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
