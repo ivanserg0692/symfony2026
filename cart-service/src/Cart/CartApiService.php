@@ -7,10 +7,6 @@ use App\Entity\CartItem;
 use App\Repository\CartItemRepository;
 use App\Repository\CartRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class CartApiService
 {
@@ -18,8 +14,6 @@ class CartApiService
         private readonly CartRepository $cartRepository,
         private readonly CartItemRepository $cartItemRepository,
         private readonly EntityManagerInterface $entityManager,
-        private readonly SerializerInterface $serializer,
-        private readonly ValidatorInterface $validator,
     ) {
     }
 
@@ -28,15 +22,13 @@ class CartApiService
         return $this->cartRepository->findActiveForOwnerWithItems($ownerId);
     }
 
-    public function updateItem(int $itemId, int $ownerId, string $payload): ?CartItem
+    public function updateItem(int $itemId, int $ownerId, CartItemUpdateRequest $updateRequest): ?CartItem
     {
         $item = $this->cartItemRepository->findOneInActiveCartForOwner($itemId, $ownerId);
 
         if ($item === null) {
             return null;
         }
-
-        $updateRequest = $this->deserializeUpdateRequest($payload);
 
         if ($updateRequest->hasQuantity() && $updateRequest->getQuantity() !== null) {
             $item->setQuantity($updateRequest->getQuantity());
@@ -76,32 +68,5 @@ class CartApiService
 
         $this->entityManager->remove($cart);
         $this->entityManager->flush();
-    }
-
-    private function deserializeUpdateRequest(string $payload): CartItemUpdateRequest
-    {
-        if (trim($payload) === "") {
-            throw new \InvalidArgumentException("Request body must contain valid JSON.");
-        }
-
-        try {
-            $updateRequest = $this->serializer->deserialize($payload, CartItemUpdateRequest::class, "json", [
-                AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES => false,
-            ]);
-        } catch (SerializerExceptionInterface $exception) {
-            throw new \InvalidArgumentException($exception->getMessage(), previous: $exception);
-        }
-
-        if (!$updateRequest instanceof CartItemUpdateRequest) {
-            throw new \InvalidArgumentException("Request body must contain quantity or sort.");
-        }
-
-        $violations = $this->validator->validate($updateRequest);
-
-        if (count($violations) > 0) {
-            throw new \InvalidArgumentException((string) $violations);
-        }
-
-        return $updateRequest;
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Controller\Api;
 
 use App\Cart\CartApiService;
+use App\Cart\CartItemUpdateRequest;
+use App\Controller\Api\Request\RequestPayloadResolver;
 use App\Entity\Cart;
 use App\Entity\CartItem;
 use App\Security\CurrentUserProvider;
@@ -72,12 +74,23 @@ class CartController extends AbstractController
             new OA\Response(response: 404, description: "Cart item was not found."),
         ]
     )]
-    public function updateItem(int $itemId, Request $request, CurrentUserProvider $currentUserProvider, CartApiService $cartApiService): JsonResponse
+    public function updateItem(
+        int $itemId,
+        Request $request,
+        CurrentUserProvider $currentUserProvider,
+        CartApiService $cartApiService,
+        RequestPayloadResolver $requestPayloadResolver,
+    ): JsonResponse
     {
         $ownerId = $currentUserProvider->getRequiredUserId($request);
 
         try {
-            $item = $cartApiService->updateItem($itemId, $ownerId, $request->getContent());
+            $updateRequest = $requestPayloadResolver->resolve(
+                $request->getContent(),
+                CartItemUpdateRequest::class,
+                "Request body must contain quantity or sort.",
+            );
+            $item = $cartApiService->updateItem($itemId, $ownerId, $updateRequest);
         } catch (\InvalidArgumentException $exception) {
             return $this->json(["message" => $exception->getMessage()], Response::HTTP_BAD_REQUEST);
         }
