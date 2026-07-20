@@ -4,9 +4,11 @@ namespace App\Cart;
 
 use App\Entity\Cart;
 use App\Entity\CartItem;
+use App\Grpc\CatalogInventoryClient;
 use App\Repository\CartItemRepository;
 use App\Repository\CartRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class CartApiService
 {
@@ -14,6 +16,8 @@ class CartApiService
         private readonly CartRepository $cartRepository,
         private readonly CartItemRepository $cartItemRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly CatalogInventoryClient $catalogInventoryClient,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -31,6 +35,11 @@ class CartApiService
         }
 
         if ($updateRequest->hasQuantity() && $updateRequest->getQuantity() !== null) {
+            $response = $this->catalogInventoryClient->checkStock($item->getCatalogElementId(), $updateRequest->getQuantity());
+            if (!$response->available) {
+                throw new \InvalidArgumentException($this->translator->trans("cart.item.quantity.exceeds_available"));
+            }
+
             $item->setQuantity($updateRequest->getQuantity());
         }
 

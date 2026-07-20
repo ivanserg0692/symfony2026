@@ -57,6 +57,22 @@ class CartApiTest extends ApiTestCase
         self::assertSame(7, $this->jsonResponse()["quantity"]);
     }
 
+    public function testRejectsUnavailableQuantity(): void
+    {
+        $item = $this->firstItem($this->createCart(123));
+        $this->setCatalogStockAvailable(false);
+
+        $this->requestJson("PATCH", sprintf("/api/cart/items/%d", $item->getId()), 123, ["quantity" => 7]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        self::assertSame("Requested quantity exceeds available stock.", $this->jsonResponse()["message"]);
+
+        $this->entityManager->clear();
+        $persistedItem = $this->entityManager->find(CartItem::class, $item->getId());
+        self::assertInstanceOf(CartItem::class, $persistedItem);
+        self::assertSame(1, $persistedItem->getQuantity());
+    }
+
     public function testUpdateSort(): void
     {
         $item = $this->firstItem($this->createCart(123));

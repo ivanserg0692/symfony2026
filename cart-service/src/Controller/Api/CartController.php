@@ -70,7 +70,7 @@ class CartController extends AbstractController
                 description: "Updated cart item.",
                 content: new OA\JsonContent(ref: new Model(type: CartItem::class, groups: ["cart:item"]))
             ),
-            new OA\Response(response: 400, description: "Invalid request body or X-User-Id header."),
+            new OA\Response(response: 400, description: "Invalid request body, unavailable quantity, or X-User-Id header."),
             new OA\Response(response: 404, description: "Cart item was not found."),
         ]
     )]

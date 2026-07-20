@@ -4,13 +4,10 @@ namespace App\Grpc;
 
 use Grpc\Catalog\V1\CheckStockRequest;
 use Grpc\Catalog\V1\InventoryServiceClient;
-use Grpc\ChannelCredentials;
 
-final class CatalogInventoryClient
+class CatalogInventoryClient
 {
-    private ?InventoryServiceClient $client = null;
-
-    public function __construct(private readonly string $catalogGrpcDsn)
+    public function __construct(private readonly InventoryServiceClient $client)
     {
     }
 
@@ -20,7 +17,7 @@ final class CatalogInventoryClient
         $request->setProductId($productId);
         $request->setRequestedQuantity($requestedQuantity);
 
-        [$response, $status] = $this->getClient()->CheckStock($request)->wait();
+        [$response, $status] = $this->client->CheckStock($request)->wait();
 
         if ($status->code !== \Grpc\STATUS_OK) {
             throw new \RuntimeException($status->details !== '' ? $status->details : 'Catalog gRPC request failed.');
@@ -44,12 +41,5 @@ final class CatalogInventoryClient
             $response->getAvailable(),
             $stores,
         );
-    }
-
-    private function getClient(): InventoryServiceClient
-    {
-        return $this->client ??= new InventoryServiceClient($this->catalogGrpcDsn, [
-            'credentials' => ChannelCredentials::createInsecure(),
-        ]);
     }
 }

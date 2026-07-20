@@ -3,6 +3,8 @@
 namespace App\Tests\Functional;
 
 use App\Entity\Cart;
+use App\Grpc\CatalogInventoryClient;
+use App\Grpc\CatalogStockResponse;
 use App\Entity\CartItem;
 use App\Entity\Order;
 use App\Entity\OrderItem;
@@ -15,6 +17,7 @@ abstract class ApiTestCase extends WebTestCase
 {
     protected KernelBrowser $client;
     protected EntityManagerInterface $entityManager;
+    private CatalogInventoryClient $catalogInventoryClient;
 
     protected function setUp(): void
     {
@@ -32,6 +35,8 @@ abstract class ApiTestCase extends WebTestCase
         }
 
         $schemaTool->createSchema($metadata);
+
+        $this->setCatalogStockAvailable(true);
     }
 
     protected function tearDown(): void
@@ -67,6 +72,38 @@ abstract class ApiTestCase extends WebTestCase
         }
 
         $this->client->request($method, $uri, server: $server, content: $body === null ? null : json_encode($body, JSON_THROW_ON_ERROR));
+    }
+
+    protected function setCatalogStockAvailable(bool $available): void
+    {
+        if (!isset($this->catalogInventoryClient)) {
+            $this->catalogInventoryClient = new class extends CatalogInventoryClient {
+                private bool $available = true;
+
+                public function __construct()
+                {
+                }
+
+                public function setAvailable(bool $available): void
+                {
+                    $this->available = $available;
+                }
+
+                public function checkStock(int $productId, int $requestedQuantity): CatalogStockResponse
+                {
+                    return new CatalogStockResponse(
+                        $productId,
+                        $this->available ? $requestedQuantity : 0,
+                        $this->available,
+                        [],
+                    );
+                }
+            };
+
+            static::getContainer()->set(CatalogInventoryClient::class, $this->catalogInventoryClient);
+        }
+
+        $this->catalogInventoryClient->setAvailable($available);
     }
 
     protected function createCart(int $ownerId, int $itemCount = 2): Cart

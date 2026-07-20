@@ -23,5 +23,13 @@ services:
         exclude:
             - '../src/Grpc/Generated/'
 
+    Grpc\Catalog\V1\InventoryServiceClient:
+        factory: ['@App\Grpc\CatalogInventoryServiceClientFactory', 'create']
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+when@test:
+    services:
+        App\Grpc\CatalogInventoryClient:
+            public: true
