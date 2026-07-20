@@ -234,9 +234,11 @@ The notification recipients are administrators resolved by the application, not 
 - MR result (EN): [symfony/docs/mr-task-7-1-en.md](symfony/docs/mr-task-7-1-en.md)
 - MR result (RU): [symfony/docs/mr-task-7-1-ru.md](symfony/docs/mr-task-7-1-ru.md)
 #### `Task 7.2` - in progress
-- Backend Merge Request 7.2: TBD
+- Backend Merge Request 7.2: <https://github.com/ivanserg0692/symfony2026/pull/10>
 - Frontend Merge Request 7.2: TBD
 - Task file: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
+- MR result (EN): [symfony/docs/mr-task-7.2-en.md](symfony/docs/mr-task-7.2-en.md)
+- MR result (RU): [symfony/docs/mr-task-7.2-ru.md](symfony/docs/mr-task-7.2-ru.md)
 
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
@@ -679,9 +681,11 @@ API отдает новости, аутентификацию, текущего 
 - Результат MR (EN): [symfony/docs/mr-task-7-1-en.md](symfony/docs/mr-task-7-1-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-7-1-ru.md](symfony/docs/mr-task-7-1-ru.md)
 #### `Task 7.2` - in progress
-- Backend Merge Request 7.2: TBD
+- Backend Merge Request 7.2: <https://github.com/ivanserg0692/symfony2026/pull/10>
 - Frontend Merge Request 7.2: TBD
 - Файл задачи: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
+- Результат MR (EN): [symfony/docs/mr-task-7.2-en.md](symfony/docs/mr-task-7.2-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-7.2-ru.md](symfony/docs/mr-task-7.2-ru.md)
 
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:

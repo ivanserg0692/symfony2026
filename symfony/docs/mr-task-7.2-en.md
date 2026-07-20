@@ -1,0 +1,54 @@
+# MR Task 7.2 Result Log
+
+## Overview
+
+This document describes the visible result of merge request 10.
+
+Merge request: https://github.com/ivanserg0692/symfony2026/pull/10
+
+Task file: [task-7.2.md](task-7.2.md)
+
+The merge request continues Task 7.2 and focuses on Cart/Order Service endpoints that require internal gRPC integration with Catalog Service.
+
+## Scope
+
+The expected result includes:
+
+- gRPC-based Catalog Service integration for Cart/Order flows;
+- internal service-to-service communication only;
+- REST/HTTP external access through nginx/API layer;
+- unchanged behavior for endpoints that are already complete without gRPC.
+
+## Target Endpoints
+
+Endpoints covered by this task:
+
+- `POST /api/cart/items` - validate product existence, availability, price, and stock before adding a cart item.
+- `PATCH /api/cart/items/{itemId}` - validate requested quantity against Catalog Service data before updating a cart item.
+- `GET /api/orders/{orderId}` - check order ownership first, then load required catalog details/snapshots through gRPC.
+
+## Out Of Scope
+
+The following endpoints are tracked separately:
+
+- `POST /api/orders` - requires a separate RabbitMQ/event-driven flow.
+- `POST /api/orders/{orderId}/cancel` - requires a separate cancel flow.
+
+Already completed endpoints without gRPC remain outside this implementation scope:
+
+- `GET /api/cart`;
+- `DELETE /api/cart/items/{itemId}`;
+- `DELETE /api/cart`;
+- `GET /api/orders`.
+
+## Security Notes
+
+`GET /api/orders/{orderId}` must not call Catalog Service before verifying that the order belongs to the current user. This prevents loading or exposing catalog-related details for another user's order.
+
+## Screenshots
+
+Not applicable for backend gRPC integration work.
+
+## Updates
+
+Implementation notes will be appended here as dated sections.
