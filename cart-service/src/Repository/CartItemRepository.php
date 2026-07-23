@@ -28,4 +28,17 @@ class CartItemRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    public function findOneProductInActiveCartForOwner(int $productId, int $ownerId): ?CartItem
+    {
+        return $this->createQueryBuilder("item")
+            ->innerJoin("item.cart", "cart")
+            ->addSelect("cart")
+            ->andWhere("item.catalogElementId = :productId")
+            ->andWhere("cart.ownerId = :ownerId")
+            ->setParameter("productId", $productId)
+            ->setParameter("ownerId", $ownerId)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

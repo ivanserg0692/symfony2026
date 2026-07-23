@@ -8,6 +8,7 @@ use App\Grpc\CatalogStockResponse;
 use App\Entity\CartItem;
 use App\Entity\Order;
 use App\Entity\OrderItem;
+use App\Grpc\CatalogStoreStock;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -76,26 +77,96 @@ abstract class ApiTestCase extends WebTestCase
 
     protected function setCatalogStockAvailable(bool $available): void
     {
+        $this->catalogInventoryClient()->setProductFound(true);
+        $this->catalogInventoryClient()->setFail(false);
+        $this->catalogInventoryClient()->setAvailableQuantity($available ? 1000000 : 0);
+    }
+
+    protected function setCatalogStockAvailableQuantity(int $availableQuantity): void
+    {
+        $this->catalogInventoryClient()->setProductFound(true);
+        $this->catalogInventoryClient()->setFail(false);
+        $this->catalogInventoryClient()->setAvailableQuantity($availableQuantity);
+    }
+
+    protected function setCatalogProductFound(bool $found): void
+    {
+        $this->catalogInventoryClient()->setProductFound($found);
+    }
+
+    protected function setCatalogInventoryFailure(bool $fail): void
+    {
+        $this->catalogInventoryClient()->setFail($fail);
+    }
+
+    /**
+     * @return list<array{productId: int, requestedQuantity: int}>
+     */
+    protected function catalogStockRequests(): array
+    {
+        return $this->catalogInventoryClient()->requests();
+    }
+
+    private function catalogInventoryClient(): CatalogInventoryClient
+    {
         if (!isset($this->catalogInventoryClient)) {
             $this->catalogInventoryClient = new class extends CatalogInventoryClient {
-                private bool $available = true;
+                private int $availableQuantity = 1000000;
+                private bool $productFound = true;
+                private bool $fail = false;
+
+                /**
+                 * @var list<array{productId: int, requestedQuantity: int}>
+                 */
+                private array $requests = [];
 
                 public function __construct()
                 {
                 }
 
-                public function setAvailable(bool $available): void
+                public function setAvailableQuantity(int $availableQuantity): void
                 {
-                    $this->available = $available;
+                    $this->availableQuantity = $availableQuantity;
+                }
+
+                public function setProductFound(bool $productFound): void
+                {
+                    $this->productFound = $productFound;
+                }
+
+                public function setFail(bool $fail): void
+                {
+                    $this->fail = $fail;
+                }
+
+                /**
+                 * @return list<array{productId: int, requestedQuantity: int}>
+                 */
+                public function requests(): array
+                {
+                    return $this->requests;
                 }
 
                 public function checkStock(int $productId, int $requestedQuantity): CatalogStockResponse
                 {
+                    $this->requests[] = [
+                        "productId" => $productId,
+                        "requestedQuantity" => $requestedQuantity,
+                    ];
+
+                    if ($this->fail) {
+                        throw new \RuntimeException("gRPC transport failed");
+                    }
+
+                    if (!$this->productFound) {
+                        return new CatalogStockResponse($productId, 0, false, []);
+                    }
+
                     return new CatalogStockResponse(
                         $productId,
-                        $this->available ? $requestedQuantity : 0,
-                        $this->available,
-                        [],
+                        $this->availableQuantity,
+                        $requestedQuantity <= $this->availableQuantity,
+                        [new CatalogStoreStock(1, $this->availableQuantity)],
                     );
                 }
             };
@@ -103,7 +174,7 @@ abstract class ApiTestCase extends WebTestCase
             static::getContainer()->set(CatalogInventoryClient::class, $this->catalogInventoryClient);
         }
 
-        $this->catalogInventoryClient->setAvailable($available);
+        return $this->catalogInventoryClient;
     }
 
     protected function createCart(int $ownerId, int $itemCount = 2): Cart

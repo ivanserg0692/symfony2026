@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\CartRepository;
+use Gedmo\Mapping\Annotation as Gedmo;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -23,10 +24,12 @@ class Cart
     private ?int $ownerId = null;
 
     #[ORM\Column]
+    #[Gedmo\Timestampable(on: "create")]
     #[Groups(["cart:item"])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[Gedmo\Timestampable(on: "update")]
     #[Groups(["cart:item"])]
     private ?\DateTimeImmutable $updatedAt = null;
 
