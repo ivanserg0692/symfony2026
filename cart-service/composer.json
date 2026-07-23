@@ -14,6 +14,7 @@
         "grpc/grpc": "^1.82",
         "nelmio/api-doc-bundle": "^5.10",
         "nelmio/cors-bundle": "^2.6",
+        "stof/doctrine-extensions-bundle": "^1.15",
         "symfony/console": "8.1.*",
         "symfony/dotenv": "8.1.*",
         "symfony/flex": "^2",
