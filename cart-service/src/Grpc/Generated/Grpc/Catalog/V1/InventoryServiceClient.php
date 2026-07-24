@@ -30,4 +30,18 @@ class InventoryServiceClient extends \Grpc\BaseStub {
         $metadata, $options);
     }
 
+    /**
+     * @param \Grpc\Catalog\V1\DeductStocksRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall<\Grpc\Catalog\V1\DeductStocksResponse>
+     */
+    public function DeductStocks(\Grpc\Catalog\V1\DeductStocksRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/catalog.v1.InventoryService/DeductStocks',
+        $argument,
+        ['\Grpc\Catalog\V1\DeductStocksResponse', 'decode'],
+        $metadata, $options);
+    }
+
 }
