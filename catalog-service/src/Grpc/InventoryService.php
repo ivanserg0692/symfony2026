@@ -53,9 +53,9 @@ final readonly class InventoryService implements InventoryServiceInterface
     public function DeductStocks(GRPC\ContextInterface $ctx, DeductStocksRequest $in): DeductStocksResponse
     {
         try {
-            return $this->createDeductStocksResponse($this->deductionService->deduct(
+            return $this->mapToDeductStocksResponse($this->deductionService->deduct(
                 $in->getOperationId(),
-                $this->createStockDeductionRequestItems($in),
+                $this->mapToStockDeductionRequestItems($in),
             ));
         } catch (InvalidInventoryDeductionRequestException $exception) {
             throw new GRPCException($exception->getMessage(), StatusCode::INVALID_ARGUMENT);
@@ -113,7 +113,7 @@ final readonly class InventoryService implements InventoryServiceInterface
     /**
      * @return list<StockDeductionRequestItem>
      */
-    private function createStockDeductionRequestItems(DeductStocksRequest $request): array
+    private function mapToStockDeductionRequestItems(DeductStocksRequest $request): array
     {
         $items = [];
 
@@ -128,30 +128,30 @@ final readonly class InventoryService implements InventoryServiceInterface
         return $items;
     }
 
-    private function createDeductStocksResponse(StockDeductionResult $result): DeductStocksResponse
+    private function mapToDeductStocksResponse(StockDeductionResult $result): DeductStocksResponse
     {
         return new DeductStocksResponse([
             "operation_id" => $result->operationId,
             "products" => array_map(
-                fn (ProductStockDeduction $product): ProductDeduction => $this->createProductDeduction($product),
+                fn (ProductStockDeduction $product): ProductDeduction => $this->mapToProductDeduction($product),
                 $result->products,
             ),
         ]);
     }
 
-    private function createProductDeduction(ProductStockDeduction $product): ProductDeduction
+    private function mapToProductDeduction(ProductStockDeduction $product): ProductDeduction
     {
         return new ProductDeduction([
             "product_id" => $product->productId,
             "total_deducted_quantity" => $product->totalDeductedQuantity,
             "stores" => array_map(
-                fn (StoreStockDeduction $store): StoreDeduction => $this->createStoreDeduction($store),
+                fn (StoreStockDeduction $store): StoreDeduction => $this->mapToStoreDeduction($store),
                 $product->stores,
             ),
         ]);
     }
 
-    private function createStoreDeduction(StoreStockDeduction $store): StoreDeduction
+    private function mapToStoreDeduction(StoreStockDeduction $store): StoreDeduction
     {
         return new StoreDeduction([
             "store_id" => $store->storeId,
