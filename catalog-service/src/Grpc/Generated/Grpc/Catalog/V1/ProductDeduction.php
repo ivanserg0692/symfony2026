@@ -26,6 +26,10 @@ class ProductDeduction extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>repeated .catalog.v1.StoreDeduction stores = 3 [json_name = "stores"];</code>
      */
     private $stores;
+    /**
+     * Generated from protobuf field <code>int64 product_snapshot_id = 4 [json_name = "productSnapshotId"];</code>
+     */
+    protected $product_snapshot_id = 0;
 
     /**
      * Constructor.
@@ -36,6 +40,7 @@ class ProductDeduction extends \Google\Protobuf\Internal\Message
      *     @type int|string $product_id
      *     @type int $total_deducted_quantity
      *     @type \Grpc\Catalog\V1\StoreDeduction[] $stores
+     *     @type int|string $product_snapshot_id
      * }
      */
     public function __construct($data = NULL) {
@@ -105,6 +110,28 @@ class ProductDeduction extends \Google\Protobuf\Internal\Message
     {
         $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::MESSAGE, \Grpc\Catalog\V1\StoreDeduction::class);
         $this->stores = $arr;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>int64 product_snapshot_id = 4 [json_name = "productSnapshotId"];</code>
+     * @return int|string
+     */
+    public function getProductSnapshotId()
+    {
+        return $this->product_snapshot_id;
+    }
+
+    /**
+     * Generated from protobuf field <code>int64 product_snapshot_id = 4 [json_name = "productSnapshotId"];</code>
+     * @param int|string $var
+     * @return $this
+     */
+    public function setProductSnapshotId(int|string $var)
+    {
+        GPBUtil::checkInt64($var);
+        $this->product_snapshot_id = $var;
 
         return $this;
     }
