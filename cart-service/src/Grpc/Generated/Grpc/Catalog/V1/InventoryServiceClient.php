@@ -44,4 +44,18 @@ class InventoryServiceClient extends \Grpc\BaseStub {
         $metadata, $options);
     }
 
+    /**
+     * @param \Grpc\Catalog\V1\GetProductPricesRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall<\Grpc\Catalog\V1\GetProductPricesResponse>
+     */
+    public function GetProductPrices(\Grpc\Catalog\V1\GetProductPricesRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/catalog.v1.InventoryService/GetProductPrices',
+        $argument,
+        ['\Grpc\Catalog\V1\GetProductPricesResponse', 'decode'],
+        $metadata, $options);
+    }
+
 }

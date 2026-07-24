@@ -28,4 +28,13 @@ interface InventoryServiceInterface extends GRPC\ServiceInterface
     * @throws GRPC\Exception\InvokeException
     */
     public function DeductStocks(GRPC\ContextInterface $ctx, DeductStocksRequest $in): DeductStocksResponse;
+
+    /**
+    * @param GRPC\ContextInterface $ctx
+    * @param GetProductPricesRequest $in
+    * @return GetProductPricesResponse
+    *
+    * @throws GRPC\Exception\InvokeException
+    */
+    public function GetProductPrices(GRPC\ContextInterface $ctx, GetProductPricesRequest $in): GetProductPricesResponse;
 }
