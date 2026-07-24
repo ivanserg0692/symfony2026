@@ -10,6 +10,7 @@ final readonly class CatalogProductDeduction
     public function __construct(
         public int $productId,
         public int $totalDeductedQuantity,
+        public int $productSnapshotId,
         public array $stores,
     ) {
     }

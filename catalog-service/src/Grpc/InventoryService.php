@@ -144,6 +144,7 @@ final readonly class InventoryService implements InventoryServiceInterface
         return new ProductDeduction([
             "product_id" => $product->productId,
             "total_deducted_quantity" => $product->totalDeductedQuantity,
+            "product_snapshot_id" => $product->productSnapshotId,
             "stores" => array_map(
                 fn (StoreStockDeduction $store): StoreDeduction => $this->mapToStoreDeduction($store),
                 $product->stores,

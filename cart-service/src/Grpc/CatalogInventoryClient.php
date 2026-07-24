@@ -89,6 +89,7 @@ class CatalogInventoryClient
             $products[] = new CatalogProductDeduction(
                 (int) $product->getProductId(),
                 $product->getTotalDeductedQuantity(),
+                (int) $product->getProductSnapshotId(),
                 $stores,
             );
         }

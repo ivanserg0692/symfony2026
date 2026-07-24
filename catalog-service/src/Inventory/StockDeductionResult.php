@@ -14,7 +14,7 @@ final readonly class StockDeductionResult
     }
 
     /**
-     * @return array{operationId: string, products: list<array{productId: int, totalDeductedQuantity: int, stores: list<array{storeId: int, deductedQuantity: int}>}>}
+     * @return array{operationId: string, products: list<array{productId: int, totalDeductedQuantity: int, stores: list<array{storeId: int, deductedQuantity: int}>, productSnapshotId: int}>}
      */
     public function toPayload(): array
     {
@@ -25,7 +25,7 @@ final readonly class StockDeductionResult
     }
 
     /**
-     * @param array{operationId: string, products: list<array{productId: int|string, totalDeductedQuantity: int|string, stores: list<array{storeId: int|string, deductedQuantity: int|string}>}>} $payload
+     * @param array{operationId: string, products: list<array{productId: int|string, totalDeductedQuantity: int|string, stores: list<array{storeId: int|string, deductedQuantity: int|string}>, productSnapshotId?: int|string}>} $payload
      */
     public static function fromPayload(array $payload): self
     {

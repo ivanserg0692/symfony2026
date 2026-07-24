@@ -131,6 +131,19 @@ class CatalogElementsRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    public function findOneForInventorySnapshot(int $id): ?CatalogElements
+    {
+        $queryBuilder = $this->createQueryBuilder("element");
+
+        $this->addProductRelation($queryBuilder);
+
+        return $queryBuilder
+            ->andWhere("element.id = :id")
+            ->setParameter("id", $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     private function addProductRelation(
         QueryBuilder $queryBuilder,
         string $elementAlias = "element",

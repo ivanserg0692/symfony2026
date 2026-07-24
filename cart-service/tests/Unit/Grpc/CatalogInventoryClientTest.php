@@ -51,6 +51,7 @@ final class CatalogInventoryClientTest extends TestCase
                 new ProductDeduction([
                     "product_id" => 10,
                     "total_deducted_quantity" => 7,
+                    "product_snapshot_id" => 501,
                     "stores" => [
                         new StoreDeduction(["store_id" => 1, "deducted_quantity" => 5]),
                         new StoreDeduction(["store_id" => 2, "deducted_quantity" => 2]),
@@ -65,6 +66,7 @@ final class CatalogInventoryClientTest extends TestCase
         self::assertSame('op-1', $result->operationId);
         self::assertSame(10, $result->products[0]->productId);
         self::assertSame(7, $result->products[0]->totalDeductedQuantity);
+        self::assertSame(501, $result->products[0]->productSnapshotId);
         self::assertSame(1, $result->products[0]->stores[0]->storeId);
         self::assertSame(5, $result->products[0]->stores[0]->deductedQuantity);
         self::assertSame(2, $result->products[0]->stores[1]->storeId);

@@ -66,6 +66,122 @@ final class InventoryDeductionServiceTest extends KernelTestCase
         self::assertSame(5, $result->products[0]->stores[0]->deductedQuantity);
     }
 
+    public function testSuccessfulDeductionCreatesProductSnapshotWithCopiedProductData(): void
+    {
+        $store = $this->createStore('store-1');
+        $product = $this->createProduct('product-1');
+        $this->addStock($product, $store, 8);
+
+        $result = $this->service->deduct('op-snapshot', [
+            new StockDeductionRequestItem($product->getId(), 5, $store->getId()),
+        ]);
+
+        $snapshotId = $result->products[0]->productSnapshotId;
+        $snapshot = $this->snapshotRow($snapshotId);
+
+        self::assertGreaterThan(0, $snapshotId);
+        self::assertSame($product->getId(), (int) $snapshot['original_product_id']);
+        self::assertSame('product-1', $snapshot['name']);
+        self::assertSame('Description for product-1', $snapshot['description']);
+        self::assertSame('product-1-picture', $snapshot['picture_id']);
+        self::assertSame(1, (int) $snapshot['active']);
+        self::assertSame(1, (int) $snapshot['created_by']);
+    }
+
+    public function testChangingProductAfterDeductionDoesNotChangeSnapshot(): void
+    {
+        $store = $this->createStore('store-1');
+        $product = $this->createProduct('product-1');
+        $this->addStock($product, $store, 8);
+
+        $result = $this->service->deduct('op-snapshot-immutable', [
+            new StockDeductionRequestItem($product->getId(), 5, $store->getId()),
+        ]);
+
+        $product
+            ->setName('changed-product')
+            ->setDescription('Changed description')
+            ->setPictureId('changed-picture');
+        $this->entityManager->flush();
+
+        $snapshot = $this->snapshotRow($result->products[0]->productSnapshotId);
+
+        self::assertSame('product-1', $snapshot['name']);
+        self::assertSame('Description for product-1', $snapshot['description']);
+        self::assertSame('product-1-picture', $snapshot['picture_id']);
+    }
+
+    public function testAutomaticSplitCreatesOneSnapshotForProduct(): void
+    {
+        $store1 = $this->createStore('store-1');
+        $store2 = $this->createStore('store-2');
+        $product = $this->createProduct('product-1');
+        $this->addStock($product, $store1, 5);
+        $this->addStock($product, $store2, 10);
+
+        $result = $this->service->deduct('op-snapshot-auto-split', [
+            new StockDeductionRequestItem($product->getId(), 7, null),
+        ]);
+
+        self::assertSame(1, $this->snapshotCount($product));
+        self::assertSame([$result->products[0]->productSnapshotId], $this->snapshotIds($product));
+        self::assertSame([
+            [$store1->getId(), 5],
+            [$store2->getId(), 2],
+        ], $this->storePairs($result));
+    }
+
+    public function testInsufficientStockDoesNotCreateSnapshots(): void
+    {
+        $store = $this->createStore('store-1');
+        $product = $this->createProduct('product-1');
+        $this->addStock($product, $store, 4);
+
+        $this->expectException(InsufficientInventoryStockException::class);
+
+        try {
+            $this->service->deduct('op-no-snapshot-insufficient', [
+                new StockDeductionRequestItem($product->getId(), 5, $store->getId()),
+            ]);
+        } finally {
+            self::assertSame(0, $this->snapshotCount($product));
+        }
+    }
+
+    public function testSnapshotCreationFailureRollsBackStockDeduction(): void
+    {
+        $store = $this->createStore('store-1');
+        $product = $this->createProduct('product-1');
+        $operationId = 'op-snapshot-conflict';
+        $this->addStock($product, $store, 8);
+        $this->createProduct($this->snapshotSlug('product-1', $operationId, $product->getId()));
+
+        try {
+            $this->service->deduct($operationId, [
+                new StockDeductionRequestItem($product->getId(), 5, $store->getId()),
+            ]);
+            self::fail('Snapshot creation should fail on duplicate snapshot product slug.');
+        } catch (\Throwable) {
+            self::assertSame(8, $this->stock($product, $store));
+            self::assertSame(0, $this->snapshotCount($product));
+        }
+    }
+
+    public function testRepeatedOperationIdReturnsSameSnapshotIdWithoutCreatingAnotherSnapshot(): void
+    {
+        $store = $this->createStore('store-1');
+        $product = $this->createProduct('product-1');
+        $this->addStock($product, $store, 10);
+        $items = [new StockDeductionRequestItem($product->getId(), 4, $store->getId())];
+
+        $first = $this->service->deduct('op-idempotent-snapshot', $items);
+        $second = $this->service->deduct('op-idempotent-snapshot', $items);
+
+        self::assertSame(1, $this->snapshotCount($product));
+        self::assertSame($first->products[0]->productSnapshotId, $second->products[0]->productSnapshotId);
+        self::assertSame($first->toPayload(), $second->toPayload());
+    }
+
     public function testExplicitStoreInsufficientStockDoesNotUseOtherStore(): void
     {
         $store1 = $this->createStore('store-1');
@@ -297,6 +413,8 @@ final class InventoryDeductionServiceTest extends KernelTestCase
             ->setActive(true)
             ->setCreatedAt(new \DateTimeImmutable('2026-01-01 10:00:00'))
             ->setCreatedBy(1)
+            ->setDescription(sprintf('Description for %s', $slug))
+            ->setPictureId(sprintf('%s-picture', $slug))
             ->setSort(100);
 
         $this->entityManager->persist($product);
@@ -325,6 +443,49 @@ final class InventoryDeductionServiceTest extends KernelTestCase
                 'store_id' => $store->getId(),
             ],
         );
+    }
+
+    /**
+     * @return array{id: int|string, original_product_id: int|string, name: string, description: string|null, picture_id: string|null, active: bool|int|string, created_by: int|string}
+     */
+    private function snapshotRow(int $snapshotId): array
+    {
+        $row = $this->entityManager->getConnection()->fetchAssociative(
+            'SELECT snapshot.id, snapshot.original_product_id, product.name, product.description, product.picture_id, product.active, product.created_by FROM product_snapshot snapshot INNER JOIN product ON product.id = snapshot.product_id WHERE snapshot.id = :snapshot_id',
+            ['snapshot_id' => $snapshotId],
+        );
+
+        self::assertIsArray($row);
+
+        return $row;
+    }
+
+    private function snapshotCount(CatalogElements $product): int
+    {
+        return (int) $this->entityManager->getConnection()->fetchOne(
+            'SELECT COUNT(*) FROM product_snapshot WHERE original_product_id = :product_id',
+            ['product_id' => $product->getId()],
+        );
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function snapshotIds(CatalogElements $product): array
+    {
+        $ids = $this->entityManager->getConnection()->fetchFirstColumn(
+            'SELECT id FROM product_snapshot WHERE original_product_id = :product_id ORDER BY id ASC',
+            ['product_id' => $product->getId()],
+        );
+
+        return array_map('intval', $ids);
+    }
+
+    private function snapshotSlug(string $sourceSlug, string $operationId, int $productId): string
+    {
+        $suffix = '-snapshot-' . substr(hash('sha256', sprintf('%s:%d', $operationId, $productId)), 0, 16);
+
+        return substr($sourceSlug, 0, 255 - strlen($suffix)) . $suffix;
     }
 
     /**

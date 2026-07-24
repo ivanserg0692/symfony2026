@@ -2,6 +2,8 @@
 
 namespace App\Repository;
 
+use App\Entity\CatalogElements;
+use App\Entity\Product;
 use App\Entity\ProductSnapshot;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
@@ -87,6 +89,33 @@ class ProductSnapshotRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    public function createFromCatalogElement(CatalogElements $catalogElement, string $operationId): ProductSnapshot
+    {
+        $sourceProduct = $catalogElement->getProduct();
+        $productId = $catalogElement->getId();
+
+        if ($sourceProduct === null || $productId === null) {
+            throw new \RuntimeException("Product snapshot source product is incomplete.");
+        }
+
+        $snapshotProduct = (new Product())
+            ->setName((string) $sourceProduct->getName())
+            ->setCreatedAt($sourceProduct->getCreatedAt() ?? new \DateTimeImmutable())
+            ->setActive($sourceProduct->isActive() ?? false)
+            ->setCreatedBy($sourceProduct->getCreatedBy() ?? 0)
+            ->setDescription($sourceProduct->getDescription())
+            ->setSlug($this->createSnapshotSlug($sourceProduct->getSlug(), $operationId, $productId))
+            ->setPictureId($sourceProduct->getPictureId());
+
+        $snapshot = (new ProductSnapshot())
+            ->setProduct($snapshotProduct)
+            ->setOriginalProduct($catalogElement);
+
+        $this->getEntityManager()->persist($snapshot);
+
+        return $snapshot;
+    }
+
     private function addSnapshotRelations(
         QueryBuilder $queryBuilder,
         string $snapshotAlias = "snapshot",
@@ -131,6 +160,14 @@ class ProductSnapshotRepository extends ServiceEntityRepository
         }
 
         return $queryBuilder->orderBy("snapshot.id", $direction);
+    }
+
+    private function createSnapshotSlug(?string $sourceSlug, string $operationId, int $productId): string
+    {
+        $suffix = "-snapshot-" . substr(hash("sha256", sprintf("%s:%d", $operationId, $productId)), 0, 16);
+        $baseSlug = $sourceSlug !== null && $sourceSlug !== "" ? $sourceSlug : sprintf("product-%d", $productId);
+
+        return substr($baseSlug, 0, 255 - strlen($suffix)) . $suffix;
     }
 
     /**

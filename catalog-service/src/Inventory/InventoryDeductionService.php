@@ -6,6 +6,7 @@ use App\Entity\InventoryOperation;
 use App\Entity\StoresElementsStocks;
 use App\Repository\CatalogElementsRepository;
 use App\Repository\InventoryOperationRepository;
+use App\Repository\ProductSnapshotRepository;
 use App\Repository\StoresElementsStocksRepository;
 use App\Repository\StoresRepository;
 use Doctrine\DBAL\Connection;
@@ -19,6 +20,7 @@ final readonly class InventoryDeductionService
         private EntityManagerInterface $entityManager,
         private Connection $connection,
         private CatalogElementsRepository $catalogElementsRepository,
+        private ProductSnapshotRepository $productSnapshotRepository,
         private StoresRepository $storesRepository,
         private StoresElementsStocksRepository $stocksRepository,
         private InventoryOperationRepository $operationRepository,
@@ -60,7 +62,12 @@ final readonly class InventoryDeductionService
                 $stockRow->setStock(($stockRow->getStock() ?? 0) - $deductedQuantity);
             }
 
-            $result = new StockDeductionResult($operationId, $this->groupProductDeductionsByProductId($deductionPlans));
+            $groupedProducts = $this->groupProductDeductionsByProductId($deductionPlans);
+            $productSnapshotIds = $this->createProductSnapshots($operationId, $groupedProducts);
+            $result = new StockDeductionResult(
+                $operationId,
+                $this->attachProductSnapshotIds($groupedProducts, $productSnapshotIds),
+            );
 
             $this->operationRepository->addDeductionOperation(
                 $operationId,
@@ -242,6 +249,63 @@ final readonly class InventoryDeductionService
         array_push($stockDeductionPlan, ...$storeDeductionPlan);
 
         return new ProductStockDeduction($item->productId, $item->requestedQuantity, $storeDeductions);
+    }
+
+    /**
+     * @param list<ProductStockDeduction> $products
+     * @return array<int, int>
+     */
+    private function createProductSnapshots(string $operationId, array $products): array
+    {
+        $snapshots = [];
+
+        foreach ($products as $productDeduction) {
+            $catalogElement = $this->catalogElementsRepository->findOneForInventorySnapshot($productDeduction->productId);
+            $sourceProduct = $catalogElement?->getProduct();
+
+            if ($catalogElement === null || $sourceProduct === null) {
+                throw new InventoryDeductionNotFoundException("product not found.");
+            }
+
+            $snapshots[$productDeduction->productId] = $this->productSnapshotRepository->createFromCatalogElement(
+                $catalogElement,
+                $operationId,
+            );
+        }
+
+        $this->entityManager->flush();
+
+        $snapshotIds = [];
+
+        foreach ($snapshots as $productId => $snapshot) {
+            $snapshotId = $snapshot->getId();
+
+            if ($snapshotId === null) {
+                throw new \RuntimeException("Product snapshot id was not generated.");
+            }
+
+            $snapshotIds[(int) $productId] = $snapshotId;
+        }
+
+        return $snapshotIds;
+    }
+
+    /**
+     * @param list<ProductStockDeduction> $products
+     * @param array<int, int>             $productSnapshotIds
+     * @return list<ProductStockDeduction>
+     */
+    private function attachProductSnapshotIds(array $products, array $productSnapshotIds): array
+    {
+        $result = [];
+
+        foreach ($products as $product) {
+            $result[] = $product->withProductSnapshotId(
+                $productSnapshotIds[$product->productId] ?? throw new \RuntimeException("Product snapshot id is missing."),
+            );
+        }
+
+        return $result;
     }
 
     /**
