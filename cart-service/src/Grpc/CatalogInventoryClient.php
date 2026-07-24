@@ -5,6 +5,7 @@ namespace App\Grpc;
 use Grpc\Catalog\V1\CheckStockRequest;
 use Grpc\Catalog\V1\DeductStockItem;
 use Grpc\Catalog\V1\DeductStocksRequest;
+use Grpc\Catalog\V1\GetProductPricesRequest;
 use Grpc\Catalog\V1\InventoryServiceClient;
 
 class CatalogInventoryClient
@@ -43,6 +44,39 @@ class CatalogInventoryClient
             $response->getAvailable(),
             $stores,
         );
+    }
+
+    /**
+     * @param int[] $productIds
+     *
+     * @return list<CatalogProductPrice>
+     */
+    public function getProductPrices(array $productIds): array
+    {
+        $request = new GetProductPricesRequest();
+        $request->setProductIds($productIds);
+
+        [$response, $status] = $this->client->GetProductPrices($request)->wait();
+
+        if ($status->code !== \Grpc\STATUS_OK) {
+            $this->throwGetProductPricesException($status->code, $status->details ?? '');
+        }
+
+        if ($response === null) {
+            throw new InventoryCommunicationException('Catalog gRPC response is empty.');
+        }
+
+        $prices = [];
+        foreach ($response->getPrices() as $price) {
+            $prices[] = new CatalogProductPrice(
+                (int) $price->getProductId(),
+                $price->getUnitPrice(),
+                $price->getUnitDiscount(),
+                $price->getFinalUnitPrice(),
+            );
+        }
+
+        return $prices;
     }
 
     /**
@@ -105,6 +139,19 @@ class CatalogInventoryClient
             \Grpc\STATUS_INVALID_ARGUMENT => new InvalidInventoryRequestException($message),
             \Grpc\STATUS_NOT_FOUND => new InventoryItemNotFoundException($message),
             \Grpc\STATUS_FAILED_PRECONDITION => new InsufficientStockException($message),
+            \Grpc\STATUS_UNAVAILABLE, \Grpc\STATUS_DEADLINE_EXCEEDED => new InventoryServiceUnavailableException($message),
+            default => new InventoryCommunicationException($message),
+        };
+    }
+
+    private function throwGetProductPricesException(int $statusCode, string $details): never
+    {
+        $message = $details !== '' ? $details : 'Catalog gRPC request failed.';
+
+        throw match ($statusCode) {
+            \Grpc\STATUS_INVALID_ARGUMENT => new InvalidInventoryRequestException($message),
+            \Grpc\STATUS_NOT_FOUND => new InventoryItemNotFoundException($message),
+            \Grpc\STATUS_FAILED_PRECONDITION => new ProductPriceUnavailableException($message),
             \Grpc\STATUS_UNAVAILABLE, \Grpc\STATUS_DEADLINE_EXCEEDED => new InventoryServiceUnavailableException($message),
             default => new InventoryCommunicationException($message),
         };

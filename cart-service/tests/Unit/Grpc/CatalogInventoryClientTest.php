@@ -6,18 +6,67 @@ use App\Grpc\CatalogInventoryClient;
 use App\Grpc\InsufficientStockException;
 use App\Grpc\InventoryItemNotFoundException;
 use App\Grpc\InventoryServiceUnavailableException;
+use App\Grpc\ProductPriceUnavailableException;
 use Grpc\Catalog\V1\DeductStocksRequest;
 use Grpc\Catalog\V1\DeductStocksResponse;
+use Grpc\Catalog\V1\GetProductPricesRequest;
+use Grpc\Catalog\V1\GetProductPricesResponse;
 use Grpc\Catalog\V1\InventoryServiceClient;
 use Grpc\Catalog\V1\ProductDeduction;
+use Grpc\Catalog\V1\ProductPrice;
 use Grpc\Catalog\V1\StoreDeduction;
 use PHPUnit\Framework\TestCase;
 
 final class CatalogInventoryClientTest extends TestCase
 {
+    public function testBuildsGetProductPricesRequest(): void
+    {
+        $nativeClient = $this->nativeClient(productPricesResponse: new GetProductPricesResponse());
+        $client = new CatalogInventoryClient($nativeClient);
+
+        $client->getProductPrices([10, 20]);
+
+        self::assertSame([10, 20], iterator_to_array($nativeClient->lastGetProductPricesRequest->getProductIds()));
+    }
+
+    public function testConvertsSuccessfulGetProductPricesResponse(): void
+    {
+        $nativeClient = $this->nativeClient(productPricesResponse: new GetProductPricesResponse([
+            "prices" => [
+                new ProductPrice([
+                    "product_id" => 10,
+                    "unit_price" => "1000",
+                    "unit_discount" => "150",
+                    "final_unit_price" => "850",
+                ]),
+            ],
+        ]));
+        $client = new CatalogInventoryClient($nativeClient);
+
+        $prices = $client->getProductPrices([10]);
+
+        self::assertSame(10, $prices[0]->productId);
+        self::assertSame('1000', $prices[0]->unitPrice);
+        self::assertSame('150', $prices[0]->unitDiscount);
+        self::assertSame('850', $prices[0]->finalUnitPrice);
+    }
+
+    public function testGetProductPricesFailedPreconditionIsMappedToProductPriceUnavailableException(): void
+    {
+        $client = new CatalogInventoryClient($this->nativeClient(
+            productPricesResponse: null,
+            productPricesStatusCode: \Grpc\STATUS_FAILED_PRECONDITION,
+            productPricesDetails: 'price unavailable',
+        ));
+
+        $this->expectException(ProductPriceUnavailableException::class);
+
+        $client->getProductPrices([10]);
+    }
+
     public function testBuildsDeductStocksRequestWithStoreId(): void
     {
-        $nativeClient = $this->nativeClient(new DeductStocksResponse(["operation_id" => "op-1"]));
+        $nativeClient = $this->nativeClient(deductStocksResponse: new DeductStocksResponse(["operation_id" => "op-1"]));
         $client = new CatalogInventoryClient($nativeClient);
 
         $client->deductStocks('op-1', [
@@ -33,7 +82,7 @@ final class CatalogInventoryClientTest extends TestCase
 
     public function testDoesNotSetStoreIdWhenItIsNotProvided(): void
     {
-        $nativeClient = $this->nativeClient(new DeductStocksResponse(["operation_id" => "op-1"]));
+        $nativeClient = $this->nativeClient(deductStocksResponse: new DeductStocksResponse(["operation_id" => "op-1"]));
         $client = new CatalogInventoryClient($nativeClient);
 
         $client->deductStocks('op-1', [
@@ -45,7 +94,7 @@ final class CatalogInventoryClientTest extends TestCase
 
     public function testConvertsSuccessfulDeductStocksResponse(): void
     {
-        $nativeClient = $this->nativeClient(new DeductStocksResponse([
+        $nativeClient = $this->nativeClient(deductStocksResponse: new DeductStocksResponse([
             "operation_id" => "op-1",
             "products" => [
                 new ProductDeduction([
@@ -75,7 +124,11 @@ final class CatalogInventoryClientTest extends TestCase
 
     public function testFailedPreconditionIsMappedToInsufficientStockException(): void
     {
-        $client = new CatalogInventoryClient($this->nativeClient(null, \Grpc\STATUS_FAILED_PRECONDITION, 'insufficient stock'));
+        $client = new CatalogInventoryClient($this->nativeClient(
+            deductStocksResponse: null,
+            deductStocksStatusCode: \Grpc\STATUS_FAILED_PRECONDITION,
+            deductStocksDetails: 'insufficient stock',
+        ));
 
         $this->expectException(InsufficientStockException::class);
 
@@ -84,7 +137,11 @@ final class CatalogInventoryClientTest extends TestCase
 
     public function testNotFoundIsMappedToInventoryItemNotFoundException(): void
     {
-        $client = new CatalogInventoryClient($this->nativeClient(null, \Grpc\STATUS_NOT_FOUND, 'not found'));
+        $client = new CatalogInventoryClient($this->nativeClient(
+            deductStocksResponse: null,
+            deductStocksStatusCode: \Grpc\STATUS_NOT_FOUND,
+            deductStocksDetails: 'not found',
+        ));
 
         $this->expectException(InventoryItemNotFoundException::class);
 
@@ -93,22 +150,43 @@ final class CatalogInventoryClientTest extends TestCase
 
     public function testUnavailableIsMappedToInventoryServiceUnavailableException(): void
     {
-        $client = new CatalogInventoryClient($this->nativeClient(null, \Grpc\STATUS_UNAVAILABLE, 'unavailable'));
+        $client = new CatalogInventoryClient($this->nativeClient(
+            deductStocksResponse: null,
+            deductStocksStatusCode: \Grpc\STATUS_UNAVAILABLE,
+            deductStocksDetails: 'unavailable',
+        ));
 
         $this->expectException(InventoryServiceUnavailableException::class);
 
         $client->deductStocks('op-1', [["productId" => 10, "quantity" => 7]]);
     }
 
-    private function nativeClient(?DeductStocksResponse $response, int $statusCode = \Grpc\STATUS_OK, string $details = ''): InventoryServiceClient
-    {
-        return new class($response, $statusCode, $details) extends InventoryServiceClient {
+    private function nativeClient(
+        ?DeductStocksResponse $deductStocksResponse = null,
+        int $deductStocksStatusCode = \Grpc\STATUS_OK,
+        string $deductStocksDetails = '',
+        ?GetProductPricesResponse $productPricesResponse = null,
+        int $productPricesStatusCode = \Grpc\STATUS_OK,
+        string $productPricesDetails = '',
+    ): InventoryServiceClient {
+        return new class(
+            $deductStocksResponse,
+            $deductStocksStatusCode,
+            $deductStocksDetails,
+            $productPricesResponse,
+            $productPricesStatusCode,
+            $productPricesDetails,
+        ) extends InventoryServiceClient {
             public ?DeductStocksRequest $lastDeductStocksRequest = null;
+            public ?GetProductPricesRequest $lastGetProductPricesRequest = null;
 
             public function __construct(
-                private readonly ?DeductStocksResponse $response,
-                private readonly int $statusCode,
-                private readonly string $details,
+                private readonly ?DeductStocksResponse $deductStocksResponse,
+                private readonly int $deductStocksStatusCode,
+                private readonly string $deductStocksDetails,
+                private readonly ?GetProductPricesResponse $productPricesResponse,
+                private readonly int $productPricesStatusCode,
+                private readonly string $productPricesDetails,
             ) {
             }
 
@@ -116,9 +194,34 @@ final class CatalogInventoryClientTest extends TestCase
             {
                 $this->lastDeductStocksRequest = $argument;
 
-                return new class($this->response, $this->statusCode, $this->details) {
+                return new class($this->deductStocksResponse, $this->deductStocksStatusCode, $this->deductStocksDetails) {
                     public function __construct(
                         private readonly ?DeductStocksResponse $response,
+                        private readonly int $statusCode,
+                        private readonly string $details,
+                    ) {
+                    }
+
+                    public function wait(): array
+                    {
+                        return [
+                            $this->response,
+                            (object) [
+                                "code" => $this->statusCode,
+                                "details" => $this->details,
+                            ],
+                        ];
+                    }
+                };
+            }
+
+            public function GetProductPrices(\Grpc\Catalog\V1\GetProductPricesRequest $argument, $metadata = [], $options = [])
+            {
+                $this->lastGetProductPricesRequest = $argument;
+
+                return new class($this->productPricesResponse, $this->productPricesStatusCode, $this->productPricesDetails) {
+                    public function __construct(
+                        private readonly ?GetProductPricesResponse $response,
                         private readonly int $statusCode,
                         private readonly string $details,
                     ) {

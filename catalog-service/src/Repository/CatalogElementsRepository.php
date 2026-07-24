@@ -106,6 +106,27 @@ class CatalogElementsRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    /**
+     * @param int[] $ids
+     *
+     * @return int[]
+     */
+    public function findExistingIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder("element")
+            ->select("element.id AS id")
+            ->andWhere("element.id IN (:ids)")
+            ->setParameter("ids", $ids)
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_map("intval", array_column($rows, "id"));
+    }
+
     public function existsById(int $id): bool
     {
         return (bool) $this->createQueryBuilder("element")
