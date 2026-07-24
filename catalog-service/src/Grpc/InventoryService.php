@@ -3,17 +3,33 @@
 namespace App\Grpc;
 
 use App\Entity\CatalogElements;
+use App\Inventory\ProductStockDeduction;
+use App\Inventory\StockDeductionRequestItem;
+use App\Inventory\StoreStockDeduction;
+use App\Inventory\StockDeductionResult;
+use App\Inventory\InsufficientInventoryStockException;
+use App\Inventory\InvalidInventoryDeductionRequestException;
+use App\Inventory\InventoryDeductionNotFoundException;
+use App\Inventory\InventoryDeductionService;
+use App\Inventory\InventoryOperationConflictException;
 use App\Repository\CatalogElementsRepository;
 use Grpc\Catalog\V1\CheckStockRequest;
 use Grpc\Catalog\V1\CheckStockResponse;
+use Grpc\Catalog\V1\DeductStocksRequest;
+use Grpc\Catalog\V1\DeductStocksResponse;
 use Grpc\Catalog\V1\InventoryServiceInterface;
+use Grpc\Catalog\V1\ProductDeduction;
+use Grpc\Catalog\V1\StoreDeduction;
 use Grpc\Catalog\V1\StoreStock;
 use Spiral\RoadRunner\GRPC;
+use Spiral\RoadRunner\GRPC\Exception\GRPCException;
+use Spiral\RoadRunner\GRPC\StatusCode;
 
 final readonly class InventoryService implements InventoryServiceInterface
 {
     public function __construct(
-        private CatalogElementsRepository $catalogElementsRepository
+        private CatalogElementsRepository $catalogElementsRepository,
+        private InventoryDeductionService $deductionService,
     ) {
     }
 
@@ -32,6 +48,26 @@ final readonly class InventoryService implements InventoryServiceInterface
             $in->getRequestedQuantity(),
             $this->createStoreStocks($element),
         );
+    }
+
+    public function DeductStocks(GRPC\ContextInterface $ctx, DeductStocksRequest $in): DeductStocksResponse
+    {
+        try {
+            return $this->createDeductStocksResponse($this->deductionService->deduct(
+                $in->getOperationId(),
+                $this->createStockDeductionRequestItems($in),
+            ));
+        } catch (InvalidInventoryDeductionRequestException $exception) {
+            throw new GRPCException($exception->getMessage(), StatusCode::INVALID_ARGUMENT);
+        } catch (InventoryDeductionNotFoundException $exception) {
+            throw new GRPCException($exception->getMessage(), StatusCode::NOT_FOUND);
+        } catch (InsufficientInventoryStockException $exception) {
+            throw new GRPCException($exception->getMessage(), StatusCode::FAILED_PRECONDITION);
+        } catch (InventoryOperationConflictException $exception) {
+            throw new GRPCException($exception->getMessage(), StatusCode::ALREADY_EXISTS);
+        } catch (\Throwable) {
+            throw new GRPCException("Internal inventory error.", StatusCode::INTERNAL);
+        }
     }
 
     /**
@@ -72,5 +108,54 @@ final readonly class InventoryService implements InventoryServiceInterface
         }
 
         return $stores;
+    }
+
+    /**
+     * @return list<StockDeductionRequestItem>
+     */
+    private function createStockDeductionRequestItems(DeductStocksRequest $request): array
+    {
+        $items = [];
+
+        foreach ($request->getItems() as $item) {
+            $items[] = new StockDeductionRequestItem(
+                (int) $item->getProductId(),
+                $item->getRequestedQuantity(),
+                $item->hasStoreId() ? (int) $item->getStoreId() : null,
+            );
+        }
+
+        return $items;
+    }
+
+    private function createDeductStocksResponse(StockDeductionResult $result): DeductStocksResponse
+    {
+        return new DeductStocksResponse([
+            "operation_id" => $result->operationId,
+            "products" => array_map(
+                fn (ProductStockDeduction $product): ProductDeduction => $this->createProductDeduction($product),
+                $result->products,
+            ),
+        ]);
+    }
+
+    private function createProductDeduction(ProductStockDeduction $product): ProductDeduction
+    {
+        return new ProductDeduction([
+            "product_id" => $product->productId,
+            "total_deducted_quantity" => $product->totalDeductedQuantity,
+            "stores" => array_map(
+                fn (StoreStockDeduction $store): StoreDeduction => $this->createStoreDeduction($store),
+                $product->stores,
+            ),
+        ]);
+    }
+
+    private function createStoreDeduction(StoreStockDeduction $store): StoreDeduction
+    {
+        return new StoreDeduction([
+            "store_id" => $store->storeId,
+            "deducted_quantity" => $store->deductedQuantity,
+        ]);
     }
 }

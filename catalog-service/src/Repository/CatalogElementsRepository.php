@@ -106,6 +106,17 @@ class CatalogElementsRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    public function existsById(int $id): bool
+    {
+        return (bool) $this->createQueryBuilder("element")
+            ->select("1")
+            ->andWhere("element.id = :id")
+            ->setParameter("id", $id)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     public function findOneForInventoryCheck(int $id): ?CatalogElements
     {
         $queryBuilder = $this->createQueryBuilder("element");
