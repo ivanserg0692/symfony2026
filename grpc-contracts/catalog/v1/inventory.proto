@@ -69,7 +69,8 @@ message GetProductPricesResponse {
 
 message ProductPrice {
   int64 product_id = 1;
-  string unit_price = 2;
-  string unit_discount = 3;
-  string final_unit_price = 4;
+  // Money amounts are represented in minor currency units, for example 1050 means 10.50.
+  int64 unit_price_minor_units = 2;
+  int64 unit_discount_minor_units = 3;
+  int64 final_unit_price_minor_units = 4;
 }

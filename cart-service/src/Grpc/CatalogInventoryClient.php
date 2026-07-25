@@ -70,9 +70,9 @@ class CatalogInventoryClient
         foreach ($response->getPrices() as $price) {
             $prices[] = new CatalogProductPrice(
                 (int) $price->getProductId(),
-                $price->getUnitPrice(),
-                $price->getUnitDiscount(),
-                $price->getFinalUnitPrice(),
+                (int) $price->getUnitPriceMinorUnits(),
+                (int) $price->getUnitDiscountMinorUnits(),
+                (int) $price->getFinalUnitPriceMinorUnits(),
             );
         }
 

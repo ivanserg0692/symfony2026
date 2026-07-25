@@ -19,17 +19,19 @@ class ProductPrice extends \Google\Protobuf\Internal\Message
      */
     protected $product_id = 0;
     /**
-     * Generated from protobuf field <code>string unit_price = 2 [json_name = "unitPrice"];</code>
+     * Money amounts are represented in minor currency units, for example 1050 means 10.50.
+     *
+     * Generated from protobuf field <code>int64 unit_price_minor_units = 2 [json_name = "unitPriceMinorUnits"];</code>
      */
-    protected $unit_price = '';
+    protected $unit_price_minor_units = 0;
     /**
-     * Generated from protobuf field <code>string unit_discount = 3 [json_name = "unitDiscount"];</code>
+     * Generated from protobuf field <code>int64 unit_discount_minor_units = 3 [json_name = "unitDiscountMinorUnits"];</code>
      */
-    protected $unit_discount = '';
+    protected $unit_discount_minor_units = 0;
     /**
-     * Generated from protobuf field <code>string final_unit_price = 4 [json_name = "finalUnitPrice"];</code>
+     * Generated from protobuf field <code>int64 final_unit_price_minor_units = 4 [json_name = "finalUnitPriceMinorUnits"];</code>
      */
-    protected $final_unit_price = '';
+    protected $final_unit_price_minor_units = 0;
 
     /**
      * Constructor.
@@ -38,9 +40,10 @@ class ProductPrice extends \Google\Protobuf\Internal\Message
      *     Optional. Data for populating the Message object.
      *
      *     @type int|string $product_id
-     *     @type string $unit_price
-     *     @type string $unit_discount
-     *     @type string $final_unit_price
+     *     @type int|string $unit_price_minor_units
+     *           Money amounts are represented in minor currency units, for example 1050 means 10.50.
+     *     @type int|string $unit_discount_minor_units
+     *     @type int|string $final_unit_price_minor_units
      * }
      */
     public function __construct($data = NULL) {
@@ -71,67 +74,71 @@ class ProductPrice extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>string unit_price = 2 [json_name = "unitPrice"];</code>
-     * @return string
+     * Money amounts are represented in minor currency units, for example 1050 means 10.50.
+     *
+     * Generated from protobuf field <code>int64 unit_price_minor_units = 2 [json_name = "unitPriceMinorUnits"];</code>
+     * @return int|string
      */
-    public function getUnitPrice()
+    public function getUnitPriceMinorUnits()
     {
-        return $this->unit_price;
+        return $this->unit_price_minor_units;
     }
 
     /**
-     * Generated from protobuf field <code>string unit_price = 2 [json_name = "unitPrice"];</code>
-     * @param string $var
+     * Money amounts are represented in minor currency units, for example 1050 means 10.50.
+     *
+     * Generated from protobuf field <code>int64 unit_price_minor_units = 2 [json_name = "unitPriceMinorUnits"];</code>
+     * @param int|string $var
      * @return $this
      */
-    public function setUnitPrice(string $var)
+    public function setUnitPriceMinorUnits(int|string $var)
     {
-        GPBUtil::checkString($var, true);
-        $this->unit_price = $var;
+        GPBUtil::checkInt64($var);
+        $this->unit_price_minor_units = $var;
 
         return $this;
     }
 
     /**
-     * Generated from protobuf field <code>string unit_discount = 3 [json_name = "unitDiscount"];</code>
-     * @return string
+     * Generated from protobuf field <code>int64 unit_discount_minor_units = 3 [json_name = "unitDiscountMinorUnits"];</code>
+     * @return int|string
      */
-    public function getUnitDiscount()
+    public function getUnitDiscountMinorUnits()
     {
-        return $this->unit_discount;
+        return $this->unit_discount_minor_units;
     }
 
     /**
-     * Generated from protobuf field <code>string unit_discount = 3 [json_name = "unitDiscount"];</code>
-     * @param string $var
+     * Generated from protobuf field <code>int64 unit_discount_minor_units = 3 [json_name = "unitDiscountMinorUnits"];</code>
+     * @param int|string $var
      * @return $this
      */
-    public function setUnitDiscount(string $var)
+    public function setUnitDiscountMinorUnits(int|string $var)
     {
-        GPBUtil::checkString($var, true);
-        $this->unit_discount = $var;
+        GPBUtil::checkInt64($var);
+        $this->unit_discount_minor_units = $var;
 
         return $this;
     }
 
     /**
-     * Generated from protobuf field <code>string final_unit_price = 4 [json_name = "finalUnitPrice"];</code>
-     * @return string
+     * Generated from protobuf field <code>int64 final_unit_price_minor_units = 4 [json_name = "finalUnitPriceMinorUnits"];</code>
+     * @return int|string
      */
-    public function getFinalUnitPrice()
+    public function getFinalUnitPriceMinorUnits()
     {
-        return $this->final_unit_price;
+        return $this->final_unit_price_minor_units;
     }
 
     /**
-     * Generated from protobuf field <code>string final_unit_price = 4 [json_name = "finalUnitPrice"];</code>
-     * @param string $var
+     * Generated from protobuf field <code>int64 final_unit_price_minor_units = 4 [json_name = "finalUnitPriceMinorUnits"];</code>
+     * @param int|string $var
      * @return $this
      */
-    public function setFinalUnitPrice(string $var)
+    public function setFinalUnitPriceMinorUnits(int|string $var)
     {
-        GPBUtil::checkString($var, true);
-        $this->final_unit_price = $var;
+        GPBUtil::checkInt64($var);
+        $this->final_unit_price_minor_units = $var;
 
         return $this;
     }

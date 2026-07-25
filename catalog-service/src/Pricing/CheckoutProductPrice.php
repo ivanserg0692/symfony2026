@@ -6,9 +6,9 @@ final readonly class CheckoutProductPrice
 {
     public function __construct(
         public int $productId,
-        public string $unitPrice,
-        public string $unitDiscount,
-        public string $finalUnitPrice,
+        public int $unitPriceMinorUnits,
+        public int $unitDiscountMinorUnits,
+        public int $finalUnitPriceMinorUnits,
     ) {
     }
 }

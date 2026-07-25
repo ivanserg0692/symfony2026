@@ -74,18 +74,18 @@ final readonly class CheckoutProductPriceProvider
             throw new CheckoutProductPriceUnavailableException($productId);
         }
 
-        $unitPrice = $basePrice->getPrice();
+        $unitPriceMinorUnits = $basePrice->getPrice();
         $salePrice = $pricesByType[self::SALE_PRICE_TYPE] ?? null;
-        $finalUnitPrice = $salePrice instanceof ProductPrice && $salePrice->getPrice() !== null
-            ? min($unitPrice, $salePrice->getPrice())
-            : $unitPrice;
-        $unitDiscount = max(0, $unitPrice - $finalUnitPrice);
+        $finalUnitPriceMinorUnits = $salePrice instanceof ProductPrice && $salePrice->getPrice() !== null
+            ? min($unitPriceMinorUnits, $salePrice->getPrice())
+            : $unitPriceMinorUnits;
+        $unitDiscountMinorUnits = max(0, $unitPriceMinorUnits - $finalUnitPriceMinorUnits);
 
         return new CheckoutProductPrice(
             $productId,
-            (string) $unitPrice,
-            (string) $unitDiscount,
-            (string) $finalUnitPrice,
+            $unitPriceMinorUnits,
+            $unitDiscountMinorUnits,
+            $finalUnitPriceMinorUnits,
         );
     }
 }

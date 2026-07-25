@@ -226,9 +226,9 @@ final readonly class InventoryService implements InventoryServiceInterface
     {
         return new GrpcProductPrice([
             "product_id" => $price->productId,
-            "unit_price" => $price->unitPrice,
-            "unit_discount" => $price->unitDiscount,
-            "final_unit_price" => $price->finalUnitPrice,
+            "unit_price_minor_units" => $price->unitPriceMinorUnits,
+            "unit_discount_minor_units" => $price->unitDiscountMinorUnits,
+            "final_unit_price_minor_units" => $price->finalUnitPriceMinorUnits,
         ]);
     }
 }
