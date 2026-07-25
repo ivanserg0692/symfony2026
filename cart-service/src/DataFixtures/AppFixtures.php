@@ -265,6 +265,13 @@ class AppFixtures extends Fixture
         return $ownerIds[random_int(0, \count($ownerIds) - 1)];
     }
 
+    private function pickOrderStatus(): OrderStatus
+    {
+        $statuses = OrderStatus::cases();
+
+        return $statuses[random_int(0, \count($statuses) - 1)];
+    }
+
     /**
      * @param array<int, array{id: int, totalStock: int, price: int}> $products
      */
@@ -400,7 +407,7 @@ class AppFixtures extends Fixture
 
                     $orderRows[] = [
                         "owner_id" => $this->pickOwnerId($ownerIds),
-                        "status" => OrderStatus::Pending->value,
+                        "status" => $this->pickOrderStatus()->value,
                         "total_price" => $this->formatMoney($totalMinorUnits),
                         "total_discount" => "0.00",
                         "final_price" => $this->formatMoney($totalMinorUnits),
