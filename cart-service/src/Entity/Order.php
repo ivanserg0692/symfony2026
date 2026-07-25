@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Order\OrderStatus;
 use App\Repository\OrderRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -21,6 +22,13 @@ class Order
 
     #[ORM\Column(name: 'owner_id')]
     private ?int $ownerId = null;
+
+    #[ORM\Column(length: 32, enumType: OrderStatus::class)]
+    #[Groups(["order:list", "order:item"])]
+    private OrderStatus $status = OrderStatus::Pending;
+
+    #[ORM\Column(name: 'operation_id', length: 64, nullable: true)]
+    private ?string $operationId = null;
 
     #[ORM\Column(name: 'total_price', type: Types::DECIMAL, precision: 15, scale: 2)]
     #[Groups(["order:list", "order:item"])]
@@ -67,6 +75,30 @@ class Order
     public function setOwnerId(int $ownerId): static
     {
         $this->ownerId = $ownerId;
+
+        return $this;
+    }
+
+    public function getStatus(): OrderStatus
+    {
+        return $this->status;
+    }
+
+    public function setStatus(OrderStatus $status): static
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    public function getOperationId(): ?string
+    {
+        return $this->operationId;
+    }
+
+    public function setOperationId(?string $operationId): static
+    {
+        $this->operationId = $operationId;
 
         return $this;
     }

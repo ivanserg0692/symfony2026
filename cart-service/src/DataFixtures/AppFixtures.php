@@ -2,6 +2,7 @@
 
 namespace App\DataFixtures;
 
+use App\Order\OrderStatus;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -399,6 +400,7 @@ class AppFixtures extends Fixture
 
                     $orderRows[] = [
                         "owner_id" => $this->pickOwnerId($ownerIds),
+                        "status" => OrderStatus::Pending->value,
                         "total_price" => $this->formatMoney($totalMinorUnits),
                         "total_discount" => "0.00",
                         "final_price" => $this->formatMoney($totalMinorUnits),
@@ -408,7 +410,7 @@ class AppFixtures extends Fixture
                     $orderItemsByOffset[] = $orderItems;
                 }
 
-                $insertedOrders = $this->insertRowsReturning($connection, "orders", ["owner_id", "total_price", "total_discount", "final_price", "created_at", "updated_at"], $orderRows, ["id"]);
+                $insertedOrders = $this->insertRowsReturning($connection, "orders", ["owner_id", "status", "total_price", "total_discount", "final_price", "created_at", "updated_at"], $orderRows, ["id"]);
                 $orderItemRows = [];
 
                 foreach ($orderItemsByOffset as $orderOffset => $orderItems) {

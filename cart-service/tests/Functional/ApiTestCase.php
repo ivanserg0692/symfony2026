@@ -3,28 +3,43 @@
 namespace App\Tests\Functional;
 
 use App\Entity\Cart;
-use App\Grpc\CatalogInventoryClient;
-use App\Grpc\CatalogStockResponse;
 use App\Entity\CartItem;
 use App\Entity\Order;
 use App\Entity\OrderItem;
+use App\Grpc\CatalogDeductStocksResult;
+use App\Grpc\CatalogInventoryClient;
+use App\Grpc\CatalogProductDeduction;
+use App\Grpc\CatalogProductPrice;
+use App\Grpc\CatalogStockResponse;
+use App\Grpc\CatalogStoreDeduction;
 use App\Grpc\CatalogStoreStock;
+use App\Grpc\InsufficientStockException;
+use App\Grpc\InventoryItemNotFoundException;
+use App\Grpc\InventoryServiceUnavailableException;
+use App\Order\OrderStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\TraceableMessageBus;
+use Symfony\Component\Messenger\Stamp\StampInterface;
 
 abstract class ApiTestCase extends WebTestCase
 {
     protected KernelBrowser $client;
     protected EntityManagerInterface $entityManager;
     private CatalogInventoryClient $catalogInventoryClient;
+    private TraceableMessageBus $messageBus;
+    private RecordingMessageBus $recordingMessageBus;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->client = static::createClient();
+        $this->client->disableReboot();
         $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
 
         $metadata = $this->entityManager->getMetadataFactory()->getAllMetadata();
@@ -38,6 +53,9 @@ abstract class ApiTestCase extends WebTestCase
         $schemaTool->createSchema($metadata);
 
         $this->setCatalogStockAvailable(true);
+        $this->setCatalogProductPrices([]);
+        $this->setCatalogDeductFailure(null);
+        static::getContainer()->set(MessageBusInterface::class, $this->messageBus());
     }
 
     protected function tearDown(): void
@@ -100,11 +118,56 @@ abstract class ApiTestCase extends WebTestCase
     }
 
     /**
+     * @param array<int, CatalogProductPrice> $pricesByProductId
+     */
+    protected function setCatalogProductPrices(array $pricesByProductId): void
+    {
+        $this->catalogInventoryClient()->setProductPrices($pricesByProductId);
+    }
+
+    protected function setCatalogDeductFailure(?\Throwable $failure): void
+    {
+        $this->catalogInventoryClient()->setDeductFailure($failure);
+    }
+
+    /**
+     * @param list<CatalogProductDeduction>|null $deductions
+     */
+    protected function setCatalogDeductResult(?array $deductions): void
+    {
+        $this->catalogInventoryClient()->setDeductResult($deductions);
+    }
+
+    /**
      * @return list<array{productId: int, requestedQuantity: int}>
      */
     protected function catalogStockRequests(): array
     {
-        return $this->catalogInventoryClient()->requests();
+        return $this->catalogInventoryClient()->stockRequests();
+    }
+
+    /**
+     * @return list<int>
+     */
+    protected function catalogPriceRequests(): array
+    {
+        return $this->catalogInventoryClient()->priceRequests();
+    }
+
+    /**
+     * @return list<array{operationId: string, items: list<array{productId: int, quantity: int, storeId?: int|null}>}>
+     */
+    protected function catalogDeductRequests(): array
+    {
+        return $this->catalogInventoryClient()->deductRequests();
+    }
+
+    /**
+     * @return list<object>
+     */
+    protected function dispatchedMessages(): array
+    {
+        return $this->recordingMessageBus()->messages();
     }
 
     private function catalogInventoryClient(): CatalogInventoryClient
@@ -114,11 +177,32 @@ abstract class ApiTestCase extends WebTestCase
                 private int $availableQuantity = 1000000;
                 private bool $productFound = true;
                 private bool $fail = false;
+                private ?\Throwable $deductFailure = null;
+
+                /**
+                 * @var array<int, CatalogProductPrice>
+                 */
+                private array $productPrices = [];
+
+                /**
+                 * @var list<CatalogProductDeduction>|null
+                 */
+                private ?array $deductResult = null;
 
                 /**
                  * @var list<array{productId: int, requestedQuantity: int}>
                  */
-                private array $requests = [];
+                private array $stockRequests = [];
+
+                /**
+                 * @var list<int>
+                 */
+                private array $priceRequests = [];
+
+                /**
+                 * @var list<array{operationId: string, items: list<array{productId: int, quantity: int, storeId?: int|null}>}>
+                 */
+                private array $deductRequests = [];
 
                 public function __construct()
                 {
@@ -140,16 +224,53 @@ abstract class ApiTestCase extends WebTestCase
                 }
 
                 /**
+                 * @param array<int, CatalogProductPrice> $productPrices
+                 */
+                public function setProductPrices(array $productPrices): void
+                {
+                    $this->productPrices = $productPrices;
+                }
+
+                public function setDeductFailure(?\Throwable $deductFailure): void
+                {
+                    $this->deductFailure = $deductFailure;
+                }
+
+                /**
+                 * @param list<CatalogProductDeduction>|null $deductResult
+                 */
+                public function setDeductResult(?array $deductResult): void
+                {
+                    $this->deductResult = $deductResult;
+                }
+
+                /**
                  * @return list<array{productId: int, requestedQuantity: int}>
                  */
-                public function requests(): array
+                public function stockRequests(): array
                 {
-                    return $this->requests;
+                    return $this->stockRequests;
+                }
+
+                /**
+                 * @return list<int>
+                 */
+                public function priceRequests(): array
+                {
+                    return $this->priceRequests;
+                }
+
+                /**
+                 * @return list<array{operationId: string, items: list<array{productId: int, quantity: int, storeId?: int|null}>}>
+                 */
+                public function deductRequests(): array
+                {
+                    return $this->deductRequests;
                 }
 
                 public function checkStock(int $productId, int $requestedQuantity): CatalogStockResponse
                 {
-                    $this->requests[] = [
+                    $this->stockRequests[] = [
                         "productId" => $productId,
                         "requestedQuantity" => $requestedQuantity,
                     ];
@@ -169,12 +290,86 @@ abstract class ApiTestCase extends WebTestCase
                         [new CatalogStoreStock(1, $this->availableQuantity)],
                     );
                 }
+
+                /**
+                 * @param int[] $productIds
+                 *
+                 * @return list<CatalogProductPrice>
+                 */
+                public function getProductPrices(array $productIds): array
+                {
+                    foreach ($productIds as $productId) {
+                        $this->priceRequests[] = (int) $productId;
+                    }
+
+                    if ($this->fail) {
+                        throw new InventoryServiceUnavailableException("Catalog inventory service is unavailable.");
+                    }
+
+                    $prices = [];
+                    foreach ($productIds as $productId) {
+                        $productId = (int) $productId;
+                        $prices[] = $this->productPrices[$productId] ?? new CatalogProductPrice($productId, 1000, 100, 900);
+                    }
+
+                    return $prices;
+                }
+
+                /**
+                 * @param list<array{productId: int, quantity: int, storeId?: int|null}> $items
+                 */
+                public function deductStocks(string $operationId, array $items): CatalogDeductStocksResult
+                {
+                    $this->deductRequests[] = [
+                        "operationId" => $operationId,
+                        "items" => $items,
+                    ];
+
+                    if ($this->deductFailure !== null) {
+                        throw $this->deductFailure;
+                    }
+
+                    if (!$this->productFound) {
+                        throw new InventoryItemNotFoundException("Product was not found.");
+                    }
+
+                    foreach ($items as $item) {
+                        if ($item["quantity"] > $this->availableQuantity) {
+                            throw new InsufficientStockException("Requested quantity is unavailable.");
+                        }
+                    }
+
+                    if ($this->deductResult !== null) {
+                        return new CatalogDeductStocksResult($operationId, $this->deductResult);
+                    }
+
+                    $deductions = [];
+                    foreach ($items as $item) {
+                        $deductions[] = new CatalogProductDeduction(
+                            $item["productId"],
+                            $item["quantity"],
+                            5000 + $item["productId"],
+                            [new CatalogStoreDeduction(1, $item["quantity"])],
+                        );
+                    }
+
+                    return new CatalogDeductStocksResult($operationId, $deductions);
+                }
             };
 
             static::getContainer()->set(CatalogInventoryClient::class, $this->catalogInventoryClient);
         }
 
         return $this->catalogInventoryClient;
+    }
+
+    private function messageBus(): TraceableMessageBus
+    {
+        if (!isset($this->messageBus)) {
+            $this->messageBus = new TraceableMessageBus($this->recordingMessageBus());
+        }
+
+        return $this->messageBus;
     }
 
     protected function createCart(int $ownerId, int $itemCount = 2): Cart
@@ -202,10 +397,15 @@ abstract class ApiTestCase extends WebTestCase
         return $cart;
     }
 
-    protected function createOrder(int $ownerId, \DateTimeImmutable $createdAt, int $itemCount = 2): Order
-    {
+    protected function createOrder(
+        int $ownerId,
+        \DateTimeImmutable $createdAt,
+        int $itemCount = 2,
+        OrderStatus $status = OrderStatus::Pending,
+    ): Order {
         $order = (new Order())
             ->setOwnerId($ownerId)
+            ->setStatus($status)
             ->setTotalPrice("20.00")
             ->setTotalDiscount("1.00")
             ->setFinalPrice("19.00")
@@ -221,7 +421,7 @@ abstract class ApiTestCase extends WebTestCase
                     ->setUnitPrice("10.00")
                     ->setUnitDiscount("0.50")
                     ->setFinalUnitPrice("9.50")
-                    ->setLineTotal((string) (9.50 * $i))
+                    ->setLineTotal(sprintf('%d.%02d', intdiv(950 * $i, 100), (950 * $i) % 100))
                     ->setCreatedAt($createdAt)
             );
         }
@@ -230,5 +430,39 @@ abstract class ApiTestCase extends WebTestCase
         $this->entityManager->flush();
 
         return $order;
+    }
+    private function recordingMessageBus(): RecordingMessageBus
+    {
+        if (!isset($this->recordingMessageBus)) {
+            $this->recordingMessageBus = new RecordingMessageBus();
+        }
+
+        return $this->recordingMessageBus;
+    }
+}
+
+final class RecordingMessageBus implements MessageBusInterface
+{
+    /**
+     *  list<object>
+     */
+    private array $messages = [];
+
+    /**
+     *  array<StampInterface> $stamps
+     */
+    public function dispatch(object $message, array $stamps = []): Envelope
+    {
+        $this->messages[] = $message;
+
+        return new Envelope($message, $stamps);
+    }
+
+    /**
+     *  list<object>
+     */
+    public function messages(): array
+    {
+        return $this->messages;
     }
 }

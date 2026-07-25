@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Order;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -87,6 +88,16 @@ class OrderRepository extends ServiceEntityRepository
             ->addOrderBy("item.sort", "ASC")
             ->addOrderBy("item.id", "ASC")
             ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function findOneForOwnerForUpdate(int $orderId, int $ownerId): ?Order
+    {
+        return $this->createOwnerQueryBuilder($ownerId)
+            ->andWhere("orderEntity.id = :orderId")
+            ->setParameter("orderId", $orderId)
+            ->getQuery()
+            ->setLockMode(LockMode::PESSIMISTIC_WRITE)
             ->getOneOrNullResult();
     }
 

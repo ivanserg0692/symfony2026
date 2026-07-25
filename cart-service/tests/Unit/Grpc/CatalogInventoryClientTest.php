@@ -35,9 +35,9 @@ final class CatalogInventoryClientTest extends TestCase
             "prices" => [
                 new ProductPrice([
                     "product_id" => 10,
-                    "unit_price" => "1000",
-                    "unit_discount" => "150",
-                    "final_unit_price" => "850",
+                    "unit_price_minor_units" => 1000,
+                    "unit_discount_minor_units" => 150,
+                    "final_unit_price_minor_units" => 850,
                 ]),
             ],
         ]));
@@ -46,9 +46,9 @@ final class CatalogInventoryClientTest extends TestCase
         $prices = $client->getProductPrices([10]);
 
         self::assertSame(10, $prices[0]->productId);
-        self::assertSame('1000', $prices[0]->unitPrice);
-        self::assertSame('150', $prices[0]->unitDiscount);
-        self::assertSame('850', $prices[0]->finalUnitPrice);
+        self::assertSame(1000, $prices[0]->unitPriceMinorUnits);
+        self::assertSame(150, $prices[0]->unitDiscountMinorUnits);
+        self::assertSame(850, $prices[0]->finalUnitPriceMinorUnits);
     }
 
     public function testGetProductPricesFailedPreconditionIsMappedToProductPriceUnavailableException(): void
