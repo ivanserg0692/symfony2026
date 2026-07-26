@@ -58,4 +58,18 @@ class InventoryServiceClient extends \Grpc\BaseStub {
         $metadata, $options);
     }
 
+    /**
+     * @param \Grpc\Catalog\V1\GetProductSnapshotsRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall<\Grpc\Catalog\V1\GetProductSnapshotsResponse>
+     */
+    public function GetProductSnapshots(\Grpc\Catalog\V1\GetProductSnapshotsRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/catalog.v1.InventoryService/GetProductSnapshots',
+        $argument,
+        ['\Grpc\Catalog\V1\GetProductSnapshotsResponse', 'decode'],
+        $metadata, $options);
+    }
+
 }
