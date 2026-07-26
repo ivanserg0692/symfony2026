@@ -14,9 +14,11 @@ use App\Order\EmptyCartException;
 use App\Order\InvalidCheckoutItemException;
 use App\Order\InvalidDeductStocksResponseException;
 use App\Order\InvalidProductPricesResponseException;
+use App\Order\InvalidProductSnapshotsResponseException;
 use App\Order\OrderAlreadyCanceledException;
 use App\Order\OrderApiService;
 use App\Order\OrderCancellationNotAllowedException;
+use App\Order\OrderDetailResponse;
 use App\Security\CurrentUserProvider;
 use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
@@ -122,7 +124,7 @@ class OrdersController extends AbstractController
     #[Route("/{orderId<\d+>}", name: "api_orders_item", methods: ["GET"])]
     #[OA\Get(
         summary: "Get order",
-        description: "Returns one current-user order with local order item data only.",
+        description: "Returns one current-user order with items and historical product snapshot data resolved through Catalog Service.",
         parameters: [
             new OA\Parameter(name: "orderId", in: "path", required: true, schema: new OA\Schema(type: "integer", minimum: 1)),
         ],
@@ -130,23 +132,32 @@ class OrdersController extends AbstractController
         responses: [
             new OA\Response(
                 response: 200,
-                description: "Order with items.",
-                content: new OA\JsonContent(ref: new Model(type: Order::class, groups: ["order:item"]))
+                description: "Order with items and product snapshots.",
+                content: new OA\JsonContent(ref: new Model(type: OrderDetailResponse::class))
             ),
             new OA\Response(response: 400, description: "X-User-Id header is missing or invalid."),
             new OA\Response(response: 404, description: "Order was not found."),
+            new OA\Response(response: 502, description: "Catalog Service returned inconsistent product snapshot data."),
+            new OA\Response(response: 503, description: "Catalog Service is unavailable."),
         ]
     )]
     public function item(int $orderId, Request $request, CurrentUserProvider $currentUserProvider, OrderApiService $orderApiService): JsonResponse
     {
         $ownerId = $currentUserProvider->getRequiredUserId($request);
-        $order = $orderApiService->findOrder($orderId, $ownerId);
+
+        try {
+            $order = $orderApiService->findOrderDetails($orderId, $ownerId);
+        } catch (InvalidProductSnapshotsResponseException|InventoryCommunicationException $exception) {
+            return $this->json(["message" => $exception->getMessage()], Response::HTTP_BAD_GATEWAY);
+        } catch (InventoryServiceUnavailableException $exception) {
+            return $this->json(["message" => $exception->getMessage()], Response::HTTP_SERVICE_UNAVAILABLE);
+        }
 
         if ($order === null) {
             return $this->json(["message" => "Order was not found."], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json($order, context: ["groups" => ["order:item"]]);
+        return $this->json($order);
     }
 
     #[Route("/{orderId<\d+>}/cancel", name: "api_orders_cancel", methods: ["POST"])]

@@ -10,6 +10,8 @@ use App\Grpc\CatalogDeductStocksResult;
 use App\Grpc\CatalogInventoryClient;
 use App\Grpc\CatalogProductDeduction;
 use App\Grpc\CatalogProductPrice;
+use App\Grpc\CatalogProductSnapshot;
+use App\Grpc\CatalogSnapshotProduct;
 use App\Grpc\CatalogStockResponse;
 use App\Grpc\CatalogStoreDeduction;
 use App\Grpc\CatalogStoreStock;
@@ -54,6 +56,8 @@ abstract class ApiTestCase extends WebTestCase
 
         $this->setCatalogStockAvailable(true);
         $this->setCatalogProductPrices([]);
+        $this->setCatalogProductSnapshots([]);
+        $this->setCatalogSnapshotResult(null);
         $this->setCatalogDeductFailure(null);
         static::getContainer()->set(MessageBusInterface::class, $this->messageBus());
     }
@@ -131,6 +135,22 @@ abstract class ApiTestCase extends WebTestCase
     }
 
     /**
+     * @param array<int, CatalogProductSnapshot> $snapshotsById
+     */
+    protected function setCatalogProductSnapshots(array $snapshotsById): void
+    {
+        $this->catalogInventoryClient()->setProductSnapshots($snapshotsById);
+    }
+
+    /**
+     * @param list<CatalogProductSnapshot>|null $snapshots
+     */
+    protected function setCatalogSnapshotResult(?array $snapshots): void
+    {
+        $this->catalogInventoryClient()->setSnapshotResult($snapshots);
+    }
+
+    /**
      * @param list<CatalogProductDeduction>|null $deductions
      */
     protected function setCatalogDeductResult(?array $deductions): void
@@ -163,6 +183,14 @@ abstract class ApiTestCase extends WebTestCase
     }
 
     /**
+     * @return list<list<int>>
+     */
+    protected function catalogSnapshotRequests(): array
+    {
+        return $this->catalogInventoryClient()->snapshotRequests();
+    }
+
+    /**
      * @return list<object>
      */
     protected function dispatchedMessages(): array
@@ -185,9 +213,19 @@ abstract class ApiTestCase extends WebTestCase
                 private array $productPrices = [];
 
                 /**
+                 * @var array<int, CatalogProductSnapshot>
+                 */
+                private array $productSnapshots = [];
+
+                /**
                  * @var list<CatalogProductDeduction>|null
                  */
                 private ?array $deductResult = null;
+
+                /**
+                 * @var list<CatalogProductSnapshot>|null
+                 */
+                private ?array $snapshotResult = null;
 
                 /**
                  * @var list<array{productId: int, requestedQuantity: int}>
@@ -198,6 +236,11 @@ abstract class ApiTestCase extends WebTestCase
                  * @var list<int>
                  */
                 private array $priceRequests = [];
+
+                /**
+                 * @var list<list<int>>
+                 */
+                private array $snapshotRequests = [];
 
                 /**
                  * @var list<array{operationId: string, items: list<array{productId: int, quantity: int, storeId?: int|null}>}>
@@ -237,6 +280,22 @@ abstract class ApiTestCase extends WebTestCase
                 }
 
                 /**
+                 * @param array<int, CatalogProductSnapshot> $productSnapshots
+                 */
+                public function setProductSnapshots(array $productSnapshots): void
+                {
+                    $this->productSnapshots = $productSnapshots;
+                }
+
+                /**
+                 * @param list<CatalogProductSnapshot>|null $snapshotResult
+                 */
+                public function setSnapshotResult(?array $snapshotResult): void
+                {
+                    $this->snapshotResult = $snapshotResult;
+                }
+
+                /**
                  * @param list<CatalogProductDeduction>|null $deductResult
                  */
                 public function setDeductResult(?array $deductResult): void
@@ -266,6 +325,14 @@ abstract class ApiTestCase extends WebTestCase
                 public function deductRequests(): array
                 {
                     return $this->deductRequests;
+                }
+
+                /**
+                 * @return list<list<int>>
+                 */
+                public function snapshotRequests(): array
+                {
+                    return $this->snapshotRequests;
                 }
 
                 public function checkStock(int $productId, int $requestedQuantity): CatalogStockResponse
@@ -313,6 +380,45 @@ abstract class ApiTestCase extends WebTestCase
                     }
 
                     return $prices;
+                }
+
+                /**
+                 * @param int[] $productSnapshotIds
+                 *
+                 * @return list<CatalogProductSnapshot>
+                 */
+                public function getProductSnapshots(array $productSnapshotIds): array
+                {
+                    $snapshotIds = array_map("intval", $productSnapshotIds);
+                    $this->snapshotRequests[] = $snapshotIds;
+
+                    if ($this->fail) {
+                        throw new InventoryServiceUnavailableException("Catalog inventory service is unavailable.");
+                    }
+
+                    if ($this->snapshotResult !== null) {
+                        return $this->snapshotResult;
+                    }
+
+                    $snapshots = [];
+                    foreach ($snapshotIds as $snapshotId) {
+                        $snapshots[] = $this->productSnapshots[$snapshotId] ?? new CatalogProductSnapshot(
+                            $snapshotId,
+                            100000 + $snapshotId,
+                            new CatalogSnapshotProduct(
+                                300000 + $snapshotId,
+                                sprintf("Snapshot product %d", $snapshotId),
+                                "2026-01-01T10:00:00+00:00",
+                                true,
+                                1,
+                                sprintf("Snapshot description %d", $snapshotId),
+                                sprintf("snapshot-product-%d", $snapshotId),
+                                sprintf("snapshot-picture-%d", $snapshotId),
+                            ),
+                        );
+                    }
+
+                    return $snapshots;
                 }
 
                 /**

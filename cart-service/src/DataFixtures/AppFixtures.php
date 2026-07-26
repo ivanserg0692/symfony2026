@@ -2,6 +2,7 @@
 
 namespace App\DataFixtures;
 
+use App\Grpc\CatalogInventoryClient;
 use App\Order\OrderStatus;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\DBAL\Connection;
@@ -50,6 +51,7 @@ class AppFixtures extends Fixture
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
+        private readonly CatalogInventoryClient $catalogInventoryClient,
     ) {
     }
 
@@ -160,23 +162,31 @@ class AppFixtures extends Fixture
      */
     private function fetchSnapshotsByCatalogElementId(array $products): array
     {
-        $snapshotsByCatalogElementId = [];
+        $deductItems = [];
 
         foreach ($products as $product) {
-            $payload = $this->requestJson(self::CATALOG_SERVICE_BASE_URL, "/api/product-snapshots", [
-                "originalProductId" => (string) $product["id"],
-                "limit" => "1",
-            ]);
+            $deductItems[] = [
+                "productId" => $product["id"],
+                "quantity" => 1,
+            ];
+        }
 
-            $items = $payload["items"] ?? null;
-            $snapshot = \is_array($items) ? ($items[0] ?? null) : null;
-            $snapshotId = \is_array($snapshot) ? ($snapshot["id"] ?? null) : null;
+        $operationId = "cart-fixtures-snapshot-map-" . substr(hash("sha256", implode(",", array_column($products, "id"))), 0, 16);
+        $result = $this->catalogInventoryClient->deductStocks($operationId, $deductItems);
+        $snapshotsByCatalogElementId = [];
 
-            if (!\is_int($snapshotId)) {
-                throw new \RuntimeException(sprintf("Catalog Service returned no product snapshot for catalog element %d.", $product["id"]));
+        foreach ($result->products as $productDeduction) {
+            if ($productDeduction->productSnapshotId <= 0) {
+                throw new \RuntimeException(sprintf("Catalog Service returned no product snapshot for catalog element %d.", $productDeduction->productId));
             }
 
-            $snapshotsByCatalogElementId[$product["id"]] = $snapshotId;
+            $snapshotsByCatalogElementId[$productDeduction->productId] = $productDeduction->productSnapshotId;
+        }
+
+        foreach ($products as $product) {
+            if (!isset($snapshotsByCatalogElementId[$product["id"]])) {
+                throw new \RuntimeException(sprintf("Catalog Service returned no product snapshot for catalog element %d.", $product["id"]));
+            }
         }
 
         return $snapshotsByCatalogElementId;

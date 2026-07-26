@@ -3,6 +3,7 @@
 namespace App\Grpc;
 
 use App\Entity\CatalogElements;
+use App\Entity\ProductSnapshot;
 use App\Inventory\ProductStockDeduction;
 use App\Inventory\StockDeductionRequestItem;
 use App\Inventory\StoreStockDeduction;
@@ -17,15 +18,20 @@ use App\Pricing\CheckoutProductPrice;
 use App\Pricing\CheckoutProductPriceProvider;
 use App\Pricing\CheckoutProductPriceUnavailableException;
 use App\Repository\CatalogElementsRepository;
+use App\Repository\ProductSnapshotRepository;
 use Grpc\Catalog\V1\CheckStockRequest;
 use Grpc\Catalog\V1\CheckStockResponse;
 use Grpc\Catalog\V1\DeductStocksRequest;
 use Grpc\Catalog\V1\DeductStocksResponse;
 use Grpc\Catalog\V1\GetProductPricesRequest;
 use Grpc\Catalog\V1\GetProductPricesResponse;
+use Grpc\Catalog\V1\GetProductSnapshotsRequest;
+use Grpc\Catalog\V1\GetProductSnapshotsResponse;
 use Grpc\Catalog\V1\InventoryServiceInterface;
 use Grpc\Catalog\V1\ProductDeduction;
 use Grpc\Catalog\V1\ProductPrice as GrpcProductPrice;
+use Grpc\Catalog\V1\ProductSnapshot as GrpcProductSnapshot;
+use Grpc\Catalog\V1\SnapshotProduct;
 use Grpc\Catalog\V1\StoreDeduction;
 use Grpc\Catalog\V1\StoreStock;
 use Spiral\RoadRunner\GRPC;
@@ -34,10 +40,13 @@ use Spiral\RoadRunner\GRPC\StatusCode;
 
 final readonly class InventoryService implements InventoryServiceInterface
 {
+    private const MAX_PRODUCT_SNAPSHOT_IDS = 100;
+
     public function __construct(
         private CatalogElementsRepository $catalogElementsRepository,
         private InventoryDeductionService $deductionService,
         private CheckoutProductPriceProvider $checkoutProductPriceProvider,
+        private ProductSnapshotRepository $productSnapshotRepository,
     ) {
     }
 
@@ -90,6 +99,29 @@ final readonly class InventoryService implements InventoryServiceInterface
             throw new GRPCException($exception->getMessage(), StatusCode::NOT_FOUND);
         } catch (CheckoutProductPriceUnavailableException $exception) {
             throw new GRPCException($exception->getMessage(), StatusCode::FAILED_PRECONDITION);
+        } catch (\Throwable) {
+            throw new GRPCException("Internal inventory error.", StatusCode::INTERNAL);
+        }
+    }
+
+    public function GetProductSnapshots(GRPC\ContextInterface $ctx, GetProductSnapshotsRequest $in): GetProductSnapshotsResponse
+    {
+        try {
+            $snapshotIds = $this->normalizeProductSnapshotIds($in);
+            $snapshots = $this->productSnapshotRepository->findListByIdsForGrpc($snapshotIds);
+
+            if (count($snapshots) !== count($snapshotIds)) {
+                throw new GRPCException("Product snapshot was not found.", StatusCode::NOT_FOUND);
+            }
+
+            return new GetProductSnapshotsResponse([
+                "snapshots" => array_map(
+                    fn (ProductSnapshot $snapshot): GrpcProductSnapshot => $this->mapToGrpcProductSnapshot($snapshot),
+                    $snapshots,
+                ),
+            ]);
+        } catch (GRPCException $exception) {
+            throw $exception;
         } catch (\Throwable) {
             throw new GRPCException("Internal inventory error.", StatusCode::INTERNAL);
         }
@@ -207,6 +239,60 @@ final readonly class InventoryService implements InventoryServiceInterface
         }
 
         return $productIds;
+    }
+
+    /**
+     * @return int[]
+     */
+    private function normalizeProductSnapshotIds(GetProductSnapshotsRequest $request): array
+    {
+        $snapshotIds = array_map("intval", iterator_to_array($request->getProductSnapshotIds()));
+
+        if ($snapshotIds === []) {
+            throw new GRPCException("Product snapshot ids list must not be empty.", StatusCode::INVALID_ARGUMENT);
+        }
+
+        if (count($snapshotIds) > self::MAX_PRODUCT_SNAPSHOT_IDS) {
+            throw new GRPCException("Product snapshot ids list is too large.", StatusCode::INVALID_ARGUMENT);
+        }
+
+        foreach ($snapshotIds as $snapshotId) {
+            if ($snapshotId <= 0) {
+                throw new GRPCException("Product snapshot id must be a positive integer.", StatusCode::INVALID_ARGUMENT);
+            }
+        }
+
+        if (count($snapshotIds) !== count(array_unique($snapshotIds))) {
+            throw new GRPCException("Product snapshot ids list must not contain duplicates.", StatusCode::INVALID_ARGUMENT);
+        }
+
+        return $snapshotIds;
+    }
+
+    private function mapToGrpcProductSnapshot(ProductSnapshot $snapshot): GrpcProductSnapshot
+    {
+        $product = $snapshot->getProduct();
+        $snapshotId = $snapshot->getId();
+        $originalProductId = $snapshot->getOriginalProductId();
+
+        if ($product === null || $snapshotId === null || $originalProductId === null || $product->getId() === null) {
+            throw new GRPCException("Product snapshot data is incomplete.", StatusCode::INTERNAL);
+        }
+
+        return new GrpcProductSnapshot([
+            "id" => $snapshotId,
+            "original_product_id" => $originalProductId,
+            "product" => new SnapshotProduct([
+                "id" => $product->getId(),
+                "name" => $product->getName() ?? "",
+                "created_at" => ($product->getCreatedAt() ?? new \DateTimeImmutable("@0"))->format(\DateTimeInterface::ATOM),
+                "active" => $product->isActive() ?? false,
+                "created_by" => $product->getCreatedBy() ?? 0,
+                "description" => $product->getDescription() ?? "",
+                "slug" => $product->getSlug() ?? "",
+                "picture_id" => $product->getPictureId() ?? "",
+            ]),
+        ]);
     }
 
     /**

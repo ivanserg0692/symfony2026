@@ -171,6 +171,20 @@ class Order
         return $this->items;
     }
 
+    /**
+     * @return int[]
+     */
+    public function getProductSnapshotIds(): array
+    {
+        $snapshotIds = [];
+
+        foreach ($this->items as $item) {
+            $snapshotIds[$item->getRequiredProductSnapshotId()] = true;
+        }
+
+        return array_keys($snapshotIds);
+    }
+
     public function addItem(OrderItem $item): static
     {
         if (!$this->items->contains($item)) {

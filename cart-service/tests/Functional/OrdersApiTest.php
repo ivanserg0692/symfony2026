@@ -244,7 +244,44 @@ class OrdersApiTest extends ApiTestCase
         self::assertCount(2, $payload["items"]);
         self::assertArrayHasKey("productSnapshotId", $payload["items"][0]);
         self::assertArrayHasKey("lineTotal", $payload["items"][0]);
+        self::assertSame("Snapshot product " . $payload["items"][0]["productSnapshotId"], $payload["items"][0]["productSnapshot"]["product"]["name"]);
+        self::assertSame($payload["items"][0]["productSnapshotId"], $payload["items"][0]["productSnapshot"]["id"]);
         self::assertArrayNotHasKey("ownerId", $payload);
+        self::assertSame([[2124, 2125]], $this->catalogSnapshotRequests());
+    }
+
+    public function testForeignOrderDoesNotRequestSnapshots(): void
+    {
+        $order = $this->createOrder(123, new \DateTimeImmutable("2026-01-02 10:00:00"));
+
+        $this->requestJson("GET", sprintf("/api/orders/%d", $order->getId()), 456);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+        self::assertSame([], $this->catalogSnapshotRequests());
+    }
+
+    public function testOrderDetailDeduplicatesSnapshotIds(): void
+    {
+        $order = $this->createOrder(123, new \DateTimeImmutable("2026-01-02 10:00:00"));
+        $items = $order->getItems()->toArray();
+        $items[1]->setProductSnapshotId((int) $items[0]->getProductSnapshotId());
+        $this->entityManager->flush();
+
+        $this->requestJson("GET", sprintf("/api/orders/%d", $order->getId()), 123);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame([[2124]], $this->catalogSnapshotRequests());
+    }
+
+    public function testOrderDetailReturnsBadGatewayWhenSnapshotResponseIsMissingItem(): void
+    {
+        $order = $this->createOrder(123, new \DateTimeImmutable("2026-01-02 10:00:00"));
+        $this->setCatalogSnapshotResult([]);
+
+        $this->requestJson("GET", sprintf("/api/orders/%d", $order->getId()), 123);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_GATEWAY);
+        self::assertSame([[2124, 2125]], $this->catalogSnapshotRequests());
     }
 
     public function testForeignOrderReturnsNotFound(): void

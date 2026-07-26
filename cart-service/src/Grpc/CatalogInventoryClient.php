@@ -6,6 +6,7 @@ use Grpc\Catalog\V1\CheckStockRequest;
 use Grpc\Catalog\V1\DeductStockItem;
 use Grpc\Catalog\V1\DeductStocksRequest;
 use Grpc\Catalog\V1\GetProductPricesRequest;
+use Grpc\Catalog\V1\GetProductSnapshotsRequest;
 use Grpc\Catalog\V1\InventoryServiceClient;
 
 class CatalogInventoryClient
@@ -77,6 +78,53 @@ class CatalogInventoryClient
         }
 
         return $prices;
+    }
+
+    /**
+     * @param int[] $productSnapshotIds
+     *
+     * @return list<CatalogProductSnapshot>
+     */
+    public function getProductSnapshots(array $productSnapshotIds): array
+    {
+        $request = new GetProductSnapshotsRequest();
+        $request->setProductSnapshotIds($productSnapshotIds);
+
+        [$response, $status] = $this->client->GetProductSnapshots($request)->wait();
+
+        if ($status->code !== \Grpc\STATUS_OK) {
+            $this->throwGetProductSnapshotsException($status->code, $status->details ?? '');
+        }
+
+        if ($response === null) {
+            throw new InventoryCommunicationException('Catalog gRPC response is empty.');
+        }
+
+        $snapshots = [];
+        foreach ($response->getSnapshots() as $snapshot) {
+            $product = $snapshot->getProduct();
+
+            if ($product === null) {
+                throw new InventoryCommunicationException('Catalog product snapshot response is incomplete.');
+            }
+
+            $snapshots[] = new CatalogProductSnapshot(
+                (int) $snapshot->getId(),
+                (int) $snapshot->getOriginalProductId(),
+                new CatalogSnapshotProduct(
+                    (int) $product->getId(),
+                    $product->getName(),
+                    $product->getCreatedAt(),
+                    $product->getActive(),
+                    (int) $product->getCreatedBy(),
+                    $product->getDescription() !== '' ? $product->getDescription() : null,
+                    $product->getSlug(),
+                    $product->getPictureId() !== '' ? $product->getPictureId() : null,
+                ),
+            );
+        }
+
+        return $snapshots;
     }
 
     /**
@@ -152,6 +200,18 @@ class CatalogInventoryClient
             \Grpc\STATUS_INVALID_ARGUMENT => new InvalidInventoryRequestException($message),
             \Grpc\STATUS_NOT_FOUND => new InventoryItemNotFoundException($message),
             \Grpc\STATUS_FAILED_PRECONDITION => new ProductPriceUnavailableException($message),
+            \Grpc\STATUS_UNAVAILABLE, \Grpc\STATUS_DEADLINE_EXCEEDED => new InventoryServiceUnavailableException($message),
+            default => new InventoryCommunicationException($message),
+        };
+    }
+
+    private function throwGetProductSnapshotsException(int $statusCode, string $details): never
+    {
+        $message = $details !== '' ? $details : 'Catalog gRPC request failed.';
+
+        throw match ($statusCode) {
+            \Grpc\STATUS_INVALID_ARGUMENT => new InvalidInventoryRequestException($message),
+            \Grpc\STATUS_NOT_FOUND => new InventoryItemNotFoundException($message),
             \Grpc\STATUS_UNAVAILABLE, \Grpc\STATUS_DEADLINE_EXCEEDED => new InventoryServiceUnavailableException($message),
             default => new InventoryCommunicationException($message),
         };

@@ -76,6 +76,30 @@ class ProductSnapshotRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
+    /**
+     * @param int[] $ids
+     *
+     * @return ProductSnapshot[]
+     */
+    public function findListByIdsForGrpc(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $snapshots = $this->createQueryBuilder("snapshot")
+            ->innerJoin("snapshot.product", "product")
+            ->addSelect("product")
+            ->innerJoin("snapshot.originalProduct", "originalProduct")
+            ->addSelect("originalProduct")
+            ->andWhere("snapshot.id IN (:ids)")
+            ->setParameter("ids", $ids)
+            ->getQuery()
+            ->getResult();
+
+        return $this->sortSnapshotsByIds($snapshots, $ids);
+    }
+
     public function findOneForPublicApi(int $id): ?ProductSnapshot
     {
         $queryBuilder = $this->createQueryBuilder("snapshot");

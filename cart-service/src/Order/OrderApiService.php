@@ -4,6 +4,8 @@ namespace App\Order;
 
 use App\Entity\Order;
 use App\Grpc\CatalogInventoryClient;
+use App\Grpc\CatalogProductSnapshots;
+use App\Grpc\InventoryItemNotFoundException;
 use App\Repository\CartRepository;
 use App\Repository\OrderRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,6 +24,7 @@ class OrderApiService
         private readonly OrderFactory $orderFactory,
         private readonly CheckoutCartItemsFactory $checkoutCartItemsFactory,
         private readonly CheckoutOrderItemSourceFactory $checkoutOrderItemSourceFactory,
+        private readonly OrderDetailResponseFactory $orderDetailResponseFactory,
     ) {
     }
 
@@ -47,6 +50,39 @@ class OrderApiService
     public function findOrder(int $orderId, int $ownerId): ?Order
     {
         return $this->orderRepository->findOneForOwnerWithItems($orderId, $ownerId);
+    }
+
+    public function findOrderDetails(int $orderId, int $ownerId): ?OrderDetailResponse
+    {
+        $order = $this->findOrder($orderId, $ownerId);
+
+        if ($order === null) {
+            return null;
+        }
+
+        try {
+            $snapshotIds = $order->getProductSnapshotIds();
+        } catch (\LogicException $exception) {
+            throw new InvalidProductSnapshotsResponseException("Order item has an invalid product snapshot id.", previous: $exception);
+        }
+
+        if ($snapshotIds === []) {
+            return $this->orderDetailResponseFactory->create($order, []);
+        }
+
+        try {
+            $snapshots = $this->catalogInventoryClient->getProductSnapshots($snapshotIds);
+        } catch (InventoryItemNotFoundException $exception) {
+            throw new InvalidProductSnapshotsResponseException("Catalog product snapshot referenced by order item was not found.", previous: $exception);
+        }
+
+        try {
+            $snapshotsById = new CatalogProductSnapshots($snapshots)->indexByRequestedIds($snapshotIds);
+        } catch (\LogicException $exception) {
+            throw new InvalidProductSnapshotsResponseException($exception->getMessage(), previous: $exception);
+        }
+
+        return $this->orderDetailResponseFactory->create($order, $snapshotsById);
     }
 
     public function createOrderFromCurrentCart(int $ownerId): Order
