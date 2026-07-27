@@ -56,9 +56,6 @@ class Product
     #[Groups(["catalog_element:item"])]
     private Collection $sections;
 
-    #[ORM\OneToOne(mappedBy: 'product', targetEntity: CatalogElements::class)]
-    private ?CatalogElements $catalogElement = null;
-
     public function __construct()
     {
         $this->sections = new ArrayCollection();
@@ -182,22 +179,6 @@ class Product
     {
         if ($this->sections->removeElement($section)) {
             $section->removeProduct($this);
-        }
-
-        return $this;
-    }
-
-    public function getCatalogElement(): ?CatalogElements
-    {
-        return $this->catalogElement;
-    }
-
-    public function setCatalogElement(?CatalogElements $catalogElement): static
-    {
-        $this->catalogElement = $catalogElement;
-
-        if ($catalogElement !== null && $catalogElement->getProduct() !== $this) {
-            $catalogElement->setProduct($this);
         }
 
         return $this;

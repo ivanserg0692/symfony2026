@@ -144,22 +144,16 @@ class ProductSnapshotRepository extends ServiceEntityRepository
         QueryBuilder $queryBuilder,
         string $snapshotAlias = "snapshot",
         string $productAlias = "product",
-        string $productCatalogElementAlias = "productCatalogElement",
         string $originalProductAlias = "originalProduct",
         string $originalProductModelAlias = "originalProductModel",
-        string $originalProductCatalogElementAlias = "originalProductCatalogElement",
     ): QueryBuilder {
         return $queryBuilder
             ->innerJoin(sprintf("%s.product", $snapshotAlias), $productAlias)
             ->addSelect($productAlias)
-            ->leftJoin(sprintf("%s.catalogElement", $productAlias), $productCatalogElementAlias)
-            ->addSelect($productCatalogElementAlias)
             ->innerJoin(sprintf("%s.originalProduct", $snapshotAlias), $originalProductAlias)
             ->addSelect($originalProductAlias)
             ->innerJoin(sprintf("%s.product", $originalProductAlias), $originalProductModelAlias)
-            ->addSelect($originalProductModelAlias)
-            ->leftJoin(sprintf("%s.catalogElement", $originalProductModelAlias), $originalProductCatalogElementAlias)
-            ->addSelect($originalProductCatalogElementAlias);
+            ->addSelect($originalProductModelAlias);
     }
 
     private function applyListFilters(QueryBuilder $queryBuilder, ?int $originalProductId): QueryBuilder
