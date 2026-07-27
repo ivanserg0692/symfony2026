@@ -6,6 +6,7 @@ use App\Entity\Order;
 use App\Grpc\CatalogInventoryClient;
 use App\Grpc\CatalogProductSnapshots;
 use App\Grpc\InventoryItemNotFoundException;
+use App\Repository\CartItemRepository;
 use App\Repository\CartRepository;
 use App\Repository\OrderRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -17,6 +18,7 @@ class OrderApiService
     public function __construct(
         private readonly OrderRepository $orderRepository,
         private readonly CartRepository $cartRepository,
+        private readonly CartItemRepository $cartItemRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly CatalogInventoryClient $catalogInventoryClient,
         private readonly MessageBusInterface $messageBus,
@@ -99,7 +101,7 @@ class OrderApiService
                 throw new ActiveCartNotFoundException();
             }
 
-            $items = $cart->getItems()->toArray();
+            $items = $this->cartItemRepository->findForCart($cart);
 
             if ($items === []) {
                 throw new EmptyCartException();

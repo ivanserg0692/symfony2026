@@ -31,36 +31,42 @@ class CartApiService
     {
         $productId = (int) $createRequest->getProductId();
         $quantity = (int) $createRequest->getQuantity();
-        $item = $this->cartItemRepository->findOneProductInActiveCartForOwner($productId, $ownerId);
-        $resultingQuantity = $item === null ? $quantity : (int) $item->getQuantity() + $quantity;
-
-        try {
-            $response = $this->catalogInventoryClient->checkStock($productId, $resultingQuantity);
-        } catch (\Throwable $exception) {
-            throw new CatalogInventoryUnavailableException("Catalog inventory service is unavailable.", previous: $exception);
-        }
-
-        if ($this->isMissingProductResponse($response, $productId)) {
-            throw new CatalogProductNotFoundException($productId);
-        }
-
-        if (!$response->available) {
-            throw new CartItemUnavailableException($productId, $resultingQuantity, $response->totalAvailableQuantity);
-        }
-
-        $created = $item === null;
 
         $this->entityManager->getConnection()->beginTransaction();
         try {
-            $cart = $this->cartRepository->findActiveForOwnerWithItems($ownerId);
+            $cart = $this->cartRepository->findForOwnerForUpdate($ownerId);
+            $items = [];
+
             if ($cart === null) {
                 $cart = $this->createCart($ownerId);
                 $this->entityManager->persist($cart);
+            } else {
+                $items = $this->cartItemRepository->findForCart($cart);
             }
 
+            $item = $this->findItemByProductId($items, $productId);
+            $resultingQuantity = $item === null ? $quantity : (int) $item->getQuantity() + $quantity;
+
+            try {
+                $response = $this->catalogInventoryClient->checkStock($productId, $resultingQuantity);
+            } catch (\Throwable $exception) {
+                throw new CatalogInventoryUnavailableException("Catalog inventory service is unavailable.", previous: $exception);
+            }
+
+            if ($this->isMissingProductResponse($response, $productId)) {
+                throw new CatalogProductNotFoundException($productId);
+            }
+
+            if (!$response->available) {
+                throw new CartItemUnavailableException($productId, $resultingQuantity, $response->totalAvailableQuantity);
+            }
+
+            $created = $item === null;
+
             if ($item === null) {
-                $item = $this->createItem($productId, $resultingQuantity, $this->nextSort($cart));
-                $cart->addItem($item);
+                $item = $this->createItem($productId, $resultingQuantity, $this->nextSort($items));
+                $item->setCart($cart);
+                $this->entityManager->persist($item);
             } else {
                 $item->setQuantity($resultingQuantity);
             }
@@ -78,26 +84,44 @@ class CartApiService
 
     public function updateItem(int $itemId, int $ownerId, CartItemUpdateRequest $updateRequest): ?CartItem
     {
-        $item = $this->cartItemRepository->findOneInActiveCartForOwner($itemId, $ownerId);
+        $this->entityManager->getConnection()->beginTransaction();
+        try {
+            $cart = $this->cartRepository->findForOwnerForUpdate($ownerId);
 
-        if ($item === null) {
-            return null;
-        }
+            if ($cart === null) {
+                $this->entityManager->getConnection()->commit();
 
-        if ($updateRequest->hasQuantity() && $updateRequest->getQuantity() !== null) {
-            $response = $this->catalogInventoryClient->checkStock($item->getCatalogElementId(), $updateRequest->getQuantity());
-            if (!$response->available) {
-                throw new \InvalidArgumentException($this->translator->trans("cart.item.quantity.exceeds_available"));
+                return null;
             }
 
-            $item->setQuantity($updateRequest->getQuantity());
-        }
+            $item = $this->cartItemRepository->findOneForCart($cart, $itemId);
 
-        if ($updateRequest->hasSort() && $updateRequest->getSort() !== null) {
-            $item->setSort($updateRequest->getSort());
-        }
+            if ($item === null) {
+                $this->entityManager->getConnection()->commit();
 
-        $this->entityManager->flush();
+                return null;
+            }
+
+            if ($updateRequest->hasQuantity() && $updateRequest->getQuantity() !== null) {
+                $response = $this->catalogInventoryClient->checkStock($item->getCatalogElementId(), $updateRequest->getQuantity());
+                if (!$response->available) {
+                    throw new \InvalidArgumentException($this->translator->trans("cart.item.quantity.exceeds_available"));
+                }
+
+                $item->setQuantity($updateRequest->getQuantity());
+            }
+
+            if ($updateRequest->hasSort() && $updateRequest->getSort() !== null) {
+                $item->setSort($updateRequest->getSort());
+            }
+
+            $this->entityManager->flush();
+            $this->entityManager->getConnection()->commit();
+        } catch (\Throwable $exception) {
+            $this->entityManager->getConnection()->rollBack();
+
+            throw $exception;
+        }
 
         return $item;
     }
@@ -148,10 +172,27 @@ class CartApiService
             ->setSort($sort);
     }
 
-    private function nextSort(Cart $cart): int
+    /**
+     * @param list<CartItem> $items
+     */
+    private function findItemByProductId(array $items, int $productId): ?CartItem
+    {
+        foreach ($items as $item) {
+            if ($item->getCatalogElementId() === $productId) {
+                return $item;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<CartItem> $items
+     */
+    private function nextSort(array $items): int
     {
         $maxSort = 0;
-        foreach ($cart->getItems() as $item) {
+        foreach ($items as $item) {
             $maxSort = max($maxSort, (int) $item->getSort());
         }
 

@@ -96,6 +96,22 @@ class CartApiTest extends ApiTestCase
         ], $this->catalogStockRequests());
     }
 
+    public function testAddItemChecksStockInsideTransaction(): void
+    {
+        $item = $this->firstItem($this->createCart(123));
+        $checkedInsideTransaction = false;
+
+        $this->setCatalogCheckStockCallback(function () use (&$checkedInsideTransaction): void {
+            $checkedInsideTransaction = $this->entityManager->getConnection()->isTransactionActive();
+        });
+
+        $this->requestJson("POST", "/api/cart/items", 123, ["productId" => $item->getCatalogElementId(), "quantity" => 2]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_OK);
+        self::assertTrue($checkedInsideTransaction);
+        self::assertSame(3, $this->jsonResponse()["quantity"]);
+    }
+
     public function testAddItemReturnsNotFoundWhenProductIsMissing(): void
     {
         $this->setCatalogProductFound(false);
@@ -169,6 +185,22 @@ class CartApiTest extends ApiTestCase
         $this->requestJson("PATCH", sprintf("/api/cart/items/%d", $item->getId()), 123, ["quantity" => 7]);
 
         self::assertResponseIsSuccessful();
+        self::assertSame(7, $this->jsonResponse()["quantity"]);
+    }
+
+    public function testUpdateItemChecksStockInsideTransaction(): void
+    {
+        $item = $this->firstItem($this->createCart(123));
+        $checkedInsideTransaction = false;
+
+        $this->setCatalogCheckStockCallback(function () use (&$checkedInsideTransaction): void {
+            $checkedInsideTransaction = $this->entityManager->getConnection()->isTransactionActive();
+        });
+
+        $this->requestJson("PATCH", sprintf("/api/cart/items/%d", $item->getId()), 123, ["quantity" => 7]);
+
+        self::assertResponseIsSuccessful();
+        self::assertTrue($checkedInsideTransaction);
         self::assertSame(7, $this->jsonResponse()["quantity"]);
     }
 

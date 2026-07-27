@@ -46,12 +46,7 @@ class CartRepository extends ServiceEntityRepository
 
     public function findForOwnerForUpdate(int $ownerId): ?Cart
     {
-        $queryBuilder = $this->createOwnerQueryBuilder($ownerId);
-        $this->addItemsRelation($queryBuilder);
-
-        return $queryBuilder
-            ->addOrderBy("item.sort", "ASC")
-            ->addOrderBy("item.id", "ASC")
+        return $this->createOwnerQueryBuilder($ownerId)
             ->getQuery()
             ->setLockMode(LockMode::PESSIMISTIC_WRITE)
             ->getOneOrNullResult();

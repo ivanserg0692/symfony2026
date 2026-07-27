@@ -121,6 +121,11 @@ abstract class ApiTestCase extends WebTestCase
         $this->catalogInventoryClient()->setFail($fail);
     }
 
+    protected function setCatalogCheckStockCallback(callable $callback): void
+    {
+        $this->catalogInventoryClient()->setCheckStockCallback($callback);
+    }
+
     /**
      * @param array<int, CatalogProductPrice> $pricesByProductId
      */
@@ -208,6 +213,11 @@ abstract class ApiTestCase extends WebTestCase
                 private ?\Throwable $deductFailure = null;
 
                 /**
+                 * @var callable(int, int): void|null
+                 */
+                private $checkStockCallback = null;
+
+                /**
                  * @var array<int, CatalogProductPrice>
                  */
                 private array $productPrices = [];
@@ -264,6 +274,11 @@ abstract class ApiTestCase extends WebTestCase
                 public function setFail(bool $fail): void
                 {
                     $this->fail = $fail;
+                }
+
+                public function setCheckStockCallback(callable $checkStockCallback): void
+                {
+                    $this->checkStockCallback = $checkStockCallback;
                 }
 
                 /**
@@ -337,6 +352,10 @@ abstract class ApiTestCase extends WebTestCase
 
                 public function checkStock(int $productId, int $requestedQuantity): CatalogStockResponse
                 {
+                    if ($this->checkStockCallback !== null) {
+                        ($this->checkStockCallback)($productId, $requestedQuantity);
+                    }
+
                     $this->stockRequests[] = [
                         "productId" => $productId,
                         "requestedQuantity" => $requestedQuantity,
