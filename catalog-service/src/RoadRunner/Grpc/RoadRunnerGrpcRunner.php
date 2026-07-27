@@ -60,6 +60,7 @@ final readonly class RoadRunnerGrpcRunner implements RunnerInterface
             }
         } finally {
             $this->servicesResetter->reset();
+            $this->dataCollector?->reset();
         }
     }
 }

@@ -29,7 +29,7 @@ final readonly class ProfilingInvoker implements InvokerInterface
         $serviceName = $this->resolveServiceName($service);
         $request = $this->createRequest($serviceName, $method, $input);
         $this->profilerContext->activate($request);
-        $this->logger?->debug('got a GRPC request');
+        $this->logger?->debug('got a GRPC request with PID ' . getmypid());
         $startedAt = microtime(true);
 
         try {
