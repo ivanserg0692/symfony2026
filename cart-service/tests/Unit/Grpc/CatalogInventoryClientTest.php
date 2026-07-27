@@ -2,6 +2,7 @@
 
 namespace App\Tests\Unit\Grpc;
 
+use App\Grpc\CatalogGrpcCallLogger;
 use App\Grpc\CatalogInventoryClient;
 use App\Grpc\InsufficientStockException;
 use App\Grpc\InventoryItemNotFoundException;
@@ -16,13 +17,14 @@ use Grpc\Catalog\V1\ProductDeduction;
 use Grpc\Catalog\V1\ProductPrice;
 use Grpc\Catalog\V1\StoreDeduction;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 
 final class CatalogInventoryClientTest extends TestCase
 {
     public function testBuildsGetProductPricesRequest(): void
     {
         $nativeClient = $this->nativeClient(productPricesResponse: new GetProductPricesResponse());
-        $client = new CatalogInventoryClient($nativeClient);
+        $client = $this->client($nativeClient);
 
         $client->getProductPrices([10, 20]);
 
@@ -41,7 +43,7 @@ final class CatalogInventoryClientTest extends TestCase
                 ]),
             ],
         ]));
-        $client = new CatalogInventoryClient($nativeClient);
+        $client = $this->client($nativeClient);
 
         $prices = $client->getProductPrices([10]);
 
@@ -53,7 +55,7 @@ final class CatalogInventoryClientTest extends TestCase
 
     public function testGetProductPricesFailedPreconditionIsMappedToProductPriceUnavailableException(): void
     {
-        $client = new CatalogInventoryClient($this->nativeClient(
+        $client = $this->client($this->nativeClient(
             productPricesResponse: null,
             productPricesStatusCode: \Grpc\STATUS_FAILED_PRECONDITION,
             productPricesDetails: 'price unavailable',
@@ -67,7 +69,7 @@ final class CatalogInventoryClientTest extends TestCase
     public function testBuildsDeductStocksRequestWithStoreId(): void
     {
         $nativeClient = $this->nativeClient(deductStocksResponse: new DeductStocksResponse(["operation_id" => "op-1"]));
-        $client = new CatalogInventoryClient($nativeClient);
+        $client = $this->client($nativeClient);
 
         $client->deductStocks('op-1', [
             ["productId" => 10, "quantity" => 5, "storeId" => 3],
@@ -83,7 +85,7 @@ final class CatalogInventoryClientTest extends TestCase
     public function testDoesNotSetStoreIdWhenItIsNotProvided(): void
     {
         $nativeClient = $this->nativeClient(deductStocksResponse: new DeductStocksResponse(["operation_id" => "op-1"]));
-        $client = new CatalogInventoryClient($nativeClient);
+        $client = $this->client($nativeClient);
 
         $client->deductStocks('op-1', [
             ["productId" => 20, "quantity" => 2, "storeId" => null],
@@ -108,7 +110,7 @@ final class CatalogInventoryClientTest extends TestCase
                 ]),
             ],
         ]));
-        $client = new CatalogInventoryClient($nativeClient);
+        $client = $this->client($nativeClient);
 
         $result = $client->deductStocks('op-1', [["productId" => 10, "quantity" => 7]]);
 
@@ -124,7 +126,7 @@ final class CatalogInventoryClientTest extends TestCase
 
     public function testFailedPreconditionIsMappedToInsufficientStockException(): void
     {
-        $client = new CatalogInventoryClient($this->nativeClient(
+        $client = $this->client($this->nativeClient(
             deductStocksResponse: null,
             deductStocksStatusCode: \Grpc\STATUS_FAILED_PRECONDITION,
             deductStocksDetails: 'insufficient stock',
@@ -137,7 +139,7 @@ final class CatalogInventoryClientTest extends TestCase
 
     public function testNotFoundIsMappedToInventoryItemNotFoundException(): void
     {
-        $client = new CatalogInventoryClient($this->nativeClient(
+        $client = $this->client($this->nativeClient(
             deductStocksResponse: null,
             deductStocksStatusCode: \Grpc\STATUS_NOT_FOUND,
             deductStocksDetails: 'not found',
@@ -150,7 +152,7 @@ final class CatalogInventoryClientTest extends TestCase
 
     public function testUnavailableIsMappedToInventoryServiceUnavailableException(): void
     {
-        $client = new CatalogInventoryClient($this->nativeClient(
+        $client = $this->client($this->nativeClient(
             deductStocksResponse: null,
             deductStocksStatusCode: \Grpc\STATUS_UNAVAILABLE,
             deductStocksDetails: 'unavailable',
@@ -159,6 +161,11 @@ final class CatalogInventoryClientTest extends TestCase
         $this->expectException(InventoryServiceUnavailableException::class);
 
         $client->deductStocks('op-1', [["productId" => 10, "quantity" => 7]]);
+    }
+
+    private function client(InventoryServiceClient $nativeClient): CatalogInventoryClient
+    {
+        return new CatalogInventoryClient($nativeClient, new CatalogGrpcCallLogger(new NullLogger()));
     }
 
     private function nativeClient(

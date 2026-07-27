@@ -11,8 +11,10 @@ use Grpc\Catalog\V1\InventoryServiceClient;
 
 class CatalogInventoryClient
 {
-    public function __construct(private readonly InventoryServiceClient $client)
-    {
+    public function __construct(
+        private readonly InventoryServiceClient $client,
+        private readonly CatalogGrpcCallLogger $callLogger,
+    ) {
     }
 
     public function checkStock(int $productId, int $requestedQuantity): CatalogStockResponse
@@ -21,7 +23,14 @@ class CatalogInventoryClient
         $request->setProductId($productId);
         $request->setRequestedQuantity($requestedQuantity);
 
-        [$response, $status] = $this->client->CheckStock($request)->wait();
+        [$response, $status] = $this->callLogger->wait(
+            'CheckStock',
+            $this->client->CheckStock($request),
+            [
+                'product_id' => $productId,
+                'requested_quantity' => $requestedQuantity,
+            ],
+        );
 
         if ($status->code !== \Grpc\STATUS_OK) {
             throw new \RuntimeException($status->details !== '' ? $status->details : 'Catalog gRPC request failed.');
@@ -57,7 +66,13 @@ class CatalogInventoryClient
         $request = new GetProductPricesRequest();
         $request->setProductIds($productIds);
 
-        [$response, $status] = $this->client->GetProductPrices($request)->wait();
+        [$response, $status] = $this->callLogger->wait(
+            'GetProductPrices',
+            $this->client->GetProductPrices($request),
+            [
+                'product_count' => count($productIds),
+            ],
+        );
 
         if ($status->code !== \Grpc\STATUS_OK) {
             $this->throwGetProductPricesException($status->code, $status->details ?? '');
@@ -90,7 +105,13 @@ class CatalogInventoryClient
         $request = new GetProductSnapshotsRequest();
         $request->setProductSnapshotIds($productSnapshotIds);
 
-        [$response, $status] = $this->client->GetProductSnapshots($request)->wait();
+        [$response, $status] = $this->callLogger->wait(
+            'GetProductSnapshots',
+            $this->client->GetProductSnapshots($request),
+            [
+                'snapshot_count' => count($productSnapshotIds),
+            ],
+        );
 
         if ($status->code !== \Grpc\STATUS_OK) {
             $this->throwGetProductSnapshotsException($status->code, $status->details ?? '');
@@ -147,7 +168,14 @@ class CatalogInventoryClient
             $request->getItems()[] = $requestItem;
         }
 
-        [$response, $status] = $this->client->DeductStocks($request)->wait();
+        [$response, $status] = $this->callLogger->wait(
+            'DeductStocks',
+            $this->client->DeductStocks($request),
+            [
+                'operation_id' => $operationId,
+                'item_count' => count($items),
+            ],
+        );
 
         if ($status->code !== \Grpc\STATUS_OK) {
             $this->throwDeductStocksException($status->code, $status->details ?? '');

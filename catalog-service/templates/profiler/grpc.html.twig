@@ -1,0 +1,99 @@
+{% extends '@WebProfiler/Profiler/layout.html.twig' %}
+
+{% block toolbar %}
+    {% if collector.hasCall %}
+        {% set icon %}
+            {{ include('@WebProfiler/Icon/request.svg') }}
+            <span class="sf-toolbar-value">gRPC</span>
+            <span class="sf-toolbar-info-piece-additional-detail">{{ collector.method }}</span>
+        {% endset %}
+
+        {% set text %}
+            <div class="sf-toolbar-info-piece">
+                <b>Service</b>
+                <span>{{ collector.service }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b>Method</b>
+                <span>{{ collector.method }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b>Handler time</b>
+                <span>{{ collector.handlerDurationMs is not null ? collector.handlerDurationMs ~ ' ms' : 'n/a' }}</span>
+            </div>
+        {% endset %}
+
+        {{ include('@WebProfiler/Profiler/toolbar_item.html.twig', { link: profiler_url }) }}
+    {% endif %}
+{% endblock %}
+
+{% block menu %}
+    <span class="label {{ collector.exceptionClass ? 'status-error' : '' }}">
+        <span class="icon">{{ include('@WebProfiler/Icon/request.svg') }}</span>
+        <strong>gRPC</strong>
+        {% if collector.hasCall %}
+            <span class="count">
+                <span>{{ collector.handlerDurationMs is not null ? collector.handlerDurationMs ~ ' ms' : collector.method }}</span>
+            </span>
+        {% endif %}
+    </span>
+{% endblock %}
+
+{% block panel %}
+    <h2>gRPC Call</h2>
+
+    {% if not collector.hasCall %}
+        <div class="empty">
+            <p>No gRPC call data was collected for this profile.</p>
+        </div>
+    {% else %}
+        <div class="metrics">
+            <div class="metric">
+                <span class="value">{{ collector.handlerDurationMs is not null ? collector.handlerDurationMs ~ ' ms' : 'n/a' }}</span>
+                <span class="label">Handler time</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{ collector.totalDurationMs is not null ? collector.totalDurationMs ~ ' ms' : 'n/a' }}</span>
+                <span class="label">Total before response</span>
+            </div>
+        </div>
+
+        <h3>Call</h3>
+        <table>
+            <tbody>
+                <tr>
+                    <th>Service</th>
+                    <td><code>{{ collector.service }}</code></td>
+                </tr>
+                <tr>
+                    <th>Method</th>
+                    <td><code>{{ collector.method }}</code></td>
+                </tr>
+                <tr>
+                    <th>Request type</th>
+                    <td><code>{{ collector.requestType ?: 'n/a' }}</code></td>
+                </tr>
+                <tr>
+                    <th>Response type</th>
+                    <td><code>{{ collector.responseType ?: 'n/a' }}</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        {% if collector.exceptionClass %}
+            <h3>Exception</h3>
+            <table>
+                <tbody>
+                    <tr>
+                        <th>Class</th>
+                        <td><code>{{ collector.exceptionClass }}</code></td>
+                    </tr>
+                    <tr>
+                        <th>Message</th>
+                        <td>{{ collector.exceptionMessage }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        {% endif %}
+    {% endif %}
+{% endblock %}

@@ -10,13 +10,12 @@ use Spiral\RoadRunner\GRPC\Method;
 use Spiral\RoadRunner\GRPC\ServiceInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Profiler\Profiler;
 
 final readonly class ProfilingInvoker implements InvokerInterface
 {
     public function __construct(
         private InvokerInterface $inner,
-        private Profiler $profiler,
+        private GrpcProfilerContext $profilerContext,
         private ?LoggerInterface $logger = null,
     ) {
     }
@@ -29,22 +28,48 @@ final readonly class ProfilingInvoker implements InvokerInterface
     ): string {
         $serviceName = $this->resolveServiceName($service);
         $request = $this->createRequest($serviceName, $method, $input);
+        $this->profilerContext->activate($request);
+        $this->logger?->debug('got a GRPC request');
+        $startedAt = microtime(true);
 
         try {
             $grpcResponse = $this->inner->invoke($service, $method, $ctx, $input);
+            $this->logger?->debug('the GRPC request is completed');
         } catch (\Throwable $exception) {
-            $response = new Response('', Response::HTTP_INTERNAL_SERVER_ERROR, [
+            $handlerDurationMs = $this->durationMs($startedAt);
+
+            $responseFactory = static fn (): Response => new Response('', Response::HTTP_INTERNAL_SERVER_ERROR, [
                 'content-type' => 'application/grpc+json',
             ]);
-            $this->collect($request, $response, $exception);
+            $logContext = [
+                'service' => $serviceName,
+                'method' => $method->name,
+                'handler_duration_ms' => $handlerDurationMs,
+                'total_duration_ms' => $this->durationMs($startedAt),
+                'exception_class' => $exception::class,
+                'exception_message' => $exception->getMessage(),
+            ];
+
+            $this->logger?->warning('gRPC server call failed.', $logContext);
+            $this->profilerContext->schedule($request, $responseFactory, $exception, $logContext);
 
             throw $exception;
         }
 
-        $response = new Response($this->serializeOutput($method, $grpcResponse), Response::HTTP_OK, [
+        $handlerDurationMs = $this->durationMs($startedAt);
+
+        $responseFactory = fn (): Response => new Response($this->serializeOutput($method, $grpcResponse), Response::HTTP_OK, [
             'content-type' => 'application/grpc+json',
         ]);
-        $this->collect($request, $response);
+        $logContext = [
+            'service' => $serviceName,
+            'method' => $method->name,
+            'handler_duration_ms' => $handlerDurationMs,
+            'total_duration_ms' => $this->durationMs($startedAt),
+        ];
+
+        $this->logger?->debug('gRPC server call completed.', $logContext);
+        $this->profilerContext->schedule($request, $responseFactory, null, $logContext);
 
         return $grpcResponse;
     }
@@ -122,19 +147,8 @@ final readonly class ProfilingInvoker implements InvokerInterface
         return $service::class;
     }
 
-    private function collect(Request $request, Response $response, ?\Throwable $exception = null): void
+    private function durationMs(float $startedAt): float
     {
-        $profile = $this->profiler->collect($request, $response, $exception);
-
-        if ($profile === null) {
-            return;
-        }
-
-        $this->profiler->saveProfile($profile);
-
-        $this->logger?->debug('gRPC profiler token', [
-            'token' => $profile->getToken(),
-            'path' => $request->getPathInfo(),
-        ]);
+        return round((microtime(true) - $startedAt) * 1000, 2);
     }
 }

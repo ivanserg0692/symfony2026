@@ -29,6 +29,17 @@ services:
 
 when@dev:
     services:
+        App\RoadRunner\Grpc\GrpcDataCollector:
+            tags:
+                -
+                    name: data_collector
+                    template: 'profiler/grpc.html.twig'
+                    id: 'app.grpc'
+
+        App\RoadRunner\Grpc\GrpcProfilerContext:
+            arguments:
+                $requestStack: '@.virtual_request_stack'
+
         App\RoadRunner\Grpc\RoadRunnerGrpcRunner:
             public: true
             autowire: true
