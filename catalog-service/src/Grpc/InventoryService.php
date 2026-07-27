@@ -34,6 +34,7 @@ use Grpc\Catalog\V1\ProductSnapshot as GrpcProductSnapshot;
 use Grpc\Catalog\V1\SnapshotProduct;
 use Grpc\Catalog\V1\StoreDeduction;
 use Grpc\Catalog\V1\StoreStock;
+use Psr\Log\LoggerInterface;
 use Spiral\RoadRunner\GRPC;
 use Spiral\RoadRunner\GRPC\Exception\GRPCException;
 use Spiral\RoadRunner\GRPC\StatusCode;
@@ -47,6 +48,7 @@ final readonly class InventoryService implements InventoryServiceInterface
         private InventoryDeductionService $deductionService,
         private CheckoutProductPriceProvider $checkoutProductPriceProvider,
         private ProductSnapshotRepository $productSnapshotRepository,
+        private readonly LoggerInterface $logger
     ) {
     }
 
@@ -107,6 +109,7 @@ final readonly class InventoryService implements InventoryServiceInterface
     public function GetProductSnapshots(GRPC\ContextInterface $ctx, GetProductSnapshotsRequest $in): GetProductSnapshotsResponse
     {
         try {
+            $this->logger->debug('got a GetProductSnapshots request');
             $snapshotIds = $this->normalizeProductSnapshotIds($in);
             $snapshots = $this->productSnapshotRepository->findListByIdsForGrpc($snapshotIds);
 

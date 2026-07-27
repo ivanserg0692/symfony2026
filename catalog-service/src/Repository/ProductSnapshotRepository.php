@@ -8,13 +8,14 @@ use App\Entity\ProductSnapshot;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use Psr\Log\LoggerInterface;
 
 /**
  * @extends ServiceEntityRepository<ProductSnapshot>
  */
 class ProductSnapshotRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $registry, private readonly LoggerInterface $logger)
     {
         parent::__construct($registry, ProductSnapshot::class);
     }
@@ -87,6 +88,7 @@ class ProductSnapshotRepository extends ServiceEntityRepository
             return [];
         }
 
+        $this->logger->debug('started looking for ids');
         $snapshots = $this->createQueryBuilder("snapshot")
             ->innerJoin("snapshot.product", "product")
             ->addSelect("product")
@@ -96,6 +98,7 @@ class ProductSnapshotRepository extends ServiceEntityRepository
             ->setParameter("ids", $ids)
             ->getQuery()
             ->getResult();
+        $this->logger->debug('found ids');
 
         return $this->sortSnapshotsByIds($snapshots, $ids);
     }

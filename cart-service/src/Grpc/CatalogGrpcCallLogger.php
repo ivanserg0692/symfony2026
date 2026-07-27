@@ -17,6 +17,7 @@ final class CatalogGrpcCallLogger
      */
     public function wait(string $method, object $call, array $context = []): array
     {
+        $this->logger->debug('Catalog gRPC call initiated');
         $startedAt = microtime(true);
 
         try {
