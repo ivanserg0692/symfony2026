@@ -50,23 +50,23 @@ final readonly class InventoryDeductionService
             }
 
             $deductionPlans = [];
-            $stockDeductionPlan = [];
+            $stockRowsToUpdate = [];
 
             foreach ($normalizedItems as $item) {
                 $deductionPlans[] = $item->storeId === null
-                    ? $this->createAutomaticDeductionPlan($item, $stockDeductionPlan)
-                    : $this->createStoreDeductionPlan($item, $stockDeductionPlan);
+                    ? $this->createAutomaticDeductionPlan($item, $stockRowsToUpdate)
+                    : $this->createStoreDeductionPlan($item, $stockRowsToUpdate);
             }
 
-            foreach ($stockDeductionPlan as [$stockRow, $deductedQuantity]) {
+            foreach ($stockRowsToUpdate as [$stockRow, $deductedQuantity]) {
                 $stockRow->setStock(($stockRow->getStock() ?? 0) - $deductedQuantity);
             }
 
-            $groupedProducts = $this->groupProductDeductionsByProductId($deductionPlans);
-            $productSnapshotIds = $this->createProductSnapshots($operationId, $groupedProducts);
+            $mergedDeductions = $this->mergeProductDeductionsByProductId($deductionPlans);
+            $productSnapshotIds = $this->createProductSnapshots($operationId, $mergedDeductions);
             $result = new StockDeductionResult(
                 $operationId,
-                $this->attachProductSnapshotIds($groupedProducts, $productSnapshotIds),
+                $this->attachProductSnapshotIds($mergedDeductions, $productSnapshotIds),
             );
 
             $this->operationRepository->addDeductionOperation(
@@ -168,9 +168,9 @@ final readonly class InventoryDeductionService
     }
 
     /**
-     * @param list<array{0: StoresElementsStocks, 1: int}> $stockDeductionPlan
+     * @param list<array{0: StoresElementsStocks, 1: int}> $stockRowsToUpdate
      */
-    private function createStoreDeductionPlan(StockDeductionRequestItem $item, array &$stockDeductionPlan): ProductStockDeduction
+    private function createStoreDeductionPlan(StockDeductionRequestItem $item, array &$stockRowsToUpdate): ProductStockDeduction
     {
         if ($item->storeId === null) {
             throw new InvalidInventoryDeductionRequestException("store_id must be provided.");
@@ -196,7 +196,7 @@ final readonly class InventoryDeductionService
             throw new InsufficientInventoryStockException("insufficient stock.");
         }
 
-        $stockDeductionPlan[] = [$stockRow, $item->requestedQuantity];
+        $stockRowsToUpdate[] = [$stockRow, $item->requestedQuantity];
 
         return new ProductStockDeduction(
             $item->productId,
@@ -206,9 +206,9 @@ final readonly class InventoryDeductionService
     }
 
     /**
-     * @param list<array{0: StoresElementsStocks, 1: int}> $stockDeductionPlan
+     * @param list<array{0: StoresElementsStocks, 1: int}> $stockRowsToUpdate
      */
-    private function createAutomaticDeductionPlan(StockDeductionRequestItem $item, array &$stockDeductionPlan): ProductStockDeduction
+    private function createAutomaticDeductionPlan(StockDeductionRequestItem $item, array &$stockRowsToUpdate): ProductStockDeduction
     {
         if (!$this->catalogElementsRepository->existsById($item->productId)) {
             throw new InventoryDeductionNotFoundException("product not found.");
@@ -217,8 +217,6 @@ final readonly class InventoryDeductionService
         $stockRows = $this->stocksRepository->findPositiveForProductWithWriteLock($item->productId);
         $remainingQuantityToDeduct = $item->requestedQuantity;
         $storeDeductions = [];
-        $storeDeductionPlan = [];
-
         foreach ($stockRows as $stockRow) {
             if ($remainingQuantityToDeduct <= 0) {
                 break;
@@ -237,7 +235,7 @@ final readonly class InventoryDeductionService
                 continue;
             }
 
-            $storeDeductionPlan[] = [$stockRow, $deductedQuantity];
+            $stockRowsToUpdate[] = [$stockRow, $deductedQuantity];
             $storeDeductions[] = new StoreStockDeduction($storeId, $deductedQuantity);
             $remainingQuantityToDeduct -= $deductedQuantity;
         }
@@ -245,8 +243,6 @@ final readonly class InventoryDeductionService
         if ($remainingQuantityToDeduct > 0) {
             throw new InsufficientInventoryStockException("insufficient stock.");
         }
-
-        array_push($stockDeductionPlan, ...$storeDeductionPlan);
 
         return new ProductStockDeduction($item->productId, $item->requestedQuantity, $storeDeductions);
     }
@@ -312,7 +308,7 @@ final readonly class InventoryDeductionService
      * @param list<ProductStockDeduction> $products
      * @return list<ProductStockDeduction>
      */
-    private function groupProductDeductionsByProductId(array $products): array
+    private function mergeProductDeductionsByProductId(array $products): array
     {
         $merged = [];
 
