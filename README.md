@@ -6,6 +6,7 @@
   - [Overview](#overview)
   - [Project Features](#project-features)
   - [Application Areas](#application-areas)
+  - [Online Store Domain](#online-store-domain)
   - [API Endpoints](#api-endpoints)
   - [Admin Moderation and Notifications](#admin-moderation-and-notifications)
   - [Current Status](#current-status)
@@ -39,6 +40,7 @@
   - [Обзор](#%D0%BE%D0%B1%D0%B7%D0%BE%D1%80)
   - [Возможности проекта](#%D0%B2%D0%BE%D0%B7%D0%BC%D0%BE%D0%B6%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0)
   - [Области приложения](#%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F)
+  - [Домен интернет-магазина](#%D0%B4%D0%BE%D0%BC%D0%B5%D0%BD-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0)
   - [API Endpoints](#api-endpoints-1)
   - [Модерация в админке и уведомления](#%D0%BC%D0%BE%D0%B4%D0%B5%D1%80%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2-%D0%B0%D0%B4%D0%BC%D0%B8%D0%BD%D0%BA%D0%B5-%D0%B8-%D1%83%D0%B2%D0%B5%D0%B4%D0%BE%D0%BC%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F)
   - [Текущий статус](#%D1%82%D0%B5%D0%BA%D1%83%D1%89%D0%B8%D0%B9-%D1%81%D1%82%D0%B0%D1%82%D1%83%D1%81)
@@ -104,6 +106,14 @@ The API exposes news, authentication, current-user, and notification operations 
 | EasyAdmin | Back-office UI for administrators. It is not represented as API endpoints in Swagger. |
 | Internal workflows | Doctrine listeners, Messenger messages, Mailer, and Notifier logic that react to application state changes. |
 | Console tooling | Bootstrap and maintenance commands such as JWT key initialization, admin sync, migrations, fixtures, and refresh-token cleanup. |
+
+### Online Store Domain
+
+The project also includes an online store domain split across the main Symfony application and the Catalog service. The Catalog service owns products, catalog elements, prices, attributes, images, stock rows, and immutable product snapshots. Cart and Orders owns customer carts, order creation, order items, item prices, and authenticated order reads.
+
+Checkout deducts stock through the Catalog gRPC inventory contract. During stock deduction, Catalog creates product snapshots and Cart and Orders stores only the referenced `productSnapshotId` on each `OrderItem`. Historical order responses must use these snapshots instead of current product data, so changing, disabling, repricing, or deleting the current product does not rewrite already placed orders.
+
+Product snapshots are not exposed through a standalone public REST endpoint. Cart and Orders first authorizes the authenticated user against the requested order, collects snapshot IDs only from that order's items, and then requests those snapshots from Catalog in one trusted gRPC batch call. Order item prices remain stored in `OrderItem`; snapshots preserve the historical product representation.
 
 ### API Endpoints
 
@@ -242,6 +252,7 @@ The notification recipients are administrators resolved by the application, not 
 - MR result (EN): [symfony/docs/mr-task-7.2-en.md](symfony/docs/mr-task-7.2-en.md)
 - MR result (RU): [symfony/docs/mr-task-7.2-ru.md](symfony/docs/mr-task-7.2-ru.md)
 - gRPC contracts: [grpc-contracts/README.md](grpc-contracts/README.md)
+- Testing documentation: [TESTING.md](TESTING.md)
 - Order snapshot flow diagram: [symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
 
 #### Frontend Application
@@ -263,6 +274,10 @@ Task 7 captures the backend service architecture, while Task 7.2 documents the C
 - Cart/Order gRPC task: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
 - Task 7.2 MR result EN: [symfony/docs/mr-task-7.2-en.md](symfony/docs/mr-task-7.2-en.md)
 - Task 7.2 MR result RU: [symfony/docs/mr-task-7.2-ru.md](symfony/docs/mr-task-7.2-ru.md)
+- Catalog service entities EN: [catalog-service/docs/entities-summary-en.md](catalog-service/docs/entities-summary-en.md)
+- Catalog service entities RU: [catalog-service/docs/entities-summary-ru.md](catalog-service/docs/entities-summary-ru.md)
+- Catalog service tables EN: [symfony/docs/catalog-service-tables-en.md](symfony/docs/catalog-service-tables-en.md)
+- Catalog service tables RU: [symfony/docs/catalog-service-tables-ru.md](symfony/docs/catalog-service-tables-ru.md)
 
 <!-- plantuml src="symfony/docs/plantuml/grpc-contracts/order-snapshot-flow.puml" alt="Order product snapshot gRPC flow" out="symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png" -->
 ![Order product snapshot gRPC flow](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
@@ -569,6 +584,14 @@ API отдает новости, аутентификацию, текущего 
 | Internal workflows | Doctrine listeners, Messenger messages, Mailer и Notifier logic, которые реагируют на изменения состояния приложения. |
 | Console tooling | Bootstrap- и maintenance-команды: JWT keys, admin sync, migrations, fixtures и cleanup refresh tokens. |
 
+### Домен интернет-магазина
+
+В проекте также есть домен интернет-магазина, разделенный между основным Symfony-приложением и Catalog service. Catalog service владеет товарами, элементами каталога, ценами, атрибутами, изображениями, остатками и неизменяемыми product snapshots. Cart and Orders владеет корзинами пользователей, созданием заказов, позициями заказа, ценами позиций и чтением заказов аутентифицированного пользователя.
+
+Checkout списывает остатки через gRPC inventory-контракт Catalog service. Во время списания Catalog создает product snapshots, а Cart and Orders сохраняет в каждом `OrderItem` только ссылку `productSnapshotId`. Исторические ответы заказов должны строиться по этим snapshots, а не по текущим данным товара, поэтому переименование, отключение, изменение цены или удаление текущего товара не переписывает уже созданные заказы.
+
+Product snapshots не отдаются через отдельную публичную REST-ручку. Cart and Orders сначала авторизует аутентифицированного пользователя относительно запрошенного заказа, собирает snapshot IDs только из позиций этого заказа и затем одним доверенным batch gRPC-вызовом запрашивает эти snapshots у Catalog. Цены позиций заказа остаются в `OrderItem`; snapshots сохраняют историческое представление товара.
+
 ### API Endpoints
 
 <!-- START api-endpoints-ru generated from OpenAPI -->
@@ -706,6 +729,7 @@ API отдает новости, аутентификацию, текущего 
 - Результат MR (EN): [symfony/docs/mr-task-7.2-en.md](symfony/docs/mr-task-7.2-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-7.2-ru.md](symfony/docs/mr-task-7.2-ru.md)
 - gRPC-контракты: [grpc-contracts/README.md](grpc-contracts/README.md)
+- Документация тестирования: [TESTING.md](TESTING.md)
 - Диаграмма order snapshot flow: [symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
 
 #### Frontend-приложение
@@ -727,6 +751,10 @@ Task 7 фиксирует архитектуру backend-сервисов, а Ta
 - Задача Cart/Order gRPC: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
 - Результат MR Task 7.2 EN: [symfony/docs/mr-task-7.2-en.md](symfony/docs/mr-task-7.2-en.md)
 - Результат MR Task 7.2 RU: [symfony/docs/mr-task-7.2-ru.md](symfony/docs/mr-task-7.2-ru.md)
+- Entity Catalog Service EN: [catalog-service/docs/entities-summary-en.md](catalog-service/docs/entities-summary-en.md)
+- Entity Catalog Service RU: [catalog-service/docs/entities-summary-ru.md](catalog-service/docs/entities-summary-ru.md)
+- Таблицы Catalog Service EN: [symfony/docs/catalog-service-tables-en.md](symfony/docs/catalog-service-tables-en.md)
+- Таблицы Catalog Service RU: [symfony/docs/catalog-service-tables-ru.md](symfony/docs/catalog-service-tables-ru.md)
 
 <!-- plantuml src="symfony/docs/plantuml/grpc-contracts/order-snapshot-flow.puml" alt="Order product snapshot gRPC flow" out="symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png" -->
 ![Order product snapshot gRPC flow](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
