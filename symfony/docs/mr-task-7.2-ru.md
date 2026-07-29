@@ -11,6 +11,7 @@
 - [Скриншоты](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B)
 - [Обновления](#%D0%BE%D0%B1%D0%BD%D0%BE%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F)
   - [2026-07-29](#2026-07-29)
+  - [2026-07-30](#2026-07-30)
 
 <!-- END doctoc -->
 
@@ -89,6 +90,28 @@ Task 7.2 доведена до состояния готового backend MR sc
 - Цены заказа остаются в `OrderItem`, поэтому отсутствие price fields в snapshot не является проблемой.
 - Для Catalog gRPC добавлены performance logging и profiler view, чтобы видеть handler time, profiler save time и total processing time.
 - Cart add/update и checkout paths усилены transaction/locking behavior вокруг операций, которые читают и меняют состояние корзины.
+
+Связанная документация:
+
+- gRPC contracts: [grpc-contracts/README.md](../../grpc-contracts/README.md).
+- Proto source: [inventory.proto](../../grpc-contracts/catalog/v1/inventory.proto).
+
+### 2026-07-30
+
+Зафиксированы добавленные gRPC-контракты `catalog.v1.InventoryService`:
+
+- `CheckStock(CheckStockRequest) returns (CheckStockResponse)` - проверка остатков для cart add/update validation.
+- `GetProductPrices(GetProductPricesRequest) returns (GetProductPricesResponse)` - batch-получение checkout prices по product ids.
+- `DeductStocks(DeductStocksRequest) returns (DeductStocksResponse)` - списание остатков при checkout и возврат `product_snapshot_id`.
+- `GetProductSnapshots(GetProductSnapshotsRequest) returns (GetProductSnapshotsResponse)` - batch-получение исторических product snapshots для order detail response.
+
+Ключевые сообщения и поля контракта:
+
+- `ProductDeduction.product_snapshot_id`;
+- `GetProductSnapshotsRequest.product_snapshot_ids`;
+- `ProductSnapshot`;
+- `SnapshotProduct`;
+- `ProductPrice`.
 
 Связанная документация:
 
