@@ -101,10 +101,14 @@ The API exposes news, authentication, current-user, and notification operations 
 
 | Area | Purpose |
 | --- | --- |
-| Public API | JSON endpoints under `api/v1` for authentication, news, and notifications. |
+| Public API | JSON endpoints for authentication, news, notifications, cart, and order reads. |
+| Catalog service | Product catalog boundary that owns products, catalog elements, prices, attributes, images, stock rows, and product snapshots. |
+| Cart and Orders | Customer cart and order boundary that owns active carts, order creation, order items, item prices, and authenticated order responses. |
+| gRPC integration | Internal service contracts for checkout stock deduction and trusted batch product snapshot reads. |
+| Checkout flow | Order creation workflow that performs final stock deduction, stores item prices in `OrderItem`, and links order items to immutable Catalog snapshots. |
 | Swagger/OpenAPI | Runtime API contract for routes that match `^/api/v1`. |
 | EasyAdmin | Back-office UI for administrators. It is not represented as API endpoints in Swagger. |
-| Internal workflows | Doctrine listeners, Messenger messages, Mailer, and Notifier logic that react to application state changes. |
+| Internal workflows | Doctrine listeners, Messenger messages, Mailer, Notifier logic, and order consistency checks that react to application state changes. |
 | Console tooling | Bootstrap and maintenance commands such as JWT key initialization, admin sync, migrations, fixtures, and refresh-token cleanup. |
 
 ### Online Store Domain
@@ -578,10 +582,14 @@ API отдает новости, аутентификацию, текущего 
 
 | Область | Назначение |
 | --- | --- |
-| Public API | JSON-ручки в зоне `api/v1` для аутентификации, новостей и уведомлений. |
+| Public API | JSON-ручки для аутентификации, новостей, уведомлений, корзины и чтения заказов. |
+| Catalog service | Граница каталога, которая владеет товарами, элементами каталога, ценами, атрибутами, изображениями, остатками и product snapshots. |
+| Cart and Orders | Граница корзины и заказов, которая владеет активными корзинами, созданием заказов, позициями заказа, ценами позиций и ответами заказов для аутентифицированного пользователя. |
+| gRPC integration | Внутренние сервисные контракты для checkout-списания остатков и доверенного batch-чтения product snapshots. |
+| Checkout flow | Сценарий создания заказа, который выполняет финальное списание остатков, хранит цены позиций в `OrderItem` и связывает позиции заказа с неизменяемыми snapshots из Catalog. |
 | Swagger/OpenAPI | Runtime API-контракт для маршрутов, соответствующих `^/api/v1`. |
 | EasyAdmin | Back-office интерфейс для администраторов. Он не представлен в Swagger как API-ручки. |
-| Internal workflows | Doctrine listeners, Messenger messages, Mailer и Notifier logic, которые реагируют на изменения состояния приложения. |
+| Internal workflows | Doctrine listeners, Messenger messages, Mailer, Notifier logic и проверки консистентности заказов, которые реагируют на изменения состояния приложения. |
 | Console tooling | Bootstrap- и maintenance-команды: JWT keys, admin sync, migrations, fixtures и cleanup refresh tokens. |
 
 ### Домен интернет-магазина
