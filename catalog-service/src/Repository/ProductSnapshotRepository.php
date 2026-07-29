@@ -2,17 +2,20 @@
 
 namespace App\Repository;
 
+use App\Entity\CatalogElements;
+use App\Entity\Product;
 use App\Entity\ProductSnapshot;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use Psr\Log\LoggerInterface;
 
 /**
  * @extends ServiceEntityRepository<ProductSnapshot>
  */
 class ProductSnapshotRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $registry, private readonly LoggerInterface $logger)
     {
         parent::__construct($registry, ProductSnapshot::class);
     }
@@ -74,6 +77,32 @@ class ProductSnapshotRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
+    /**
+     * @param int[] $ids
+     *
+     * @return ProductSnapshot[]
+     */
+    public function findListByIdsForGrpc(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $this->logger->debug('started looking for ids');
+        $snapshots = $this->createQueryBuilder("snapshot")
+            ->innerJoin("snapshot.product", "product")
+            ->addSelect("product")
+            ->innerJoin("snapshot.originalProduct", "originalProduct")
+            ->addSelect("originalProduct")
+            ->andWhere("snapshot.id IN (:ids)")
+            ->setParameter("ids", $ids)
+            ->getQuery()
+            ->getResult();
+        $this->logger->debug('found ids');
+
+        return $this->sortSnapshotsByIds($snapshots, $ids);
+    }
+
     public function findOneForPublicApi(int $id): ?ProductSnapshot
     {
         $queryBuilder = $this->createQueryBuilder("snapshot");
@@ -87,26 +116,47 @@ class ProductSnapshotRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    public function createFromCatalogElement(CatalogElements $catalogElement, string $operationId): ProductSnapshot
+    {
+        $sourceProduct = $catalogElement->getProduct();
+        $productId = $catalogElement->getId();
+
+        if ($sourceProduct === null || $productId === null) {
+            throw new \RuntimeException("Product snapshot source product is incomplete.");
+        }
+
+        $snapshotProduct = (new Product())
+            ->setName((string) $sourceProduct->getName())
+            ->setCreatedAt($sourceProduct->getCreatedAt() ?? new \DateTimeImmutable())
+            ->setActive($sourceProduct->isActive() ?? false)
+            ->setCreatedBy($sourceProduct->getCreatedBy() ?? 0)
+            ->setDescription($sourceProduct->getDescription())
+            ->setSlug($this->createSnapshotSlug($sourceProduct->getSlug(), $operationId, $productId))
+            ->setPictureId($sourceProduct->getPictureId());
+
+        $snapshot = (new ProductSnapshot())
+            ->setProduct($snapshotProduct)
+            ->setOriginalProduct($catalogElement);
+
+        $this->getEntityManager()->persist($snapshot);
+
+        return $snapshot;
+    }
+
     private function addSnapshotRelations(
         QueryBuilder $queryBuilder,
         string $snapshotAlias = "snapshot",
         string $productAlias = "product",
-        string $productCatalogElementAlias = "productCatalogElement",
         string $originalProductAlias = "originalProduct",
         string $originalProductModelAlias = "originalProductModel",
-        string $originalProductCatalogElementAlias = "originalProductCatalogElement",
     ): QueryBuilder {
         return $queryBuilder
             ->innerJoin(sprintf("%s.product", $snapshotAlias), $productAlias)
             ->addSelect($productAlias)
-            ->leftJoin(sprintf("%s.catalogElement", $productAlias), $productCatalogElementAlias)
-            ->addSelect($productCatalogElementAlias)
             ->innerJoin(sprintf("%s.originalProduct", $snapshotAlias), $originalProductAlias)
             ->addSelect($originalProductAlias)
             ->innerJoin(sprintf("%s.product", $originalProductAlias), $originalProductModelAlias)
-            ->addSelect($originalProductModelAlias)
-            ->leftJoin(sprintf("%s.catalogElement", $originalProductModelAlias), $originalProductCatalogElementAlias)
-            ->addSelect($originalProductCatalogElementAlias);
+            ->addSelect($originalProductModelAlias);
     }
 
     private function applyListFilters(QueryBuilder $queryBuilder, ?int $originalProductId): QueryBuilder
@@ -131,6 +181,14 @@ class ProductSnapshotRepository extends ServiceEntityRepository
         }
 
         return $queryBuilder->orderBy("snapshot.id", $direction);
+    }
+
+    private function createSnapshotSlug(?string $sourceSlug, string $operationId, int $productId): string
+    {
+        $suffix = "-snapshot-" . substr(hash("sha256", sprintf("%s:%d", $operationId, $productId)), 0, 16);
+        $baseSlug = $sourceSlug !== null && $sourceSlug !== "" ? $sourceSlug : sprintf("product-%d", $productId);
+
+        return substr($baseSlug, 0, 255 - strlen($suffix)) . $suffix;
     }
 
     /**

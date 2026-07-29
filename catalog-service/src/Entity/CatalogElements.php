@@ -22,7 +22,7 @@ class CatalogElements
     private ?int $id = null;
     // Extension entity for live-catalog relations; Product keeps the base product data.
 
-    #[ORM\OneToOne(inversedBy: 'catalogElement', cascade: ['persist'])]
+    #[ORM\OneToOne(cascade: ['persist'])]
     #[ORM\JoinColumn(name: 'product_id', referencedColumnName: 'id', nullable: false, unique: true, onDelete: 'CASCADE')]
     private ?Product $product = null;
 
@@ -46,7 +46,6 @@ class CatalogElements
     public function __construct()
     {
         $this->product = new Product();
-        $this->product->setCatalogElement($this);
         $this->storeStocks = new ArrayCollection();
         $this->productPrices = new ArrayCollection();
     }
@@ -65,10 +64,6 @@ class CatalogElements
     public function setProduct(Product $product): static
     {
         $this->product = $product;
-
-        if ($product->getCatalogElement() !== $this) {
-            $product->setCatalogElement($this);
-        }
 
         return $this;
     }
@@ -290,7 +285,6 @@ class CatalogElements
     {
         if ($this->product === null) {
             $this->product = new Product();
-            $this->product->setCatalogElement($this);
         }
 
         return $this->product;

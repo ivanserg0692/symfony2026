@@ -14,14 +14,17 @@
         "grpc/grpc": "^1.82",
         "nelmio/api-doc-bundle": "^5.10",
         "nelmio/cors-bundle": "^2.6",
+        "stof/doctrine-extensions-bundle": "^1.15",
         "symfony/console": "8.1.*",
         "symfony/dotenv": "8.1.*",
         "symfony/flex": "^2",
         "symfony/framework-bundle": "8.1.*",
         "symfony/http-client": "8.1.*",
+        "symfony/messenger": "8.1.*",
         "symfony/property-access": "8.1.*",
         "symfony/runtime": "8.1.*",
         "symfony/serializer": "8.1.*",
+        "symfony/translation": "8.1.*",
         "symfony/validator": "8.1.*",
         "symfony/yaml": "8.1.*"
     },
@@ -86,6 +89,7 @@
         "symfony/browser-kit": "8.1.*",
         "symfony/css-selector": "8.1.*",
         "symfony/debug-bundle": "8.1.*",
+        "symfony/maker-bundle": "^1.67",
         "symfony/web-profiler-bundle": "8.1.*"
     }
 }

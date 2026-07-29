@@ -1,5 +1,24 @@
 # Лог Результата MR Task 6
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Обзор](#%D0%BE%D0%B1%D0%B7%D0%BE%D1%80)
+- [Планируемый результат](#%D0%BF%D0%BB%D0%B0%D0%BD%D0%B8%D1%80%D1%83%D0%B5%D0%BC%D1%8B%D0%B9-%D1%80%D0%B5%D0%B7%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%82)
+- [Скриншоты](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B)
+- [Доработки за 2026-05-07](#%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B8-%D0%B7%D0%B0-2026-05-07)
+  - [Отдельное frontend-приложение](#%D0%BE%D1%82%D0%B4%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D0%B5-frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
+  - [API client и dataProvider](#api-client-%D0%B8-dataprovider)
+  - [Авторизация, CSRF и refresh](#%D0%B0%D0%B2%D1%82%D0%BE%D1%80%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-csrf-%D0%B8-refresh)
+  - [Login form и Turnstile](#login-form-%D0%B8-turnstile)
+  - [Локализация](#%D0%BB%D0%BE%D0%BA%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F)
+  - [Theme provider](#theme-provider)
+  - [Layout и breadcrumbs](#layout-%D0%B8-breadcrumbs)
+  - [Раздел новостей](#%D1%80%D0%B0%D0%B7%D0%B4%D0%B5%D0%BB-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B5%D0%B9)
+  - [Refine CLI и generated code](#refine-cli-%D0%B8-generated-code)
+
+<!-- END doctoc -->
+
 ## Обзор
 
 Этот документ описывает видимый результат merge request 6.

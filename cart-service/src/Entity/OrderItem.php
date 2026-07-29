@@ -76,6 +76,15 @@ class OrderItem
         return $this->productSnapshotId;
     }
 
+    public function getRequiredProductSnapshotId(): int
+    {
+        if ($this->productSnapshotId === null || $this->productSnapshotId <= 0) {
+            throw new \LogicException("Order item has an invalid product snapshot id.");
+        }
+
+        return $this->productSnapshotId;
+    }
+
     public function setProductSnapshotId(int $productSnapshotId): static
     {
         $this->productSnapshotId = $productSnapshotId;

@@ -146,6 +146,9 @@ services:
     depends_on:
       catalog-db:
         condition: service_healthy
+    env_file:
+      - .env.local
+      - ./catalog-service/.env.rr
     environment:
       APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
       DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"

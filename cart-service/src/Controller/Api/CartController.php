@@ -3,6 +3,12 @@
 namespace App\Controller\Api;
 
 use App\Cart\CartApiService;
+use App\Cart\CartItemCreateRequest;
+use App\Cart\CartItemUnavailableException;
+use App\Cart\CartItemUpdateRequest;
+use App\Cart\CatalogInventoryUnavailableException;
+use App\Cart\CatalogProductNotFoundException;
+use App\Controller\Api\Request\RequestPayloadResolver;
 use App\Entity\Cart;
 use App\Entity\CartItem;
 use App\Security\CurrentUserProvider;
@@ -44,6 +50,80 @@ class CartController extends AbstractController
         return $this->json($cart, context: ["groups" => ["cart:item"]]);
     }
 
+    #[Route("/items", name: "api_cart_item_post", methods: ["POST"])]
+    #[OA\Post(
+        summary: "Add cart item",
+        description: "Adds a product to the current user's active cart after checking resulting stock through Catalog Service.",
+        security: [["XUserId" => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["productId", "quantity"],
+                properties: [
+                    new OA\Property(property: "productId", type: "integer", minimum: 1),
+                    new OA\Property(property: "quantity", type: "integer", minimum: 1),
+                ],
+                type: "object"
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: "Created cart item.",
+                content: new OA\JsonContent(ref: new Model(type: CartItem::class, groups: ["cart:item"]))
+            ),
+            new OA\Response(
+                response: 200,
+                description: "Updated existing cart item.",
+                content: new OA\JsonContent(ref: new Model(type: CartItem::class, groups: ["cart:item"]))
+            ),
+            new OA\Response(response: 400, description: "Invalid request body or X-User-Id header."),
+            new OA\Response(response: 404, description: "Product was not found."),
+            new OA\Response(response: 409, description: "Requested quantity is unavailable."),
+            new OA\Response(response: 503, description: "Catalog inventory service is unavailable."),
+        ]
+    )]
+    public function addItem(
+        Request $request,
+        CurrentUserProvider $currentUserProvider,
+        CartApiService $cartApiService,
+        RequestPayloadResolver $requestPayloadResolver,
+    ): JsonResponse
+    {
+        $ownerId = $currentUserProvider->getRequiredUserId($request);
+
+        try {
+            $createRequest = $requestPayloadResolver->resolve(
+                $request->getContent(),
+                CartItemCreateRequest::class,
+                "Request body must contain productId and quantity.",
+            );
+            $result = $cartApiService->addItem($ownerId, $createRequest);
+        } catch (\InvalidArgumentException $exception) {
+            return $this->json(["message" => $exception->getMessage()], Response::HTTP_BAD_REQUEST);
+        } catch (CatalogProductNotFoundException $exception) {
+            return $this->json([
+                "message" => $exception->getMessage(),
+                "productId" => $exception->productId,
+            ], Response::HTTP_NOT_FOUND);
+        } catch (CartItemUnavailableException $exception) {
+            return $this->json([
+                "message" => $exception->getMessage(),
+                "productId" => $exception->productId,
+                "requestedQuantity" => $exception->requestedQuantity,
+                "availableQuantity" => $exception->availableQuantity,
+            ], Response::HTTP_CONFLICT);
+        } catch (CatalogInventoryUnavailableException) {
+            return $this->json(["message" => "Catalog inventory service is unavailable."], Response::HTTP_SERVICE_UNAVAILABLE);
+        }
+
+        return $this->json(
+            $result->item,
+            $result->created ? Response::HTTP_CREATED : Response::HTTP_OK,
+            context: ["groups" => ["cart:item"]],
+        );
+    }
+
     #[Route("/items/{itemId<\d+>}", name: "api_cart_item_patch", methods: ["PATCH"])]
     #[OA\Patch(
         summary: "Update cart item",
@@ -68,16 +148,27 @@ class CartController extends AbstractController
                 description: "Updated cart item.",
                 content: new OA\JsonContent(ref: new Model(type: CartItem::class, groups: ["cart:item"]))
             ),
-            new OA\Response(response: 400, description: "Invalid request body or X-User-Id header."),
+            new OA\Response(response: 400, description: "Invalid request body, unavailable quantity, or X-User-Id header."),
             new OA\Response(response: 404, description: "Cart item was not found."),
         ]
     )]
-    public function updateItem(int $itemId, Request $request, CurrentUserProvider $currentUserProvider, CartApiService $cartApiService): JsonResponse
+    public function updateItem(
+        int $itemId,
+        Request $request,
+        CurrentUserProvider $currentUserProvider,
+        CartApiService $cartApiService,
+        RequestPayloadResolver $requestPayloadResolver,
+    ): JsonResponse
     {
         $ownerId = $currentUserProvider->getRequiredUserId($request);
 
         try {
-            $item = $cartApiService->updateItem($itemId, $ownerId, $request->getContent());
+            $updateRequest = $requestPayloadResolver->resolve(
+                $request->getContent(),
+                CartItemUpdateRequest::class,
+                "Request body must contain quantity or sort.",
+            );
+            $item = $cartApiService->updateItem($itemId, $ownerId, $updateRequest);
         } catch (\InvalidArgumentException $exception) {
             return $this->json(["message" => $exception->getMessage()], Response::HTTP_BAD_REQUEST);
         }

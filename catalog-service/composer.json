@@ -85,6 +85,7 @@
         "fakerphp/faker": "^1.24",
         "symfony/debug-bundle": "8.1.*",
         "symfony/maker-bundle": "^1.67",
+        "symfony/phpunit-bridge": "^8.1",
         "symfony/stopwatch": "8.1.*",
         "symfony/web-profiler-bundle": "8.1.*"
     }

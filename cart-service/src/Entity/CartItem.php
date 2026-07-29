@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\CartItemRepository;
+use Gedmo\Mapping\Annotation as Gedmo;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
@@ -35,10 +36,12 @@ class CartItem
     private ?int $sort = null;
 
     #[ORM\Column]
+    #[Gedmo\Timestampable(on: "create")]
     #[Groups(["cart:item"])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[Gedmo\Timestampable(on: "update")]
     #[Groups(["cart:item"])]
     private ?\DateTimeImmutable $updatedAt = null;
 

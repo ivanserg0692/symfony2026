@@ -29,6 +29,17 @@ class StoresRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function existsById(int $id): bool
+    {
+        return (bool) $this->createQueryBuilder("store")
+            ->select("1")
+            ->andWhere("store.id = :id")
+            ->setParameter("id", $id)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     public function findOneForPublicApi(int $id): ?Stores
     {
         return $this->find($id);

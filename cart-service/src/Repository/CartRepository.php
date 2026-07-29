@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Cart;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -17,16 +18,23 @@ class CartRepository extends ServiceEntityRepository
         parent::__construct($registry, Cart::class);
     }
 
-    public function findActiveForOwner(int $ownerId): ?Cart
+    public function findForOwner(int $ownerId): ?Cart
     {
         return $this->createOwnerQueryBuilder($ownerId)
             ->getQuery()
             ->getOneOrNullResult();
     }
 
+    public function findActiveForOwner(int $ownerId): ?Cart
+    {
+        return $this->createActiveOwnerQueryBuilder($ownerId)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     public function findActiveForOwnerWithItems(int $ownerId): ?Cart
     {
-        $queryBuilder = $this->createOwnerQueryBuilder($ownerId);
+        $queryBuilder = $this->createActiveOwnerQueryBuilder($ownerId);
         $this->addItemsRelation($queryBuilder);
 
         return $queryBuilder
@@ -36,7 +44,22 @@ class CartRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    public function findForOwnerForUpdate(int $ownerId): ?Cart
+    {
+        return $this->createOwnerQueryBuilder($ownerId)
+            ->getQuery()
+            ->setLockMode(LockMode::PESSIMISTIC_WRITE)
+            ->getOneOrNullResult();
+    }
+
     private function createOwnerQueryBuilder(int $ownerId): QueryBuilder
+    {
+        return $this->createQueryBuilder("cart")
+            ->andWhere("cart.ownerId = :ownerId")
+            ->setParameter("ownerId", $ownerId);
+    }
+
+    private function createActiveOwnerQueryBuilder(int $ownerId): QueryBuilder
     {
         return $this->createQueryBuilder("cart")
             ->andWhere("cart.ownerId = :ownerId")

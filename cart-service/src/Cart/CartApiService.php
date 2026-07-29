@@ -4,13 +4,12 @@ namespace App\Cart;
 
 use App\Entity\Cart;
 use App\Entity\CartItem;
+use App\Grpc\CatalogInventoryClient;
+use App\Grpc\CatalogStockResponse;
 use App\Repository\CartItemRepository;
 use App\Repository\CartRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class CartApiService
 {
@@ -18,8 +17,8 @@ class CartApiService
         private readonly CartRepository $cartRepository,
         private readonly CartItemRepository $cartItemRepository,
         private readonly EntityManagerInterface $entityManager,
-        private readonly SerializerInterface $serializer,
-        private readonly ValidatorInterface $validator,
+        private readonly CatalogInventoryClient $catalogInventoryClient,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -28,26 +27,101 @@ class CartApiService
         return $this->cartRepository->findActiveForOwnerWithItems($ownerId);
     }
 
-    public function updateItem(int $itemId, int $ownerId, string $payload): ?CartItem
+    public function addItem(int $ownerId, CartItemCreateRequest $createRequest): CartItemMutationResult
     {
-        $item = $this->cartItemRepository->findOneInActiveCartForOwner($itemId, $ownerId);
+        $productId = (int) $createRequest->getProductId();
+        $quantity = (int) $createRequest->getQuantity();
 
-        if ($item === null) {
-            return null;
+        $this->entityManager->getConnection()->beginTransaction();
+        try {
+            $cart = $this->cartRepository->findForOwnerForUpdate($ownerId);
+            $items = [];
+
+            if ($cart === null) {
+                $cart = $this->createCart($ownerId);
+                $this->entityManager->persist($cart);
+            } else {
+                $items = $this->cartItemRepository->findForCart($cart);
+            }
+
+            $item = $this->findItemByProductId($items, $productId);
+            $resultingQuantity = $item === null ? $quantity : (int) $item->getQuantity() + $quantity;
+
+            try {
+                $response = $this->catalogInventoryClient->checkStock($productId, $resultingQuantity);
+            } catch (\Throwable $exception) {
+                throw new CatalogInventoryUnavailableException("Catalog inventory service is unavailable.", previous: $exception);
+            }
+
+            if ($this->isMissingProductResponse($response, $productId)) {
+                throw new CatalogProductNotFoundException($productId);
+            }
+
+            if (!$response->available) {
+                throw new CartItemUnavailableException($productId, $resultingQuantity, $response->totalAvailableQuantity);
+            }
+
+            $created = $item === null;
+
+            if ($item === null) {
+                $item = $this->createItem($productId, $resultingQuantity, $this->nextSort($items));
+                $item->setCart($cart);
+                $this->entityManager->persist($item);
+            } else {
+                $item->setQuantity($resultingQuantity);
+            }
+
+            $this->entityManager->flush();
+            $this->entityManager->getConnection()->commit();
+        } catch (\Throwable $exception) {
+            $this->entityManager->getConnection()->rollBack();
+
+            throw $exception;
         }
 
-        $updateRequest = $this->deserializeUpdateRequest($payload);
+        return new CartItemMutationResult($item, $created);
+    }
 
-        if ($updateRequest->hasQuantity() && $updateRequest->getQuantity() !== null) {
-            $item->setQuantity($updateRequest->getQuantity());
+    public function updateItem(int $itemId, int $ownerId, CartItemUpdateRequest $updateRequest): ?CartItem
+    {
+        $this->entityManager->getConnection()->beginTransaction();
+        try {
+            $cart = $this->cartRepository->findForOwnerForUpdate($ownerId);
+
+            if ($cart === null) {
+                $this->entityManager->getConnection()->commit();
+
+                return null;
+            }
+
+            $item = $this->cartItemRepository->findOneForCart($cart, $itemId);
+
+            if ($item === null) {
+                $this->entityManager->getConnection()->commit();
+
+                return null;
+            }
+
+            if ($updateRequest->hasQuantity() && $updateRequest->getQuantity() !== null) {
+                $response = $this->catalogInventoryClient->checkStock($item->getCatalogElementId(), $updateRequest->getQuantity());
+                if (!$response->available) {
+                    throw new \InvalidArgumentException($this->translator->trans("cart.item.quantity.exceeds_available"));
+                }
+
+                $item->setQuantity($updateRequest->getQuantity());
+            }
+
+            if ($updateRequest->hasSort() && $updateRequest->getSort() !== null) {
+                $item->setSort($updateRequest->getSort());
+            }
+
+            $this->entityManager->flush();
+            $this->entityManager->getConnection()->commit();
+        } catch (\Throwable $exception) {
+            $this->entityManager->getConnection()->rollBack();
+
+            throw $exception;
         }
-
-        if ($updateRequest->hasSort() && $updateRequest->getSort() !== null) {
-            $item->setSort($updateRequest->getSort());
-        }
-
-        $item->setUpdatedAt(new \DateTimeImmutable());
-        $this->entityManager->flush();
 
         return $item;
     }
@@ -78,30 +152,50 @@ class CartApiService
         $this->entityManager->flush();
     }
 
-    private function deserializeUpdateRequest(string $payload): CartItemUpdateRequest
+    private function isMissingProductResponse(CatalogStockResponse $response, int $productId): bool
     {
-        if (trim($payload) === "") {
-            throw new \InvalidArgumentException("Request body must contain valid JSON.");
+        return $response->productId !== $productId
+            || (!$response->available && $response->totalAvailableQuantity === 0 && $response->stores === []);
+    }
+
+    private function createCart(int $ownerId): Cart
+    {
+        return (new Cart())
+            ->setOwnerId($ownerId);
+    }
+
+    private function createItem(int $productId, int $quantity, int $sort): CartItem
+    {
+        return (new CartItem())
+            ->setCatalogElementId($productId)
+            ->setQuantity($quantity)
+            ->setSort($sort);
+    }
+
+    /**
+     * @param list<CartItem> $items
+     */
+    private function findItemByProductId(array $items, int $productId): ?CartItem
+    {
+        foreach ($items as $item) {
+            if ($item->getCatalogElementId() === $productId) {
+                return $item;
+            }
         }
 
-        try {
-            $updateRequest = $this->serializer->deserialize($payload, CartItemUpdateRequest::class, "json", [
-                AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES => false,
-            ]);
-        } catch (SerializerExceptionInterface $exception) {
-            throw new \InvalidArgumentException($exception->getMessage(), previous: $exception);
+        return null;
+    }
+
+    /**
+     * @param list<CartItem> $items
+     */
+    private function nextSort(array $items): int
+    {
+        $maxSort = 0;
+        foreach ($items as $item) {
+            $maxSort = max($maxSort, (int) $item->getSort());
         }
 
-        if (!$updateRequest instanceof CartItemUpdateRequest) {
-            throw new \InvalidArgumentException("Request body must contain quantity or sort.");
-        }
-
-        $violations = $this->validator->validate($updateRequest);
-
-        if (count($violations) > 0) {
-            throw new \InvalidArgumentException((string) $violations);
-        }
-
-        return $updateRequest;
+        return $maxSort + 100;
     }
 }

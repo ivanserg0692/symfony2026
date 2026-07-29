@@ -2,6 +2,8 @@
 
 namespace App\DataFixtures;
 
+use App\Grpc\CatalogInventoryClient;
+use App\Order\OrderStatus;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -49,6 +51,7 @@ class AppFixtures extends Fixture
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
+        private readonly CatalogInventoryClient $catalogInventoryClient,
     ) {
     }
 
@@ -159,23 +162,31 @@ class AppFixtures extends Fixture
      */
     private function fetchSnapshotsByCatalogElementId(array $products): array
     {
-        $snapshotsByCatalogElementId = [];
+        $deductItems = [];
 
         foreach ($products as $product) {
-            $payload = $this->requestJson(self::CATALOG_SERVICE_BASE_URL, "/api/product-snapshots", [
-                "originalProductId" => (string) $product["id"],
-                "limit" => "1",
-            ]);
+            $deductItems[] = [
+                "productId" => $product["id"],
+                "quantity" => 1,
+            ];
+        }
 
-            $items = $payload["items"] ?? null;
-            $snapshot = \is_array($items) ? ($items[0] ?? null) : null;
-            $snapshotId = \is_array($snapshot) ? ($snapshot["id"] ?? null) : null;
+        $operationId = "cart-fixtures-snapshot-map-" . substr(hash("sha256", implode(",", array_column($products, "id"))), 0, 16);
+        $result = $this->catalogInventoryClient->deductStocks($operationId, $deductItems);
+        $snapshotsByCatalogElementId = [];
 
-            if (!\is_int($snapshotId)) {
-                throw new \RuntimeException(sprintf("Catalog Service returned no product snapshot for catalog element %d.", $product["id"]));
+        foreach ($result->products as $productDeduction) {
+            if ($productDeduction->productSnapshotId <= 0) {
+                throw new \RuntimeException(sprintf("Catalog Service returned no product snapshot for catalog element %d.", $productDeduction->productId));
             }
 
-            $snapshotsByCatalogElementId[$product["id"]] = $snapshotId;
+            $snapshotsByCatalogElementId[$productDeduction->productId] = $productDeduction->productSnapshotId;
+        }
+
+        foreach ($products as $product) {
+            if (!isset($snapshotsByCatalogElementId[$product["id"]])) {
+                throw new \RuntimeException(sprintf("Catalog Service returned no product snapshot for catalog element %d.", $product["id"]));
+            }
         }
 
         return $snapshotsByCatalogElementId;
@@ -262,6 +273,13 @@ class AppFixtures extends Fixture
     private function pickOwnerId(array $ownerIds): int
     {
         return $ownerIds[random_int(0, \count($ownerIds) - 1)];
+    }
+
+    private function pickOrderStatus(): OrderStatus
+    {
+        $statuses = OrderStatus::cases();
+
+        return $statuses[random_int(0, \count($statuses) - 1)];
     }
 
     /**
@@ -399,6 +417,7 @@ class AppFixtures extends Fixture
 
                     $orderRows[] = [
                         "owner_id" => $this->pickOwnerId($ownerIds),
+                        "status" => $this->pickOrderStatus()->value,
                         "total_price" => $this->formatMoney($totalMinorUnits),
                         "total_discount" => "0.00",
                         "final_price" => $this->formatMoney($totalMinorUnits),
@@ -408,7 +427,7 @@ class AppFixtures extends Fixture
                     $orderItemsByOffset[] = $orderItems;
                 }
 
-                $insertedOrders = $this->insertRowsReturning($connection, "orders", ["owner_id", "total_price", "total_discount", "final_price", "created_at", "updated_at"], $orderRows, ["id"]);
+                $insertedOrders = $this->insertRowsReturning($connection, "orders", ["owner_id", "status", "total_price", "total_discount", "final_price", "created_at", "updated_at"], $orderRows, ["id"]);
                 $orderItemRows = [];
 
                 foreach ($orderItemsByOffset as $orderOffset => $orderItems) {

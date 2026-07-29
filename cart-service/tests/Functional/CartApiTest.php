@@ -47,6 +47,137 @@ class CartApiTest extends ApiTestCase
         self::assertNull($this->jsonResponse()["id"]);
     }
 
+    public function testAddItemCreatesFirstItemAndCart(): void
+    {
+        $this->requestJson("POST", "/api/cart/items", 123, ["productId" => 501, "quantity" => 2]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_CREATED);
+        $payload = $this->jsonResponse();
+        self::assertSame(501, $payload["catalogElementId"]);
+        self::assertSame(2, $payload["quantity"]);
+
+        self::assertSame(1, $this->entityManager->getRepository(Cart::class)->count([]));
+        self::assertSame(1, $this->entityManager->getRepository(CartItem::class)->count([]));
+    }
+
+    public function testAddItemToExistingCart(): void
+    {
+        $this->createCart(123);
+
+        $this->requestJson("POST", "/api/cart/items", 123, ["productId" => 999, "quantity" => 4]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_CREATED);
+        $payload = $this->jsonResponse();
+        self::assertSame(999, $payload["catalogElementId"]);
+        self::assertSame(4, $payload["quantity"]);
+        self::assertSame(3, $this->entityManager->getRepository(CartItem::class)->count([]));
+    }
+
+    public function testAddItemIncreasesExistingQuantity(): void
+    {
+        $item = $this->firstItem($this->createCart(123));
+
+        $this->requestJson("POST", "/api/cart/items", 123, ["productId" => $item->getCatalogElementId(), "quantity" => 2]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_OK);
+        self::assertSame(3, $this->jsonResponse()["quantity"]);
+        self::assertSame(2, $this->entityManager->getRepository(CartItem::class)->count([]));
+    }
+
+    public function testAddItemChecksResultingQuantity(): void
+    {
+        $item = $this->firstItem($this->createCart(123));
+
+        $this->requestJson("POST", "/api/cart/items", 123, ["productId" => $item->getCatalogElementId(), "quantity" => 2]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_OK);
+        self::assertSame([
+            ["productId" => $item->getCatalogElementId(), "requestedQuantity" => 3],
+        ], $this->catalogStockRequests());
+    }
+
+    public function testAddItemChecksStockInsideTransaction(): void
+    {
+        $item = $this->firstItem($this->createCart(123));
+        $checkedInsideTransaction = false;
+
+        $this->setCatalogCheckStockCallback(function () use (&$checkedInsideTransaction): void {
+            $checkedInsideTransaction = $this->entityManager->getConnection()->isTransactionActive();
+        });
+
+        $this->requestJson("POST", "/api/cart/items", 123, ["productId" => $item->getCatalogElementId(), "quantity" => 2]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_OK);
+        self::assertTrue($checkedInsideTransaction);
+        self::assertSame(3, $this->jsonResponse()["quantity"]);
+    }
+
+    public function testAddItemReturnsNotFoundWhenProductIsMissing(): void
+    {
+        $this->setCatalogProductFound(false);
+
+        $this->requestJson("POST", "/api/cart/items", 123, ["productId" => 501, "quantity" => 2]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+        self::assertSame("Product was not found.", $this->jsonResponse()["message"]);
+        self::assertSame(0, $this->entityManager->getRepository(Cart::class)->count([]));
+        self::assertSame(0, $this->entityManager->getRepository(CartItem::class)->count([]));
+    }
+
+    public function testAddItemReturnsConflictWhenQuantityIsUnavailable(): void
+    {
+        $this->setCatalogStockAvailableQuantity(3);
+
+        $this->requestJson("POST", "/api/cart/items", 123, ["productId" => 501, "quantity" => 5]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
+        self::assertSame([
+            "message" => "Requested quantity is unavailable",
+            "productId" => 501,
+            "requestedQuantity" => 5,
+            "availableQuantity" => 3,
+        ], $this->jsonResponse());
+        self::assertSame(0, $this->entityManager->getRepository(Cart::class)->count([]));
+        self::assertSame(0, $this->entityManager->getRepository(CartItem::class)->count([]));
+    }
+
+    public function testAddItemRejectsInvalidProductId(): void
+    {
+        $this->requestJson("POST", "/api/cart/items", 123, ["productId" => 0, "quantity" => 2]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testAddItemRejectsInvalidQuantity(): void
+    {
+        $this->requestJson("POST", "/api/cart/items", 123, ["productId" => 501, "quantity" => 0]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testAddItemRejectsExtraFields(): void
+    {
+        $this->requestJson("POST", "/api/cart/items", 123, ["productId" => 501, "quantity" => 2, "ownerId" => 123]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testAddItemDoesNotChangeCartWhenGrpcFails(): void
+    {
+        $cart = $this->createCart(123, 1);
+        $item = $this->firstItem($cart);
+        $this->setCatalogInventoryFailure(true);
+
+        $this->requestJson("POST", "/api/cart/items", 123, ["productId" => $item->getCatalogElementId(), "quantity" => 2]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_SERVICE_UNAVAILABLE);
+        $this->entityManager->clear();
+        $persistedItem = $this->entityManager->find(CartItem::class, $item->getId());
+        self::assertInstanceOf(CartItem::class, $persistedItem);
+        self::assertSame(1, $persistedItem->getQuantity());
+        self::assertSame(1, $this->entityManager->getRepository(CartItem::class)->count([]));
+    }
+
     public function testUpdateQuantity(): void
     {
         $item = $this->firstItem($this->createCart(123));
@@ -55,6 +186,38 @@ class CartApiTest extends ApiTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame(7, $this->jsonResponse()["quantity"]);
+    }
+
+    public function testUpdateItemChecksStockInsideTransaction(): void
+    {
+        $item = $this->firstItem($this->createCart(123));
+        $checkedInsideTransaction = false;
+
+        $this->setCatalogCheckStockCallback(function () use (&$checkedInsideTransaction): void {
+            $checkedInsideTransaction = $this->entityManager->getConnection()->isTransactionActive();
+        });
+
+        $this->requestJson("PATCH", sprintf("/api/cart/items/%d", $item->getId()), 123, ["quantity" => 7]);
+
+        self::assertResponseIsSuccessful();
+        self::assertTrue($checkedInsideTransaction);
+        self::assertSame(7, $this->jsonResponse()["quantity"]);
+    }
+
+    public function testRejectsUnavailableQuantity(): void
+    {
+        $item = $this->firstItem($this->createCart(123));
+        $this->setCatalogStockAvailable(false);
+
+        $this->requestJson("PATCH", sprintf("/api/cart/items/%d", $item->getId()), 123, ["quantity" => 7]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        self::assertSame("Requested quantity exceeds available stock.", $this->jsonResponse()["message"]);
+
+        $this->entityManager->clear();
+        $persistedItem = $this->entityManager->find(CartItem::class, $item->getId());
+        self::assertInstanceOf(CartItem::class, $persistedItem);
+        self::assertSame(1, $persistedItem->getQuantity());
     }
 
     public function testUpdateSort(): void

@@ -106,12 +106,57 @@ class CatalogElementsRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    /**
+     * @param int[] $ids
+     *
+     * @return int[]
+     */
+    public function findExistingIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder("element")
+            ->select("element.id AS id")
+            ->andWhere("element.id IN (:ids)")
+            ->setParameter("ids", $ids)
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_map("intval", array_column($rows, "id"));
+    }
+
+    public function existsById(int $id): bool
+    {
+        return (bool) $this->createQueryBuilder("element")
+            ->select("1")
+            ->andWhere("element.id = :id")
+            ->setParameter("id", $id)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     public function findOneForInventoryCheck(int $id): ?CatalogElements
     {
         $queryBuilder = $this->createQueryBuilder("element");
 
         $this->addProductRelation($queryBuilder);
         $this->addStoreRelations($queryBuilder);
+
+        return $queryBuilder
+            ->andWhere("element.id = :id")
+            ->setParameter("id", $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function findOneForInventorySnapshot(int $id): ?CatalogElements
+    {
+        $queryBuilder = $this->createQueryBuilder("element");
+
+        $this->addProductRelation($queryBuilder);
 
         return $queryBuilder
             ->andWhere("element.id = :id")

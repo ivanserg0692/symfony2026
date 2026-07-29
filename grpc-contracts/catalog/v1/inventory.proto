@@ -7,6 +7,9 @@ option php_metadata_namespace = "Grpc\\Catalog\\V1\\GPBMetadata";
 
 service InventoryService {
   rpc CheckStock(CheckStockRequest) returns (CheckStockResponse);
+  rpc DeductStocks(DeductStocksRequest) returns (DeductStocksResponse);
+  rpc GetProductPrices(GetProductPricesRequest) returns (GetProductPricesResponse);
+  rpc GetProductSnapshots(GetProductSnapshotsRequest) returns (GetProductSnapshotsResponse);
 }
 
 message CheckStockRequest {
@@ -24,4 +27,76 @@ message CheckStockResponse {
 message StoreStock {
   int64 store_id = 1;
   int32 available_quantity = 2;
+}
+
+message DeductStocksRequest {
+  string operation_id = 1;
+  repeated DeductStockItem items = 2;
+}
+
+message DeductStockItem {
+  int64 product_id = 1;
+  int32 requested_quantity = 2;
+
+  oneof store_selector {
+    int64 store_id = 3;
+  }
+}
+
+message DeductStocksResponse {
+  string operation_id = 1;
+  repeated ProductDeduction products = 2;
+}
+
+message ProductDeduction {
+  int64 product_id = 1;
+  int32 total_deducted_quantity = 2;
+  repeated StoreDeduction stores = 3;
+  int64 product_snapshot_id = 4;
+}
+
+message StoreDeduction {
+  int64 store_id = 1;
+  int32 deducted_quantity = 2;
+}
+
+message GetProductPricesRequest {
+  repeated int64 product_ids = 1;
+}
+
+message GetProductPricesResponse {
+  repeated ProductPrice prices = 1;
+}
+
+message ProductPrice {
+  int64 product_id = 1;
+  // Money amounts are represented in minor currency units, for example 1050 means 10.50.
+  int64 unit_price_minor_units = 2;
+  int64 unit_discount_minor_units = 3;
+  int64 final_unit_price_minor_units = 4;
+}
+
+message GetProductSnapshotsRequest {
+  repeated int64 product_snapshot_ids = 1;
+}
+
+message GetProductSnapshotsResponse {
+  repeated ProductSnapshot snapshots = 1;
+}
+
+message ProductSnapshot {
+  int64 id = 1;
+  int64 original_product_id = 2;
+  SnapshotProduct product = 3;
+}
+
+message SnapshotProduct {
+  int64 id = 1;
+  string name = 2;
+  string created_at = 3;
+  bool active = 4;
+  int64 created_by = 5;
+  string description = 6;
+  string slug = 7;
+  string picture_id = 8;
 }

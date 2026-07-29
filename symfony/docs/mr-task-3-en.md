@@ -1,5 +1,23 @@
 # MR Task 3 Result Log
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Overview](#overview)
+- [Screenshots](#screenshots)
+  - [EasyAdmin 5 Installed](#easyadmin-5-installed)
+  - [Admin Login Form](#admin-login-form)
+  - [Admin Dashboard](#admin-dashboard)
+  - [User List](#user-list)
+  - [User Group Filter](#user-group-filter)
+  - [Filtered User List](#filtered-user-list)
+  - [JWT Auth Endpoints](#jwt-auth-endpoints)
+- [Updates for 2026-04-23](#updates-for-2026-04-23)
+- [Updates for 2026-04-24](#updates-for-2026-04-24)
+- [Updates for 2026-04-26](#updates-for-2026-04-26)
+
+<!-- END doctoc -->
+
 ## Overview
 
 This document captures the visible result of the current merge request related to the admin area and authentication flow.

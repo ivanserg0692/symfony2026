@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\StoresElementsStocks;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\LockMode;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -16,28 +17,37 @@ class StoresElementsStocksRepository extends ServiceEntityRepository
         parent::__construct($registry, StoresElementsStocks::class);
     }
 
-    //    /**
-    //     * @return StoresElementsStocks[] Returns an array of StoresElementsStocks objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('s')
-    //            ->andWhere('s.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('s.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    public function findOneForProductStoreWithWriteLock(int $productId, int $storeId): ?StoresElementsStocks
+    {
+        return $this->createQueryBuilder("stock")
+            ->addSelect("IDENTITY(stock.element) AS HIDDEN product_id")
+            ->addSelect("IDENTITY(stock.store) AS HIDDEN store_id")
+            ->andWhere("IDENTITY(stock.element) = :product_id")
+            ->andWhere("IDENTITY(stock.store) = :store_id")
+            ->setParameter("product_id", $productId)
+            ->setParameter("store_id", $storeId)
+            ->orderBy("product_id", "ASC")
+            ->addOrderBy("store_id", "ASC")
+            ->getQuery()
+            ->setLockMode(LockMode::PESSIMISTIC_WRITE)
+            ->getOneOrNullResult();
+    }
 
-    //    public function findOneBySomeField($value): ?StoresElementsStocks
-    //    {
-    //        return $this->createQueryBuilder('s')
-    //            ->andWhere('s.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    /**
+     * @return list<StoresElementsStocks>
+     */
+    public function findPositiveForProductWithWriteLock(int $productId): array
+    {
+        return $this->createQueryBuilder("stock")
+            ->addSelect("IDENTITY(stock.element) AS HIDDEN product_id")
+            ->addSelect("IDENTITY(stock.store) AS HIDDEN store_id")
+            ->andWhere("IDENTITY(stock.element) = :product_id")
+            ->andWhere("stock.stock > 0")
+            ->setParameter("product_id", $productId)
+            ->orderBy("product_id", "ASC")
+            ->addOrderBy("store_id", "ASC")
+            ->getQuery()
+            ->setLockMode(LockMode::PESSIMISTIC_WRITE)
+            ->getResult();
+    }
 }
