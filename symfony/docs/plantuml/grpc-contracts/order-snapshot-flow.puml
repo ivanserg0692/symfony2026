@@ -1,0 +1,59 @@
+@startuml
+!theme plain
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam wrapWidth 180
+skinparam maxMessageSize 180
+
+title Order Product Snapshot gRPC Flow
+
+actor "Client" as Client
+participant "nginx API Gateway" as Nginx
+participant "Cart/Order Service\nREST controller" as OrdersRest
+participant "Order repository" as OrderRepository
+participant "Catalog gRPC client" as CatalogClient
+participant "Catalog Service\nInventoryService" as CatalogGrpc
+database "Orders DB" as OrdersDb
+database "Catalog DB" as CatalogDb
+
+Client -> Nginx : GET /api/orders/{orderId}
+Nginx -> OrdersRest : REST/HTTP\ntrusted X-User-Id
+
+OrdersRest -> OrderRepository : find order by id and owner id
+OrderRepository -> OrdersDb : SELECT owned order
+OrdersDb --> OrderRepository : Order + OrderItems
+OrderRepository --> OrdersRest : owned order or not found
+
+alt order missing or belongs to another user
+  OrdersRest --> Nginx : 404 Not Found
+  Nginx --> Client : 404 Not Found
+else order belongs to user
+  OrdersRest -> OrdersRest : collect unique productSnapshotIds\nfrom authorized OrderItems
+  OrdersRest -> CatalogClient : GetProductSnapshots(ids)
+  CatalogClient -> CatalogGrpc : gRPC batch request
+  CatalogGrpc -> CatalogDb : SELECT ProductSnapshot rows
+  CatalogDb --> CatalogGrpc : snapshots
+  CatalogGrpc --> CatalogClient : ProductSnapshot messages
+  CatalogClient --> OrdersRest : snapshot DTOs
+  OrdersRest -> OrdersRest : map snapshots back to OrderItems
+  OrdersRest --> Nginx : order detail response
+  Nginx --> Client : 200 OK
+end
+
+note right of CatalogGrpc
+Catalog Service does not receive user id
+and does not authorize orders.
+It returns snapshots to trusted backend callers only.
+end note
+
+note over OrdersRest
+Authorization order:
+1. authenticated owner
+2. owned Order
+3. OrderItems
+4. snapshot ids
+5. batch gRPC request
+end note
+
+@enduml

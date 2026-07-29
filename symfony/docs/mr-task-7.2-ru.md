@@ -47,8 +47,36 @@ Merge request продолжает Task 7.2 и фокусируется на end
 
 ## Скриншоты
 
-Не применимо для backend gRPC integration work.
+Catalog gRPC performance profiler:
+
+![Catalog gRPC performance profiler](../../catalog-service/docs/images/grpc-performance.png)
+
+Order product snapshot gRPC flow:
+
+<!-- plantuml src="plantuml/grpc-contracts/order-snapshot-flow.puml" alt="Order product snapshot gRPC flow" out="images/plantuml/grpc-contracts/order-snapshot-flow.png" -->
+![Order product snapshot gRPC flow](images/plantuml/grpc-contracts/order-snapshot-flow.png)
+<!-- /plantuml -->
 
 ## Обновления
 
 Заметки по реализации будут добавляться сюда отдельными датированными секциями.
+
+### 2026-07-29
+
+Task 7.2 доведена до состояния готового backend MR scope.
+
+Добавлено:
+
+- Cart/Order Service вызывает Catalog Service по gRPC для cart add/update validation и order detail snapshot loading.
+- `GET /api/orders/{orderId}` сначала проверяет ownership заказа, затем собирает `productSnapshotId` только из `OrderItems` разрешенного заказа и делает один batch-вызов `GetProductSnapshots`.
+- `GET /api/orders` остается lightweight paginated list без полной подгрузки items и snapshots.
+- Product snapshot data возвращается через order detail response и не открывается через standalone public REST endpoint.
+- Исторический ответ заказа строится из snapshot data; текущий Product не используется для восстановления product fields заказа.
+- Цены заказа остаются в `OrderItem`, поэтому отсутствие price fields в snapshot не является проблемой.
+- Для Catalog gRPC добавлены performance logging и profiler view, чтобы видеть handler time, profiler save time и total processing time.
+- Cart add/update и checkout paths усилены transaction/locking behavior вокруг операций, которые читают и меняют состояние корзины.
+
+Связанная документация:
+
+- gRPC contracts: [grpc-contracts/README.md](../../grpc-contracts/README.md).
+- Proto source: [inventory.proto](../../grpc-contracts/catalog/v1/inventory.proto).

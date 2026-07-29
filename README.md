@@ -22,6 +22,7 @@
     - [`Task 7.2` - in progress](#task-72---in-progress)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
+  - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
   - [News Export and Batch Processing](#news-export-and-batch-processing)
   - [Run With Docker Compose](#run-with-docker-compose)
   - [Doctrine Database Setup](#doctrine-database-setup)
@@ -54,6 +55,7 @@
     - [`Task 7.2` - in progress](#task-72---in-progress-1)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
+  - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
   - [Экспорт новостей и batch-обработка](#%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D1%80%D1%82-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B5%D0%B9-%D0%B8-batch-%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0)
   - [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
   - [Настройка Doctrine и базы данных](#%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-doctrine-%D0%B8-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85)
@@ -239,6 +241,8 @@ The notification recipients are administrators resolved by the application, not 
 - Task file: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
 - MR result (EN): [symfony/docs/mr-task-7.2-en.md](symfony/docs/mr-task-7.2-en.md)
 - MR result (RU): [symfony/docs/mr-task-7.2-ru.md](symfony/docs/mr-task-7.2-ru.md)
+- gRPC contracts: [grpc-contracts/README.md](grpc-contracts/README.md)
+- Order snapshot flow diagram: [symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
 
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
@@ -248,6 +252,21 @@ A separate frontend application was developed with React and Refine:
 ![Frontend news list](symfony/docs/images/frontend/news_list.png)
 
 ![Frontend notification list](symfony/docs/images/frontend/notification_list.png)
+
+### gRPC Contracts and Service Flows
+
+Internal gRPC contracts are stored separately from generated PHP files and are documented in [grpc-contracts/README.md](grpc-contracts/README.md). The current Catalog contract source is [grpc-contracts/catalog/v1/inventory.proto](grpc-contracts/catalog/v1/inventory.proto).
+
+Task 7 captures the backend service architecture, while Task 7.2 documents the Cart/Order integration work:
+
+- Architecture task: [symfony/docs/task-7.md](symfony/docs/task-7.md)
+- Cart/Order gRPC task: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
+- Task 7.2 MR result EN: [symfony/docs/mr-task-7.2-en.md](symfony/docs/mr-task-7.2-en.md)
+- Task 7.2 MR result RU: [symfony/docs/mr-task-7.2-ru.md](symfony/docs/mr-task-7.2-ru.md)
+
+<!-- plantuml src="symfony/docs/plantuml/grpc-contracts/order-snapshot-flow.puml" alt="Order product snapshot gRPC flow" out="symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png" -->
+![Order product snapshot gRPC flow](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
+<!-- /plantuml -->
 
 ### News Export and Batch Processing
 
@@ -686,6 +705,8 @@ API отдает новости, аутентификацию, текущего 
 - Файл задачи: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
 - Результат MR (EN): [symfony/docs/mr-task-7.2-en.md](symfony/docs/mr-task-7.2-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-7.2-ru.md](symfony/docs/mr-task-7.2-ru.md)
+- gRPC-контракты: [grpc-contracts/README.md](grpc-contracts/README.md)
+- Диаграмма order snapshot flow: [symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
 
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:
@@ -695,6 +716,21 @@ API отдает новости, аутентификацию, текущего 
 ![Список новостей frontend](symfony/docs/images/frontend/news_list.png)
 
 ![Список уведомлений frontend](symfony/docs/images/frontend/notification_list.png)
+
+### gRPC-контракты и сервисные сценарии
+
+Внутренние gRPC-контракты хранятся отдельно от сгенерированных PHP-файлов и описаны в [grpc-contracts/README.md](grpc-contracts/README.md). Текущий source контракта Catalog Service: [grpc-contracts/catalog/v1/inventory.proto](grpc-contracts/catalog/v1/inventory.proto).
+
+Task 7 фиксирует архитектуру backend-сервисов, а Task 7.2 описывает Cart/Order integration work:
+
+- Архитектурная задача: [symfony/docs/task-7.md](symfony/docs/task-7.md)
+- Задача Cart/Order gRPC: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
+- Результат MR Task 7.2 EN: [symfony/docs/mr-task-7.2-en.md](symfony/docs/mr-task-7.2-en.md)
+- Результат MR Task 7.2 RU: [symfony/docs/mr-task-7.2-ru.md](symfony/docs/mr-task-7.2-ru.md)
+
+<!-- plantuml src="symfony/docs/plantuml/grpc-contracts/order-snapshot-flow.puml" alt="Order product snapshot gRPC flow" out="symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png" -->
+![Order product snapshot gRPC flow](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
+<!-- /plantuml -->
 
 ### Экспорт новостей и batch-обработка
 
