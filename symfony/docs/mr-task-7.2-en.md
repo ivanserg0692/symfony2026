@@ -1,5 +1,19 @@
 # MR Task 7.2 Result Log
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Overview](#overview)
+- [Scope](#scope)
+- [Target Endpoints](#target-endpoints)
+- [Out Of Scope](#out-of-scope)
+- [Security Notes](#security-notes)
+- [Screenshots](#screenshots)
+- [Updates](#updates)
+  - [2026-07-29](#2026-07-29)
+
+<!-- END doctoc -->
+
 ## Overview
 
 This document describes the visible result of merge request 10.

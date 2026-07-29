@@ -1,5 +1,19 @@
 # MR Task 4 Result Log
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Overview](#overview)
+- [Screenshots](#screenshots)
+  - [RabbitMQ Management UI](#rabbitmq-management-ui)
+- [Updates for 2026-04-29](#updates-for-2026-04-29)
+- [Updates for 2026-05-01](#updates-for-2026-05-01)
+  - [News Moderation Email Notification](#news-moderation-email-notification)
+  - [Notification API Endpoints](#notification-api-endpoints)
+  - [Symfony Notifier Channel for Entity Notifications](#symfony-notifier-channel-for-entity-notifications)
+
+<!-- END doctoc -->
+
 ## Overview
 
 This document captures the visible result of the current merge request related to notification infrastructure and asynchronous email delivery.

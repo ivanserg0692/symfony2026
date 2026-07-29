@@ -1,5 +1,24 @@
 # MR Task 6 Result Log
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Overview](#overview)
+- [Planned Result](#planned-result)
+- [Screenshots](#screenshots)
+- [Updates for 2026-05-07](#updates-for-2026-05-07)
+  - [Separate Frontend Application](#separate-frontend-application)
+  - [API Client and DataProvider](#api-client-and-dataprovider)
+  - [Authentication, CSRF, and Refresh](#authentication-csrf-and-refresh)
+  - [Login Form and Turnstile](#login-form-and-turnstile)
+  - [Localization](#localization)
+  - [Theme Provider](#theme-provider)
+  - [Layout and Breadcrumbs](#layout-and-breadcrumbs)
+  - [News Section](#news-section)
+  - [Refine CLI and Generated Code](#refine-cli-and-generated-code)
+
+<!-- END doctoc -->
+
 ## Overview
 
 This document describes the visible result of merge request 6.

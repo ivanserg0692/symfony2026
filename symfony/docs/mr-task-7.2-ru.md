@@ -1,5 +1,19 @@
 # Лог Результата MR Task 7.2
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Обзор](#%D0%BE%D0%B1%D0%B7%D0%BE%D1%80)
+- [Scope](#scope)
+- [Целевые endpoints](#%D1%86%D0%B5%D0%BB%D0%B5%D0%B2%D1%8B%D0%B5-endpoints)
+- [Вне Scope](#%D0%B2%D0%BD%D0%B5-scope)
+- [Security Notes](#security-notes)
+- [Скриншоты](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B)
+- [Обновления](#%D0%BE%D0%B1%D0%BD%D0%BE%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F)
+  - [2026-07-29](#2026-07-29)
+
+<!-- END doctoc -->
+
 ## Обзор
 
 Этот документ описывает видимый результат merge request 10.

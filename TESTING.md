@@ -1,5 +1,23 @@
 # Testing
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [English](#english)
+  - [Docker](#docker)
+  - [Catalog Service](#catalog-service)
+  - [Cart Service](#cart-service)
+  - [Protobuf Generation Before Tests](#protobuf-generation-before-tests)
+  - [Known Notes](#known-notes)
+- [Русский](#%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9)
+  - [Docker](#docker-1)
+  - [Catalog Service](#catalog-service-1)
+  - [Cart Service](#cart-service-1)
+  - [Генерация protobuf перед тестами](#%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B0%D1%86%D0%B8%D1%8F-protobuf-%D0%BF%D0%B5%D1%80%D0%B5%D0%B4-%D1%82%D0%B5%D1%81%D1%82%D0%B0%D0%BC%D0%B8)
+  - [Известные особенности](#%D0%B8%D0%B7%D0%B2%D0%B5%D1%81%D1%82%D0%BD%D1%8B%D0%B5-%D0%BE%D1%81%D0%BE%D0%B1%D0%B5%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8)
+
+<!-- END doctoc -->
+
 ## English
 
 ### Docker

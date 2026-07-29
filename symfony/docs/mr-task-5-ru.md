@@ -1,5 +1,24 @@
 # Лог Результата MR Task 5
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Обзор](#%D0%BE%D0%B1%D0%B7%D0%BE%D1%80)
+- [Планируемый результат](#%D0%BF%D0%BB%D0%B0%D0%BD%D0%B8%D1%80%D1%83%D0%B5%D0%BC%D1%8B%D0%B9-%D1%80%D0%B5%D0%B7%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%82)
+- [Скриншоты](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B)
+- [Доработки за 2026-05-02](#%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B8-%D0%B7%D0%B0-2026-05-02)
+- [Доработки за 2026-05-05](#%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B8-%D0%B7%D0%B0-2026-05-05)
+  - [Архитектура экспорта новостей через Messenger Batch](#%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0-%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D1%80%D1%82%D0%B0-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B5%D0%B9-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-messenger-batch)
+  - [Запуск экспорта](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D1%80%D1%82%D0%B0)
+  - [Batch-обработка messages](#batch-%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-messages)
+  - [Retry и ошибки](#retry-%D0%B8-%D0%BE%D1%88%D0%B8%D0%B1%D0%BA%D0%B8)
+  - [CSV chunks и порядок объединения](#csv-chunks-%D0%B8-%D0%BF%D0%BE%D1%80%D1%8F%D0%B4%D0%BE%D0%BA-%D0%BE%D0%B1%D1%8A%D0%B5%D0%B4%D0%B8%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F)
+  - [Финализация batch](#%D1%84%D0%B8%D0%BD%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-batch)
+  - [Админка и видимость результата](#%D0%B0%D0%B4%D0%BC%D0%B8%D0%BD%D0%BA%D0%B0-%D0%B8-%D0%B2%D0%B8%D0%B4%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C-%D1%80%D0%B5%D0%B7%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%82%D0%B0)
+  - [Разделение ответственности](#%D1%80%D0%B0%D0%B7%D0%B4%D0%B5%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D1%81%D1%82%D0%B2%D0%B5%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8)
+
+<!-- END doctoc -->
+
 ## Обзор
 
 Этот документ является заглушкой для видимого результата merge request 5.

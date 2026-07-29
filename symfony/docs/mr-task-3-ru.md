@@ -1,5 +1,23 @@
 # Лог Результата MR Task 3
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Обзор](#%D0%BE%D0%B1%D0%B7%D0%BE%D1%80)
+- [Скриншоты](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B)
+  - [Установка EasyAdmin 5](#%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-easyadmin-5)
+  - [Форма Входа Для Админки](#%D1%84%D0%BE%D1%80%D0%BC%D0%B0-%D0%B2%D1%85%D0%BE%D0%B4%D0%B0-%D0%B4%D0%BB%D1%8F-%D0%B0%D0%B4%D0%BC%D0%B8%D0%BD%D0%BA%D0%B8)
+  - [Dashboard Админки](#dashboard-%D0%B0%D0%B4%D0%BC%D0%B8%D0%BD%D0%BA%D0%B8)
+  - [Список Пользователей](#%D1%81%D0%BF%D0%B8%D1%81%D0%BE%D0%BA-%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D0%B5%D0%B9)
+  - [Фильтр Пользователей По Группе](#%D1%84%D0%B8%D0%BB%D1%8C%D1%82%D1%80-%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D0%B5%D0%B9-%D0%BF%D0%BE-%D0%B3%D1%80%D1%83%D0%BF%D0%BF%D0%B5)
+  - [Отфильтрованный Список Пользователей](#%D0%BE%D1%82%D1%84%D0%B8%D0%BB%D1%8C%D1%82%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D1%8B%D0%B9-%D1%81%D0%BF%D0%B8%D1%81%D0%BE%D0%BA-%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D0%B5%D0%B9)
+  - [JWT Auth Endpoints](#jwt-auth-endpoints)
+- [Доработки за 2026-04-23](#%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B8-%D0%B7%D0%B0-2026-04-23)
+- [Доработки за 2026-04-24](#%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B8-%D0%B7%D0%B0-2026-04-24)
+- [Доработки за 2026-04-26](#%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B8-%D0%B7%D0%B0-2026-04-26)
+
+<!-- END doctoc -->
+
 ## Обзор
 
 Этот документ фиксирует видимый результат текущего merge request, связанного с административной частью и потоком аутентификации.
