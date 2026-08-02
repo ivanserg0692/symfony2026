@@ -12,15 +12,15 @@
   - [Current Status](#current-status)
   - [Tech Stack and Component Roles](#tech-stack-and-component-roles)
   - [Tasks](#tasks)
-    - [`Task 1` - done](#task-1---done)
-    - [`Task 2` - done](#task-2---done)
-    - [`Task 3` - done](#task-3---done)
-    - [`Task 4` - done](#task-4---done)
-    - [`Task 5` - done](#task-5---done)
-    - [`Task 6` - done](#task-6---done)
-    - [`Task 7` - in progress](#task-7---in-progress)
-    - [`Task 7.1` - completed](#task-71---completed)
-    - [`Task 7.2` - completed](#task-72---completed)
+    - [`Task 1`: Swagger setup and baseline News API preparation - done](#task-1-swagger-setup-and-baseline-news-api-preparation---done)
+    - [`Task 2`: JWT authentication and authorization endpoints - done](#task-2-jwt-authentication-and-authorization-endpoints---done)
+    - [`Task 3`: Add access control for the News API - done](#task-3-add-access-control-for-the-news-api---done)
+    - [`Task 4`: Add email and internal notifications - done](#task-4-add-email-and-internal-notifications---done)
+    - [`Task 5`: Export news to S3 through a queue - done](#task-5-export-news-to-s3-through-a-queue---done)
+    - [`Task 6`: Refine frontend application for the existing API - done](#task-6-refine-frontend-application-for-the-existing-api---done)
+    - [`Task 7`: Backend service architecture with nginx API Gateway, main Symfony service, and internal gRPC - in progress](#task-7-backend-service-architecture-with-nginx-api-gateway-main-symfony-service-and-internal-grpc---in-progress)
+    - [`Task 7.1`: Develop Catalog Service and Order/Cart Service backend services - completed](#task-71-develop-catalog-service-and-ordercart-service-backend-services---completed)
+    - [`Task 7.2`: Complete Cart/Order endpoints that require gRPC integrations - completed](#task-72-complete-cartorder-endpoints-that-require-grpc-integrations---completed)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
   - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
@@ -46,15 +46,15 @@
   - [Текущий статус](#%D1%82%D0%B5%D0%BA%D1%83%D1%89%D0%B8%D0%B9-%D1%81%D1%82%D0%B0%D1%82%D1%83%D1%81)
   - [Технологический стек и назначение компонентов](#%D1%82%D0%B5%D1%85%D0%BD%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9-%D1%81%D1%82%D0%B5%D0%BA-%D0%B8-%D0%BD%D0%B0%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BA%D0%BE%D0%BC%D0%BF%D0%BE%D0%BD%D0%B5%D0%BD%D1%82%D0%BE%D0%B2)
   - [Задачи](#%D0%B7%D0%B0%D0%B4%D0%B0%D1%87%D0%B8)
-    - [`Task 1` - done](#task-1---done-1)
-    - [`Task 2` - done](#task-2---done-1)
-    - [`Task 3` - done](#task-3---done-1)
-    - [`Task 4` - done](#task-4---done-1)
-    - [`Task 5` - done](#task-5---done-1)
-    - [`Task 6` - done](#task-6---done-1)
-    - [`Task 7` - in progress](#task-7---in-progress-1)
-    - [`Task 7.1` - completed](#task-71---completed-1)
-    - [`Task 7.2` - completed](#task-72---completed-1)
+    - [`Task 1`: Запуск Swagger-документации и подготовка базового News API - done](#task-1-%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-swagger-%D0%B4%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D0%B8%D0%B8-%D0%B8-%D0%BF%D0%BE%D0%B4%D0%B3%D0%BE%D1%82%D0%BE%D0%B2%D0%BA%D0%B0-%D0%B1%D0%B0%D0%B7%D0%BE%D0%B2%D0%BE%D0%B3%D0%BE-news-api---done)
+    - [`Task 2`: Добавление JWT-аутентификации и ручек авторизации - done](#task-2-%D0%B4%D0%BE%D0%B1%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5-jwt-%D0%B0%D1%83%D1%82%D0%B5%D0%BD%D1%82%D0%B8%D1%84%D0%B8%D0%BA%D0%B0%D1%86%D0%B8%D0%B8-%D0%B8-%D1%80%D1%83%D1%87%D0%B5%D0%BA-%D0%B0%D0%B2%D1%82%D0%BE%D1%80%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8---done)
+    - [`Task 3`: Добавление проверки доступа к News API - done](#task-3-%D0%B4%D0%BE%D0%B1%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BF%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%BA%D0%B8-%D0%B4%D0%BE%D1%81%D1%82%D1%83%D0%BF%D0%B0-%D0%BA-news-api---done)
+    - [`Task 4`: Добавление уведомлений через email и внутренние notifications - done](#task-4-%D0%B4%D0%BE%D0%B1%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5-%D1%83%D0%B2%D0%B5%D0%B4%D0%BE%D0%BC%D0%BB%D0%B5%D0%BD%D0%B8%D0%B9-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-email-%D0%B8-%D0%B2%D0%BD%D1%83%D1%82%D1%80%D0%B5%D0%BD%D0%BD%D0%B8%D0%B5-notifications---done)
+    - [`Task 5`: Экспорт новостей в S3 через очередь - done](#task-5-%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D1%80%D1%82-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B5%D0%B9-%D0%B2-s3-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-%D0%BE%D1%87%D0%B5%D1%80%D0%B5%D0%B4%D1%8C---done)
+    - [`Task 6`: Frontend-приложение на refine для существующего API - done](#task-6-frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BD%D0%B0-refine-%D0%B4%D0%BB%D1%8F-%D1%81%D1%83%D1%89%D0%B5%D1%81%D1%82%D0%B2%D1%83%D1%8E%D1%89%D0%B5%D0%B3%D0%BE-api---done)
+    - [`Task 7`: Архитектура backend-сервисов с nginx API Gateway, основным Symfony-сервисом и внутренним gRPC - in progress](#task-7-%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0-backend-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-%D1%81-nginx-api-gateway-%D0%BE%D1%81%D0%BD%D0%BE%D0%B2%D0%BD%D1%8B%D0%BC-symfony-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%BC-%D0%B8-%D0%B2%D0%BD%D1%83%D1%82%D1%80%D0%B5%D0%BD%D0%BD%D0%B8%D0%BC-grpc---in-progress)
+    - [`Task 7.1`: Разработка backend-сервисов Catalog Service и Order/Cart Service - completed](#task-71-%D1%80%D0%B0%D0%B7%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-backend-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-catalog-service-%D0%B8-ordercart-service---completed)
+    - [`Task 7.2`: Доработка Cart/Order endpoints, которым нужны gRPC-интеграции - completed](#task-72-%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-cartorder-endpoints-%D0%BA%D0%BE%D1%82%D0%BE%D1%80%D1%8B%D0%BC-%D0%BD%D1%83%D0%B6%D0%BD%D1%8B-grpc-%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D0%B8---completed)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
   - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
@@ -209,47 +209,47 @@ The notification recipients are administrators resolved by the application, not 
 
 ### Tasks
 
-#### `Task 1` - done
+#### `Task 1`: Swagger setup and baseline News API preparation - done
 - Task file: [symfony/docs/task-1.md](symfony/docs/task-1.md)
 - Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
-#### `Task 2` - done
+#### `Task 2`: JWT authentication and authorization endpoints - done
 - Merge Request 2: <https://github.com/ivanserg0692/symfony2026/pull/2>
 - Task file: [symfony/docs/task-2.md](symfony/docs/task-2.md)
 - MR result: [symfony/docs/mr-task-2.md](symfony/docs/mr-task-2.md)
-#### `Task 3` - done
+#### `Task 3`: Add access control for the News API - done
 - Merge Request 3: <https://github.com/ivanserg0692/symfony2026/pull/3>
 - Task file: [symfony/docs/task-3.md](symfony/docs/task-3.md)
 - MR result (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - MR result (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
-#### `Task 4` - done
+#### `Task 4`: Add email and internal notifications - done
 - Merge Request 4: <https://github.com/ivanserg0692/symfony2026/pull/4>
 - Task file: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 - MR result (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
 - MR result (RU): [symfony/docs/mr-task-4-ru.md](symfony/docs/mr-task-4-ru.md)
-#### `Task 5` - done
+#### `Task 5`: Export news to S3 through a queue - done
 - Merge Request 5: <https://github.com/ivanserg0692/symfony2026/pull/5>
 - Task file: [symfony/docs/task-5.md](symfony/docs/task-5.md)
 - MR result (EN): [symfony/docs/mr-task-5-en.md](symfony/docs/mr-task-5-en.md)
 - MR result (RU): [symfony/docs/mr-task-5-ru.md](symfony/docs/mr-task-5-ru.md)
-#### `Task 6` - done
+#### `Task 6`: Refine frontend application for the existing API - done
 - Backend Merge Request 6: <https://github.com/ivanserg0692/symfony2026/pull/6>
 - Frontend Merge Request 6: <https://github.com/ivanserg0692/symfony2026-frontend/pull/1>
 - Task file: [symfony/docs/task-6.md](symfony/docs/task-6.md)
 - MR result (EN): [symfony/docs/mr-task-6-en.md](symfony/docs/mr-task-6-en.md)
 - MR result (RU): [symfony/docs/mr-task-6-ru.md](symfony/docs/mr-task-6-ru.md)
-#### `Task 7` - in progress
+#### `Task 7`: Backend service architecture with nginx API Gateway, main Symfony service, and internal gRPC - in progress
 - Backend Merge Request 7: <https://github.com/ivanserg0692/symfony2026/pull/7>
 - Frontend Merge Request 7: TBD
 - Task file: [symfony/docs/task-7.md](symfony/docs/task-7.md)
 - MR result (EN): [symfony/docs/mr-task-7-en.md](symfony/docs/mr-task-7-en.md)
 - MR result (RU): [symfony/docs/mr-task-7-ru.md](symfony/docs/mr-task-7-ru.md)
-#### `Task 7.1` - completed
+#### `Task 7.1`: Develop Catalog Service and Order/Cart Service backend services - completed
 - Backend Merge Request 7.1: <https://github.com/ivanserg0692/symfony2026/pull/9>
 - Frontend Merge Request 7.1: TBD
 - Task file: [symfony/docs/task-7-1.md](symfony/docs/task-7-1.md)
 - MR result (EN): [symfony/docs/mr-task-7-1-en.md](symfony/docs/mr-task-7-1-en.md)
 - MR result (RU): [symfony/docs/mr-task-7-1-ru.md](symfony/docs/mr-task-7-1-ru.md)
-#### `Task 7.2` - completed
+#### `Task 7.2`: Complete Cart/Order endpoints that require gRPC integrations - completed
 - Backend Merge Request 7.2: <https://github.com/ivanserg0692/symfony2026/pull/10>
 - Frontend Merge Request 7.2: TBD
 - Task file: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
@@ -690,47 +690,47 @@ Product snapshots не отдаются через отдельную публи
 
 ### Задачи
 
-#### `Task 1` - done
+#### `Task 1`: Запуск Swagger-документации и подготовка базового News API - done
 - Файл задачи: [symfony/docs/task-1.md](symfony/docs/task-1.md)
 - Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
-#### `Task 2` - done
+#### `Task 2`: Добавление JWT-аутентификации и ручек авторизации - done
 -  Merge Request 2: <https://github.com/ivanserg0692/symfony2026/pull/2>
 - Файл задачи: [symfony/docs/task-2.md](symfony/docs/task-2.md)
 - Результат MR: [symfony/docs/mr-task-2.md](symfony/docs/mr-task-2.md)
-#### `Task 3` - done
+#### `Task 3`: Добавление проверки доступа к News API - done
 - Merge Request 3: <https://github.com/ivanserg0692/symfony2026/pull/3>
 - Файл задачи: [symfony/docs/task-3.md](symfony/docs/task-3.md)
 - Результат MR (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
-#### `Task 4` - done
+#### `Task 4`: Добавление уведомлений через email и внутренние notifications - done
 - Merge Request 4: <https://github.com/ivanserg0692/symfony2026/pull/4>
 - Файл задачи: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 - Результат MR (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-4-ru.md](symfony/docs/mr-task-4-ru.md)
-#### `Task 5` - done
+#### `Task 5`: Экспорт новостей в S3 через очередь - done
 - Merge Request 5: <https://github.com/ivanserg0692/symfony2026/pull/5>
 - Файл задачи: [symfony/docs/task-5.md](symfony/docs/task-5.md)
 - Результат MR (EN): [symfony/docs/mr-task-5-en.md](symfony/docs/mr-task-5-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-5-ru.md](symfony/docs/mr-task-5-ru.md)
-#### `Task 6` - done
+#### `Task 6`: Frontend-приложение на refine для существующего API - done
 - Backend Merge Request 6: <https://github.com/ivanserg0692/symfony2026/pull/6>
 - Frontend Merge Request 6: <https://github.com/ivanserg0692/symfony2026-frontend/pull/1>
 - Файл задачи: [symfony/docs/task-6.md](symfony/docs/task-6.md)
 - Результат MR (EN): [symfony/docs/mr-task-6-en.md](symfony/docs/mr-task-6-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-6-ru.md](symfony/docs/mr-task-6-ru.md)
-#### `Task 7` - in progress
+#### `Task 7`: Архитектура backend-сервисов с nginx API Gateway, основным Symfony-сервисом и внутренним gRPC - in progress
 - Backend Merge Request 7: <https://github.com/ivanserg0692/symfony2026/pull/7>
 - Frontend Merge Request 7: TBD
 - Файл задачи: [symfony/docs/task-7.md](symfony/docs/task-7.md)
 - Результат MR (EN): [symfony/docs/mr-task-7-en.md](symfony/docs/mr-task-7-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-7-ru.md](symfony/docs/mr-task-7-ru.md)
-#### `Task 7.1` - completed
+#### `Task 7.1`: Разработка backend-сервисов Catalog Service и Order/Cart Service - completed
 - Backend Merge Request 7.1: <https://github.com/ivanserg0692/symfony2026/pull/9>
 - Frontend Merge Request 7.1: TBD
 - Файл задачи: [symfony/docs/task-7-1.md](symfony/docs/task-7-1.md)
 - Результат MR (EN): [symfony/docs/mr-task-7-1-en.md](symfony/docs/mr-task-7-1-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-7-1-ru.md](symfony/docs/mr-task-7-1-ru.md)
-#### `Task 7.2` - completed
+#### `Task 7.2`: Доработка Cart/Order endpoints, которым нужны gRPC-интеграции - completed
 - Backend Merge Request 7.2: <https://github.com/ivanserg0692/symfony2026/pull/10>
 - Frontend Merge Request 7.2: TBD
 - Файл задачи: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
