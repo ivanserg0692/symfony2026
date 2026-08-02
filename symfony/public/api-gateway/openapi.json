@@ -11,9 +11,6 @@
       "description": "Local API Gateway"
     }
   ],
-  "x-generated-by": "npm run gateway:generate",
-  "x-source-manifest": "api-gateway/routes.json",
-  "x-generated-note": "This file is generated automatically. Edit api-gateway/routes.json and rerun npm run gateway:generate.",
   "paths": {
     "/api/v1/auth/me": {
       "get": {
@@ -2297,5 +2294,9 @@
     {
       "name": "Users"
     }
-  ]
+  ],
+  "x-generated-by": "npm run gateway:generate",
+  "x-source-manifest": "api-gateway/routes.json",
+  "x-openapi-header": "api-gateway/openapi-header.json",
+  "x-generated-note": "This file is generated automatically. Edit api-gateway/routes.json or api-gateway/openapi-header.json and rerun npm run gateway:generate."
 }

@@ -1,0 +1,14 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Symfony2026 API Gateway",
+    "description": "Public REST/HTTP API contract exposed through the nginx API Gateway.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8001",
+      "description": "Local API Gateway"
+    }
+  ]
+}

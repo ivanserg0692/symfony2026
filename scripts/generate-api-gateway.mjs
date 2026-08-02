@@ -6,6 +6,7 @@ import { dirname, resolve } from 'node:path';
 
 const METHOD_ORDER = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
 const CONFIG_PATH = 'api-gateway/routes.json';
+const OPENAPI_HEADER_PATH = 'api-gateway/openapi-header.json';
 const NGINX_ROUTES_OUTPUT_PATH = 'docker/nginx/snippets/generated-api-gateway-routes.conf';
 const OPENAPI_OUTPUT_PATH = 'symfony/public/api-gateway/openapi.json';
 
@@ -18,7 +19,7 @@ function main() {
 }
 
 function validateConfig(config) {
-  for (const name of ['info', 'servers', 'openapiSources', 'routes']) {
+  for (const name of ['openapiSources', 'routes']) {
     if (!config[name]) {
       throw new Error(`Missing API Gateway config section: ${name}`);
     }
@@ -89,25 +90,24 @@ function renderRoute(route) {
 
 function buildGatewayOpenApi(config) {
   const sourceCache = new Map();
-  const gateway = {
-    openapi: '3.0.0',
-    info: config.info,
-    servers: config.servers,
-    'x-generated-by': 'npm run gateway:generate',
-    'x-source-manifest': CONFIG_PATH,
-    'x-generated-note': 'This file is generated automatically. Edit api-gateway/routes.json and rerun npm run gateway:generate.',
-    paths: {},
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-        },
-      },
+  const gateway = readOpenApiHeader();
+
+  gateway['x-generated-by'] = 'npm run gateway:generate';
+  gateway['x-source-manifest'] = CONFIG_PATH;
+  gateway['x-openapi-header'] = OPENAPI_HEADER_PATH;
+  gateway['x-generated-note'] = 'This file is generated automatically. Edit api-gateway/routes.json or api-gateway/openapi-header.json and rerun npm run gateway:generate.';
+  gateway.paths = {};
+  gateway.components ??= {};
+  gateway.components.securitySchemes = {
+    ...gateway.components.securitySchemes,
+    bearerAuth: {
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
     },
-    tags: [],
   };
+  gateway.tags ??= [];
+
   const sourceNames = new Set();
 
   for (const route of config.routes) {
@@ -139,6 +139,26 @@ function buildGatewayOpenApi(config) {
   gateway.tags = gateway.tags.sort((left, right) => String(left.name ?? '').localeCompare(String(right.name ?? '')));
 
   return gateway;
+}
+
+function readOpenApiHeader() {
+  const header = readJson(OPENAPI_HEADER_PATH);
+
+  return {
+    ...header,
+    paths: {
+      ...header.paths,
+    },
+    components: {
+      ...header.components,
+      securitySchemes: {
+        ...header.components?.securitySchemes,
+      },
+    },
+    tags: [
+      ...(header.tags ?? []),
+    ],
+  };
 }
 
 function readOpenApiSource(name, sourceConfig, sourceCache) {
