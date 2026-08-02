@@ -110,6 +110,8 @@ The public REST/HTTP entrypoint is the API Gateway. Backend service endpoints ar
 ![External API request workflow](symfony/docs/images/plantuml/service-architecture/request-workflow.png)
 <!-- /plantuml -->
 
+Gateway routes are described in `api-gateway/routes.json`. Run `npm run gateway:generate` to regenerate the nginx gateway config and the public gateway OpenAPI contract at `symfony/public/api-gateway/openapi.json`. Service OpenAPI specs remain internal source contracts; the gateway spec is the public client contract.
+
 ### Project Features
 
 - JWT authentication with access tokens, refresh tokens, HttpOnly cookies, CSRF protection for unsafe API methods, login throttling, and Cloudflare Turnstile validation.
@@ -650,6 +652,8 @@ API отдает новости, аутентификацию, текущего 
 <!-- plantuml src="symfony/docs/plantuml/service-architecture/request-workflow.puml" alt="Workflow внешнего API-запроса" out="symfony/docs/images/plantuml/service-architecture/request-workflow.png" -->
 ![Workflow внешнего API-запроса](symfony/docs/images/plantuml/service-architecture/request-workflow.png)
 <!-- /plantuml -->
+
+Маршруты gateway описываются в `api-gateway/routes.json`. Команда `npm run gateway:generate` пересобирает nginx-конфиг gateway и публичный OpenAPI-контракт gateway в `symfony/public/api-gateway/openapi.json`. OpenAPI-спеки сервисов остаются внутренними source contracts; публичным клиентским контрактом является gateway spec.
 
 ### Возможности проекта
 
