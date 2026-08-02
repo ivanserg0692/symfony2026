@@ -5,10 +5,12 @@
 - [English](#english)
   - [Overview](#overview)
   - [Service Architecture](#service-architecture)
+    - [API Gateway](#api-gateway)
   - [Project Features](#project-features)
   - [Application Areas](#application-areas)
   - [Online Store Domain](#online-store-domain)
   - [API Endpoints](#api-endpoints)
+    - [API Gateway Public API](#api-gateway-public-api)
     - [Symfony API](#symfony-api)
     - [Catalog Service API](#catalog-service-api)
     - [Cart Service API](#cart-service-api)
@@ -25,7 +27,7 @@
     - [`Task 7`: Backend service architecture with nginx API Gateway, main Symfony service, and internal gRPC - in progress](#task-7-backend-service-architecture-with-nginx-api-gateway-main-symfony-service-and-internal-grpc---in-progress)
     - [`Task 7.1`: Develop Catalog Service and Order/Cart Service backend services - completed](#task-71-develop-catalog-service-and-ordercart-service-backend-services---completed)
     - [`Task 7.2`: Complete Cart/Order endpoints that require gRPC integrations - completed](#task-72-complete-cartorder-endpoints-that-require-grpc-integrations---completed)
-    - [`Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - in progress](#task-73-implement-the-external-api-gateway-for-the-public-resthttp-contract---in-progress)
+    - [`Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - completed](#task-73-implement-the-external-api-gateway-for-the-public-resthttp-contract---completed)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
   - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
@@ -44,10 +46,12 @@
 - [Русский](#%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9)
   - [Обзор](#%D0%BE%D0%B1%D0%B7%D0%BE%D1%80)
   - [Архитектура сервисов](#%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2)
+    - [API Gateway](#api-gateway-1)
   - [Возможности проекта](#%D0%B2%D0%BE%D0%B7%D0%BC%D0%BE%D0%B6%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0)
   - [Области приложения](#%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F)
   - [Домен интернет-магазина](#%D0%B4%D0%BE%D0%BC%D0%B5%D0%BD-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0)
   - [API Endpoints](#api-endpoints-1)
+    - [API Gateway Public API](#api-gateway-public-api-1)
     - [Symfony API](#symfony-api-1)
     - [Catalog Service API](#catalog-service-api-1)
     - [Cart Service API](#cart-service-api-1)
@@ -64,7 +68,7 @@
     - [`Task 7`: Архитектура backend-сервисов с nginx API Gateway, основным Symfony-сервисом и внутренним gRPC - in progress](#task-7-%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0-backend-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-%D1%81-nginx-api-gateway-%D0%BE%D1%81%D0%BD%D0%BE%D0%B2%D0%BD%D1%8B%D0%BC-symfony-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%BC-%D0%B8-%D0%B2%D0%BD%D1%83%D1%82%D1%80%D0%B5%D0%BD%D0%BD%D0%B8%D0%BC-grpc---in-progress)
     - [`Task 7.1`: Разработка backend-сервисов Catalog Service и Order/Cart Service - completed](#task-71-%D1%80%D0%B0%D0%B7%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-backend-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-catalog-service-%D0%B8-ordercart-service---completed)
     - [`Task 7.2`: Доработка Cart/Order endpoints, которым нужны gRPC-интеграции - completed](#task-72-%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-cartorder-endpoints-%D0%BA%D0%BE%D1%82%D0%BE%D1%80%D1%8B%D0%BC-%D0%BD%D1%83%D0%B6%D0%BD%D1%8B-grpc-%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D0%B8---completed)
-    - [`Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - in progress](#task-73-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B5%D0%B3%D0%BE-api-gateway-%D0%B4%D0%BB%D1%8F-%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D0%BE%D0%B3%D0%BE-resthttp-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D0%B0---in-progress)
+    - [`Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - completed](#task-73-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B5%D0%B3%D0%BE-api-gateway-%D0%B4%D0%BB%D1%8F-%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D0%BE%D0%B3%D0%BE-resthttp-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D0%B0---completed)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
   - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
@@ -110,7 +114,20 @@ The public REST/HTTP entrypoint is the API Gateway. Backend service endpoints ar
 ![External API request workflow](symfony/docs/images/plantuml/service-architecture/request-workflow.png)
 <!-- /plantuml -->
 
-Gateway routes are described in `api-gateway/routes.json`. Run `npm run gateway:generate` to regenerate the nginx gateway config and the public gateway OpenAPI contract at `symfony/public/api-gateway/openapi.json`. Service OpenAPI specs remain internal source contracts; the gateway spec is the public client contract.
+#### API Gateway
+
+The `api-gateway` service is the public REST/HTTP entrypoint for client applications. It is implemented with nginx and routes external `/api/v1/...` requests to the internal Symfony, Catalog, and Cart service routes.
+
+Gateway routing is described in `api-gateway/routes.json`. The base public OpenAPI metadata is stored separately in `api-gateway/openapi-header.json`, so common OpenAPI fields can be changed without editing the route manifest or generated files.
+
+Run `npm run gateway:generate` to regenerate both Gateway artifacts from the same source configuration:
+
+- nginx route config: `docker/nginx/snippets/generated-api-gateway-routes.conf`;
+- public Gateway OpenAPI contract: `symfony/public/api-gateway/openapi.json`.
+
+The generator implementation lives in `scripts/generate-api-gateway.mjs`. Shared nginx proxy/auth settings live in `docker/nginx/snippets/`.
+
+Service OpenAPI specs remain internal source contracts. The generated Gateway OpenAPI spec is the public client contract.
 
 ### Project Features
 
@@ -145,7 +162,41 @@ Product snapshots are not exposed through a standalone public REST endpoint. Car
 
 ### API Endpoints
 
-The endpoint tables below describe internal service endpoints generated from each service OpenAPI contract. The external public API surface is defined separately at the API Gateway level.
+The API Gateway table below describes the external public API surface exposed to REST/HTTP clients. It is generated from the Gateway OpenAPI contract.
+
+#### API Gateway Public API
+
+<!-- START api-endpoints service=api-gateway locale=en sourceType=file source=symfony/public/api-gateway/openapi.json -->
+| Method | Path | Summary |
+| --- | --- | --- |
+| `GET` | `/api/v1/auth/me` | Get current authenticated user |
+| `GET` | `/api/v1/cart` | Get current cart |
+| `DELETE` | `/api/v1/cart` | Clear current cart |
+| `POST` | `/api/v1/cart/items` | Add cart item |
+| `PATCH` | `/api/v1/cart/items/{itemId}` | Update cart item |
+| `DELETE` | `/api/v1/cart/items/{itemId}` | Delete cart item |
+| `GET` | `/api/v1/catalog/elements` | List catalog elements |
+| `GET` | `/api/v1/catalog/elements/{id}` | Get catalog element |
+| `GET` | `/api/v1/catalog/sections` | List active catalog sections |
+| `GET` | `/api/v1/catalog/sections/{id}` | Get catalog section |
+| `GET` | `/api/v1/news` | Paginated list of news. |
+| `GET` | `/api/v1/news/{slug}` | News item. |
+| `GET` | `/api/v1/notification` | Paginated list of current user notifications. |
+| `DELETE` | `/api/v1/notification` | Current user notifications deleted. |
+| `GET` | `/api/v1/notification/{id}` | Notification item. |
+| `DELETE` | `/api/v1/notification/{id}` | Notification deleted. |
+| `PATCH` | `/api/v1/notification/{id}/read` | Notification marked as read. |
+| `GET` | `/api/v1/orders` | List orders |
+| `POST` | `/api/v1/orders` | Create order |
+| `GET` | `/api/v1/orders/{orderId}` | Get order |
+| `POST` | `/api/v1/orders/{orderId}/cancel` | Cancel order |
+| `GET` | `/api/v1/ping` | Ping API v1 |
+| `GET` | `/api/v1/stores` | List active stores |
+| `GET` | `/api/v1/stores/{id}` | Get store |
+| `GET` | `/api/v1/users` | List users |
+<!-- END api-endpoints service=api-gateway locale=en -->
+
+The service tables below describe internal service endpoints generated from each service OpenAPI contract.
 
 #### Symfony API
 
@@ -325,11 +376,13 @@ The notification recipients are administrators resolved by the application, not 
 - gRPC contracts: [grpc-contracts/README.md](grpc-contracts/README.md)
 - Testing documentation: [TESTING.md](TESTING.md)
 - Order snapshot flow diagram: [symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
-#### `Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - in progress
+#### `Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - completed
 - Brief info: Implement nginx API Gateway as the only external REST/HTTP entrypoint and keep service OpenAPI endpoints internal.
 - Backend Merge Request 7.3: https://github.com/ivanserg0692/symfony2026/pull/11
 - Frontend Merge Request 7.3: TBD
 - Task file: [symfony/docs/task-7.3.md](symfony/docs/task-7.3.md)
+- MR result (EN): [symfony/docs/mr-task-7.3-en.md](symfony/docs/mr-task-7.3-en.md)
+- MR result (RU): [symfony/docs/mr-task-7.3-ru.md](symfony/docs/mr-task-7.3-ru.md)
 
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
@@ -653,7 +706,20 @@ API отдает новости, аутентификацию, текущего 
 ![Workflow внешнего API-запроса](symfony/docs/images/plantuml/service-architecture/request-workflow.png)
 <!-- /plantuml -->
 
-Маршруты gateway описываются в `api-gateway/routes.json`. Команда `npm run gateway:generate` пересобирает nginx-конфиг gateway и публичный OpenAPI-контракт gateway в `symfony/public/api-gateway/openapi.json`. OpenAPI-спеки сервисов остаются внутренними source contracts; публичным клиентским контрактом является gateway spec.
+#### API Gateway
+
+Сервис `api-gateway` является публичной REST/HTTP-точкой входа для клиентских приложений. Он реализован на nginx и маршрутизирует внешние запросы `/api/v1/...` во внутренние routes Symfony, Catalog и Cart services.
+
+Маршрутизация gateway описывается в `api-gateway/routes.json`. Базовые публичные OpenAPI-метаданные вынесены отдельно в `api-gateway/openapi-header.json`, чтобы общие поля OpenAPI можно было менять без правки route manifest и generated files.
+
+Команда `npm run gateway:generate` пересобирает оба gateway artifact из одной source configuration:
+
+- nginx route config: `docker/nginx/snippets/generated-api-gateway-routes.conf`;
+- публичный Gateway OpenAPI contract: `symfony/public/api-gateway/openapi.json`.
+
+Реализация генератора находится в `scripts/generate-api-gateway.mjs`. Общие nginx proxy/auth настройки находятся в `docker/nginx/snippets/`.
+
+OpenAPI-спеки сервисов остаются внутренними source contracts. Сгенерированная Gateway OpenAPI spec является публичным клиентским контрактом.
 
 ### Возможности проекта
 
@@ -688,7 +754,41 @@ Product snapshots не отдаются через отдельную публи
 
 ### API Endpoints
 
-Таблицы ниже описывают внутренние endpoints сервисов, сгенерированные из OpenAPI-контракта каждого сервиса. Внешняя публичная поверхность API определяется отдельно на уровне API Gateway.
+Таблица API Gateway ниже описывает внешнюю публичную API-поверхность для REST/HTTP клиентов. Она генерируется из Gateway OpenAPI contract.
+
+#### API Gateway Public API
+
+<!-- START api-endpoints service=api-gateway locale=ru sourceType=file source=symfony/public/api-gateway/openapi.json -->
+| Method | Path | Описание из OpenAPI |
+| --- | --- | --- |
+| `GET` | `/api/v1/auth/me` | Get current authenticated user |
+| `GET` | `/api/v1/cart` | Get current cart |
+| `DELETE` | `/api/v1/cart` | Clear current cart |
+| `POST` | `/api/v1/cart/items` | Add cart item |
+| `PATCH` | `/api/v1/cart/items/{itemId}` | Update cart item |
+| `DELETE` | `/api/v1/cart/items/{itemId}` | Delete cart item |
+| `GET` | `/api/v1/catalog/elements` | List catalog elements |
+| `GET` | `/api/v1/catalog/elements/{id}` | Get catalog element |
+| `GET` | `/api/v1/catalog/sections` | List active catalog sections |
+| `GET` | `/api/v1/catalog/sections/{id}` | Get catalog section |
+| `GET` | `/api/v1/news` | Paginated list of news. |
+| `GET` | `/api/v1/news/{slug}` | News item. |
+| `GET` | `/api/v1/notification` | Paginated list of current user notifications. |
+| `DELETE` | `/api/v1/notification` | Current user notifications deleted. |
+| `GET` | `/api/v1/notification/{id}` | Notification item. |
+| `DELETE` | `/api/v1/notification/{id}` | Notification deleted. |
+| `PATCH` | `/api/v1/notification/{id}/read` | Notification marked as read. |
+| `GET` | `/api/v1/orders` | List orders |
+| `POST` | `/api/v1/orders` | Create order |
+| `GET` | `/api/v1/orders/{orderId}` | Get order |
+| `POST` | `/api/v1/orders/{orderId}/cancel` | Cancel order |
+| `GET` | `/api/v1/ping` | Ping API v1 |
+| `GET` | `/api/v1/stores` | List active stores |
+| `GET` | `/api/v1/stores/{id}` | Get store |
+| `GET` | `/api/v1/users` | List users |
+<!-- END api-endpoints service=api-gateway locale=ru -->
+
+Таблицы сервисов ниже описывают внутренние service endpoints, сгенерированные из OpenAPI-контракта каждого сервиса.
 
 #### Symfony API
 
@@ -868,11 +968,13 @@ Product snapshots не отдаются через отдельную публи
 - gRPC-контракты: [grpc-contracts/README.md](grpc-contracts/README.md)
 - Документация тестирования: [TESTING.md](TESTING.md)
 - Диаграмма order snapshot flow: [symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
-#### `Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - in progress
+#### `Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - completed
 - Brief info: Реализовать nginx API Gateway как единственную внешнюю REST/HTTP точку входа и оставить OpenAPI endpoints сервисов внутренними.
 - Backend Merge Request 7.3: https://github.com/ivanserg0692/symfony2026/pull/11
 - Frontend Merge Request 7.3: TBD
 - Файл задачи: [symfony/docs/task-7.3.md](symfony/docs/task-7.3.md)
+- Результат MR (EN): [symfony/docs/mr-task-7.3-en.md](symfony/docs/mr-task-7.3-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-7.3-ru.md](symfony/docs/mr-task-7.3-ru.md)
 
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:
