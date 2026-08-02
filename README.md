@@ -24,7 +24,7 @@
     - [`Task 7`: Backend service architecture with nginx API Gateway, main Symfony service, and internal gRPC - in progress](#task-7-backend-service-architecture-with-nginx-api-gateway-main-symfony-service-and-internal-grpc---in-progress)
     - [`Task 7.1`: Develop Catalog Service and Order/Cart Service backend services - completed](#task-71-develop-catalog-service-and-ordercart-service-backend-services---completed)
     - [`Task 7.2`: Complete Cart/Order endpoints that require gRPC integrations - completed](#task-72-complete-cartorder-endpoints-that-require-grpc-integrations---completed)
-    - [`Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - planned](#task-73-implement-the-external-api-gateway-for-the-public-resthttp-contract---planned)
+    - [`Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - in progress](#task-73-implement-the-external-api-gateway-for-the-public-resthttp-contract---in-progress)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
   - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
@@ -62,7 +62,7 @@
     - [`Task 7`: Архитектура backend-сервисов с nginx API Gateway, основным Symfony-сервисом и внутренним gRPC - in progress](#task-7-%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0-backend-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-%D1%81-nginx-api-gateway-%D0%BE%D1%81%D0%BD%D0%BE%D0%B2%D0%BD%D1%8B%D0%BC-symfony-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%BC-%D0%B8-%D0%B2%D0%BD%D1%83%D1%82%D1%80%D0%B5%D0%BD%D0%BD%D0%B8%D0%BC-grpc---in-progress)
     - [`Task 7.1`: Разработка backend-сервисов Catalog Service и Order/Cart Service - completed](#task-71-%D1%80%D0%B0%D0%B7%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-backend-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-catalog-service-%D0%B8-ordercart-service---completed)
     - [`Task 7.2`: Доработка Cart/Order endpoints, которым нужны gRPC-интеграции - completed](#task-72-%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-cartorder-endpoints-%D0%BA%D0%BE%D1%82%D0%BE%D1%80%D1%8B%D0%BC-%D0%BD%D1%83%D0%B6%D0%BD%D1%8B-grpc-%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D0%B8---completed)
-    - [`Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - planned](#task-73-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B5%D0%B3%D0%BE-api-gateway-%D0%B4%D0%BB%D1%8F-%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D0%BE%D0%B3%D0%BE-resthttp-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D0%B0---planned)
+    - [`Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - in progress](#task-73-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B5%D0%B3%D0%BE-api-gateway-%D0%B4%D0%BB%D1%8F-%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D0%BE%D0%B3%D0%BE-resthttp-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D0%B0---in-progress)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
   - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
@@ -309,9 +309,9 @@ The notification recipients are administrators resolved by the application, not 
 - gRPC contracts: [grpc-contracts/README.md](grpc-contracts/README.md)
 - Testing documentation: [TESTING.md](TESTING.md)
 - Order snapshot flow diagram: [symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
-#### `Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - planned
+#### `Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - in progress
 - Brief info: Implement nginx API Gateway as the only external REST/HTTP entrypoint and keep service OpenAPI endpoints internal.
-- Backend Merge Request 7.3: TBD
+- Backend Merge Request 7.3: https://github.com/ivanserg0692/symfony2026/pull/11
 - Frontend Merge Request 7.3: TBD
 - Task file: [symfony/docs/task-7.3.md](symfony/docs/task-7.3.md)
 
@@ -838,9 +838,9 @@ Product snapshots не отдаются через отдельную публи
 - gRPC-контракты: [grpc-contracts/README.md](grpc-contracts/README.md)
 - Документация тестирования: [TESTING.md](TESTING.md)
 - Диаграмма order snapshot flow: [symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
-#### `Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - planned
+#### `Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - in progress
 - Brief info: Реализовать nginx API Gateway как единственную внешнюю REST/HTTP точку входа и оставить OpenAPI endpoints сервисов внутренними.
-- Backend Merge Request 7.3: TBD
+- Backend Merge Request 7.3: https://github.com/ivanserg0692/symfony2026/pull/11
 - Frontend Merge Request 7.3: TBD
 - Файл задачи: [symfony/docs/task-7.3.md](symfony/docs/task-7.3.md)
 
