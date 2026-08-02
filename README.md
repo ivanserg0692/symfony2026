@@ -8,6 +8,9 @@
   - [Application Areas](#application-areas)
   - [Online Store Domain](#online-store-domain)
   - [API Endpoints](#api-endpoints)
+    - [Symfony API](#symfony-api)
+    - [Catalog Service API](#catalog-service-api)
+    - [Cart Service API](#cart-service-api)
   - [Admin Moderation and Notifications](#admin-moderation-and-notifications)
   - [Current Status](#current-status)
   - [Tech Stack and Component Roles](#tech-stack-and-component-roles)
@@ -42,6 +45,9 @@
   - [Области приложения](#%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F)
   - [Домен интернет-магазина](#%D0%B4%D0%BE%D0%BC%D0%B5%D0%BD-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0)
   - [API Endpoints](#api-endpoints-1)
+    - [Symfony API](#symfony-api-1)
+    - [Catalog Service API](#catalog-service-api-1)
+    - [Cart Service API](#cart-service-api-1)
   - [Модерация в админке и уведомления](#%D0%BC%D0%BE%D0%B4%D0%B5%D1%80%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2-%D0%B0%D0%B4%D0%BC%D0%B8%D0%BD%D0%BA%D0%B5-%D0%B8-%D1%83%D0%B2%D0%B5%D0%B4%D0%BE%D0%BC%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F)
   - [Текущий статус](#%D1%82%D0%B5%D0%BA%D1%83%D1%89%D0%B8%D0%B9-%D1%81%D1%82%D0%B0%D1%82%D1%83%D1%81)
   - [Технологический стек и назначение компонентов](#%D1%82%D0%B5%D1%85%D0%BD%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9-%D1%81%D1%82%D0%B5%D0%BA-%D0%B8-%D0%BD%D0%B0%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BA%D0%BE%D0%BC%D0%BF%D0%BE%D0%BD%D0%B5%D0%BD%D1%82%D0%BE%D0%B2)
@@ -121,7 +127,9 @@ Product snapshots are not exposed through a standalone public REST endpoint. Car
 
 ### API Endpoints
 
-<!-- START api-endpoints-en generated from OpenAPI -->
+#### Symfony API
+
+<!-- START api-endpoints service=symfony locale=en sourceType=docker source=symfony-cli -->
 | Method | Path | Summary |
 | --- | --- | --- |
 | `GET` | `/api/v1/auth/csrf` | Issue CSRF token for auth endpoints |
@@ -137,7 +145,37 @@ Product snapshots are not exposed through a standalone public REST endpoint. Car
 | `DELETE` | `/api/v1/notification/{id}` | Notification deleted. |
 | `PATCH` | `/api/v1/notification/{id}/read` | Notification marked as read. |
 | `GET` | `/api/v1/ping` | Ping API v1 |
-<!-- END api-endpoints-en generated from OpenAPI -->
+| `GET` | `/api/v1/users` | List users |
+<!-- END api-endpoints service=symfony locale=en -->
+
+#### Catalog Service API
+
+<!-- START api-endpoints service=catalog locale=en sourceType=docker source=catalog-cli -->
+| Method | Path | Summary |
+| --- | --- | --- |
+| `GET` | `/api/catalog/elements` | List catalog elements |
+| `GET` | `/api/catalog/elements/{id}` | Get catalog element |
+| `GET` | `/api/catalog/sections` | List active catalog sections |
+| `GET` | `/api/catalog/sections/{id}` | Get catalog section |
+| `GET` | `/api/stores` | List active stores |
+| `GET` | `/api/stores/{id}` | Get store |
+<!-- END api-endpoints service=catalog locale=en -->
+
+#### Cart Service API
+
+<!-- START api-endpoints service=cart locale=en sourceType=docker source=cart-cli -->
+| Method | Path | Summary |
+| --- | --- | --- |
+| `GET` | `/api/cart` | Get current cart |
+| `DELETE` | `/api/cart` | Clear current cart |
+| `POST` | `/api/cart/items` | Add cart item |
+| `PATCH` | `/api/cart/items/{itemId}` | Update cart item |
+| `DELETE` | `/api/cart/items/{itemId}` | Delete cart item |
+| `GET` | `/api/orders` | List orders |
+| `POST` | `/api/orders` | Create order |
+| `GET` | `/api/orders/{orderId}` | Get order |
+| `POST` | `/api/orders/{orderId}/cancel` | Cancel order |
+<!-- END api-endpoints service=cart locale=en -->
 
 ### Admin Moderation and Notifications
 
@@ -611,7 +649,9 @@ Product snapshots не отдаются через отдельную публи
 
 ### API Endpoints
 
-<!-- START api-endpoints-ru generated from OpenAPI -->
+#### Symfony API
+
+<!-- START api-endpoints service=symfony locale=ru sourceType=docker source=symfony-cli -->
 | Method | Path | Описание из OpenAPI |
 | --- | --- | --- |
 | `GET` | `/api/v1/auth/csrf` | Issue CSRF token for auth endpoints |
@@ -627,7 +667,37 @@ Product snapshots не отдаются через отдельную публи
 | `DELETE` | `/api/v1/notification/{id}` | Notification deleted. |
 | `PATCH` | `/api/v1/notification/{id}/read` | Notification marked as read. |
 | `GET` | `/api/v1/ping` | Ping API v1 |
-<!-- END api-endpoints-ru generated from OpenAPI -->
+| `GET` | `/api/v1/users` | List users |
+<!-- END api-endpoints service=symfony locale=ru -->
+
+#### Catalog Service API
+
+<!-- START api-endpoints service=catalog locale=ru sourceType=docker source=catalog-cli -->
+| Method | Path | Описание из OpenAPI |
+| --- | --- | --- |
+| `GET` | `/api/catalog/elements` | List catalog elements |
+| `GET` | `/api/catalog/elements/{id}` | Get catalog element |
+| `GET` | `/api/catalog/sections` | List active catalog sections |
+| `GET` | `/api/catalog/sections/{id}` | Get catalog section |
+| `GET` | `/api/stores` | List active stores |
+| `GET` | `/api/stores/{id}` | Get store |
+<!-- END api-endpoints service=catalog locale=ru -->
+
+#### Cart Service API
+
+<!-- START api-endpoints service=cart locale=ru sourceType=docker source=cart-cli -->
+| Method | Path | Описание из OpenAPI |
+| --- | --- | --- |
+| `GET` | `/api/cart` | Get current cart |
+| `DELETE` | `/api/cart` | Clear current cart |
+| `POST` | `/api/cart/items` | Add cart item |
+| `PATCH` | `/api/cart/items/{itemId}` | Update cart item |
+| `DELETE` | `/api/cart/items/{itemId}` | Delete cart item |
+| `GET` | `/api/orders` | List orders |
+| `POST` | `/api/orders` | Create order |
+| `GET` | `/api/orders/{orderId}` | Get order |
+| `POST` | `/api/orders/{orderId}/cancel` | Cancel order |
+<!-- END api-endpoints service=cart locale=ru -->
 
 ### Модерация в админке и уведомления
 
