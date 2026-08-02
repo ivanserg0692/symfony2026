@@ -4,6 +4,7 @@
 
 - [English](#english)
   - [Overview](#overview)
+  - [Service Architecture](#service-architecture)
   - [Project Features](#project-features)
   - [Application Areas](#application-areas)
   - [Online Store Domain](#online-store-domain)
@@ -42,6 +43,7 @@
   - [Git Identity](#git-identity)
 - [Русский](#%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9)
   - [Обзор](#%D0%BE%D0%B1%D0%B7%D0%BE%D1%80)
+  - [Архитектура сервисов](#%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2)
   - [Возможности проекта](#%D0%B2%D0%BE%D0%B7%D0%BC%D0%BE%D0%B6%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0)
   - [Области приложения](#%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F)
   - [Домен интернет-магазина](#%D0%B4%D0%BE%D0%BC%D0%B5%D0%BD-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0)
@@ -95,6 +97,18 @@ The Symfony codebase itself lives in `symfony`.
 The project demonstrates how the public API, the admin UI, and internal application workflows can work together in a Symfony application.
 
 The API exposes news, authentication, current-user, and notification operations under `api/v1`. The EasyAdmin back office manages users, groups, news, statuses, and other administrative data. News moderation is performed in the admin UI, and moving a news item to `on_moderation` creates notifications for administrators.
+
+### Service Architecture
+
+The public REST/HTTP entrypoint is the API Gateway. Backend service endpoints are internal service contracts; client-facing external API routes are defined at the gateway level.
+
+<!-- plantuml src="symfony/docs/plantuml/service-architecture/components.puml" alt="Service architecture overview" out="symfony/docs/images/plantuml/service-architecture/components.png" -->
+![Service architecture overview](symfony/docs/images/plantuml/service-architecture/components.png)
+<!-- /plantuml -->
+
+<!-- plantuml src="symfony/docs/plantuml/service-architecture/request-workflow.puml" alt="External API request workflow" out="symfony/docs/images/plantuml/service-architecture/request-workflow.png" -->
+![External API request workflow](symfony/docs/images/plantuml/service-architecture/request-workflow.png)
+<!-- /plantuml -->
 
 ### Project Features
 
@@ -624,6 +638,18 @@ GIT_COMMITTER_EMAIL="you@example.com"
 Проект показывает, как в Symfony-приложении вместе работают публичное API, административный интерфейс и внутренние процессы.
 
 API отдает новости, аутентификацию, текущего пользователя и уведомления в зоне `api/v1`. Админка EasyAdmin управляет пользователями, группами, новостями, статусами и другими административными данными. Модерация новостей выполняется через админку, а перевод новости в статус `on_moderation` создает уведомления для администраторов.
+
+### Архитектура сервисов
+
+Публичная REST/HTTP-точка входа находится на уровне API Gateway. Endpoints backend-сервисов остаются внутренними сервисными контрактами, а внешние клиентские маршруты определяются на уровне gateway.
+
+<!-- plantuml src="symfony/docs/plantuml/service-architecture/components.puml" alt="Обзор архитектуры сервисов" out="symfony/docs/images/plantuml/service-architecture/components.png" -->
+![Обзор архитектуры сервисов](symfony/docs/images/plantuml/service-architecture/components.png)
+<!-- /plantuml -->
+
+<!-- plantuml src="symfony/docs/plantuml/service-architecture/request-workflow.puml" alt="Workflow внешнего API-запроса" out="symfony/docs/images/plantuml/service-architecture/request-workflow.png" -->
+![Workflow внешнего API-запроса](symfony/docs/images/plantuml/service-architecture/request-workflow.png)
+<!-- /plantuml -->
 
 ### Возможности проекта
 
