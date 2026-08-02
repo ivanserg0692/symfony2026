@@ -127,6 +127,8 @@ Product snapshots are not exposed through a standalone public REST endpoint. Car
 
 ### API Endpoints
 
+The endpoint tables below describe internal service endpoints generated from each service OpenAPI contract. The external public API surface is defined separately at the API Gateway level.
+
 #### Symfony API
 
 <!-- START api-endpoints service=symfony locale=en sourceType=docker source=symfony-cli -->
@@ -648,6 +650,8 @@ Checkout списывает остатки через gRPC inventory-контр�
 Product snapshots не отдаются через отдельную публичную REST-ручку. Cart and Orders сначала авторизует аутентифицированного пользователя относительно запрошенного заказа, собирает snapshot IDs только из позиций этого заказа и затем одним доверенным batch gRPC-вызовом запрашивает эти snapshots у Catalog. Цены позиций заказа остаются в `OrderItem`; snapshots сохраняют историческое представление товара.
 
 ### API Endpoints
+
+Таблицы ниже описывают внутренние endpoints сервисов, сгенерированные из OpenAPI-контракта каждого сервиса. Внешняя публичная поверхность API определяется отдельно на уровне API Gateway.
 
 #### Symfony API
 
