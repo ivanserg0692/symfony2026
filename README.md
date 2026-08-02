@@ -210,46 +210,55 @@ The notification recipients are administrators resolved by the application, not 
 ### Tasks
 
 #### `Task 1`: Swagger setup and baseline News API preparation - done
+- Brief info: Launch Swagger/OpenAPI documentation and prepare the first versioned News API endpoints.
 - Task file: [symfony/docs/task-1.md](symfony/docs/task-1.md)
 - Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
 #### `Task 2`: JWT authentication and authorization endpoints - done
+- Brief info: Add JWT login, refresh, current-user endpoints, cookie support, rate limiting, and protected route access.
 - Merge Request 2: <https://github.com/ivanserg0692/symfony2026/pull/2>
 - Task file: [symfony/docs/task-2.md](symfony/docs/task-2.md)
 - MR result: [symfony/docs/mr-task-2.md](symfony/docs/mr-task-2.md)
 #### `Task 3`: Add access control for the News API - done
+- Brief info: Define public and protected News API routes with role-based access rules and proper authorization errors.
 - Merge Request 3: <https://github.com/ivanserg0692/symfony2026/pull/3>
 - Task file: [symfony/docs/task-3.md](symfony/docs/task-3.md)
 - MR result (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - MR result (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
 #### `Task 4`: Add email and internal notifications - done
+- Brief info: Introduce internal user notifications, an email channel, notification API endpoints, and moderation alerts.
 - Merge Request 4: <https://github.com/ivanserg0692/symfony2026/pull/4>
 - Task file: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 - MR result (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
 - MR result (RU): [symfony/docs/mr-task-4-ru.md](symfony/docs/mr-task-4-ru.md)
 #### `Task 5`: Export news to S3 through a queue - done
+- Brief info: Build asynchronous news export through Symfony Messenger, RabbitMQ, and MinIO/S3-compatible storage.
 - Merge Request 5: <https://github.com/ivanserg0692/symfony2026/pull/5>
 - Task file: [symfony/docs/task-5.md](symfony/docs/task-5.md)
 - MR result (EN): [symfony/docs/mr-task-5-en.md](symfony/docs/mr-task-5-en.md)
 - MR result (RU): [symfony/docs/mr-task-5-ru.md](symfony/docs/mr-task-5-ru.md)
 #### `Task 6`: Refine frontend application for the existing API - done
+- Brief info: Create a separate React/Next.js/refine frontend that consumes the existing Symfony `/api/v1` HTTP API.
 - Backend Merge Request 6: <https://github.com/ivanserg0692/symfony2026/pull/6>
 - Frontend Merge Request 6: <https://github.com/ivanserg0692/symfony2026-frontend/pull/1>
 - Task file: [symfony/docs/task-6.md](symfony/docs/task-6.md)
 - MR result (EN): [symfony/docs/mr-task-6-en.md](symfony/docs/mr-task-6-en.md)
 - MR result (RU): [symfony/docs/mr-task-6-ru.md](symfony/docs/mr-task-6-ru.md)
 #### `Task 7`: Backend service architecture with nginx API Gateway, main Symfony service, and internal gRPC - in progress
+- Brief info: Document the target backend architecture with nginx as the REST gateway and gRPC reserved for internal service calls.
 - Backend Merge Request 7: <https://github.com/ivanserg0692/symfony2026/pull/7>
 - Frontend Merge Request 7: TBD
 - Task file: [symfony/docs/task-7.md](symfony/docs/task-7.md)
 - MR result (EN): [symfony/docs/mr-task-7-en.md](symfony/docs/mr-task-7-en.md)
 - MR result (RU): [symfony/docs/mr-task-7-ru.md](symfony/docs/mr-task-7-ru.md)
 #### `Task 7.1`: Develop Catalog Service and Order/Cart Service backend services - completed
+- Brief info: Split catalog and cart/order responsibilities into dedicated backend services with REST entrypoints and internal gRPC contracts.
 - Backend Merge Request 7.1: <https://github.com/ivanserg0692/symfony2026/pull/9>
 - Frontend Merge Request 7.1: TBD
 - Task file: [symfony/docs/task-7-1.md](symfony/docs/task-7-1.md)
 - MR result (EN): [symfony/docs/mr-task-7-1-en.md](symfony/docs/mr-task-7-1-en.md)
 - MR result (RU): [symfony/docs/mr-task-7-1-ru.md](symfony/docs/mr-task-7-1-ru.md)
 #### `Task 7.2`: Complete Cart/Order endpoints that require gRPC integrations - completed
+- Brief info: Complete Cart/Order flows that need Catalog Service data through internal gRPC checks and product snapshots.
 - Backend Merge Request 7.2: <https://github.com/ivanserg0692/symfony2026/pull/10>
 - Frontend Merge Request 7.2: TBD
 - Task file: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
@@ -691,46 +700,55 @@ Product snapshots не отдаются через отдельную публи
 ### Задачи
 
 #### `Task 1`: Запуск Swagger-документации и подготовка базового News API - done
+- Brief info: Запустить Swagger/OpenAPI-документацию и подготовить первые versioned endpoints News API.
 - Файл задачи: [symfony/docs/task-1.md](symfony/docs/task-1.md)
 - Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
 #### `Task 2`: Добавление JWT-аутентификации и ручек авторизации - done
+- Brief info: Добавить JWT login, refresh, current-user endpoints, cookie support, rate limiting и защиту приватных маршрутов.
 -  Merge Request 2: <https://github.com/ivanserg0692/symfony2026/pull/2>
 - Файл задачи: [symfony/docs/task-2.md](symfony/docs/task-2.md)
 - Результат MR: [symfony/docs/mr-task-2.md](symfony/docs/mr-task-2.md)
 #### `Task 3`: Добавление проверки доступа к News API - done
+- Brief info: Разделить публичные и защищенные маршруты News API через роли и корректные ошибки авторизации.
 - Merge Request 3: <https://github.com/ivanserg0692/symfony2026/pull/3>
 - Файл задачи: [symfony/docs/task-3.md](symfony/docs/task-3.md)
 - Результат MR (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
 #### `Task 4`: Добавление уведомлений через email и внутренние notifications - done
+- Brief info: Добавить внутренние уведомления пользователей, email-канал, notification endpoints и уведомления о модерации.
 - Merge Request 4: <https://github.com/ivanserg0692/symfony2026/pull/4>
 - Файл задачи: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 - Результат MR (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-4-ru.md](symfony/docs/mr-task-4-ru.md)
 #### `Task 5`: Экспорт новостей в S3 через очередь - done
+- Brief info: Реализовать асинхронный экспорт новостей через Symfony Messenger, RabbitMQ и MinIO/S3-compatible storage.
 - Merge Request 5: <https://github.com/ivanserg0692/symfony2026/pull/5>
 - Файл задачи: [symfony/docs/task-5.md](symfony/docs/task-5.md)
 - Результат MR (EN): [symfony/docs/mr-task-5-en.md](symfony/docs/mr-task-5-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-5-ru.md](symfony/docs/mr-task-5-ru.md)
 #### `Task 6`: Frontend-приложение на refine для существующего API - done
+- Brief info: Создать отдельный React/Next.js/refine frontend, который работает с существующим Symfony `/api/v1` HTTP API.
 - Backend Merge Request 6: <https://github.com/ivanserg0692/symfony2026/pull/6>
 - Frontend Merge Request 6: <https://github.com/ivanserg0692/symfony2026-frontend/pull/1>
 - Файл задачи: [symfony/docs/task-6.md](symfony/docs/task-6.md)
 - Результат MR (EN): [symfony/docs/mr-task-6-en.md](symfony/docs/mr-task-6-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-6-ru.md](symfony/docs/mr-task-6-ru.md)
 #### `Task 7`: Архитектура backend-сервисов с nginx API Gateway, основным Symfony-сервисом и внутренним gRPC - in progress
+- Brief info: Зафиксировать целевую backend-архитектуру с nginx как REST gateway и gRPC только для внутренних service-to-service вызовов.
 - Backend Merge Request 7: <https://github.com/ivanserg0692/symfony2026/pull/7>
 - Frontend Merge Request 7: TBD
 - Файл задачи: [symfony/docs/task-7.md](symfony/docs/task-7.md)
 - Результат MR (EN): [symfony/docs/mr-task-7-en.md](symfony/docs/mr-task-7-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-7-ru.md](symfony/docs/mr-task-7-ru.md)
 #### `Task 7.1`: Разработка backend-сервисов Catalog Service и Order/Cart Service - completed
+- Brief info: Вынести каталог и корзину/заказы в отдельные backend-сервисы с REST endpoints и внутренними gRPC-контрактами.
 - Backend Merge Request 7.1: <https://github.com/ivanserg0692/symfony2026/pull/9>
 - Frontend Merge Request 7.1: TBD
 - Файл задачи: [symfony/docs/task-7-1.md](symfony/docs/task-7-1.md)
 - Результат MR (EN): [symfony/docs/mr-task-7-1-en.md](symfony/docs/mr-task-7-1-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-7-1-ru.md](symfony/docs/mr-task-7-1-ru.md)
 #### `Task 7.2`: Доработка Cart/Order endpoints, которым нужны gRPC-интеграции - completed
+- Brief info: Доработать Cart/Order сценарии, которым нужны проверки Catalog Service через gRPC и product snapshots.
 - Backend Merge Request 7.2: <https://github.com/ivanserg0692/symfony2026/pull/10>
 - Frontend Merge Request 7.2: TBD
 - Файл задачи: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
