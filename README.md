@@ -469,6 +469,19 @@ docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console app
 
 ### Doctrine Database Setup
 
+The repository includes shared database maintenance scripts for all Doctrine-backed Symfony services listed in `DATABASE_SERVICE_TARGETS` in the root `.env`.
+
+Run database maintenance through npm scripts from the repository root:
+
+```bash
+npm run db:create
+npm run db:status
+npm run db:migrate
+npm run db:init
+```
+
+`db:init` creates missing databases and then applies migrations. Fixtures are intentionally not included because they can rewrite development data.
+
 Start PostgreSQL and create the database if it does not exist yet:
 
 ```bash
@@ -1053,6 +1066,19 @@ docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
 ```
 
 ### Настройка Doctrine и базы данных
+
+В репозитории есть общие database maintenance scripts для всех Symfony-сервисов с Doctrine, перечисленных в `DATABASE_SERVICE_TARGETS` в корневом `.env`.
+
+Запускайте обслуживание баз через npm scripts из корня репозитория:
+
+```bash
+npm run db:create
+npm run db:status
+npm run db:migrate
+npm run db:init
+```
+
+`db:init` создает отсутствующие базы и затем применяет миграции. Fixtures специально не включены, потому что они могут перезаписать development-данные.
 
 Поднимите PostgreSQL и создайте базу, если она еще не существует:
 
