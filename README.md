@@ -160,8 +160,14 @@ Checkout deducts stock through the Catalog gRPC inventory contract. During stock
 
 Product snapshots are not exposed through a standalone public REST endpoint. Cart and Orders first authorizes the authenticated user against the requested order, collects snapshot IDs only from that order's items, and then requests those snapshots from Catalog in one trusted gRPC batch call. Order item prices remain stored in `OrderItem`; snapshots preserve the historical product representation.
 
+The current checkout implementation creates the order and leaves it in the `pending` status. Delivery and payment services are not implemented yet. Further order movement is planned as an asynchronous RabbitMQ/Messenger workflow: order-created messages will be consumed by payment and delivery handlers, and those handlers will advance order statuses after their own processing succeeds.
+
 <!-- plantuml src="symfony/docs/plantuml/store-domain/relations.puml" alt="Online store domain relations" out="symfony/docs/images/plantuml/store-domain/relations.png" -->
 ![Online store domain relations](symfony/docs/images/plantuml/store-domain/relations.png)
+<!-- /plantuml -->
+
+<!-- plantuml src="symfony/docs/plantuml/store-domain/workflow.puml" alt="Online store workflow" out="symfony/docs/images/plantuml/store-domain/workflow.png" -->
+![Online store workflow](symfony/docs/images/plantuml/store-domain/workflow.png)
 <!-- /plantuml -->
 
 ### API Endpoints
@@ -769,8 +775,14 @@ Checkout списывает остатки через gRPC inventory-контр�
 
 Product snapshots не отдаются через отдельную публичную REST-ручку. Cart and Orders сначала авторизует аутентифицированного пользователя относительно запрошенного заказа, собирает snapshot IDs только из позиций этого заказа и затем одним доверенным batch gRPC-вызовом запрашивает эти snapshots у Catalog. Цены позиций заказа остаются в `OrderItem`; snapshots сохраняют историческое представление товара.
 
+Текущая реализация checkout создает заказ и оставляет его в статусе `pending`. Сервисы доставки и оплаты пока не реализованы. Дальнейшее движение заказа планируется как асинхронный workflow через RabbitMQ/Messenger: сообщения о создании заказа будут обрабатываться payment- и delivery-handler-ами, а они уже будут переводить заказ в следующие статусы после успешной обработки.
+
 <!-- plantuml src="symfony/docs/plantuml/store-domain/relations.puml" alt="Связи домена интернет-магазина" out="symfony/docs/images/plantuml/store-domain/relations.png" -->
 ![Связи домена интернет-магазина](symfony/docs/images/plantuml/store-domain/relations.png)
+<!-- /plantuml -->
+
+<!-- plantuml src="symfony/docs/plantuml/store-domain/workflow.puml" alt="Workflow интернет-магазина" out="symfony/docs/images/plantuml/store-domain/workflow.png" -->
+![Workflow интернет-магазина](symfony/docs/images/plantuml/store-domain/workflow.png)
 <!-- /plantuml -->
 
 ### API Endpoints

@@ -1,0 +1,108 @@
+@startuml
+!theme plain
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+skinparam wrapWidth 180
+skinparam maxMessageSize 180
+
+title Online Store Workflow
+
+legend right
+  <color:#1f77b4><b>blue</b></color> = public REST/HTTP through API Gateway
+  <color:#2ca02c><b>green</b></color> = internal REST/HTTP
+  <color:#d62728><b>red</b></color> = internal gRPC
+  <color:#7f7f7f><b>gray</b></color> = database write/read
+  <color:#ff7f0e><b>orange</b></color> = planned async RabbitMQ/Messenger flow
+endlegend
+
+actor Frontend
+participant "API Gateway\nnginx" as Gateway
+participant "Auth\nMain Symfony" as Auth
+participant "Catalog\nSymfony" as Catalog
+database "Catalog DB" as CatalogDb
+participant "Cart / Orders\nSymfony" as Cart
+database "Orders DB" as OrdersDb
+queue "RabbitMQ / Messenger\nplanned" as Messenger
+participant "Payment Service\nplanned" as Payment
+participant "Delivery Service\nplanned" as Delivery
+
+group Catalog browsing
+  Frontend -[#1f77b4]> Gateway : GET /api/v1/catalog/elements\nGET /api/v1/catalog/sections\nGET /api/v1/stores
+  Gateway -[#2ca02c]> Catalog : GET /api/catalog/elements\nGET /api/catalog/sections\nGET /api/stores
+  Catalog -[#7f7f7f]> CatalogDb : read active products,\nsections, stores, prices, stock
+  CatalogDb -[#7f7f7f]> Catalog : catalog data
+  Catalog -[#2ca02c]> Gateway : catalog response
+  Gateway -[#1f77b4]> Frontend : public catalog response
+end
+
+group Cart operations
+  Frontend -[#1f77b4]> Gateway : POST /api/v1/cart/items\nAuthorization: Bearer JWT
+  Gateway -[#2ca02c]> Auth : GET /api/v1/auth/me
+  Auth -[#2ca02c]> Gateway : 200 OK\nX-User-Id
+  Gateway -[#2ca02c]> Cart : POST /api/cart/items\nX-User-Id
+  Cart -[#d62728]> Catalog : validate catalog element\nand read current price/stock
+  Catalog -[#7f7f7f]> CatalogDb : read catalog element
+  CatalogDb -[#7f7f7f]> Catalog : element data
+  Catalog -[#d62728]> Cart : validated item data
+  Cart -[#7f7f7f]> OrdersDb : create or update cart\nand cart_items
+  OrdersDb -[#7f7f7f]> Cart : current cart
+  Cart -[#2ca02c]> Gateway : cart response
+  Gateway -[#1f77b4]> Frontend : current cart response
+end
+
+group Checkout
+  Frontend -[#1f77b4]> Gateway : POST /api/v1/orders\nAuthorization: Bearer JWT
+  Gateway -[#2ca02c]> Auth : GET /api/v1/auth/me
+  Auth -[#2ca02c]> Gateway : 200 OK\nX-User-Id
+  Gateway -[#2ca02c]> Cart : POST /api/orders\nX-User-Id
+  Cart -[#7f7f7f]> OrdersDb : read user cart\nand cart_items
+  OrdersDb -[#7f7f7f]> Cart : checkout items
+  Cart -[#d62728]> Catalog : DeductStockRequest\ncatalog element IDs, quantities, operation ID
+  Catalog -[#7f7f7f]> CatalogDb : deduct stock,\ncreate inventory operation,\ncreate product snapshots
+  CatalogDb -[#7f7f7f]> Catalog : stock result\nand snapshot IDs
+  Catalog -[#d62728]> Cart : DeductStockResponse
+  Cart -[#7f7f7f]> OrdersDb : create order,\norder_items, stored prices,\nclear cart
+  OrdersDb -[#7f7f7f]> Cart : created order
+  Cart -[#2ca02c]> Gateway : order response\nstatus: pending
+  Gateway -[#1f77b4]> Frontend : created order response\nstatus: pending
+
+  group Planned async order movement
+    Cart -[#ff7f0e,dashed]> Messenger : planned OrderCreated message
+    Messenger -[#ff7f0e,dashed]> Payment : planned payment processing
+    Payment -[#ff7f0e,dashed]> Messenger : planned payment result
+    Messenger -[#ff7f0e,dashed]> Delivery : planned delivery processing
+    Delivery -[#ff7f0e,dashed]> Messenger : planned delivery result
+    Messenger -[#ff7f0e,dashed]> Cart : planned order status command/event
+    Cart -[#7f7f7f,dashed]> OrdersDb : planned status transition
+  end
+end
+
+group Order read
+  Frontend -[#1f77b4]> Gateway : GET /api/v1/orders/{orderId}\nAuthorization: Bearer JWT
+  Gateway -[#2ca02c]> Auth : GET /api/v1/auth/me
+  Auth -[#2ca02c]> Gateway : 200 OK\nX-User-Id
+  Gateway -[#2ca02c]> Cart : GET /api/orders/{orderId}\nX-User-Id
+  Cart -[#7f7f7f]> OrdersDb : read order owned by user\nand order_items
+  OrdersDb -[#7f7f7f]> Cart : order with snapshot IDs
+  Cart -[#d62728]> Catalog : BatchProductSnapshotsRequest
+  Catalog -[#7f7f7f]> CatalogDb : read snapshots by IDs
+  CatalogDb -[#7f7f7f]> Catalog : immutable snapshots
+  Catalog -[#d62728]> Cart : BatchProductSnapshotsResponse
+  Cart -[#2ca02c]> Gateway : order response with snapshots
+  Gateway -[#1f77b4]> Frontend : historical order response
+end
+
+note over Gateway, Cart
+The Gateway strips client-supplied identity headers and injects the trusted X-User-Id
+only after the internal auth check succeeds.
+end note
+
+note over Cart, Catalog
+Catalog is the stock and product snapshot owner.
+Cart / Orders stores order ownership, item prices, and snapshot references.
+Payment and delivery are planned services; they are not part of the current synchronous checkout.
+end note
+
+@enduml
