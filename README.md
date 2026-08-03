@@ -193,7 +193,6 @@ The API Gateway table below describes the external public API surface exposed to
 | `GET` | `/api/v1/ping` | Ping API v1 |
 | `GET` | `/api/v1/stores` | List active stores |
 | `GET` | `/api/v1/stores/{id}` | Get store |
-| `GET` | `/api/v1/users` | List users |
 <!-- END api-endpoints service=api-gateway locale=en -->
 
 The service tables below describe internal service endpoints generated from each service OpenAPI contract.
@@ -785,7 +784,6 @@ Product snapshots не отдаются через отдельную публи
 | `GET` | `/api/v1/ping` | Ping API v1 |
 | `GET` | `/api/v1/stores` | List active stores |
 | `GET` | `/api/v1/stores/{id}` | Get store |
-| `GET` | `/api/v1/users` | List users |
 <!-- END api-endpoints service=api-gateway locale=ru -->
 
 Таблицы сервисов ниже описывают внутренние service endpoints, сгенерированные из OpenAPI-контракта каждого сервиса.

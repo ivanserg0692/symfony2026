@@ -87,18 +87,6 @@
       }
     },
     {
-      "id": "users",
-      "match": "exact",
-      "publicPath": "/api/v1/users",
-      "upstream": "symfony_web",
-      "internalPath": "/api/v1/users",
-      "auth": false,
-      "openapi": {
-        "source": "symfony",
-        "path": "/api/v1/users"
-      }
-    },
-    {
       "id": "news",
       "match": "prefix",
       "publicPath": "/api/v1/news",

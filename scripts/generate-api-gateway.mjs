@@ -167,7 +167,8 @@ function buildGatewayOpenApi(config) {
   }
 
   gateway.paths = sortObjectByKey(gateway.paths);
-  gateway.tags = gateway.tags.sort((left, right) => String(left.name ?? '').localeCompare(String(right.name ?? '')));
+  gateway.tags = filterUsedTags(gateway.tags, gateway.paths)
+    .sort((left, right) => String(left.name ?? '').localeCompare(String(right.name ?? '')));
 
   return gateway;
 }
@@ -327,6 +328,30 @@ function mergeTags(targetTags, sourceTags) {
     targetTags.push(tag);
     existing.add(tag.name);
   }
+}
+
+function filterUsedTags(tags, paths) {
+  const usedTags = collectUsedTags(paths);
+
+  return tags.filter((tag) => tag.name && usedTags.has(tag.name));
+}
+
+function collectUsedTags(paths) {
+  const usedTags = new Set();
+
+  for (const pathItem of Object.values(paths)) {
+    for (const [key, operation] of Object.entries(pathItem)) {
+      if (!METHOD_ORDER.includes(key)) {
+        continue;
+      }
+
+      for (const tagName of operation.tags ?? []) {
+        usedTags.add(tagName);
+      }
+    }
+  }
+
+  return usedTags;
 }
 
 function sortObjectByKey(object) {

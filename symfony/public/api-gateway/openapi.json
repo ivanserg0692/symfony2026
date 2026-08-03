@@ -1156,122 +1156,6 @@
           }
         }
       }
-    },
-    "/api/v1/users": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "List users",
-        "description": "Returns user identifiers for local service fixtures and integration checks.",
-        "operationId": "get_api_v1_users_index",
-        "parameters": [
-          {
-            "name": "query",
-            "in": "query",
-            "description": "Search query.",
-            "required": false,
-            "schema": {
-              "description": "Search query.",
-              "type": "string",
-              "default": "",
-              "example": "release"
-            },
-            "example": "release"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Page number starting from 1.",
-            "required": false,
-            "schema": {
-              "description": "Page number starting from 1.",
-              "type": "integer",
-              "default": 1,
-              "minimum": 1,
-              "example": 1
-            },
-            "example": 1
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Number of items per page.",
-            "required": false,
-            "schema": {
-              "description": "Number of items per page.",
-              "type": "integer",
-              "default": 10,
-              "maximum": 100,
-              "minimum": 1,
-              "example": 10
-            },
-            "example": 10
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sort field.",
-            "required": false,
-            "schema": {
-              "description": "Sort field.",
-              "type": "string",
-              "default": "createdAt",
-              "enum": [
-                "id",
-                "slug",
-                "createdAt"
-              ],
-              "example": "createdAt"
-            },
-            "example": "createdAt"
-          },
-          {
-            "name": "direction",
-            "in": "query",
-            "description": "Sort direction.",
-            "required": false,
-            "schema": {
-              "description": "Sort direction.",
-              "type": "string",
-              "default": "DESC",
-              "enum": [
-                "ASC",
-                "DESC"
-              ],
-              "example": "DESC"
-            },
-            "example": "DESC"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Paginated list of users.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/ListResponseDto"
-                    },
-                    {
-                      "properties": {
-                        "items": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/User2"
-                          }
-                        }
-                      },
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -2290,9 +2174,6 @@
     },
     {
       "name": "System"
-    },
-    {
-      "name": "Users"
     }
   ],
   "x-generated-by": "npm run gateway:generate",
