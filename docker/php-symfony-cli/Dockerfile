@@ -1,3 +1,5 @@
+FROM ghcr.io/roadrunner-server/roadrunner:2025.1.1 AS roadrunner
+
 FROM php:8.4-cli-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -22,13 +24,15 @@ RUN docker-php-ext-install \
     intl \
     mbstring \
     pdo_pgsql \
+    sockets \
     xsl \
     zip
 
-RUN pecl install amqp xdebug \
-    && docker-php-ext-enable amqp xdebug
+RUN pecl install amqp grpc xdebug \
+    && docker-php-ext-enable amqp grpc xdebug
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+COPY --from=roadrunner /usr/bin/rr /usr/local/bin/rr
 
 RUN wget https://get.symfony.com/cli/installer -O - | bash
 

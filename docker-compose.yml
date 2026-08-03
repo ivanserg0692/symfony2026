@@ -4,6 +4,7 @@ services:
     image: postgres:16-alpine
     container_name: symfony-db
     env_file:
+      - .env
       - .env.local
     ports:
       - "5432:5432"
@@ -14,6 +15,48 @@ services:
       start_period: 30s
     volumes:
       - database_data:/var/lib/postgresql/data
+
+  # PostgreSQL database used by the Catalog service.
+  catalog-db:
+    image: postgres:16-alpine
+    container_name: catalog-db
+    env_file:
+      - .env
+      - .env.local
+    environment:
+      POSTGRES_DB: ${CATALOG_POSTGRES_DB:-catalog}
+      POSTGRES_USER: ${CATALOG_POSTGRES_USER:-catalog}
+      POSTGRES_PASSWORD: ${CATALOG_POSTGRES_PASSWORD:-catalog}
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d \"$${POSTGRES_DB}\" -U \"$${POSTGRES_USER}\""]
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - catalog_database_data:/var/lib/postgresql/data
+
+  # PostgreSQL database used by the Cart service.
+  cart-db:
+    image: postgres:16-alpine
+    container_name: cart-db
+    env_file:
+      - .env
+      - .env.local
+    environment:
+      POSTGRES_DB: ${CART_POSTGRES_DB:-cart}
+      POSTGRES_USER: ${CART_POSTGRES_USER:-cart}
+      POSTGRES_PASSWORD: ${CART_POSTGRES_PASSWORD:-cart}
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d \"$${POSTGRES_DB}\" -U \"$${POSTGRES_USER}\""]
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - cart_database_data:/var/lib/postgresql/data
 
   # CLI PHP workspace for running Symfony, Composer, console commands, and tests.
   # Usage examples:
@@ -34,6 +77,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file:
+      - .env
       - .env.local
     environment:
       GIT_AUTHOR_NAME: ${GIT_AUTHOR_NAME:-}
@@ -60,6 +104,119 @@ services:
     stdin_open: false
     tty: false
 
+  # Public REST entry point for browser and API clients.
+  api-gateway:
+    image: nginx:1.27-alpine
+    container_name: api-gateway
+    depends_on:
+      - symfony-web
+      - catalog-web
+      - cart-web
+    ports:
+      - "${API_GATEWAY_HTTP_PORT:-8001}:80"
+    volumes:
+      - ./docker/nginx/api-gateway.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/nginx/snippets:/etc/nginx/snippets:ro
+
+  # Local Catalog service web server for REST/API access during development.
+  catalog-web:
+    <<: *symfony-base
+    container_name: catalog-web
+    volumes:
+      - ./catalog-service:/workspace
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+    environment:
+      APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
+      DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
+    command:
+      - sh
+      - -lc
+      - /root/.symfony5/bin/symfony server:stop || true; /root/.symfony5/bin/symfony serve --allow-http --no-tls --listen-ip=0.0.0.0 --port=8000 --daemon; exec tail -f /dev/null
+    ports:
+      - "8010:8000"
+    stdin_open: false
+    tty: false
+
+  # CLI PHP workspace for running Catalog service console commands.
+  catalog-cli:
+    <<: *symfony-base
+    container_name: catalog-cli
+    volumes:
+      - ./catalog-service:/workspace
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+    environment:
+      APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
+      DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
+    command:
+      - bash
+
+  # Local Catalog gRPC server powered by RoadRunner.
+  catalog-grpc:
+    <<: *symfony-base
+    container_name: catalog-grpc
+    volumes:
+      - ./catalog-service:/workspace
+      - ./grpc-contracts:/grpc-contracts:ro
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+    env_file:
+      - .env
+      - .env.local
+      - ./catalog-service/.env.rr
+    environment:
+      APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
+      DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
+    command:
+      - rr
+      - serve
+      - -c
+      - .rr.yaml
+    ports:
+      - "9011:9001"
+    stdin_open: false
+    tty: false
+
+  # Local Cart service web server for REST/API access during development.
+  cart-web:
+    <<: *symfony-base
+    container_name: cart-web
+    volumes:
+      - ./cart-service:/workspace
+    depends_on:
+      cart-db:
+        condition: service_healthy
+    environment:
+      APP_SECRET: "${CART_APP_SECRET:-cart-dev-secret-change-me}"
+      DATABASE_URL: "${CART_DATABASE_URL:-postgresql://cart:cart@cart-db:5432/cart?serverVersion=16&charset=utf8}"
+    command:
+      - sh
+      - -lc
+      - /root/.symfony5/bin/symfony server:stop || true; /root/.symfony5/bin/symfony serve --allow-http --no-tls --listen-ip=0.0.0.0 --port=8000 --daemon; exec tail -f /dev/null
+    ports:
+      - "8020:8000"
+    stdin_open: false
+    tty: false
+
+  # CLI PHP workspace for running Cart service console commands.
+  cart-cli:
+    <<: *symfony-base
+    container_name: cart-cli
+    volumes:
+      - ./cart-service:/workspace
+    depends_on:
+      cart-db:
+        condition: service_healthy
+    environment:
+      APP_SECRET: "${CART_APP_SECRET:-cart-dev-secret-change-me}"
+      DATABASE_URL: "${CART_DATABASE_URL:-postgresql://cart:cart@cart-db:5432/cart?serverVersion=16&charset=utf8}"
+    command:
+      - bash
+
   # Local SMTP catcher and web UI for inspecting outgoing development emails.
   mailpit:
     image: axllent/mailpit:latest
@@ -73,6 +230,7 @@ services:
     image: rabbitmq:4-management
     container_name: symfony-rabbitmq
     env_file:
+      - .env
       - .env.local
     ports:
       - "15672:15672"
@@ -84,6 +242,7 @@ services:
     image: quay.io/minio/minio:latest
     container_name: symfony-minio
     env_file:
+      - .env
       - .env.local
     command: server /data --console-address ":9001"
     ports:
@@ -103,6 +262,7 @@ services:
   minio-client:
     image: quay.io/minio/mc:latest
     env_file:
+      - .env
       - .env.local
     depends_on:
       minio:
@@ -125,5 +285,7 @@ services:
 
 volumes:
   database_data:
+  catalog_database_data:
+  cart_database_data:
   rabbitmq_data:
   minio_data:

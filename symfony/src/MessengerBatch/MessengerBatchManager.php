@@ -39,6 +39,8 @@ final readonly class MessengerBatchManager
         return (bool) $this->entityManager->getConnection()->transactional(function () use ($batchId): bool {
             $this->batchRepository->incrementProcessedJobs($batchId);
 
+            // Another worker may have already incremented the last counter before this call.
+            // Completion is based only on persisted counters, and only one UPDATE can close the batch.
             return 1 === $this->batchRepository->finishIfComplete($batchId);
         });
     }
@@ -48,6 +50,8 @@ final readonly class MessengerBatchManager
         return (bool) $this->entityManager->getConnection()->transactional(function () use ($batchId): bool {
             $this->batchRepository->incrementFailedJobs($batchId);
 
+            // Another worker may have already incremented the last counter before this call.
+            // Completion is based only on persisted counters, and only one UPDATE can close the batch.
             return 1 === $this->batchRepository->finishIfComplete($batchId);
         });
     }

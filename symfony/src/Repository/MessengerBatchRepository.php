@@ -18,11 +18,19 @@ class MessengerBatchRepository extends ServiceEntityRepository
         parent::__construct($registry, MessengerBatch::class);
     }
 
+    /**
+     * Registers a new batch entity in Doctrine UnitOfWork.
+     * The caller controls when the transaction is flushed.
+     */
     public function save(MessengerBatch $batch): void
     {
         $this->getEntityManager()->persist($batch);
     }
 
+    /**
+     * Atomically moves a pending batch to processing state.
+     * Returns the number of updated rows; 0 means the batch was already taken, cancelled, or missing.
+     */
     public function start(int $batchId): int
     {
         return $this->getConnection()->executeStatement(sprintf(
@@ -38,6 +46,10 @@ class MessengerBatchRepository extends ServiceEntityRepository
         ]);
     }
 
+    /**
+     * Counts one successfully handled job while the batch is still processing.
+     * The conditional update keeps cancelled or already finished batches unchanged.
+     */
     public function incrementProcessedJobs(int $batchId): int
     {
         return $this->getConnection()->executeStatement(sprintf(
@@ -49,6 +61,10 @@ class MessengerBatchRepository extends ServiceEntityRepository
         ]);
     }
 
+    /**
+     * Counts one failed job while the batch is still processing.
+     * The conditional update keeps cancelled or already finished batches unchanged.
+     */
     public function incrementFailedJobs(int $batchId): int
     {
         return $this->getConnection()->executeStatement(sprintf(
@@ -60,6 +76,10 @@ class MessengerBatchRepository extends ServiceEntityRepository
         ]);
     }
 
+    /**
+     * Closes the batch once all jobs are counted.
+     * A batch with at least one failed job becomes failed; otherwise it becomes finished.
+     */
     public function finishIfComplete(int $batchId): int
     {
         return $this->getConnection()->executeStatement(sprintf(
@@ -76,6 +96,10 @@ class MessengerBatchRepository extends ServiceEntityRepository
         ]);
     }
 
+    /**
+     * Cancels a batch that has not reached a terminal state yet.
+     * Finished, failed, and already cancelled batches are left unchanged.
+     */
     public function cancel(int $batchId): int
     {
         return $this->getConnection()->executeStatement(sprintf(
@@ -92,11 +116,17 @@ class MessengerBatchRepository extends ServiceEntityRepository
         ]);
     }
 
+    /**
+     * Uses DBAL for atomic conditional updates that do not require loading the entity first.
+     */
     private function getConnection(): \Doctrine\DBAL\Connection
     {
         return $this->getEntityManager()->getConnection();
     }
 
+    /**
+     * Reads the mapped table name so raw SQL stays aligned with Doctrine metadata.
+     */
     private function getTableName(): string
     {
         return $this->getClassMetadata()->getTableName();

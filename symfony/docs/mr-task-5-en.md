@@ -1,5 +1,24 @@
 # MR Task 5 Result Log
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Overview](#overview)
+- [Planned Result](#planned-result)
+- [Screenshots](#screenshots)
+- [Updates for 2026-05-02](#updates-for-2026-05-02)
+- [Updates for 2026-05-05](#updates-for-2026-05-05)
+  - [News Export Messenger Batch Architecture](#news-export-messenger-batch-architecture)
+  - [Export Startup](#export-startup)
+  - [Message Batch Processing](#message-batch-processing)
+  - [Retry and Errors](#retry-and-errors)
+  - [CSV Chunks and Merge Order](#csv-chunks-and-merge-order)
+  - [Batch Finalization](#batch-finalization)
+  - [Admin Visibility](#admin-visibility)
+  - [Responsibility Split](#responsibility-split)
+
+<!-- END doctoc -->
+
 ## Overview
 
 This document is a placeholder for the visible result of merge request 5.

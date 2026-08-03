@@ -1,0 +1,12 @@
+version: "3"
+
+server:
+  command: "php bin/grpc-worker"
+  relay: pipes
+
+grpc:
+  listen: "tcp://0.0.0.0:9001"
+  proto:
+    - "/grpc-contracts/catalog/v1/inventory.proto"
+  pool:
+#      num_workers: 1 # use one worker for the easer dubbing

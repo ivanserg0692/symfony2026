@@ -4,21 +4,33 @@
 
 - [English](#english)
   - [Overview](#overview)
+  - [Service Architecture](#service-architecture)
+    - [API Gateway](#api-gateway)
   - [Project Features](#project-features)
   - [Application Areas](#application-areas)
+  - [Online Store Domain](#online-store-domain)
   - [API Endpoints](#api-endpoints)
+    - [API Gateway Public API](#api-gateway-public-api)
+    - [Symfony API](#symfony-api)
+    - [Catalog Service API](#catalog-service-api)
+    - [Cart Service API](#cart-service-api)
   - [Admin Moderation and Notifications](#admin-moderation-and-notifications)
   - [Current Status](#current-status)
   - [Tech Stack and Component Roles](#tech-stack-and-component-roles)
   - [Tasks](#tasks)
-    - [`Task 1` - done](#task-1---done)
-    - [`Task 2` - done](#task-2---done)
-    - [`Task 3` - done](#task-3---done)
-    - [`Task 4` - done](#task-4---done)
-    - [`Task 5` - done](#task-5---done)
-    - [`Task 6` - done](#task-6---done)
+    - [`Task 1`: Swagger setup and baseline News API preparation - done](#task-1-swagger-setup-and-baseline-news-api-preparation---done)
+    - [`Task 2`: JWT authentication and authorization endpoints - done](#task-2-jwt-authentication-and-authorization-endpoints---done)
+    - [`Task 3`: Add access control for the News API - done](#task-3-add-access-control-for-the-news-api---done)
+    - [`Task 4`: Add email and internal notifications - done](#task-4-add-email-and-internal-notifications---done)
+    - [`Task 5`: Export news to S3 through a queue - done](#task-5-export-news-to-s3-through-a-queue---done)
+    - [`Task 6`: Refine frontend application for the existing API - done](#task-6-refine-frontend-application-for-the-existing-api---done)
+    - [`Task 7`: Backend service architecture with nginx API Gateway, main Symfony service, and internal gRPC - completed](#task-7-backend-service-architecture-with-nginx-api-gateway-main-symfony-service-and-internal-grpc---completed)
+      - [`Task 7.1`: Develop Catalog Service and Order/Cart Service backend services - completed](#task-71-develop-catalog-service-and-ordercart-service-backend-services---completed)
+      - [`Task 7.2`: Complete Cart/Order endpoints that require gRPC integrations - completed](#task-72-complete-cartorder-endpoints-that-require-grpc-integrations---completed)
+      - [`Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - completed](#task-73-implement-the-external-api-gateway-for-the-public-resthttp-contract---completed)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
+  - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
   - [News Export and Batch Processing](#news-export-and-batch-processing)
   - [Run With Docker Compose](#run-with-docker-compose)
   - [Doctrine Database Setup](#doctrine-database-setup)
@@ -33,21 +45,33 @@
   - [Git Identity](#git-identity)
 - [Русский](#%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9)
   - [Обзор](#%D0%BE%D0%B1%D0%B7%D0%BE%D1%80)
+  - [Архитектура сервисов](#%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2)
+    - [API Gateway](#api-gateway-1)
   - [Возможности проекта](#%D0%B2%D0%BE%D0%B7%D0%BC%D0%BE%D0%B6%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0)
   - [Области приложения](#%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F)
+  - [Домен интернет-магазина](#%D0%B4%D0%BE%D0%BC%D0%B5%D0%BD-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0)
   - [API Endpoints](#api-endpoints-1)
+    - [API Gateway Public API](#api-gateway-public-api-1)
+    - [Symfony API](#symfony-api-1)
+    - [Catalog Service API](#catalog-service-api-1)
+    - [Cart Service API](#cart-service-api-1)
   - [Модерация в админке и уведомления](#%D0%BC%D0%BE%D0%B4%D0%B5%D1%80%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2-%D0%B0%D0%B4%D0%BC%D0%B8%D0%BD%D0%BA%D0%B5-%D0%B8-%D1%83%D0%B2%D0%B5%D0%B4%D0%BE%D0%BC%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F)
   - [Текущий статус](#%D1%82%D0%B5%D0%BA%D1%83%D1%89%D0%B8%D0%B9-%D1%81%D1%82%D0%B0%D1%82%D1%83%D1%81)
   - [Технологический стек и назначение компонентов](#%D1%82%D0%B5%D1%85%D0%BD%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9-%D1%81%D1%82%D0%B5%D0%BA-%D0%B8-%D0%BD%D0%B0%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BA%D0%BE%D0%BC%D0%BF%D0%BE%D0%BD%D0%B5%D0%BD%D1%82%D0%BE%D0%B2)
   - [Задачи](#%D0%B7%D0%B0%D0%B4%D0%B0%D1%87%D0%B8)
-    - [`Task 1` - done](#task-1---done-1)
-    - [`Task 2` - done](#task-2---done-1)
-    - [`Task 3` - done](#task-3---done-1)
-    - [`Task 4` - done](#task-4---done-1)
-    - [`Task 5` - done](#task-5---done-1)
-    - [`Task 6` - done](#task-6---done-1)
+    - [`Task 1`: Запуск Swagger-документации и подготовка базового News API - done](#task-1-%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-swagger-%D0%B4%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D0%B8%D0%B8-%D0%B8-%D0%BF%D0%BE%D0%B4%D0%B3%D0%BE%D1%82%D0%BE%D0%B2%D0%BA%D0%B0-%D0%B1%D0%B0%D0%B7%D0%BE%D0%B2%D0%BE%D0%B3%D0%BE-news-api---done)
+    - [`Task 2`: Добавление JWT-аутентификации и ручек авторизации - done](#task-2-%D0%B4%D0%BE%D0%B1%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5-jwt-%D0%B0%D1%83%D1%82%D0%B5%D0%BD%D1%82%D0%B8%D1%84%D0%B8%D0%BA%D0%B0%D1%86%D0%B8%D0%B8-%D0%B8-%D1%80%D1%83%D1%87%D0%B5%D0%BA-%D0%B0%D0%B2%D1%82%D0%BE%D1%80%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8---done)
+    - [`Task 3`: Добавление проверки доступа к News API - done](#task-3-%D0%B4%D0%BE%D0%B1%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BF%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%BA%D0%B8-%D0%B4%D0%BE%D1%81%D1%82%D1%83%D0%BF%D0%B0-%D0%BA-news-api---done)
+    - [`Task 4`: Добавление уведомлений через email и внутренние notifications - done](#task-4-%D0%B4%D0%BE%D0%B1%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5-%D1%83%D0%B2%D0%B5%D0%B4%D0%BE%D0%BC%D0%BB%D0%B5%D0%BD%D0%B8%D0%B9-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-email-%D0%B8-%D0%B2%D0%BD%D1%83%D1%82%D1%80%D0%B5%D0%BD%D0%BD%D0%B8%D0%B5-notifications---done)
+    - [`Task 5`: Экспорт новостей в S3 через очередь - done](#task-5-%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D1%80%D1%82-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B5%D0%B9-%D0%B2-s3-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-%D0%BE%D1%87%D0%B5%D1%80%D0%B5%D0%B4%D1%8C---done)
+    - [`Task 6`: Frontend-приложение на refine для существующего API - done](#task-6-frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BD%D0%B0-refine-%D0%B4%D0%BB%D1%8F-%D1%81%D1%83%D1%89%D0%B5%D1%81%D1%82%D0%B2%D1%83%D1%8E%D1%89%D0%B5%D0%B3%D0%BE-api---done)
+    - [`Task 7`: Архитектура backend-сервисов с nginx API Gateway, основным Symfony-сервисом и внутренним gRPC - completed](#task-7-%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0-backend-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-%D1%81-nginx-api-gateway-%D0%BE%D1%81%D0%BD%D0%BE%D0%B2%D0%BD%D1%8B%D0%BC-symfony-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%BC-%D0%B8-%D0%B2%D0%BD%D1%83%D1%82%D1%80%D0%B5%D0%BD%D0%BD%D0%B8%D0%BC-grpc---completed)
+      - [`Task 7.1`: Разработка backend-сервисов Catalog Service и Order/Cart Service - completed](#task-71-%D1%80%D0%B0%D0%B7%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-backend-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-catalog-service-%D0%B8-ordercart-service---completed)
+      - [`Task 7.2`: Доработка Cart/Order endpoints, которым нужны gRPC-интеграции - completed](#task-72-%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-cartorder-endpoints-%D0%BA%D0%BE%D1%82%D0%BE%D1%80%D1%8B%D0%BC-%D0%BD%D1%83%D0%B6%D0%BD%D1%8B-grpc-%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D0%B8---completed)
+      - [`Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - completed](#task-73-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B5%D0%B3%D0%BE-api-gateway-%D0%B4%D0%BB%D1%8F-%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D0%BE%D0%B3%D0%BE-resthttp-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D0%B0---completed)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
+  - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
   - [Экспорт новостей и batch-обработка](#%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D1%80%D1%82-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B5%D0%B9-%D0%B8-batch-%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0)
   - [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
   - [Настройка Doctrine и базы данных](#%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-doctrine-%D0%B8-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85)
@@ -78,6 +102,33 @@ The project demonstrates how the public API, the admin UI, and internal applicat
 
 The API exposes news, authentication, current-user, and notification operations under `api/v1`. The EasyAdmin back office manages users, groups, news, statuses, and other administrative data. News moderation is performed in the admin UI, and moving a news item to `on_moderation` creates notifications for administrators.
 
+### Service Architecture
+
+The public REST/HTTP entrypoint is the API Gateway. Backend service endpoints are internal service contracts; client-facing external API routes are defined at the gateway level.
+
+<!-- plantuml src="symfony/docs/plantuml/service-architecture/components.puml" alt="Service architecture overview" out="symfony/docs/images/plantuml/service-architecture/components.png" -->
+![Service architecture overview](symfony/docs/images/plantuml/service-architecture/components.png)
+<!-- /plantuml -->
+
+<!-- plantuml src="symfony/docs/plantuml/service-architecture/request-workflow.puml" alt="External API request workflow" out="symfony/docs/images/plantuml/service-architecture/request-workflow.png" -->
+![External API request workflow](symfony/docs/images/plantuml/service-architecture/request-workflow.png)
+<!-- /plantuml -->
+
+#### API Gateway
+
+The `api-gateway` service is the public REST/HTTP entrypoint for client applications. It is implemented with nginx and routes external `/api/v1/...` requests to the internal Symfony, Catalog, and Cart service routes.
+
+Gateway routing is described in `api-gateway/routes.json`. The base public OpenAPI metadata is stored separately in `api-gateway/openapi-header.json`, so common OpenAPI fields can be changed without editing the route manifest or generated files.
+
+Run `npm run gateway:generate` to regenerate both Gateway artifacts from the same source configuration:
+
+- nginx route config: `docker/nginx/snippets/generated-api-gateway-routes.conf`;
+- public Gateway OpenAPI contract: `symfony/public/api-gateway/openapi.json`.
+
+The generator implementation lives in `scripts/generate-api-gateway.mjs`. Shared nginx proxy/auth settings live in `docker/nginx/snippets/`.
+
+Service OpenAPI specs remain internal source contracts. The generated Gateway OpenAPI spec is the public client contract.
+
 ### Project Features
 
 - JWT authentication with access tokens, refresh tokens, HttpOnly cookies, CSRF protection for unsafe API methods, login throttling, and Cloudflare Turnstile validation.
@@ -91,15 +142,74 @@ The API exposes news, authentication, current-user, and notification operations 
 
 | Area | Purpose |
 | --- | --- |
-| Public API | JSON endpoints under `api/v1` for authentication, news, and notifications. |
+| Public API | JSON endpoints for authentication, news, notifications, cart, and order reads. |
+| Catalog service | Product catalog boundary that owns products, catalog elements, prices, attributes, images, stock rows, and product snapshots. |
+| Cart and Orders | Customer cart and order boundary that owns active carts, order creation, order items, item prices, and authenticated order responses. |
+| gRPC integration | Internal service contracts for checkout stock deduction and trusted batch product snapshot reads. |
+| Checkout flow | Order creation workflow that performs final stock deduction, stores item prices in `OrderItem`, and links order items to immutable Catalog snapshots. |
 | Swagger/OpenAPI | Runtime API contract for routes that match `^/api/v1`. |
 | EasyAdmin | Back-office UI for administrators. It is not represented as API endpoints in Swagger. |
-| Internal workflows | Doctrine listeners, Messenger messages, Mailer, and Notifier logic that react to application state changes. |
+| Internal workflows | Doctrine listeners, Messenger messages, Mailer, Notifier logic, and order consistency checks that react to application state changes. |
 | Console tooling | Bootstrap and maintenance commands such as JWT key initialization, admin sync, migrations, fixtures, and refresh-token cleanup. |
+
+### Online Store Domain
+
+The project also includes an online store domain split across the main Symfony application and the Catalog service. The Catalog service owns products, catalog elements, prices, attributes, images, stock rows, and immutable product snapshots. Cart and Orders owns customer carts, order creation, order items, item prices, and authenticated order reads.
+
+Checkout deducts stock through the Catalog gRPC inventory contract. During stock deduction, Catalog creates product snapshots and Cart and Orders stores only the referenced `productSnapshotId` on each `OrderItem`. Historical order responses must use these snapshots instead of current product data, so changing, disabling, repricing, or deleting the current product does not rewrite already placed orders.
+
+Product snapshots are not exposed through a standalone public REST endpoint. Cart and Orders first authorizes the authenticated user against the requested order, collects snapshot IDs only from that order's items, and then requests those snapshots from Catalog in one trusted gRPC batch call. Order item prices remain stored in `OrderItem`; snapshots preserve the historical product representation.
+
+The current checkout implementation creates the order and leaves it in the `pending` status. Delivery and payment services are not implemented yet. Further order movement is planned as an asynchronous RabbitMQ/Messenger workflow: order-created messages will be consumed by payment and delivery handlers, and those handlers will advance order statuses after their own processing succeeds.
+
+<!-- plantuml src="symfony/docs/plantuml/store-domain/relations.puml" alt="Online store domain relations" out="symfony/docs/images/plantuml/store-domain/relations.png" -->
+![Online store domain relations](symfony/docs/images/plantuml/store-domain/relations.png)
+<!-- /plantuml -->
+
+<!-- plantuml src="symfony/docs/plantuml/store-domain/workflow.puml" alt="Online store workflow" out="symfony/docs/images/plantuml/store-domain/workflow.png" -->
+![Online store workflow](symfony/docs/images/plantuml/store-domain/workflow.png)
+<!-- /plantuml -->
 
 ### API Endpoints
 
-<!-- START api-endpoints-en generated from OpenAPI -->
+The API Gateway table below describes the external public API surface exposed to REST/HTTP clients. It is generated from the Gateway OpenAPI contract.
+
+#### API Gateway Public API
+
+<!-- START api-endpoints service=api-gateway locale=en sourceType=file source=symfony/public/api-gateway/openapi.json -->
+| Method | Path | Summary |
+| --- | --- | --- |
+| `GET` | `/api/v1/auth/me` | Get current authenticated user |
+| `GET` | `/api/v1/cart` | Get current cart |
+| `DELETE` | `/api/v1/cart` | Clear current cart |
+| `POST` | `/api/v1/cart/items` | Add cart item |
+| `PATCH` | `/api/v1/cart/items/{itemId}` | Update cart item |
+| `DELETE` | `/api/v1/cart/items/{itemId}` | Delete cart item |
+| `GET` | `/api/v1/catalog/elements` | List catalog elements |
+| `GET` | `/api/v1/catalog/elements/{id}` | Get catalog element |
+| `GET` | `/api/v1/catalog/sections` | List active catalog sections |
+| `GET` | `/api/v1/catalog/sections/{id}` | Get catalog section |
+| `GET` | `/api/v1/news` | Paginated list of news. |
+| `GET` | `/api/v1/news/{slug}` | News item. |
+| `GET` | `/api/v1/notification` | Paginated list of current user notifications. |
+| `DELETE` | `/api/v1/notification` | Current user notifications deleted. |
+| `GET` | `/api/v1/notification/{id}` | Notification item. |
+| `DELETE` | `/api/v1/notification/{id}` | Notification deleted. |
+| `PATCH` | `/api/v1/notification/{id}/read` | Notification marked as read. |
+| `GET` | `/api/v1/orders` | List orders |
+| `POST` | `/api/v1/orders` | Create order |
+| `GET` | `/api/v1/orders/{orderId}` | Get order |
+| `POST` | `/api/v1/orders/{orderId}/cancel` | Cancel order |
+| `GET` | `/api/v1/ping` | Ping API v1 |
+| `GET` | `/api/v1/stores` | List active stores |
+| `GET` | `/api/v1/stores/{id}` | Get store |
+<!-- END api-endpoints service=api-gateway locale=en -->
+
+The service tables below describe internal service endpoints generated from each service OpenAPI contract.
+
+#### Symfony API
+
+<!-- START api-endpoints service=symfony locale=en sourceType=docker source=symfony-cli -->
 | Method | Path | Summary |
 | --- | --- | --- |
 | `GET` | `/api/v1/auth/csrf` | Issue CSRF token for auth endpoints |
@@ -115,7 +225,37 @@ The API exposes news, authentication, current-user, and notification operations 
 | `DELETE` | `/api/v1/notification/{id}` | Notification deleted. |
 | `PATCH` | `/api/v1/notification/{id}/read` | Notification marked as read. |
 | `GET` | `/api/v1/ping` | Ping API v1 |
-<!-- END api-endpoints-en generated from OpenAPI -->
+| `GET` | `/api/v1/users` | List users |
+<!-- END api-endpoints service=symfony locale=en -->
+
+#### Catalog Service API
+
+<!-- START api-endpoints service=catalog locale=en sourceType=docker source=catalog-cli -->
+| Method | Path | Summary |
+| --- | --- | --- |
+| `GET` | `/api/catalog/elements` | List catalog elements |
+| `GET` | `/api/catalog/elements/{id}` | Get catalog element |
+| `GET` | `/api/catalog/sections` | List active catalog sections |
+| `GET` | `/api/catalog/sections/{id}` | Get catalog section |
+| `GET` | `/api/stores` | List active stores |
+| `GET` | `/api/stores/{id}` | Get store |
+<!-- END api-endpoints service=catalog locale=en -->
+
+#### Cart Service API
+
+<!-- START api-endpoints service=cart locale=en sourceType=docker source=cart-cli -->
+| Method | Path | Summary |
+| --- | --- | --- |
+| `GET` | `/api/cart` | Get current cart |
+| `DELETE` | `/api/cart` | Clear current cart |
+| `POST` | `/api/cart/items` | Add cart item |
+| `PATCH` | `/api/cart/items/{itemId}` | Update cart item |
+| `DELETE` | `/api/cart/items/{itemId}` | Delete cart item |
+| `GET` | `/api/orders` | List orders |
+| `POST` | `/api/orders` | Create order |
+| `GET` | `/api/orders/{orderId}` | Get order |
+| `POST` | `/api/orders/{orderId}/cancel` | Cancel order |
+<!-- END api-endpoints service=cart locale=en -->
 
 ### Admin Moderation and Notifications
 
@@ -187,34 +327,71 @@ The notification recipients are administrators resolved by the application, not 
 
 ### Tasks
 
-#### `Task 1` - done
+#### `Task 1`: Swagger setup and baseline News API preparation - done
+- Brief info: Launch Swagger/OpenAPI documentation and prepare the first versioned News API endpoints.
 - Task file: [symfony/docs/task-1.md](symfony/docs/task-1.md)
 - Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
-#### `Task 2` - done
+#### `Task 2`: JWT authentication and authorization endpoints - done
+- Brief info: Add JWT login, refresh, current-user endpoints, cookie support, rate limiting, and protected route access.
 - Merge Request 2: <https://github.com/ivanserg0692/symfony2026/pull/2>
 - Task file: [symfony/docs/task-2.md](symfony/docs/task-2.md)
 - MR result: [symfony/docs/mr-task-2.md](symfony/docs/mr-task-2.md)
-#### `Task 3` - done
+#### `Task 3`: Add access control for the News API - done
+- Brief info: Define public and protected News API routes with role-based access rules and proper authorization errors.
 - Merge Request 3: <https://github.com/ivanserg0692/symfony2026/pull/3>
 - Task file: [symfony/docs/task-3.md](symfony/docs/task-3.md)
 - MR result (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - MR result (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
-#### `Task 4` - done
+#### `Task 4`: Add email and internal notifications - done
+- Brief info: Introduce internal user notifications, an email channel, notification API endpoints, and moderation alerts.
 - Merge Request 4: <https://github.com/ivanserg0692/symfony2026/pull/4>
 - Task file: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 - MR result (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
 - MR result (RU): [symfony/docs/mr-task-4-ru.md](symfony/docs/mr-task-4-ru.md)
-#### `Task 5` - done
+#### `Task 5`: Export news to S3 through a queue - done
+- Brief info: Build asynchronous news export through Symfony Messenger, RabbitMQ, and MinIO/S3-compatible storage.
 - Merge Request 5: <https://github.com/ivanserg0692/symfony2026/pull/5>
 - Task file: [symfony/docs/task-5.md](symfony/docs/task-5.md)
 - MR result (EN): [symfony/docs/mr-task-5-en.md](symfony/docs/mr-task-5-en.md)
 - MR result (RU): [symfony/docs/mr-task-5-ru.md](symfony/docs/mr-task-5-ru.md)
-#### `Task 6` - done
+#### `Task 6`: Refine frontend application for the existing API - done
+- Brief info: Create a separate React/Next.js/refine frontend that consumes the existing Symfony `/api/v1` HTTP API.
 - Backend Merge Request 6: <https://github.com/ivanserg0692/symfony2026/pull/6>
 - Frontend Merge Request 6: <https://github.com/ivanserg0692/symfony2026-frontend/pull/1>
 - Task file: [symfony/docs/task-6.md](symfony/docs/task-6.md)
 - MR result (EN): [symfony/docs/mr-task-6-en.md](symfony/docs/mr-task-6-en.md)
 - MR result (RU): [symfony/docs/mr-task-6-ru.md](symfony/docs/mr-task-6-ru.md)
+#### `Task 7`: Backend service architecture with nginx API Gateway, main Symfony service, and internal gRPC - completed
+- Brief info: Document and complete the backend architecture with nginx as the REST gateway and gRPC reserved for internal service calls.
+- Backend Merge Request 7: <https://github.com/ivanserg0692/symfony2026/pull/7>
+- Frontend Merge Request 7: TBD
+- Task file: [symfony/docs/task-7.md](symfony/docs/task-7.md)
+- MR result (EN): [symfony/docs/mr-task-7-en.md](symfony/docs/mr-task-7-en.md)
+- MR result (RU): [symfony/docs/mr-task-7-ru.md](symfony/docs/mr-task-7-ru.md)
+##### `Task 7.1`: Develop Catalog Service and Order/Cart Service backend services - completed
+- Brief info: Split catalog and cart/order responsibilities into dedicated backend services with REST entrypoints and internal gRPC contracts.
+- Backend Merge Request 7.1: <https://github.com/ivanserg0692/symfony2026/pull/9>
+- Frontend Merge Request 7.1: TBD
+- Task file: [symfony/docs/task-7-1.md](symfony/docs/task-7-1.md)
+- MR result (EN): [symfony/docs/mr-task-7-1-en.md](symfony/docs/mr-task-7-1-en.md)
+- MR result (RU): [symfony/docs/mr-task-7-1-ru.md](symfony/docs/mr-task-7-1-ru.md)
+##### `Task 7.2`: Complete Cart/Order endpoints that require gRPC integrations - completed
+- Brief info: Complete Cart/Order flows that need Catalog Service data through internal gRPC checks and product snapshots.
+- Backend Merge Request 7.2: <https://github.com/ivanserg0692/symfony2026/pull/10>
+- Frontend Merge Request 7.2: TBD
+- Task file: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
+- MR result (EN): [symfony/docs/mr-task-7.2-en.md](symfony/docs/mr-task-7.2-en.md)
+- MR result (RU): [symfony/docs/mr-task-7.2-ru.md](symfony/docs/mr-task-7.2-ru.md)
+- gRPC contracts: [grpc-contracts/README.md](grpc-contracts/README.md)
+- Testing documentation: [TESTING.md](TESTING.md)
+- Order snapshot flow diagram: [symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
+##### `Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - completed
+- Brief info: Implement nginx API Gateway as the only external REST/HTTP entrypoint and keep service OpenAPI endpoints internal.
+- Backend Merge Request 7.3: https://github.com/ivanserg0692/symfony2026/pull/11
+- Frontend Merge Request 7.3: TBD
+- Task file: [symfony/docs/task-7.3.md](symfony/docs/task-7.3.md)
+- MR result (EN): [symfony/docs/mr-task-7.3-en.md](symfony/docs/mr-task-7.3-en.md)
+- MR result (RU): [symfony/docs/mr-task-7.3-ru.md](symfony/docs/mr-task-7.3-ru.md)
 
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
@@ -224,6 +401,25 @@ A separate frontend application was developed with React and Refine:
 ![Frontend news list](symfony/docs/images/frontend/news_list.png)
 
 ![Frontend notification list](symfony/docs/images/frontend/notification_list.png)
+
+### gRPC Contracts and Service Flows
+
+Internal gRPC contracts are stored separately from generated PHP files and are documented in [grpc-contracts/README.md](grpc-contracts/README.md). The current Catalog contract source is [grpc-contracts/catalog/v1/inventory.proto](grpc-contracts/catalog/v1/inventory.proto).
+
+Task 7 captures the backend service architecture, while Task 7.2 documents the Cart/Order integration work:
+
+- Architecture task: [symfony/docs/task-7.md](symfony/docs/task-7.md)
+- Cart/Order gRPC task: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
+- Task 7.2 MR result EN: [symfony/docs/mr-task-7.2-en.md](symfony/docs/mr-task-7.2-en.md)
+- Task 7.2 MR result RU: [symfony/docs/mr-task-7.2-ru.md](symfony/docs/mr-task-7.2-ru.md)
+- Catalog service entities EN: [catalog-service/docs/entities-summary-en.md](catalog-service/docs/entities-summary-en.md)
+- Catalog service entities RU: [catalog-service/docs/entities-summary-ru.md](catalog-service/docs/entities-summary-ru.md)
+- Catalog service tables EN: [symfony/docs/catalog-service-tables-en.md](symfony/docs/catalog-service-tables-en.md)
+- Catalog service tables RU: [symfony/docs/catalog-service-tables-ru.md](symfony/docs/catalog-service-tables-ru.md)
+
+<!-- plantuml src="symfony/docs/plantuml/grpc-contracts/order-snapshot-flow.puml" alt="Order product snapshot gRPC flow" out="symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png" -->
+![Order product snapshot gRPC flow](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
+<!-- /plantuml -->
 
 ### News Export and Batch Processing
 
@@ -282,6 +478,20 @@ docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console app
 ```
 
 ### Doctrine Database Setup
+
+The repository includes shared database maintenance scripts for all Doctrine-backed Symfony services listed in `DATABASE_SERVICE_TARGETS` in the root `.env`.
+
+Run database maintenance through npm scripts from the repository root:
+
+```bash
+npm run db:create
+npm run db:status
+npm run db:migrate
+npm run db:init
+npm run db:fixtures
+```
+
+`db:init` creates missing databases and then applies migrations. `db:fixtures` loads fixtures separately and is intentionally not included in `db:init` because it can rewrite development data.
 
 Start PostgreSQL and create the database if it does not exist yet:
 
@@ -507,6 +717,33 @@ GIT_COMMITTER_EMAIL="you@example.com"
 
 API отдает новости, аутентификацию, текущего пользователя и уведомления в зоне `api/v1`. Админка EasyAdmin управляет пользователями, группами, новостями, статусами и другими административными данными. Модерация новостей выполняется через админку, а перевод новости в статус `on_moderation` создает уведомления для администраторов.
 
+### Архитектура сервисов
+
+Публичная REST/HTTP-точка входа находится на уровне API Gateway. Endpoints backend-сервисов остаются внутренними сервисными контрактами, а внешние клиентские маршруты определяются на уровне gateway.
+
+<!-- plantuml src="symfony/docs/plantuml/service-architecture/components.puml" alt="Обзор архитектуры сервисов" out="symfony/docs/images/plantuml/service-architecture/components.png" -->
+![Обзор архитектуры сервисов](symfony/docs/images/plantuml/service-architecture/components.png)
+<!-- /plantuml -->
+
+<!-- plantuml src="symfony/docs/plantuml/service-architecture/request-workflow.puml" alt="Workflow внешнего API-запроса" out="symfony/docs/images/plantuml/service-architecture/request-workflow.png" -->
+![Workflow внешнего API-запроса](symfony/docs/images/plantuml/service-architecture/request-workflow.png)
+<!-- /plantuml -->
+
+#### API Gateway
+
+Сервис `api-gateway` является публичной REST/HTTP-точкой входа для клиентских приложений. Он реализован на nginx и маршрутизирует внешние запросы `/api/v1/...` во внутренние routes Symfony, Catalog и Cart services.
+
+Маршрутизация gateway описывается в `api-gateway/routes.json`. Базовые публичные OpenAPI-метаданные вынесены отдельно в `api-gateway/openapi-header.json`, чтобы общие поля OpenAPI можно было менять без правки route manifest и generated files.
+
+Команда `npm run gateway:generate` пересобирает оба gateway artifact из одной source configuration:
+
+- nginx route config: `docker/nginx/snippets/generated-api-gateway-routes.conf`;
+- публичный Gateway OpenAPI contract: `symfony/public/api-gateway/openapi.json`.
+
+Реализация генератора находится в `scripts/generate-api-gateway.mjs`. Общие nginx proxy/auth настройки находятся в `docker/nginx/snippets/`.
+
+OpenAPI-спеки сервисов остаются внутренними source contracts. Сгенерированная Gateway OpenAPI spec является публичным клиентским контрактом.
+
 ### Возможности проекта
 
 - JWT-аутентификация с access tokens, refresh tokens, HttpOnly cookie, CSRF-защитой для небезопасных API-методов, ограничением попыток логина и проверкой Cloudflare Turnstile.
@@ -520,15 +757,74 @@ API отдает новости, аутентификацию, текущего 
 
 | Область | Назначение |
 | --- | --- |
-| Public API | JSON-ручки в зоне `api/v1` для аутентификации, новостей и уведомлений. |
+| Public API | JSON-ручки для аутентификации, новостей, уведомлений, корзины и чтения заказов. |
+| Catalog service | Граница каталога, которая владеет товарами, элементами каталога, ценами, атрибутами, изображениями, остатками и product snapshots. |
+| Cart and Orders | Граница корзины и заказов, которая владеет активными корзинами, созданием заказов, позициями заказа, ценами позиций и ответами заказов для аутентифицированного пользователя. |
+| gRPC integration | Внутренние сервисные контракты для checkout-списания остатков и доверенного batch-чтения product snapshots. |
+| Checkout flow | Сценарий создания заказа, который выполняет финальное списание остатков, хранит цены позиций в `OrderItem` и связывает позиции заказа с неизменяемыми snapshots из Catalog. |
 | Swagger/OpenAPI | Runtime API-контракт для маршрутов, соответствующих `^/api/v1`. |
 | EasyAdmin | Back-office интерфейс для администраторов. Он не представлен в Swagger как API-ручки. |
-| Internal workflows | Doctrine listeners, Messenger messages, Mailer и Notifier logic, которые реагируют на изменения состояния приложения. |
+| Internal workflows | Doctrine listeners, Messenger messages, Mailer, Notifier logic и проверки консистентности заказов, которые реагируют на изменения состояния приложения. |
 | Console tooling | Bootstrap- и maintenance-команды: JWT keys, admin sync, migrations, fixtures и cleanup refresh tokens. |
+
+### Домен интернет-магазина
+
+В проекте также есть домен интернет-магазина, разделенный между основным Symfony-приложением и Catalog service. Catalog service владеет товарами, элементами каталога, ценами, атрибутами, изображениями, остатками и неизменяемыми product snapshots. Cart and Orders владеет корзинами пользователей, созданием заказов, позициями заказа, ценами позиций и чтением заказов аутентифицированного пользователя.
+
+Checkout списывает остатки через gRPC inventory-контракт Catalog service. Во время списания Catalog создает product snapshots, а Cart and Orders сохраняет в каждом `OrderItem` только ссылку `productSnapshotId`. Исторические ответы заказов должны строиться по этим snapshots, а не по текущим данным товара, поэтому переименование, отключение, изменение цены или удаление текущего товара не переписывает уже созданные заказы.
+
+Product snapshots не отдаются через отдельную публичную REST-ручку. Cart and Orders сначала авторизует аутентифицированного пользователя относительно запрошенного заказа, собирает snapshot IDs только из позиций этого заказа и затем одним доверенным batch gRPC-вызовом запрашивает эти snapshots у Catalog. Цены позиций заказа остаются в `OrderItem`; snapshots сохраняют историческое представление товара.
+
+Текущая реализация checkout создает заказ и оставляет его в статусе `pending`. Сервисы доставки и оплаты пока не реализованы. Дальнейшее движение заказа планируется как асинхронный workflow через RabbitMQ/Messenger: сообщения о создании заказа будут обрабатываться payment- и delivery-handler-ами, а они уже будут переводить заказ в следующие статусы после успешной обработки.
+
+<!-- plantuml src="symfony/docs/plantuml/store-domain/relations.puml" alt="Связи домена интернет-магазина" out="symfony/docs/images/plantuml/store-domain/relations.png" -->
+![Связи домена интернет-магазина](symfony/docs/images/plantuml/store-domain/relations.png)
+<!-- /plantuml -->
+
+<!-- plantuml src="symfony/docs/plantuml/store-domain/workflow.puml" alt="Workflow интернет-магазина" out="symfony/docs/images/plantuml/store-domain/workflow.png" -->
+![Workflow интернет-магазина](symfony/docs/images/plantuml/store-domain/workflow.png)
+<!-- /plantuml -->
 
 ### API Endpoints
 
-<!-- START api-endpoints-ru generated from OpenAPI -->
+Таблица API Gateway ниже описывает внешнюю публичную API-поверхность для REST/HTTP клиентов. Она генерируется из Gateway OpenAPI contract.
+
+#### API Gateway Public API
+
+<!-- START api-endpoints service=api-gateway locale=ru sourceType=file source=symfony/public/api-gateway/openapi.json -->
+| Method | Path | Описание из OpenAPI |
+| --- | --- | --- |
+| `GET` | `/api/v1/auth/me` | Get current authenticated user |
+| `GET` | `/api/v1/cart` | Get current cart |
+| `DELETE` | `/api/v1/cart` | Clear current cart |
+| `POST` | `/api/v1/cart/items` | Add cart item |
+| `PATCH` | `/api/v1/cart/items/{itemId}` | Update cart item |
+| `DELETE` | `/api/v1/cart/items/{itemId}` | Delete cart item |
+| `GET` | `/api/v1/catalog/elements` | List catalog elements |
+| `GET` | `/api/v1/catalog/elements/{id}` | Get catalog element |
+| `GET` | `/api/v1/catalog/sections` | List active catalog sections |
+| `GET` | `/api/v1/catalog/sections/{id}` | Get catalog section |
+| `GET` | `/api/v1/news` | Paginated list of news. |
+| `GET` | `/api/v1/news/{slug}` | News item. |
+| `GET` | `/api/v1/notification` | Paginated list of current user notifications. |
+| `DELETE` | `/api/v1/notification` | Current user notifications deleted. |
+| `GET` | `/api/v1/notification/{id}` | Notification item. |
+| `DELETE` | `/api/v1/notification/{id}` | Notification deleted. |
+| `PATCH` | `/api/v1/notification/{id}/read` | Notification marked as read. |
+| `GET` | `/api/v1/orders` | List orders |
+| `POST` | `/api/v1/orders` | Create order |
+| `GET` | `/api/v1/orders/{orderId}` | Get order |
+| `POST` | `/api/v1/orders/{orderId}/cancel` | Cancel order |
+| `GET` | `/api/v1/ping` | Ping API v1 |
+| `GET` | `/api/v1/stores` | List active stores |
+| `GET` | `/api/v1/stores/{id}` | Get store |
+<!-- END api-endpoints service=api-gateway locale=ru -->
+
+Таблицы сервисов ниже описывают внутренние service endpoints, сгенерированные из OpenAPI-контракта каждого сервиса.
+
+#### Symfony API
+
+<!-- START api-endpoints service=symfony locale=ru sourceType=docker source=symfony-cli -->
 | Method | Path | Описание из OpenAPI |
 | --- | --- | --- |
 | `GET` | `/api/v1/auth/csrf` | Issue CSRF token for auth endpoints |
@@ -544,7 +840,37 @@ API отдает новости, аутентификацию, текущего 
 | `DELETE` | `/api/v1/notification/{id}` | Notification deleted. |
 | `PATCH` | `/api/v1/notification/{id}/read` | Notification marked as read. |
 | `GET` | `/api/v1/ping` | Ping API v1 |
-<!-- END api-endpoints-ru generated from OpenAPI -->
+| `GET` | `/api/v1/users` | List users |
+<!-- END api-endpoints service=symfony locale=ru -->
+
+#### Catalog Service API
+
+<!-- START api-endpoints service=catalog locale=ru sourceType=docker source=catalog-cli -->
+| Method | Path | Описание из OpenAPI |
+| --- | --- | --- |
+| `GET` | `/api/catalog/elements` | List catalog elements |
+| `GET` | `/api/catalog/elements/{id}` | Get catalog element |
+| `GET` | `/api/catalog/sections` | List active catalog sections |
+| `GET` | `/api/catalog/sections/{id}` | Get catalog section |
+| `GET` | `/api/stores` | List active stores |
+| `GET` | `/api/stores/{id}` | Get store |
+<!-- END api-endpoints service=catalog locale=ru -->
+
+#### Cart Service API
+
+<!-- START api-endpoints service=cart locale=ru sourceType=docker source=cart-cli -->
+| Method | Path | Описание из OpenAPI |
+| --- | --- | --- |
+| `GET` | `/api/cart` | Get current cart |
+| `DELETE` | `/api/cart` | Clear current cart |
+| `POST` | `/api/cart/items` | Add cart item |
+| `PATCH` | `/api/cart/items/{itemId}` | Update cart item |
+| `DELETE` | `/api/cart/items/{itemId}` | Delete cart item |
+| `GET` | `/api/orders` | List orders |
+| `POST` | `/api/orders` | Create order |
+| `GET` | `/api/orders/{orderId}` | Get order |
+| `POST` | `/api/orders/{orderId}/cancel` | Cancel order |
+<!-- END api-endpoints service=cart locale=ru -->
 
 ### Модерация в админке и уведомления
 
@@ -616,34 +942,71 @@ API отдает новости, аутентификацию, текущего 
 
 ### Задачи
 
-#### `Task 1` - done
+#### `Task 1`: Запуск Swagger-документации и подготовка базового News API - done
+- Brief info: Запустить Swagger/OpenAPI-документацию и подготовить первые versioned endpoints News API.
 - Файл задачи: [symfony/docs/task-1.md](symfony/docs/task-1.md)
 - Merge Request 1: <https://github.com/ivanserg0692/symfony2026/pull/1>
-#### `Task 2` - done
+#### `Task 2`: Добавление JWT-аутентификации и ручек авторизации - done
+- Brief info: Добавить JWT login, refresh, current-user endpoints, cookie support, rate limiting и защиту приватных маршрутов.
 -  Merge Request 2: <https://github.com/ivanserg0692/symfony2026/pull/2>
 - Файл задачи: [symfony/docs/task-2.md](symfony/docs/task-2.md)
 - Результат MR: [symfony/docs/mr-task-2.md](symfony/docs/mr-task-2.md)
-#### `Task 3` - done
+#### `Task 3`: Добавление проверки доступа к News API - done
+- Brief info: Разделить публичные и защищенные маршруты News API через роли и корректные ошибки авторизации.
 - Merge Request 3: <https://github.com/ivanserg0692/symfony2026/pull/3>
 - Файл задачи: [symfony/docs/task-3.md](symfony/docs/task-3.md)
 - Результат MR (EN): [symfony/docs/mr-task-3-en.md](symfony/docs/mr-task-3-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-3-ru.md](symfony/docs/mr-task-3-ru.md)
-#### `Task 4` - done
+#### `Task 4`: Добавление уведомлений через email и внутренние notifications - done
+- Brief info: Добавить внутренние уведомления пользователей, email-канал, notification endpoints и уведомления о модерации.
 - Merge Request 4: <https://github.com/ivanserg0692/symfony2026/pull/4>
 - Файл задачи: [symfony/docs/task-4.md](symfony/docs/task-4.md)
 - Результат MR (EN): [symfony/docs/mr-task-4-en.md](symfony/docs/mr-task-4-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-4-ru.md](symfony/docs/mr-task-4-ru.md)
-#### `Task 5` - done
+#### `Task 5`: Экспорт новостей в S3 через очередь - done
+- Brief info: Реализовать асинхронный экспорт новостей через Symfony Messenger, RabbitMQ и MinIO/S3-compatible storage.
 - Merge Request 5: <https://github.com/ivanserg0692/symfony2026/pull/5>
 - Файл задачи: [symfony/docs/task-5.md](symfony/docs/task-5.md)
 - Результат MR (EN): [symfony/docs/mr-task-5-en.md](symfony/docs/mr-task-5-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-5-ru.md](symfony/docs/mr-task-5-ru.md)
-#### `Task 6` - done
+#### `Task 6`: Frontend-приложение на refine для существующего API - done
+- Brief info: Создать отдельный React/Next.js/refine frontend, который работает с существующим Symfony `/api/v1` HTTP API.
 - Backend Merge Request 6: <https://github.com/ivanserg0692/symfony2026/pull/6>
 - Frontend Merge Request 6: <https://github.com/ivanserg0692/symfony2026-frontend/pull/1>
 - Файл задачи: [symfony/docs/task-6.md](symfony/docs/task-6.md)
 - Результат MR (EN): [symfony/docs/mr-task-6-en.md](symfony/docs/mr-task-6-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-6-ru.md](symfony/docs/mr-task-6-ru.md)
+#### `Task 7`: Архитектура backend-сервисов с nginx API Gateway, основным Symfony-сервисом и внутренним gRPC - completed
+- Brief info: Зафиксировать и завершить backend-архитектуру с nginx как REST gateway и gRPC только для внутренних service-to-service вызовов.
+- Backend Merge Request 7: <https://github.com/ivanserg0692/symfony2026/pull/7>
+- Frontend Merge Request 7: TBD
+- Файл задачи: [symfony/docs/task-7.md](symfony/docs/task-7.md)
+- Результат MR (EN): [symfony/docs/mr-task-7-en.md](symfony/docs/mr-task-7-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-7-ru.md](symfony/docs/mr-task-7-ru.md)
+##### `Task 7.1`: Разработка backend-сервисов Catalog Service и Order/Cart Service - completed
+- Brief info: Вынести каталог и корзину/заказы в отдельные backend-сервисы с REST endpoints и внутренними gRPC-контрактами.
+- Backend Merge Request 7.1: <https://github.com/ivanserg0692/symfony2026/pull/9>
+- Frontend Merge Request 7.1: TBD
+- Файл задачи: [symfony/docs/task-7-1.md](symfony/docs/task-7-1.md)
+- Результат MR (EN): [symfony/docs/mr-task-7-1-en.md](symfony/docs/mr-task-7-1-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-7-1-ru.md](symfony/docs/mr-task-7-1-ru.md)
+##### `Task 7.2`: Доработка Cart/Order endpoints, которым нужны gRPC-интеграции - completed
+- Brief info: Доработать Cart/Order сценарии, которым нужны проверки Catalog Service через gRPC и product snapshots.
+- Backend Merge Request 7.2: <https://github.com/ivanserg0692/symfony2026/pull/10>
+- Frontend Merge Request 7.2: TBD
+- Файл задачи: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
+- Результат MR (EN): [symfony/docs/mr-task-7.2-en.md](symfony/docs/mr-task-7.2-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-7.2-ru.md](symfony/docs/mr-task-7.2-ru.md)
+- gRPC-контракты: [grpc-contracts/README.md](grpc-contracts/README.md)
+- Документация тестирования: [TESTING.md](TESTING.md)
+- Диаграмма order snapshot flow: [symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
+##### `Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - completed
+- Brief info: Реализовать nginx API Gateway как единственную внешнюю REST/HTTP точку входа и оставить OpenAPI endpoints сервисов внутренними.
+- Backend Merge Request 7.3: https://github.com/ivanserg0692/symfony2026/pull/11
+- Frontend Merge Request 7.3: TBD
+- Файл задачи: [symfony/docs/task-7.3.md](symfony/docs/task-7.3.md)
+- Результат MR (EN): [symfony/docs/mr-task-7.3-en.md](symfony/docs/mr-task-7.3-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-7.3-ru.md](symfony/docs/mr-task-7.3-ru.md)
 
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:
@@ -653,6 +1016,25 @@ API отдает новости, аутентификацию, текущего 
 ![Список новостей frontend](symfony/docs/images/frontend/news_list.png)
 
 ![Список уведомлений frontend](symfony/docs/images/frontend/notification_list.png)
+
+### gRPC-контракты и сервисные сценарии
+
+Внутренние gRPC-контракты хранятся отдельно от сгенерированных PHP-файлов и описаны в [grpc-contracts/README.md](grpc-contracts/README.md). Текущий source контракта Catalog Service: [grpc-contracts/catalog/v1/inventory.proto](grpc-contracts/catalog/v1/inventory.proto).
+
+Task 7 фиксирует архитектуру backend-сервисов, а Task 7.2 описывает Cart/Order integration work:
+
+- Архитектурная задача: [symfony/docs/task-7.md](symfony/docs/task-7.md)
+- Задача Cart/Order gRPC: [symfony/docs/task-7.2.md](symfony/docs/task-7.2.md)
+- Результат MR Task 7.2 EN: [symfony/docs/mr-task-7.2-en.md](symfony/docs/mr-task-7.2-en.md)
+- Результат MR Task 7.2 RU: [symfony/docs/mr-task-7.2-ru.md](symfony/docs/mr-task-7.2-ru.md)
+- Entity Catalog Service EN: [catalog-service/docs/entities-summary-en.md](catalog-service/docs/entities-summary-en.md)
+- Entity Catalog Service RU: [catalog-service/docs/entities-summary-ru.md](catalog-service/docs/entities-summary-ru.md)
+- Таблицы Catalog Service EN: [symfony/docs/catalog-service-tables-en.md](symfony/docs/catalog-service-tables-en.md)
+- Таблицы Catalog Service RU: [symfony/docs/catalog-service-tables-ru.md](symfony/docs/catalog-service-tables-ru.md)
+
+<!-- plantuml src="symfony/docs/plantuml/grpc-contracts/order-snapshot-flow.puml" alt="Order product snapshot gRPC flow" out="symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png" -->
+![Order product snapshot gRPC flow](symfony/docs/images/plantuml/grpc-contracts/order-snapshot-flow.png)
+<!-- /plantuml -->
 
 ### Экспорт новостей и batch-обработка
 
@@ -705,6 +1087,20 @@ docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
 ```
 
 ### Настройка Doctrine и базы данных
+
+В репозитории есть общие database maintenance scripts для всех Symfony-сервисов с Doctrine, перечисленных в `DATABASE_SERVICE_TARGETS` в корневом `.env`.
+
+Запускайте обслуживание баз через npm scripts из корня репозитория:
+
+```bash
+npm run db:create
+npm run db:status
+npm run db:migrate
+npm run db:init
+npm run db:fixtures
+```
+
+`db:init` создает отсутствующие базы и затем применяет миграции. `db:fixtures` загружает fixtures отдельно и специально не включен в `db:init`, потому что может перезаписать development-данные.
 
 Поднимите PostgreSQL и создайте базу, если она еще не существует:
 

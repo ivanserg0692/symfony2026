@@ -6,52 +6,105 @@ import { resolve } from 'node:path';
 
 const METHOD_ORDER = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
 const README_PATH = process.argv[2] ?? 'README.md';
-const OPENAPI_SOURCE = process.argv[3] ?? null;
+const BLOCK_PATTERN = /<!-- START api-endpoints(?<startParams>[^>]*) -->[\s\S]*?<!-- END api-endpoints(?<endParams>[^>]*) -->/g;
 
-const BLOCKS = [
-  {
-    name: 'api-endpoints-en',
-    header: ['Method', 'Path', 'Summary'],
-  },
-  {
-    name: 'api-endpoints-ru',
-    header: ['Method', 'Path', 'Описание из OpenAPI'],
-  },
-];
+const HEADERS_BY_LOCALE = {
+  en: ['Method', 'Path', 'Summary'],
+  ru: ['Method', 'Path', 'Описание из OpenAPI'],
+};
 
 function main() {
   const readmePath = resolve(process.cwd(), README_PATH);
-  const openApi = readOpenApi(OPENAPI_SOURCE);
-  const rows = buildRows(openApi);
+  const openApiCache = new Map();
   let readme = readFileSync(readmePath, 'utf8');
 
-  for (const block of BLOCKS) {
-    readme = replaceGeneratedBlock(readme, block.name, renderTable(block.header, rows));
+  if (!BLOCK_PATTERN.test(readme)) {
+    throw new Error('Missing generated api-endpoints blocks');
   }
+
+  readme = readme.replace(BLOCK_PATTERN, (match, startParamsRaw, endParamsRaw) => {
+    const params = parseBlockParams(startParamsRaw);
+    const endParams = parseBlockParams(endParamsRaw);
+
+    validateBlockParams(params, endParams);
+
+    const openApi = readOpenApiForBlock(params, openApiCache);
+    const rows = buildRows(openApi);
+
+    return renderGeneratedBlock(params, renderTable(HEADERS_BY_LOCALE[params.locale], rows));
+  });
 
   writeFileSync(readmePath, readme);
 }
 
-function readOpenApi(source) {
-  if (!source) {
-    const output = execFileSync(
-      'docker',
-      ['compose', 'exec', '-T', 'symfony-cli', 'php', 'bin/console', 'nelmio:apidoc:dump', '--format=json'],
-      {
-        cwd: process.cwd(),
-        encoding: 'utf8',
-        stdio: ['ignore', 'pipe', 'inherit'],
-      },
-    );
+function parseBlockParams(rawParams) {
+  return rawParams
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .reduce((params, token) => {
+      const match = token.match(/^([A-Za-z][\w-]*)=(.+)$/);
 
-    return JSON.parse(output);
+      if (!match) {
+        throw new Error(`Invalid api-endpoints marker parameter: ${token}`);
+      }
+
+      params[match[1]] = match[2];
+
+      return params;
+    }, {});
+}
+
+function validateBlockParams(params, endParams) {
+  for (const name of ['service', 'locale', 'sourceType', 'source']) {
+    if (!params[name]) {
+      throw new Error(`Missing api-endpoints marker parameter: ${name}`);
+    }
   }
 
-  if (source.startsWith('http://') || source.startsWith('https://')) {
-    throw new Error('HTTP OpenAPI sources are not supported by this script yet. Dump JSON to a file or omit the source argument.');
+  if (!HEADERS_BY_LOCALE[params.locale]) {
+    throw new Error(`Unsupported api-endpoints locale: ${params.locale}`);
   }
 
-  return JSON.parse(readFileSync(resolve(process.cwd(), source), 'utf8'));
+  if (!['docker', 'file'].includes(params.sourceType)) {
+    throw new Error(`Unsupported api-endpoints sourceType: ${params.sourceType}`);
+  }
+
+  for (const name of ['service', 'locale']) {
+    if (endParams[name] && endParams[name] !== params[name]) {
+      throw new Error(`Mismatched api-endpoints ${name}: start=${params[name]} end=${endParams[name]}`);
+    }
+  }
+}
+
+function readOpenApiForBlock(params, openApiCache) {
+  const cacheKey = `${params.sourceType}:${params.source}`;
+
+  if (!openApiCache.has(cacheKey)) {
+    openApiCache.set(cacheKey, params.sourceType === 'docker'
+      ? dumpOpenApiFromService(params.source)
+      : readOpenApiFile(params.source));
+  }
+
+  return openApiCache.get(cacheKey);
+}
+
+function dumpOpenApiFromService(composeService) {
+  const output = execFileSync(
+    'docker',
+    ['compose', 'exec', '-T', composeService, 'php', 'bin/console', 'nelmio:apidoc:dump', '--format=json'],
+    {
+      cwd: process.cwd(),
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'inherit'],
+    },
+  );
+
+  return JSON.parse(output);
+}
+
+function readOpenApiFile(path) {
+  return JSON.parse(readFileSync(resolve(process.cwd(), path), 'utf8'));
 }
 
 function buildRows(openApi) {
@@ -127,20 +180,24 @@ function escapeMarkdown(value) {
     .replace(/\s+/g, ' ');
 }
 
-function replaceGeneratedBlock(readme, name, content) {
-  const start = `<!-- START ${name} generated from OpenAPI -->`;
-  const end = `<!-- END ${name} generated from OpenAPI -->`;
-  const pattern = new RegExp(`${escapeRegExp(start)}[\\s\\S]*?${escapeRegExp(end)}`);
+function renderGeneratedBlock(params, content) {
+  const start = renderStartMarker(params);
+  const end = `<!-- END api-endpoints service=${params.service} locale=${params.locale} -->`;
 
-  if (!pattern.test(readme)) {
-    throw new Error(`Missing generated block markers for ${name}`);
-  }
-
-  return readme.replace(pattern, `${start}\n${content}\n${end}`);
+  return `${start}
+${content}
+${end}`;
 }
 
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function renderStartMarker(params) {
+  const markerParams = [
+    `service=${params.service}`,
+    `locale=${params.locale}`,
+    `sourceType=${params.sourceType}`,
+    `source=${params.source}`,
+  ];
+
+  return `<!-- START api-endpoints ${markerParams.join(' ')} -->`;
 }
 
 main();

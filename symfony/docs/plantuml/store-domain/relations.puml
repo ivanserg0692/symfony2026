@@ -1,0 +1,206 @@
+@startuml
+!theme plain
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam wrapWidth 180
+hide circle
+
+title Online Store Domain Relations
+
+package "Main Symfony Service\nMain DB" as main_service {
+  entity "user" as main_user {
+    * id : integer <<PK>>
+    --
+    email : varchar(180) <<UQ>>
+    roles : json
+    password : varchar
+  }
+
+  entity "user_groups" as user_groups {
+    * id : integer <<PK>>
+    --
+    name : varchar(255)
+    is_admin : boolean
+  }
+
+  entity "user_user_groups" as user_user_groups {
+    * user_id : integer <<PK, FK>>
+    * user_groups_id : integer <<PK, FK>>
+  }
+
+  entity "notifications" as notifications {
+    * id : integer <<PK>>
+    --
+    recipient_id : integer <<FK>>
+    message : text
+    read_at : datetime <<nullable>>
+  }
+}
+
+package "Catalog Service\nCatalog DB" as catalog_service {
+  entity "products" as products {
+    * id : integer <<PK>>
+    --
+    name : varchar(255)
+    slug : varchar(255) <<UQ>>
+    active : boolean
+    created_by : integer
+    picture_id : varchar(255) <<nullable>>
+  }
+
+  entity "catalog_elements" as catalog_elements {
+    * id : integer <<PK>>
+    --
+    product_id : integer <<FK, UQ>>
+    sort : integer
+  }
+
+  entity "catalog_sections" as catalog_sections {
+    * id : integer <<PK>>
+    --
+    parent_id : integer <<FK, nullable>>
+    name : varchar(255)
+    slug : varchar(255) <<UQ>>
+    active : boolean
+    level : integer
+    sort : integer
+  }
+
+  entity "product_catalog_sections" as product_catalog_sections {
+    * product_id : integer <<PK, FK>>
+    * catalog_section_id : integer <<PK, FK>>
+  }
+
+  entity "stores" as stores {
+    * id : integer <<PK>>
+    --
+    name : varchar(255)
+    slug : varchar(255) <<UQ>>
+    active : boolean
+  }
+
+  entity "stores_elements_stocks" as stores_elements_stocks {
+    * id : integer <<PK>>
+    --
+    store_id : integer <<FK>>
+    element_id : integer <<FK>>
+    stock : integer
+    --
+    uniq_store_element_stock(store_id, element_id) <<UQ>>
+  }
+
+  entity "price_type" as price_type {
+    * id : integer <<PK>>
+    --
+    code : varchar(255) <<UQ>>
+    name : varchar(255)
+    active : boolean
+    sort : integer
+  }
+
+  entity "product_price" as product_price {
+    * id : integer <<PK>>
+    --
+    product_id : integer <<FK>>
+    price_type_id : integer <<FK>>
+    price : integer
+    currency : varchar(3)
+    active : boolean
+    --
+    uniq_product_price_type(product_id, price_type_id) <<UQ>>
+  }
+
+  entity "product_snapshot" as product_snapshot {
+    * id : integer <<PK>>
+    --
+    product_id : integer <<FK, UQ>>
+    original_product_id : integer <<FK>>
+  }
+
+  entity "inventory_operations" as inventory_operations {
+    * id : integer <<PK>>
+    --
+    operation_id : varchar(128) <<UQ>>
+    type : varchar(64)
+    request_hash : varchar(64)
+    response_payload : json
+  }
+}
+
+package "Cart Service\nOrders DB" as cart_service {
+  entity "carts" as carts {
+    * id : integer <<PK>>
+    --
+    owner_id : integer
+    created_at : datetime
+    updated_at : datetime
+    --
+    uniq_carts_owner_id(owner_id) <<UQ>>
+  }
+
+  entity "cart_items" as cart_items {
+    * id : integer <<PK>>
+    --
+    cart_id : integer <<FK>>
+    catalog_element_id : integer
+    quantity : integer
+    sort : integer
+  }
+
+  entity "orders" as orders {
+    * id : integer <<PK>>
+    --
+    owner_id : integer
+    status : varchar(32)
+    operation_id : varchar(64) <<nullable>>
+    total_price : decimal(15,2)
+    total_discount : decimal(15,2)
+    final_price : decimal(15,2)
+  }
+
+  entity "order_items" as order_items {
+    * id : integer <<PK>>
+    --
+    order_id : integer <<FK>>
+    product_snapshot_id : integer
+    quantity : integer
+    unit_price : decimal(15,2)
+    final_unit_price : decimal(15,2)
+    line_total : decimal(15,2)
+  }
+}
+
+main_user ||--o{ user_user_groups : "ManyToMany"
+user_groups ||--o{ user_user_groups : "ManyToMany"
+main_user ||--o{ notifications : "recipient_id"
+
+products ||--|| catalog_elements : "OneToOne product_id"
+catalog_sections ||--o{ catalog_sections : "parent_id"
+products ||--o{ product_catalog_sections : "ManyToMany"
+catalog_sections ||--o{ product_catalog_sections : "ManyToMany"
+stores ||--o{ stores_elements_stocks : "store_id"
+catalog_elements ||--o{ stores_elements_stocks : "element_id"
+catalog_elements ||--o{ product_price : "product_id"
+price_type ||--o{ product_price : "price_type_id"
+products ||--|| product_snapshot : "snapshot product_id"
+catalog_elements ||--o{ product_snapshot : "original_product_id"
+
+carts ||--o{ cart_items : "cart_id"
+orders ||--o{ order_items : "order_id"
+
+main_user ..> carts : "logical owner_id\nvia X-User-Id"
+main_user ..> orders : "logical owner_id\nvia X-User-Id"
+main_user ..> products : "logical created_by"
+cart_items ..> catalog_elements : "logical catalog_element_id\ngRPC/REST lookup"
+order_items ..> product_snapshot : "logical product_snapshot_id\ngRPC snapshot read"
+orders ..> inventory_operations : "logical operation_id\nidempotent stock deduction"
+
+note bottom
+Solid relations are Doctrine relations inside one service database.
+Dotted relations are logical cross-service references; there are no physical foreign keys between service databases.
+end note
+
+@enduml

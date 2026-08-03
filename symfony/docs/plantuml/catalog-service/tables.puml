@@ -1,0 +1,155 @@
+@startuml
+!theme plain
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam wrapWidth 180
+
+title Catalog Service Tables
+
+entity "catalog_sections" as catalog_sections {
+  * id : integer <<PK>>
+  --
+  name : varchar(255)
+  slug : varchar(255) <<UQ>>
+  active : boolean
+  description : text <<nullable>>
+  picture_id : varchar(255) <<nullable>>
+  level : integer
+  left_margin : integer
+  right_margin : integer
+  parent_id : integer <<FK, nullable>>
+  sort : integer = 100
+}
+
+note top of catalog_sections
+Purpose: catalog section tree.
+Doctrine:
+- parent: ManyToOne self-reference
+- catalogSections: OneToMany children
+- catalogElements: ManyToMany products
+end note
+
+entity "catalog_elements" as catalog_elements {
+  * id : integer <<PK>>
+  --
+  name : varchar(255)
+  created_at : datetime_immutable
+  active : boolean
+  created_by : integer
+  description : text <<nullable>>
+  slug : varchar(255) <<UQ>>
+  picture_id : varchar(255) <<nullable>>
+  sort : integer = 100
+}
+
+note top of catalog_elements
+Purpose: catalog product/item card.
+Doctrine:
+- sections: ManyToMany catalog sections
+- storeStocks: OneToMany stock rows
+- productPrices: OneToMany price rows
+end note
+
+entity "catalog_elements_catalog_sections" as catalog_elements_catalog_sections {
+  * catalog_elements_id : integer <<PK, FK>>
+  * catalog_sections_id : integer <<PK, FK>>
+}
+
+note top of catalog_elements_catalog_sections
+Purpose: implicit Doctrine join table
+for products assigned to catalog sections.
+Doctrine:
+- generated from ManyToMany
+end note
+
+entity "stores" as stores {
+  * id : integer <<PK>>
+  --
+  name : varchar(255)
+  slug : varchar(255) <<UQ>>
+  active : boolean
+  description : text <<nullable>>
+}
+
+note top of stores
+Purpose: store/warehouse point.
+Doctrine:
+- elementStocks: OneToMany stock rows
+end note
+
+entity "stores_elements_stocks" as stores_elements_stocks {
+  * store_id : integer <<PK, FK>>
+  * element_id : integer <<PK, FK>>
+  --
+  stock : integer
+}
+
+note top of stores_elements_stocks
+Purpose: product stock by store.
+Doctrine:
+- store: ManyToOne Stores, part of composite PK
+- element: ManyToOne CatalogElements, part of composite PK
+end note
+
+entity "price_type" as price_type {
+  * id : integer <<PK>>
+  --
+  code : varchar(255) <<UQ>>
+  name : varchar(255)
+  description : text <<nullable>>
+  active : boolean
+  sort : integer = 100
+  created_at : datetime_immutable
+  updated_at : datetime_immutable
+}
+
+note top of price_type
+Purpose: product price type, for example base,
+sale, wholesale, or another pricing channel.
+Doctrine:
+- productPrices: OneToMany price rows
+end note
+
+entity "product_price" as product_price {
+  * id : integer <<PK>>
+  --
+  product_id : integer <<FK>>
+  price_type_id : integer <<FK>>
+  price : integer
+  currency : varchar(3)
+  active : boolean
+  valid_from : datetime_immutable <<nullable>>
+  valid_to : datetime_immutable <<nullable>>
+  created_at : datetime_immutable
+  updated_at : datetime_immutable
+  --
+  uniq_product_price_type(product_id, price_type_id) <<UQ>>
+}
+
+note top of product_price
+Purpose: product price value for a price type,
+currency, activity flag, and validity period.
+Doctrine:
+- product: ManyToOne CatalogElements
+- priceType: ManyToOne PriceType
+end note
+
+catalog_sections ||--o{ catalog_sections : "OneToMany children / ManyToOne parent_id"
+catalog_sections ||--o{ catalog_elements_catalog_sections : "ManyToMany via catalog_sections_id"
+catalog_elements ||--o{ catalog_elements_catalog_sections : "ManyToMany via catalog_elements_id"
+
+stores ||--o{ stores_elements_stocks : "OneToMany / ManyToOne store_id"
+catalog_elements ||--o{ stores_elements_stocks : "OneToMany / ManyToOne element_id"
+
+catalog_elements ||--o{ product_price : "OneToMany / ManyToOne product_id"
+price_type ||--o{ product_price : "OneToMany / ManyToOne price_type_id"
+
+note bottom of catalog_elements_catalog_sections
+Implicit Doctrine ManyToMany join table for
+CatalogElements.sections <-> CatalogSections.catalogElements.
+end note
+
+@enduml

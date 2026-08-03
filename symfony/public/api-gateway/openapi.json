@@ -1,0 +1,2402 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Symfony2026 API Gateway",
+    "description": "Public REST/HTTP API contract exposed through the nginx API Gateway.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8001",
+      "description": "Local API Gateway"
+    }
+  ],
+  "paths": {
+    "/api/v1/auth/csrf": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Issue CSRF token for auth endpoints",
+        "description": "Generates a stateless CSRF token, stores its companion cookie on the API domain, and returns the token that must be sent in the configured CSRF header. Use id=api_mutation for unsafe API methods such as DELETE.",
+        "operationId": "get_api_v1_auth_csrf",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "CSRF token id. Defaults to authenticate.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "authenticate",
+                "api_mutation"
+              ]
+            },
+            "example": "api_mutation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSRF token issued successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "token",
+                    "token_id",
+                    "header_name",
+                    "cookie_name"
+                  ],
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "example": "ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c"
+                    },
+                    "token_id": {
+                      "type": "string",
+                      "example": "api_mutation"
+                    },
+                    "header_name": {
+                      "type": "string",
+                      "example": "X-CSRF-Token"
+                    },
+                    "cookie_name": {
+                      "type": "string",
+                      "example": "csrf-token"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported CSRF token id."
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Authenticate user and issue JWT token",
+        "description": "Authenticates a user by email, password, and Cloudflare Turnstile token, returns a JWT bearer token, and sets HttpOnly access and refresh cookies for browser clients. Call GET /api/v1/auth/csrf first and send the returned token in the CSRF header.",
+        "operationId": "post_api_v1_auth_login",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "CSRF token returned by GET /api/v1/auth/csrf.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthLoginRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JWT token issued successfully. The response also sets HttpOnly cookies for access and refresh tokens when cookie support is enabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "token"
+                  ],
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials or invalid Turnstile token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 401
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Invalid credentials."
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout current user",
+        "description": "Logs out the current user through the security firewall, clears authentication cookies, and invalidates the refresh token when it is available to the logout request. Call GET /api/v1/auth/csrf first and send the returned token in the CSRF header.",
+        "operationId": "post_api_v1_auth_logout",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "CSRF token returned by GET /api/v1/auth/csrf.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Logout completed successfully."
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Get current authenticated user",
+        "description": "Returns the currently authenticated user resolved from the JWT bearer token or the AUTH_TOKEN HttpOnly cookie.",
+        "operationId": "get_api_v1_auth_me",
+        "responses": {
+          "200": {
+            "description": "Authenticated user profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token."
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Refresh JWT access token",
+        "description": "Uses the refresh token from an HttpOnly cookie or request payload and issues a new access JWT. Call GET /api/v1/auth/csrf first and send the returned token in the CSRF header.",
+        "operationId": "post_api_v1_auth_refresh",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "CSRF token returned by GET /api/v1/auth/csrf.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Access token refreshed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "token"
+                  ],
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                    },
+                    "refresh_token": {
+                      "type": "string",
+                      "example": "1f0a9d1e5fd240f6a6c7d73f8f9d4b3c"
+                    },
+                    "refresh_token_expiration": {
+                      "type": "integer",
+                      "example": 1776297600
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired, or invalid refresh token."
+          }
+        }
+      }
+    },
+    "/api/v1/cart": {
+      "get": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Get current cart",
+        "description": "Returns the current user's active cart with local cart item data only.",
+        "operationId": "get_api_cart_get",
+        "responses": {
+          "200": {
+            "description": "Current cart or an empty cart representation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cart"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "X-User-Id header is missing or invalid."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Clear current cart",
+        "description": "Deletes the current user's active cart and its items. The operation is idempotent.",
+        "operationId": "delete_api_cart_delete",
+        "responses": {
+          "204": {
+            "description": "Cart was deleted or was already absent."
+          },
+          "400": {
+            "description": "X-User-Id header is missing or invalid."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/cart/items": {
+      "post": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Add cart item",
+        "description": "Adds a product to the current user's active cart after checking resulting stock through Catalog Service.",
+        "operationId": "post_api_cart_item_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "productId",
+                  "quantity"
+                ],
+                "properties": {
+                  "productId": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated existing cart item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartItem"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created cart item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or X-User-Id header."
+          },
+          "404": {
+            "description": "Product was not found."
+          },
+          "409": {
+            "description": "Requested quantity is unavailable."
+          },
+          "503": {
+            "description": "Catalog inventory service is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/cart/items/{itemId}": {
+      "patch": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Update cart item",
+        "description": "Updates quantity and sort for an item that belongs to the current user's active cart.",
+        "operationId": "patch_api_cart_item_patch",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "pattern": "\\d+",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "sort": {
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated cart item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body, unavailable quantity, or X-User-Id header."
+          },
+          "404": {
+            "description": "Cart item was not found."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Delete cart item",
+        "description": "Deletes an item from the current user's active cart.",
+        "operationId": "delete_api_cart_item_delete",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "pattern": "\\d+",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Cart item was deleted."
+          },
+          "400": {
+            "description": "X-User-Id header is missing or invalid."
+          },
+          "404": {
+            "description": "Cart item was not found."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/elements": {
+      "get": {
+        "tags": [
+          "Catalog Elements"
+        ],
+        "summary": "List catalog elements",
+        "description": "Returns catalog elements filtered by sectionId and active with pagination.",
+        "operationId": "get_api_catalog_elements_list",
+        "parameters": [
+          {
+            "name": "sectionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated catalog elements.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CatalogElements"
+                      }
+                    },
+                    "pagination": {
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/elements/{id}": {
+      "get": {
+        "tags": [
+          "Catalog Elements"
+        ],
+        "summary": "Get catalog element",
+        "description": "Returns complete product information with sections, prices and total stock.",
+        "operationId": "get_api_catalog_elements_item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "\\d+"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Catalog element.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogElements2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Catalog element was not found."
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/sections": {
+      "get": {
+        "tags": [
+          "Catalog Sections"
+        ],
+        "summary": "List active catalog sections",
+        "description": "Returns a flat list of active catalog sections ordered by sort descending.",
+        "operationId": "get_api_catalog_sections_list",
+        "responses": {
+          "200": {
+            "description": "Active catalog sections.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogSections"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/sections/{id}": {
+      "get": {
+        "tags": [
+          "Catalog Sections"
+        ],
+        "summary": "Get catalog section",
+        "operationId": "get_api_catalog_sections_item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "\\d+"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Catalog section.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogSections"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Catalog section was not found."
+          }
+        }
+      }
+    },
+    "/api/v1/news": {
+      "get": {
+        "tags": [
+          "News"
+        ],
+        "operationId": "get_app_news",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "description": "Search query.",
+            "required": false,
+            "schema": {
+              "description": "Search query.",
+              "type": "string",
+              "default": "",
+              "example": "release"
+            },
+            "example": "release"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number starting from 1.",
+            "required": false,
+            "schema": {
+              "description": "Page number starting from 1.",
+              "type": "integer",
+              "default": 1,
+              "minimum": 1,
+              "example": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page.",
+            "required": false,
+            "schema": {
+              "description": "Number of items per page.",
+              "type": "integer",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1,
+              "example": 10
+            },
+            "example": 10
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field.",
+            "required": false,
+            "schema": {
+              "description": "Sort field.",
+              "type": "string",
+              "default": "createdAt",
+              "enum": [
+                "id",
+                "slug",
+                "createdAt"
+              ],
+              "example": "createdAt"
+            },
+            "example": "createdAt"
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "description": "Sort direction.",
+            "required": false,
+            "schema": {
+              "description": "Sort direction.",
+              "type": "string",
+              "default": "DESC",
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "example": "DESC"
+            },
+            "example": "DESC"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of news.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ListResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/News"
+                          }
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/news/{slug}": {
+      "get": {
+        "tags": [
+          "News"
+        ],
+        "operationId": "get_app_news_show",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "News slug.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "news-title"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "News item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/News"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied."
+          },
+          "404": {
+            "description": "News not found."
+          }
+        }
+      }
+    },
+    "/api/v1/notification": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "get_api_v1_notification_notification",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number starting from 1.",
+            "required": false,
+            "schema": {
+              "description": "Page number starting from 1.",
+              "type": "integer",
+              "default": 1,
+              "minimum": 1,
+              "example": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page.",
+            "required": false,
+            "schema": {
+              "description": "Number of items per page.",
+              "type": "integer",
+              "default": 10,
+              "maximum": 100,
+              "minimum": 1,
+              "example": 10
+            },
+            "example": 10
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field.",
+            "required": false,
+            "schema": {
+              "description": "Sort field.",
+              "type": "string",
+              "default": "createdAt",
+              "enum": [
+                "id",
+                "slug",
+                "createdAt"
+              ],
+              "example": "createdAt"
+            },
+            "example": "createdAt"
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "description": "Sort direction.",
+            "required": false,
+            "schema": {
+              "description": "Sort direction.",
+              "type": "string",
+              "default": "DESC",
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "example": "DESC"
+            },
+            "example": "DESC"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of current user notifications.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ListResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Notifications"
+                          }
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "delete_api_v1_notification_delete_all",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "CSRF token returned by GET /api/v1/auth/csrf?id=api_mutation.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Current user notifications deleted."
+          },
+          "403": {
+            "description": "Access denied or invalid CSRF token."
+          }
+        }
+      }
+    },
+    "/api/v1/notification/{id}": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "get_api_v1_notification_show",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Notification ID.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notifications"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied."
+          },
+          "404": {
+            "description": "Notification not found."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "delete_api_v1_notification_delete",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "CSRF token returned by GET /api/v1/auth/csrf?id=api_mutation.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Notification ID.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Notification deleted."
+          },
+          "403": {
+            "description": "Access denied."
+          },
+          "404": {
+            "description": "Notification not found."
+          }
+        }
+      }
+    },
+    "/api/v1/notification/{id}/read": {
+      "patch": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "patch_api_v1_notification_mark_as_read",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "CSRF token returned by GET /api/v1/auth/csrf?id=api_mutation.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Notification ID.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification marked as read.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notifications"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied."
+          },
+          "404": {
+            "description": "Notification not found."
+          }
+        }
+      }
+    },
+    "/api/v1/orders": {
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "List orders",
+        "description": "Returns the current user's orders with pagination, sorted by createdAt descending and id descending.",
+        "operationId": "get_api_orders_list",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated orders.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Order"
+                      }
+                    },
+                    "pagination": {
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "pages": {
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "X-User-Id header is missing or invalid."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Create order",
+        "description": "Creates an order from the current user's active cart, deducts stocks through Catalog Service, and stores local order item prices and product snapshot ids.",
+        "operationId": "post_api_orders_create",
+        "responses": {
+          "201": {
+            "description": "Created order.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order2"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid cart item, inventory request, or X-User-Id header."
+          },
+          "404": {
+            "description": "Active cart or catalog product was not found."
+          },
+          "409": {
+            "description": "Cart is empty, requested stock is unavailable, or price is unavailable."
+          },
+          "502": {
+            "description": "Catalog Service returned an invalid response."
+          },
+          "503": {
+            "description": "Catalog Service is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/orders/{orderId}": {
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Get order",
+        "description": "Returns one current-user order with items and historical product snapshot data resolved through Catalog Service.",
+        "operationId": "get_api_orders_item",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "pattern": "\\d+",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order with items and product snapshots.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "X-User-Id header is missing or invalid."
+          },
+          "404": {
+            "description": "Order was not found."
+          },
+          "502": {
+            "description": "Catalog Service returned inconsistent product snapshot data."
+          },
+          "503": {
+            "description": "Catalog Service is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/orders/{orderId}/cancel": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Cancel order",
+        "description": "Cancels a current-user pending order and publishes an OrderCanceledMessage after the status is saved.",
+        "operationId": "post_api_orders_cancel",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "pattern": "\\d+",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Canceled order.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order2"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "X-User-Id header is missing or invalid."
+          },
+          "404": {
+            "description": "Order was not found."
+          },
+          "409": {
+            "description": "Order is already canceled or cannot be canceled from the current status."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ping": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Ping API v1",
+        "description": "Simple endpoint to verify that the v1 API is available.",
+        "operationId": "get_api_v1_ping",
+        "responses": {
+          "200": {
+            "description": "API v1 is reachable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "message",
+                    "version"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "pong"
+                    },
+                    "version": {
+                      "type": "string",
+                      "example": "v1"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stores": {
+      "get": {
+        "tags": [
+          "Stores"
+        ],
+        "summary": "List active stores",
+        "operationId": "get_api_stores_list",
+        "responses": {
+          "200": {
+            "description": "Active stores.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Stores"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stores/{id}": {
+      "get": {
+        "tags": [
+          "Stores"
+        ],
+        "summary": "Get store",
+        "operationId": "get_api_stores_item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "\\d+"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Store.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stores"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Store was not found."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "XUserId": {
+        "type": "apiKey",
+        "name": "X-User-Id",
+        "in": "header"
+      }
+    },
+    "schemas": {
+      "AuthLoginRequestDto": {
+        "description": "Credentials payload for JWT login protected by Cloudflare Turnstile.",
+        "required": [
+          "email",
+          "password",
+          "turnstileToken"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "default": "",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "default": "",
+            "example": "password123"
+          },
+          "turnstileToken": {
+            "description": "Cloudflare Turnstile response token obtained on the frontend.",
+            "type": "string",
+            "default": "",
+            "example": "0.zrSnRHO7h0HwSJ4v4f9Z9w7uYxY4yG3K0B9Yk9Tt4g8gqJmM6m0l3"
+          }
+        },
+        "type": "object"
+      },
+      "Cart": {
+        "required": [
+          "id",
+          "createdAt",
+          "updatedAt",
+          "items",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartItem"
+            }
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CartItem": {
+        "required": [
+          "id",
+          "catalogElementId",
+          "quantity",
+          "sort",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "catalogElementId": {
+            "type": "integer"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "sort": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "type": "object"
+      },
+      "CatalogElements": {
+        "required": [
+          "id",
+          "productPrices",
+          "name",
+          "active",
+          "slug",
+          "totalStock"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "sort": {
+            "type": "integer",
+            "default": 100
+          },
+          "productPrices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductPrice"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "slug": {
+            "type": "string"
+          },
+          "pictureId": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalStock": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "CatalogElements2": {
+        "required": [
+          "id",
+          "productPrices",
+          "name",
+          "active",
+          "slug",
+          "sections",
+          "totalStock"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "sort": {
+            "type": "integer",
+            "default": 100
+          },
+          "productPrices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductPrice2"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "slug": {
+            "type": "string"
+          },
+          "pictureId": {
+            "type": "string",
+            "nullable": true
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogSections"
+            }
+          },
+          "totalStock": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "CatalogProductSnapshot": {
+        "required": [
+          "id",
+          "originalProductId",
+          "product"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "originalProductId": {
+            "type": "integer"
+          },
+          "product": {
+            "$ref": "#/components/schemas/CatalogSnapshotProduct"
+          }
+        },
+        "type": "object"
+      },
+      "CatalogSections": {
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "active",
+          "level"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "pictureId": {
+            "type": "string",
+            "nullable": true
+          },
+          "level": {
+            "type": "integer"
+          },
+          "sort": {
+            "type": "integer",
+            "default": 100
+          },
+          "parentId": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "type": "object"
+      },
+      "CatalogSnapshotProduct": {
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "active",
+          "createdBy",
+          "slug"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "createdBy": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "slug": {
+            "type": "string"
+          },
+          "pictureId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "type": "object"
+      },
+      "ListPaginationDto": {
+        "description": "Pagination metadata for list responses.",
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "pages"
+        ],
+        "properties": {
+          "page": {
+            "description": "Current page number.",
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "description": "Maximum number of items per page.",
+            "type": "integer",
+            "example": 10
+          },
+          "total": {
+            "description": "Total number of items.",
+            "type": "integer",
+            "example": 42
+          },
+          "pages": {
+            "description": "Total number of pages.",
+            "type": "integer",
+            "example": 5
+          }
+        },
+        "type": "object"
+      },
+      "ListQueryDto": {
+        "description": "Query parameters for paginated lists with sorting.",
+        "properties": {
+          "page": {
+            "description": "Page number starting from 1.",
+            "type": "integer",
+            "default": 1,
+            "minimum": 1,
+            "example": 1
+          },
+          "limit": {
+            "description": "Number of items per page.",
+            "type": "integer",
+            "default": 10,
+            "maximum": 100,
+            "minimum": 1,
+            "example": 10
+          },
+          "sort": {
+            "description": "Sort field.",
+            "type": "string",
+            "default": "createdAt",
+            "enum": [
+              "id",
+              "slug",
+              "createdAt"
+            ],
+            "example": "createdAt"
+          },
+          "direction": {
+            "description": "Sort direction.",
+            "type": "string",
+            "default": "DESC",
+            "enum": [
+              "ASC",
+              "DESC"
+            ],
+            "example": "DESC"
+          }
+        },
+        "type": "object"
+      },
+      "ListResponseDto": {
+        "description": "Paginated list response.",
+        "required": [
+          "pagination",
+          "sorting"
+        ],
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/ListPaginationDto"
+          },
+          "sorting": {
+            "$ref": "#/components/schemas/ListSortingDto"
+          }
+        },
+        "type": "object"
+      },
+      "ListSortingDto": {
+        "description": "Applied sorting metadata for list responses.",
+        "properties": {
+          "sort": {
+            "description": "Sort field.",
+            "type": "string",
+            "default": "createdAt",
+            "enum": [
+              "id",
+              "slug",
+              "createdAt"
+            ],
+            "example": "createdAt"
+          },
+          "direction": {
+            "description": "Sort direction.",
+            "type": "string",
+            "default": "DESC",
+            "enum": [
+              "ASC",
+              "DESC"
+            ],
+            "example": "DESC"
+          }
+        },
+        "type": "object"
+      },
+      "News": {
+        "required": [
+          "name",
+          "slug",
+          "createdAt",
+          "createdBy",
+          "brief",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/User"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "brief": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/NewsStatus"
+          }
+        },
+        "type": "object"
+      },
+      "NewsStatus": {
+        "required": [
+          "name",
+          "code"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "code": {
+            "$ref": "#/components/schemas/NewsStatusCode"
+          }
+        },
+        "type": "object"
+      },
+      "NewsStatusCode": {
+        "type": "string",
+        "enum": [
+          "public",
+          "internal",
+          "on_moderation",
+          "moderation_rejected",
+          "drafted"
+        ]
+      },
+      "Notifications": {
+        "required": [
+          "id",
+          "createdAt",
+          "message"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "message": {
+            "type": "string"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "type": "object"
+      },
+      "Order": {
+        "required": [
+          "id",
+          "totalPrice",
+          "totalDiscount",
+          "finalPrice",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "totalPrice": {
+            "type": "string"
+          },
+          "totalDiscount": {
+            "type": "string"
+          },
+          "finalPrice": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "type": "object"
+      },
+      "Order2": {
+        "required": [
+          "id",
+          "totalPrice",
+          "totalDiscount",
+          "finalPrice",
+          "createdAt",
+          "updatedAt",
+          "items"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "totalPrice": {
+            "type": "string"
+          },
+          "totalDiscount": {
+            "type": "string"
+          },
+          "finalPrice": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItem"
+            }
+          }
+        },
+        "type": "object"
+      },
+      "OrderDetailResponse": {
+        "required": [
+          "id",
+          "status",
+          "totalPrice",
+          "totalDiscount",
+          "finalPrice",
+          "createdAt",
+          "updatedAt",
+          "items"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "totalPrice": {
+            "type": "string"
+          },
+          "totalDiscount": {
+            "type": "string"
+          },
+          "finalPrice": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemDetailResponse"
+            }
+          }
+        },
+        "type": "object"
+      },
+      "OrderItem": {
+        "required": [
+          "id",
+          "productSnapshotId",
+          "quantity",
+          "sort",
+          "unitPrice",
+          "unitDiscount",
+          "finalUnitPrice",
+          "lineTotal",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "productSnapshotId": {
+            "type": "integer"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "sort": {
+            "type": "integer"
+          },
+          "unitPrice": {
+            "type": "string"
+          },
+          "unitDiscount": {
+            "type": "string"
+          },
+          "finalUnitPrice": {
+            "type": "string"
+          },
+          "lineTotal": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "type": "object"
+      },
+      "OrderItemDetailResponse": {
+        "required": [
+          "id",
+          "productSnapshotId",
+          "quantity",
+          "sort",
+          "unitPrice",
+          "unitDiscount",
+          "finalUnitPrice",
+          "lineTotal",
+          "createdAt",
+          "productSnapshot"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "productSnapshotId": {
+            "type": "integer"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "sort": {
+            "type": "integer"
+          },
+          "unitPrice": {
+            "type": "string"
+          },
+          "unitDiscount": {
+            "type": "string"
+          },
+          "finalUnitPrice": {
+            "type": "string"
+          },
+          "lineTotal": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "productSnapshot": {
+            "$ref": "#/components/schemas/CatalogProductSnapshot"
+          }
+        },
+        "type": "object"
+      },
+      "OrderStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "completed",
+          "canceled"
+        ]
+      },
+      "PriceType": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "active"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "sort": {
+            "type": "integer",
+            "default": 100
+          }
+        },
+        "type": "object"
+      },
+      "PriceType2": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "active"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "sort": {
+            "type": "integer",
+            "default": 100
+          }
+        },
+        "type": "object"
+      },
+      "ProductPrice": {
+        "required": [
+          "id",
+          "priceType",
+          "price",
+          "currency",
+          "active"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "priceType": {
+            "$ref": "#/components/schemas/PriceType"
+          },
+          "price": {
+            "type": "integer"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "type": "object"
+      },
+      "ProductPrice2": {
+        "required": [
+          "id",
+          "priceType",
+          "price",
+          "currency",
+          "active"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "priceType": {
+            "$ref": "#/components/schemas/PriceType2"
+          },
+          "price": {
+            "type": "integer"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "type": "object"
+      },
+      "SearchListQueryDto": {
+        "description": "Query parameters for paginated searchable lists with sorting.",
+        "properties": {
+          "query": {
+            "description": "Search query.",
+            "type": "string",
+            "default": "",
+            "example": "release"
+          },
+          "page": {
+            "description": "Page number starting from 1.",
+            "type": "integer",
+            "default": 1,
+            "minimum": 1,
+            "example": 1
+          },
+          "limit": {
+            "description": "Number of items per page.",
+            "type": "integer",
+            "default": 10,
+            "maximum": 100,
+            "minimum": 1,
+            "example": 10
+          },
+          "sort": {
+            "description": "Sort field.",
+            "type": "string",
+            "default": "createdAt",
+            "enum": [
+              "id",
+              "slug",
+              "createdAt"
+            ],
+            "example": "createdAt"
+          },
+          "direction": {
+            "description": "Sort direction.",
+            "type": "string",
+            "default": "DESC",
+            "enum": [
+              "ASC",
+              "DESC"
+            ],
+            "example": "DESC"
+          }
+        },
+        "type": "object"
+      },
+      "Stores": {
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "active"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "type": "object"
+      },
+      "User": {
+        "required": [
+          "id",
+          "email"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "email": {
+            "type": "string"
+          },
+          "roles": {
+            "title": "The user roles",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "secondName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "type": "object"
+      },
+      "User2": {
+        "required": [
+          "id",
+          "email"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Cart"
+    },
+    {
+      "name": "Catalog Elements"
+    },
+    {
+      "name": "Catalog Sections"
+    },
+    {
+      "name": "News"
+    },
+    {
+      "name": "Notifications"
+    },
+    {
+      "name": "Orders"
+    },
+    {
+      "name": "Stores"
+    },
+    {
+      "name": "System"
+    }
+  ],
+  "x-generated-by": "npm run gateway:generate",
+  "x-source-manifest": "api-gateway/routes.json",
+  "x-openapi-header": "api-gateway/openapi-header.json",
+  "x-generated-note": "This file is generated automatically. Edit api-gateway/routes.json or api-gateway/openapi-header.json and rerun npm run gateway:generate."
+}

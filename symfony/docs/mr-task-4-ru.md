@@ -1,5 +1,19 @@
 # Лог Результата MR Task 4
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Обзор](#%D0%BE%D0%B1%D0%B7%D0%BE%D1%80)
+- [Скриншоты](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B)
+  - [RabbitMQ Management UI](#rabbitmq-management-ui)
+- [Доработки за 2026-04-29](#%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B8-%D0%B7%D0%B0-2026-04-29)
+- [Доработки за 2026-05-01](#%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B8-%D0%B7%D0%B0-2026-05-01)
+  - [Email-уведомление о новости на модерации](#email-%D1%83%D0%B2%D0%B5%D0%B4%D0%BE%D0%BC%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BE-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B8-%D0%BD%D0%B0-%D0%BC%D0%BE%D0%B4%D0%B5%D1%80%D0%B0%D1%86%D0%B8%D0%B8)
+  - [API endpoints для уведомлений](#api-endpoints-%D0%B4%D0%BB%D1%8F-%D1%83%D0%B2%D0%B5%D0%B4%D0%BE%D0%BC%D0%BB%D0%B5%D0%BD%D0%B8%D0%B9)
+  - [Канал Symfony Notifier для entity-уведомлений](#%D0%BA%D0%B0%D0%BD%D0%B0%D0%BB-symfony-notifier-%D0%B4%D0%BB%D1%8F-entity-%D1%83%D0%B2%D0%B5%D0%B4%D0%BE%D0%BC%D0%BB%D0%B5%D0%BD%D0%B8%D0%B9)
+
+<!-- END doctoc -->
+
 ## Обзор
 
 Этот документ фиксирует видимый результат текущего merge request, связанного с инфраструктурой уведомлений и асинхронной отправкой email.

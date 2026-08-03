@@ -1,0 +1,4 @@
+cart:
+  item:
+    quantity:
+      exceeds_available: "Requested quantity exceeds available stock."

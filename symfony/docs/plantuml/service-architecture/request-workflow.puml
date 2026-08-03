@@ -1,0 +1,51 @@
+@startuml
+!theme plain
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+skinparam wrapWidth 180
+skinparam maxMessageSize 180
+
+title External API Request Workflow
+
+legend right
+  <color:#1f77b4><b>blue</b></color> = public REST/HTTP
+  <color:#2ca02c><b>green</b></color> = internal REST/HTTP
+  <color:#d62728><b>red</b></color> = internal gRPC
+endlegend
+
+actor Frontend
+participant "API Gateway\nnginx" as Gateway
+participant "Auth / News\nSymfony" as AuthNews
+participant "Catalog\nSymfony" as Catalog
+participant "Cart / Orders\nSymfony" as CartOrders
+
+Frontend -[#1f77b4]> Gateway : public REST request\nAuthorization: Bearer JWT
+
+alt Auth / News request
+  Gateway -[#2ca02c]> AuthNews : proxy internal REST request
+  AuthNews -[#2ca02c]> Gateway : internal REST response\nJWT or resource payload
+else Catalog request
+  Gateway -[#2ca02c]> Catalog : proxy internal REST request
+  Catalog -[#2ca02c]> Gateway : internal REST response
+else Cart / Orders request
+  Gateway -[#2ca02c]> CartOrders : proxy internal REST request\ntrusted user headers
+  opt product validation, stock check, or order snapshot
+    CartOrders -[#d62728]> Catalog : internal gRPC request
+    Catalog -[#d62728]> CartOrders : internal gRPC response
+  end
+  CartOrders -[#2ca02c]> Gateway : internal REST response
+end
+
+Gateway -[#1f77b4]> Frontend : public REST response
+
+note over Frontend, Gateway
+External clients talk only to the API Gateway.
+end note
+
+note over Gateway, CartOrders
+Internal REST and gRPC stay inside the backend network.
+end note
+
+@enduml
