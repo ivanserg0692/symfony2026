@@ -51,6 +51,15 @@
       "openapi": false
     },
     {
+      "id": "swagger_turnstile_js",
+      "match": "exact",
+      "publicPath": "/js/swagger-turnstile.js",
+      "upstream": "symfony_web",
+      "internalPath": "/js/swagger-turnstile.js",
+      "auth": false,
+      "openapi": false
+    },
+    {
       "id": "auth_me",
       "match": "exact",
       "publicPath": "/api/v1/auth/me",

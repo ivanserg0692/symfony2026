@@ -12,6 +12,171 @@
     }
   ],
   "paths": {
+    "/api/v1/auth/csrf": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Issue CSRF token for auth endpoints",
+        "description": "Generates a stateless CSRF token, stores its companion cookie on the API domain, and returns the token that must be sent in the configured CSRF header. Use id=api_mutation for unsafe API methods such as DELETE.",
+        "operationId": "get_api_v1_auth_csrf",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "CSRF token id. Defaults to authenticate.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "authenticate",
+                "api_mutation"
+              ]
+            },
+            "example": "api_mutation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSRF token issued successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "token",
+                    "token_id",
+                    "header_name",
+                    "cookie_name"
+                  ],
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "example": "ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c"
+                    },
+                    "token_id": {
+                      "type": "string",
+                      "example": "api_mutation"
+                    },
+                    "header_name": {
+                      "type": "string",
+                      "example": "X-CSRF-Token"
+                    },
+                    "cookie_name": {
+                      "type": "string",
+                      "example": "csrf-token"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported CSRF token id."
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Authenticate user and issue JWT token",
+        "description": "Authenticates a user by email, password, and Cloudflare Turnstile token, returns a JWT bearer token, and sets HttpOnly access and refresh cookies for browser clients. Call GET /api/v1/auth/csrf first and send the returned token in the CSRF header.",
+        "operationId": "post_api_v1_auth_login",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "CSRF token returned by GET /api/v1/auth/csrf.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthLoginRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JWT token issued successfully. The response also sets HttpOnly cookies for access and refresh tokens when cookie support is enabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "token"
+                  ],
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials or invalid Turnstile token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 401
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Invalid credentials."
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout current user",
+        "description": "Logs out the current user through the security firewall, clears authentication cookies, and invalidates the refresh token when it is available to the logout request. Call GET /api/v1/auth/csrf first and send the returned token in the CSRF header.",
+        "operationId": "post_api_v1_auth_logout",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "CSRF token returned by GET /api/v1/auth/csrf.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Logout completed successfully."
+          }
+        }
+      }
+    },
     "/api/v1/auth/me": {
       "get": {
         "tags": [
@@ -33,6 +198,60 @@
           },
           "401": {
             "description": "Missing or invalid bearer token."
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Refresh JWT access token",
+        "description": "Uses the refresh token from an HttpOnly cookie or request payload and issues a new access JWT. Call GET /api/v1/auth/csrf first and send the returned token in the CSRF header.",
+        "operationId": "post_api_v1_auth_refresh",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "CSRF token returned by GET /api/v1/auth/csrf.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ea9f28f0d5e34ce3b0900fca1e5b7d8ea4f35f2c4e5d7f8a3c2b1d0e9f7a6b5c"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Access token refreshed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "token"
+                  ],
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                    },
+                    "refresh_token": {
+                      "type": "string",
+                      "example": "1f0a9d1e5fd240f6a6c7d73f8f9d4b3c"
+                    },
+                    "refresh_token_expiration": {
+                      "type": "integer",
+                      "example": 1776297600
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired, or invalid refresh token."
           }
         }
       }

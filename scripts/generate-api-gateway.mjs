@@ -223,26 +223,39 @@ function matchesOpenApiRoute(path, openapiRoute) {
   }
 
   if (openapiRoute.pathPrefix) {
-    return path === openapiRoute.pathPrefix || path.startsWith(`${openapiRoute.pathPrefix}/`);
+    const pathPrefix = normalizeRoutePrefix(openapiRoute.pathPrefix);
+
+    return path === pathPrefix || path.startsWith(`${pathPrefix}/`);
   }
 
   throw new Error(`OpenAPI route must define path or pathPrefix: ${JSON.stringify(openapiRoute)}`);
 }
 
 function translatePath(sourcePath, route) {
-  if (route.publicPath === route.internalPath) {
+  const publicPath = normalizeRoutePrefix(route.publicPath);
+  const internalPath = normalizeRoutePrefix(route.internalPath);
+
+  if (publicPath === internalPath) {
     return sourcePath;
   }
 
-  if (sourcePath === route.internalPath) {
-    return route.publicPath;
+  if (sourcePath === internalPath) {
+    return publicPath;
   }
 
-  if (!sourcePath.startsWith(`${route.internalPath}/`)) {
+  if (!sourcePath.startsWith(`${internalPath}/`)) {
     throw new Error(`Cannot translate ${sourcePath} from ${route.internalPath} to ${route.publicPath}`);
   }
 
-  return `${route.publicPath}${sourcePath.slice(route.internalPath.length)}`;
+  return `${publicPath}${sourcePath.slice(internalPath.length)}`;
+}
+
+function normalizeRoutePrefix(path) {
+  if (path === "/") {
+    return path;
+  }
+
+  return path.replace(/\/+$/u, "");
 }
 
 function buildGatewayPathItem(pathItem, route) {
