@@ -34,11 +34,11 @@
 
 Описать и подготовить архитектурную основу backend-системы, где внешней точкой входа является nginx, а основной сервис в папке `symfony` отвечает за Auth, админку и новости.
 
-Клиенты обращаются к nginx по REST/HTTP. nginx проверяет авторизацию через Auth endpoint основного Symfony-сервиса, получает identity headers и проксирует исходный REST/HTTP запрос в нужный backend-сервис. gRPC используется только для внутренних service-to-service вызовов между backend-сервисами, а не как внешний gateway transport.
+Клиенты обращаются к nginx по REST/HTTP. nginx проверяет авторизацию через Auth endpoint основного Symfony-сервиса, получает identity header и проксирует исходный REST/HTTP запрос в нужный backend-сервис. gRPC используется только для внутренних service-to-service вызовов между backend-сервисами, а не как внешний gateway transport.
 
 ### Цель
 
-Зафиксировать целевую архитектуру backend-сервисов перед реализацией, чтобы дальнейшая разработка основного Symfony-сервиса, Catalog Service, Order/Cart Service и внутренних интеграций шла по единой модели входящего HTTP, авторизации через nginx и внутреннего gRPC-взаимодействия.
+Зафиксировать завершенную архитектурную основу backend-сервисов, чтобы дальнейшая разработка основного Symfony-сервиса, Catalog Service, Order/Cart Service и внутренних интеграций шла по единой модели входящего HTTP, авторизации через nginx и внутреннего gRPC-взаимодействия.
 
 ### Архитектурный контекст
 
@@ -53,16 +53,19 @@
 
 - `catalog-service` создан как отдельное Symfony-приложение для Catalog Service;
 - `cart-service` создан как отдельное Symfony-приложение для Order/Cart Service;
-- оба сервиса пока фиксируются как инфраструктурная основа под дальнейшую реализацию REST/HTTP endpoints, внутренних gRPC-интеграций и собственного владения данными.
+- REST/HTTP endpoints сервисов реализованы и опубликованы через nginx API Gateway под внешним namespace `/api/v1/...`;
+- Gateway OpenAPI contract генерируется отдельно от внутренних OpenAPI specs сервисов;
+- общие service env-настройки и DB maintenance scripts вынесены на уровень repository root.
 
 nginx API Gateway отвечает за:
 
 - прием REST/HTTP запросов от frontend/client-приложений;
 - выполнение auth check через Auth endpoint основного Symfony-сервиса;
-- получение identity headers от Auth/Symfony сервиса;
+- получение identity header от Auth/Symfony сервиса;
 - проксирование исходного REST/HTTP запроса в нужный backend-сервис;
-- передачу downstream-сервисам доверенных headers `X-User-Id` и `X-User-Role`;
-- запрет прямого внешнего доступа к внутренним сервисам в обход gateway.
+- передачу downstream-сервисам доверенного header `X-User-Id`;
+- очистку или перезапись client-supplied identity headers перед проксированием request;
+- целевую роль единой публичной REST/HTTP точки входа. В dev окружении сервисные порты могут оставаться опубликованными для отладки; внешний perimeter должен закрывать прямой доступ через firewall.
 
 Symfony Main Service отвечает за:
 
@@ -97,8 +100,8 @@ Order/Cart Service отвечает за:
 1. Client отправляет REST/HTTP запрос в nginx.
 2. nginx делает auth check в Symfony Main Service.
 3. Symfony Main Service валидирует токен и возвращает результат авторизации.
-4. nginx формирует trusted identity headers `X-User-Id` и `X-User-Role`.
-5. nginx проксирует исходный REST/HTTP запрос в нужный backend-сервис вместе с trusted identity headers.
+4. nginx формирует trusted identity header `X-User-Id`.
+5. nginx проксирует исходный REST/HTTP запрос в нужный backend-сервис вместе с trusted identity header.
 
 Внутренний service-to-service flow:
 
@@ -125,18 +128,18 @@ Order/Cart Service отвечает за:
 - Зафиксировано, что основной сервис в папке `symfony` отвечает за Auth, админку, новости и связанные уведомления.
 - Зафиксировано, что `catalog-service` и `cart-service` уже созданы как отдельные service applications для текущего этапа реализации.
 - Описан auth check от nginx к Symfony Main Service перед проксированием request.
-- Зафиксирована передача trusted headers `X-User-Id` и `X-User-Role` от gateway к backend-сервисам.
+- Зафиксирована передача trusted header `X-User-Id` от gateway к backend-сервисам.
 - Зафиксировано, что Catalog Service и Order/Cart Service получают внешний трафик от nginx по REST/HTTP.
 - Зафиксировано, что gRPC используется для внутренних service-to-service вызовов, а не как внешний gateway transport.
 - Зафиксирована локальная async/event-driven архитектура основного Symfony-сервиса через RabbitMQ.
 - Описано владение базой данных каждым сервисом.
-- Подготовлена основа для последующей реализации nginx routing, auth endpoint, identity headers, REST endpoints и внутренних gRPC-контрактов.
+- Подготовлена и реализована основа для nginx routing, auth endpoint, identity header, REST endpoints, внутренних gRPC-контрактов, gateway OpenAPI generation и общих maintenance scripts.
 
 ### Технический подход
 
 - Начать с описания nginx routes и правил auth check для защищенных endpoint groups.
 - В Symfony Main Service реализовать Auth endpoint, который nginx сможет использовать для проверки токена.
-- Не принимать `X-User-Id` и `X-User-Role` от внешнего клиента как доверенные headers.
+- Не принимать `X-User-Id` от внешнего клиента как доверенный header.
 - Сбрасывать или перезаписывать identity headers на уровне nginx перед проксированием downstream request.
 - Передавать downstream-сервисам только headers, сформированные после успешного auth check.
 - Для внешнего трафика использовать REST/HTTP через nginx.
@@ -150,10 +153,10 @@ Order/Cart Service отвечает за:
 
 - Проверить, что client request попадает сначала в nginx.
 - Проверить, что nginx перед защищенным route вызывает Auth endpoint Symfony Main Service.
-- Проверить, что при валидном токене downstream-сервис получает `X-User-Id` и `X-User-Role`.
+- Проверить, что при валидном токене downstream-сервис получает `X-User-Id`.
 - Проверить, что при невалидном токене nginx не проксирует request в downstream-сервис.
 - Проверить, что внешний клиент не может подделать trusted identity headers.
-- Проверить, что Catalog Service и Order/Cart Service доступны снаружи только через nginx routing.
+- Проверить, что целевой публичный REST/HTTP contract доступен через nginx routing. В dev окружении опубликованные порты сервисов допустимы для отладки, если внешний доступ к ним закрывается perimeter firewall.
 - Проверить, что внутренние service-to-service сценарии используют gRPC-контракты там, где это требуется.
 - Проверить, что async/event-driven обработка уведомлений основного Symfony-сервиса использует RabbitMQ локально внутри этого сервиса.
 
@@ -164,6 +167,7 @@ Order/Cart Service отвечает за:
 - Сейчас event-driven подход уже используется внутри Symfony Main Service для асинхронной обработки через RabbitMQ в рамках одного сервиса. В будущих итерациях эту модель можно расширить до общей подсистемы уведомлений и межсервисных событий.
 - gRPC следует рассматривать как внутренний транспорт между сервисами, а не как транспорт между клиентом и gateway.
 - Для long-running gRPC workers сохраняется требование не переносить mutable state между requests.
+- `X-User-Roles` и `X-User-Email` намеренно не входят в текущий Gateway contract и могут быть добавлены отдельной задачей, когда downstream-сервисам реально понадобится эта identity metadata.
 
 ## EN
 
@@ -175,11 +179,11 @@ Backend service architecture with nginx API Gateway, main Symfony service, and i
 
 Describe and prepare the backend architecture foundation where nginx is the external entrypoint and the main service under the `symfony` directory owns Auth, admin, and news.
 
-Clients call nginx over REST/HTTP. nginx validates authorization through an Auth endpoint exposed by the main Symfony service, receives identity headers, and proxies the original REST/HTTP request to the target backend service. gRPC is used only for internal service-to-service calls between backend services, not as the external gateway transport.
+Clients call nginx over REST/HTTP. nginx validates authorization through an Auth endpoint exposed by the main Symfony service, receives an identity header, and proxies the original REST/HTTP request to the target backend service. gRPC is used only for internal service-to-service calls between backend services, not as the external gateway transport.
 
 ### Goal
 
-Capture the target backend service architecture before implementation so that the main Symfony service, Catalog Service, Order/Cart Service, and internal integrations can be developed with a shared model for incoming HTTP, nginx-based authorization, and internal gRPC communication.
+Capture the completed backend service architecture foundation so that the main Symfony service, Catalog Service, Order/Cart Service, and internal integrations can continue to evolve with a shared model for incoming HTTP, nginx-based authorization, and internal gRPC communication.
 
 ### Architecture Context
 
@@ -194,16 +198,19 @@ Current implementation status:
 
 - `catalog-service` has been created as a separate Symfony application for Catalog Service;
 - `cart-service` has been created as a separate Symfony application for Order/Cart Service;
-- both services are currently captured as the infrastructure foundation for future REST/HTTP endpoints, internal gRPC integrations, and independent data ownership.
+- service REST/HTTP endpoints are implemented and exposed through nginx API Gateway under the external `/api/v1/...` namespace;
+- the Gateway OpenAPI contract is generated separately from internal service OpenAPI specs;
+- shared service env settings and DB maintenance scripts are maintained at the repository root.
 
 nginx API Gateway is responsible for:
 
 - accepting REST/HTTP requests from frontend/client applications;
 - performing auth check through the Auth endpoint of the main Symfony service;
-- receiving identity headers from the Auth/Symfony service;
+- receiving an identity header from the Auth/Symfony service;
 - proxying the original REST/HTTP request to the target backend service;
-- passing trusted `X-User-Id` and `X-User-Role` headers to downstream services;
-- preventing direct external access to internal services bypassing the gateway.
+- passing the trusted `X-User-Id` header to downstream services;
+- clearing or overwriting client-supplied identity headers before proxying the request;
+- acting as the target single public REST/HTTP entrypoint. In the dev environment, service ports may remain published for debugging; the external perimeter must block direct access through firewall rules.
 
 Symfony Main Service is responsible for:
 
@@ -238,8 +245,8 @@ External request flow:
 1. Client sends a REST/HTTP request to nginx.
 2. nginx performs auth check against Symfony Main Service.
 3. Symfony Main Service validates the token and returns the authorization result.
-4. nginx creates trusted `X-User-Id` and `X-User-Role` identity headers.
-5. nginx proxies the original REST/HTTP request to the target backend service with trusted identity headers.
+4. nginx creates the trusted `X-User-Id` identity header.
+5. nginx proxies the original REST/HTTP request to the target backend service with the trusted identity header.
 
 Internal service-to-service flow:
 
@@ -266,18 +273,18 @@ Each service owns its own database:
 - The main service under `symfony` is documented as responsible for Auth, admin, news, and related notifications.
 - `catalog-service` and `cart-service` are documented as existing service applications created for the current implementation stage.
 - nginx auth check against Symfony Main Service before request proxying is documented.
-- Trusted `X-User-Id` and `X-User-Role` headers from gateway to backend services are documented.
+- The trusted `X-User-Id` header from gateway to backend services is documented.
 - Catalog Service and Order/Cart Service are documented as receiving external traffic from nginx over REST/HTTP.
 - gRPC is documented as internal service-to-service transport, not as the external gateway transport.
 - Local async/event-driven architecture of the main Symfony service through RabbitMQ is documented.
 - Database ownership per service is documented.
-- The task provides a foundation for implementing nginx routing, auth endpoint, identity headers, REST endpoints, and internal gRPC contracts.
+- The task provides and implements the foundation for nginx routing, auth endpoint, identity header, REST endpoints, internal gRPC contracts, gateway OpenAPI generation, and shared maintenance scripts.
 
 ### Technical Approach
 
 - Start by describing nginx routes and auth check rules for protected endpoint groups.
 - Implement an Auth endpoint in Symfony Main Service that nginx can use for token validation.
-- Do not treat `X-User-Id` and `X-User-Role` sent by an external client as trusted headers.
+- Do not treat `X-User-Id` sent by an external client as a trusted header.
 - Clear or overwrite identity headers at nginx before proxying downstream requests.
 - Pass identity headers to downstream services only after successful auth check.
 - Use REST/HTTP through nginx for external traffic.
@@ -291,10 +298,10 @@ Each service owns its own database:
 
 - Verify that client requests reach nginx first.
 - Verify that nginx calls the Symfony Main Service Auth endpoint before a protected route is proxied.
-- Verify that with a valid token the downstream service receives `X-User-Id` and `X-User-Role`.
+- Verify that with a valid token the downstream service receives `X-User-Id`.
 - Verify that with an invalid token nginx does not proxy the request to the downstream service.
 - Verify that an external client cannot spoof trusted identity headers.
-- Verify that Catalog Service and Order/Cart Service are externally reachable only through nginx routing.
+- Verify that the target public REST/HTTP contract is reachable through nginx routing. In the dev environment, published service ports are acceptable for debugging when external access to them is blocked by the perimeter firewall.
 - Verify that internal service-to-service scenarios use gRPC contracts where required.
 - Verify that async/event-driven notification processing of the main Symfony service uses RabbitMQ locally inside that service.
 
@@ -305,3 +312,4 @@ Each service owns its own database:
 - The event-driven approach is already used inside Symfony Main Service for asynchronous processing through RabbitMQ within one service. In future iterations, this model can be expanded into a general notification subsystem and inter-service events.
 - gRPC should be treated as an internal service-to-service transport, not as client-to-gateway transport.
 - Long-running gRPC workers still must not leak mutable state between requests.
+- `X-User-Roles` and `X-User-Email` are intentionally outside the current Gateway contract and can be added in a separate task once downstream services actually need this identity metadata.

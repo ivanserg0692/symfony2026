@@ -24,7 +24,7 @@
     - [`Task 4`: Add email and internal notifications - done](#task-4-add-email-and-internal-notifications---done)
     - [`Task 5`: Export news to S3 through a queue - done](#task-5-export-news-to-s3-through-a-queue---done)
     - [`Task 6`: Refine frontend application for the existing API - done](#task-6-refine-frontend-application-for-the-existing-api---done)
-    - [`Task 7`: Backend service architecture with nginx API Gateway, main Symfony service, and internal gRPC - in progress](#task-7-backend-service-architecture-with-nginx-api-gateway-main-symfony-service-and-internal-grpc---in-progress)
+    - [`Task 7`: Backend service architecture with nginx API Gateway, main Symfony service, and internal gRPC - completed](#task-7-backend-service-architecture-with-nginx-api-gateway-main-symfony-service-and-internal-grpc---completed)
     - [`Task 7.1`: Develop Catalog Service and Order/Cart Service backend services - completed](#task-71-develop-catalog-service-and-ordercart-service-backend-services---completed)
     - [`Task 7.2`: Complete Cart/Order endpoints that require gRPC integrations - completed](#task-72-complete-cartorder-endpoints-that-require-grpc-integrations---completed)
     - [`Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - completed](#task-73-implement-the-external-api-gateway-for-the-public-resthttp-contract---completed)
@@ -65,7 +65,7 @@
     - [`Task 4`: Добавление уведомлений через email и внутренние notifications - done](#task-4-%D0%B4%D0%BE%D0%B1%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5-%D1%83%D0%B2%D0%B5%D0%B4%D0%BE%D0%BC%D0%BB%D0%B5%D0%BD%D0%B8%D0%B9-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-email-%D0%B8-%D0%B2%D0%BD%D1%83%D1%82%D1%80%D0%B5%D0%BD%D0%BD%D0%B8%D0%B5-notifications---done)
     - [`Task 5`: Экспорт новостей в S3 через очередь - done](#task-5-%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D1%80%D1%82-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B5%D0%B9-%D0%B2-s3-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-%D0%BE%D1%87%D0%B5%D1%80%D0%B5%D0%B4%D1%8C---done)
     - [`Task 6`: Frontend-приложение на refine для существующего API - done](#task-6-frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5-%D0%BD%D0%B0-refine-%D0%B4%D0%BB%D1%8F-%D1%81%D1%83%D1%89%D0%B5%D1%81%D1%82%D0%B2%D1%83%D1%8E%D1%89%D0%B5%D0%B3%D0%BE-api---done)
-    - [`Task 7`: Архитектура backend-сервисов с nginx API Gateway, основным Symfony-сервисом и внутренним gRPC - in progress](#task-7-%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0-backend-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-%D1%81-nginx-api-gateway-%D0%BE%D1%81%D0%BD%D0%BE%D0%B2%D0%BD%D1%8B%D0%BC-symfony-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%BC-%D0%B8-%D0%B2%D0%BD%D1%83%D1%82%D1%80%D0%B5%D0%BD%D0%BD%D0%B8%D0%BC-grpc---in-progress)
+    - [`Task 7`: Архитектура backend-сервисов с nginx API Gateway, основным Symfony-сервисом и внутренним gRPC - completed](#task-7-%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0-backend-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-%D1%81-nginx-api-gateway-%D0%BE%D1%81%D0%BD%D0%BE%D0%B2%D0%BD%D1%8B%D0%BC-symfony-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%BC-%D0%B8-%D0%B2%D0%BD%D1%83%D1%82%D1%80%D0%B5%D0%BD%D0%BD%D0%B8%D0%BC-grpc---completed)
     - [`Task 7.1`: Разработка backend-сервисов Catalog Service и Order/Cart Service - completed](#task-71-%D1%80%D0%B0%D0%B7%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-backend-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-catalog-service-%D0%B8-ordercart-service---completed)
     - [`Task 7.2`: Доработка Cart/Order endpoints, которым нужны gRPC-интеграции - completed](#task-72-%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-cartorder-endpoints-%D0%BA%D0%BE%D1%82%D0%BE%D1%80%D1%8B%D0%BC-%D0%BD%D1%83%D0%B6%D0%BD%D1%8B-grpc-%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D0%B8---completed)
     - [`Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - completed](#task-73-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B5%D0%B3%D0%BE-api-gateway-%D0%B4%D0%BB%D1%8F-%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D0%BE%D0%B3%D0%BE-resthttp-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D0%B0---completed)
@@ -351,8 +351,8 @@ The notification recipients are administrators resolved by the application, not 
 - Task file: [symfony/docs/task-6.md](symfony/docs/task-6.md)
 - MR result (EN): [symfony/docs/mr-task-6-en.md](symfony/docs/mr-task-6-en.md)
 - MR result (RU): [symfony/docs/mr-task-6-ru.md](symfony/docs/mr-task-6-ru.md)
-#### `Task 7`: Backend service architecture with nginx API Gateway, main Symfony service, and internal gRPC - in progress
-- Brief info: Document the target backend architecture with nginx as the REST gateway and gRPC reserved for internal service calls.
+#### `Task 7`: Backend service architecture with nginx API Gateway, main Symfony service, and internal gRPC - completed
+- Brief info: Document and complete the backend architecture with nginx as the REST gateway and gRPC reserved for internal service calls.
 - Backend Merge Request 7: <https://github.com/ivanserg0692/symfony2026/pull/7>
 - Frontend Merge Request 7: TBD
 - Task file: [symfony/docs/task-7.md](symfony/docs/task-7.md)
@@ -956,8 +956,8 @@ Product snapshots не отдаются через отдельную публи
 - Файл задачи: [symfony/docs/task-6.md](symfony/docs/task-6.md)
 - Результат MR (EN): [symfony/docs/mr-task-6-en.md](symfony/docs/mr-task-6-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-6-ru.md](symfony/docs/mr-task-6-ru.md)
-#### `Task 7`: Архитектура backend-сервисов с nginx API Gateway, основным Symfony-сервисом и внутренним gRPC - in progress
-- Brief info: Зафиксировать целевую backend-архитектуру с nginx как REST gateway и gRPC только для внутренних service-to-service вызовов.
+#### `Task 7`: Архитектура backend-сервисов с nginx API Gateway, основным Symfony-сервисом и внутренним gRPC - completed
+- Brief info: Зафиксировать и завершить backend-архитектуру с nginx как REST gateway и gRPC только для внутренних service-to-service вызовов.
 - Backend Merge Request 7: <https://github.com/ivanserg0692/symfony2026/pull/7>
 - Frontend Merge Request 7: TBD
 - Файл задачи: [symfony/docs/task-7.md](symfony/docs/task-7.md)
