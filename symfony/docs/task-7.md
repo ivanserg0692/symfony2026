@@ -8,6 +8,9 @@
   - [Описание задачи](#%D0%BE%D0%BF%D0%B8%D1%81%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B7%D0%B0%D0%B4%D0%B0%D1%87%D0%B8)
   - [Цель](#%D1%86%D0%B5%D0%BB%D1%8C)
   - [Архитектурный контекст](#%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%BD%D1%8B%D0%B9-%D0%BA%D0%BE%D0%BD%D1%82%D0%B5%D0%BA%D1%81%D1%82)
+    - [7.1 Выделение сервисов](#71-%D0%B2%D1%8B%D0%B4%D0%B5%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2)
+    - [7.2 gRPC-интеграция Cart/Order](#72-grpc-%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D1%8F-cartorder)
+    - [7.3 Публичный контракт API Gateway](#73-%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D1%8B%D0%B9-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82-api-gateway)
   - [Критерии приемки](#%D0%BA%D1%80%D0%B8%D1%82%D0%B5%D1%80%D0%B8%D0%B8-%D0%BF%D1%80%D0%B8%D0%B5%D0%BC%D0%BA%D0%B8)
   - [Технический подход](#%D1%82%D0%B5%D1%85%D0%BD%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9-%D0%BF%D0%BE%D0%B4%D1%85%D0%BE%D0%B4)
   - [Как тестировать](#%D0%BA%D0%B0%D0%BA-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D1%82%D1%8C)
@@ -17,6 +20,9 @@
   - [Task Description](#task-description)
   - [Goal](#goal)
   - [Architecture Context](#architecture-context)
+    - [7.1 Service split](#71-service-split)
+    - [7.2 Cart/Order gRPC integration](#72-cartorder-grpc-integration)
+    - [7.3 API Gateway public contract](#73-api-gateway-public-contract)
   - [Acceptance Criteria](#acceptance-criteria)
   - [Technical Approach](#technical-approach)
   - [How To Test](#how-to-test)
@@ -56,6 +62,26 @@
 - REST/HTTP endpoints сервисов реализованы и опубликованы через nginx API Gateway под внешним namespace `/api/v1/...`;
 - Gateway OpenAPI contract генерируется отдельно от внутренних OpenAPI specs сервисов;
 - общие service env-настройки и DB maintenance scripts вынесены на уровень repository root.
+
+#### 7.1 Выделение сервисов
+
+Этап `7.1` фиксирует выделение Catalog Service и Order/Cart Service в отдельные Symfony applications. Main Symfony Service сохраняет Auth, admin, news и notifications, Catalog Service владеет catalog/store/stock data, а Order/Cart Service владеет cart и order data.
+
+#### 7.2 gRPC-интеграция Cart/Order
+
+Этап `7.2` фиксирует внутреннюю интеграцию Cart/Order с Catalog через gRPC: проверка цен, списание stock, создание product snapshots и последующее чтение snapshots для исторических order responses. Эти связи остаются service-to-service и не становятся публичным client API.
+
+#### 7.3 Публичный контракт API Gateway
+
+Этап `7.3` фиксирует внешний REST/HTTP contract через nginx API Gateway. Workflow должен быть описан route-level mappings, а не только общими стрелками:
+
+- auth, news, notifications, users и ping: внешние `/api/v1/auth/...`, `/api/v1/news...`, `/api/v1/notification...`, `/api/v1/users`, `/api/v1/ping` -> Symfony Main Service с теми же internal `/api/v1/...` routes;
+- catalog elements: внешние `/api/v1/catalog/elements...` -> Catalog Service `/api/catalog/elements...`;
+- catalog sections: внешние `/api/v1/catalog/sections...` -> Catalog Service `/api/catalog/sections...`;
+- stores: внешние `/api/v1/stores...` -> Catalog Service `/api/stores...`;
+- cart: внешние `/api/v1/cart...` -> Cart Service `/api/cart...`;
+- orders: внешние `/api/v1/orders...` -> Cart Service `/api/orders...`;
+- protected routes: nginx вызывает internal `/_auth`, который проксируется в Symfony Main Service `GET /api/v1/auth/me`; после успешной проверки Gateway формирует trusted `X-User-Id`.
 
 nginx API Gateway отвечает за:
 
@@ -201,6 +227,26 @@ Current implementation status:
 - service REST/HTTP endpoints are implemented and exposed through nginx API Gateway under the external `/api/v1/...` namespace;
 - the Gateway OpenAPI contract is generated separately from internal service OpenAPI specs;
 - shared service env settings and DB maintenance scripts are maintained at the repository root.
+
+#### 7.1 Service split
+
+Stage `7.1` captures the extraction of Catalog Service and Order/Cart Service into separate Symfony applications. Symfony Main Service keeps Auth, admin, news, and notifications, Catalog Service owns catalog/store/stock data, and Order/Cart Service owns cart and order data.
+
+#### 7.2 Cart/Order gRPC integration
+
+Stage `7.2` captures the internal Cart/Order integration with Catalog over gRPC: price checks, stock deduction, product snapshot creation, and later snapshot reads for historical order responses. These relations remain service-to-service integration points and do not become public client API.
+
+#### 7.3 API Gateway public contract
+
+Stage `7.3` captures the external REST/HTTP contract through nginx API Gateway. The workflow should be documented as route-level mappings, not only as generic arrows:
+
+- auth, news, notifications, users, and ping: external `/api/v1/auth/...`, `/api/v1/news...`, `/api/v1/notification...`, `/api/v1/users`, `/api/v1/ping` -> Symfony Main Service with the same internal `/api/v1/...` routes;
+- catalog elements: external `/api/v1/catalog/elements...` -> Catalog Service `/api/catalog/elements...`;
+- catalog sections: external `/api/v1/catalog/sections...` -> Catalog Service `/api/catalog/sections...`;
+- stores: external `/api/v1/stores...` -> Catalog Service `/api/stores...`;
+- cart: external `/api/v1/cart...` -> Cart Service `/api/cart...`;
+- orders: external `/api/v1/orders...` -> Cart Service `/api/orders...`;
+- protected routes: nginx calls internal `/_auth`, which is proxied to Symfony Main Service `GET /api/v1/auth/me`; after successful validation, Gateway creates the trusted `X-User-Id`.
 
 nginx API Gateway is responsible for:
 
