@@ -1,0 +1,49 @@
+@startuml
+!theme plain
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam componentStyle rectangle
+skinparam wrapWidth 180
+skinparam maxMessageSize 180
+
+title Service Architecture Overview
+
+actor "Frontend" as Frontend
+
+legend right
+  <color:#1f77b4><b>blue</b></color> = public REST/HTTP
+  <color:#2ca02c><b>green</b></color> = internal REST/HTTP
+  <color:#d62728><b>red</b></color> = internal gRPC
+endlegend
+
+rectangle "External REST/HTTP Boundary" {
+  component "API Gateway\nnginx\npublic REST entrypoint" as Gateway
+}
+
+rectangle "Internal Backend Services" {
+  component "Auth / News\nSymfony" as AuthNews
+  component "Catalog\nSymfony" as Catalog
+  component "Cart / Orders\nSymfony" as CartOrders
+}
+
+Frontend -[#1f77b4]-> Gateway : public REST/HTTP
+
+Gateway -[#2ca02c]-> AuthNews : internal REST\nAuth / News
+Gateway -[#2ca02c]-> Catalog : internal REST\nCatalog API
+Gateway -[#2ca02c]-> CartOrders : internal REST\nCart / Orders API
+
+AuthNews -[#1f77b4]-> Frontend : JWT
+CartOrders -[#d62728]-> Catalog : gRPC\nproduct validation\nstock / snapshots
+
+note right of Gateway
+External clients call only the API Gateway.
+Service endpoints stay internal.
+end note
+
+note bottom of CartOrders
+gRPC is internal service-to-service transport.
+It is not exposed as a public client API.
+end note
+
+@enduml

@@ -195,8 +195,11 @@ final class AuthController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        return $this->json($user, context: [
+        $response = $this->json($user, context: [
             'groups' => ['user:read'],
         ]);
+        $response->headers->set('X-User-Id', (string) $user->getId());
+
+        return $response;
     }
 }

@@ -1,0 +1,183 @@
+{
+  "openapiSources": {
+    "symfony": {
+      "sourceType": "docker",
+      "source": "symfony-cli"
+    },
+    "catalog": {
+      "sourceType": "docker",
+      "source": "catalog-cli"
+    },
+    "cart": {
+      "sourceType": "docker",
+      "source": "cart-cli"
+    }
+  },
+  "routes": [
+    {
+      "id": "gateway_openapi",
+      "match": "exact",
+      "publicPath": "/api-gateway/openapi.json",
+      "upstream": "symfony_web",
+      "internalPath": "/api-gateway/openapi.json",
+      "auth": false,
+      "openapi": false
+    },
+    {
+      "id": "symfony_swagger_ui",
+      "match": "exact",
+      "publicPath": "/api/v1/doc",
+      "upstream": "symfony_web",
+      "internalPath": "/api/v1/doc",
+      "auth": false,
+      "openapi": false
+    },
+    {
+      "id": "symfony_swagger_json",
+      "match": "exact",
+      "publicPath": "/api/v1/doc.json",
+      "upstream": "symfony_web",
+      "internalPath": "/api/v1/doc.json",
+      "auth": false,
+      "openapi": false
+    },
+    {
+      "id": "nelmio_assets",
+      "match": "prefix",
+      "publicPath": "/bundles/nelmioapidoc/",
+      "upstream": "symfony_web",
+      "internalPath": "/bundles/nelmioapidoc/",
+      "auth": false,
+      "openapi": false
+    },
+    {
+      "id": "swagger_turnstile_js",
+      "match": "exact",
+      "publicPath": "/js/swagger-turnstile.js",
+      "upstream": "symfony_web",
+      "internalPath": "/js/swagger-turnstile.js",
+      "auth": false,
+      "openapi": false
+    },
+    {
+      "id": "auth_me",
+      "match": "exact",
+      "publicPath": "/api/v1/auth/me",
+      "upstream": "symfony_web",
+      "internalPath": "/api/v1/auth/me",
+      "auth": false,
+      "openapi": {
+        "source": "symfony",
+        "path": "/api/v1/auth/me"
+      }
+    },
+    {
+      "id": "auth",
+      "match": "prefix",
+      "publicPath": "/api/v1/auth/",
+      "upstream": "symfony_web",
+      "internalPath": "/api/v1/auth/",
+      "auth": false,
+      "openapi": {
+        "source": "symfony",
+        "pathPrefix": "/api/v1/auth/"
+      }
+    },
+    {
+      "id": "ping",
+      "match": "exact",
+      "publicPath": "/api/v1/ping",
+      "upstream": "symfony_web",
+      "internalPath": "/api/v1/ping",
+      "auth": false,
+      "openapi": {
+        "source": "symfony",
+        "path": "/api/v1/ping"
+      }
+    },
+    {
+      "id": "news",
+      "match": "prefix",
+      "publicPath": "/api/v1/news",
+      "upstream": "symfony_web",
+      "internalPath": "/api/v1/news",
+      "auth": false,
+      "openapi": {
+        "source": "symfony",
+        "pathPrefix": "/api/v1/news"
+      }
+    },
+    {
+      "id": "notification",
+      "match": "prefix",
+      "publicPath": "/api/v1/notification",
+      "upstream": "symfony_web",
+      "internalPath": "/api/v1/notification",
+      "auth": false,
+      "openapi": {
+        "source": "symfony",
+        "pathPrefix": "/api/v1/notification"
+      }
+    },
+    {
+      "id": "catalog_elements",
+      "match": "prefix",
+      "publicPath": "/api/v1/catalog/elements",
+      "upstream": "catalog_web",
+      "internalPath": "/api/catalog/elements",
+      "auth": false,
+      "openapi": {
+        "source": "catalog",
+        "pathPrefix": "/api/catalog/elements"
+      }
+    },
+    {
+      "id": "catalog_sections",
+      "match": "prefix",
+      "publicPath": "/api/v1/catalog/sections",
+      "upstream": "catalog_web",
+      "internalPath": "/api/catalog/sections",
+      "auth": false,
+      "openapi": {
+        "source": "catalog",
+        "pathPrefix": "/api/catalog/sections"
+      }
+    },
+    {
+      "id": "stores",
+      "match": "prefix",
+      "publicPath": "/api/v1/stores",
+      "upstream": "catalog_web",
+      "internalPath": "/api/stores",
+      "auth": false,
+      "openapi": {
+        "source": "catalog",
+        "pathPrefix": "/api/stores"
+      }
+    },
+    {
+      "id": "cart",
+      "match": "prefix",
+      "publicPath": "/api/v1/cart",
+      "upstream": "cart_web",
+      "internalPath": "/api/cart",
+      "auth": true,
+      "openapi": {
+        "source": "cart",
+        "pathPrefix": "/api/cart"
+      }
+    },
+    {
+      "id": "orders",
+      "match": "prefix",
+      "publicPath": "/api/v1/orders",
+      "upstream": "cart_web",
+      "internalPath": "/api/orders",
+      "auth": true,
+      "openapi": {
+        "source": "cart",
+        "pathPrefix": "/api/orders"
+      }
+    }
+  ]
+}
