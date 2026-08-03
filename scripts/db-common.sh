@@ -26,6 +26,8 @@ run_for_database_services() {
   local targets
   targets="$(load_database_service_targets)"
 
+  # DATABASE_SERVICE_TARGETS is a comma-separated list:
+  # compose-cli-service:Human label,another-cli-service:Another label
   IFS="," read -r -a service_entries <<< "${targets}"
 
   for service_entry in "${service_entries[@]}"; do
@@ -36,6 +38,8 @@ run_for_database_services() {
       continue
     fi
 
+    # Split each entry by the first colon. The service is used by docker compose,
+    # while the label is only printed for readable command output.
     local service="${service_entry%%:*}"
     local label="${service_entry#*:}"
 

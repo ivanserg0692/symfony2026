@@ -7,6 +7,7 @@
     "db:create": "bash scripts/db-create.sh",
     "db:migrate": "bash scripts/db-migrate.sh",
     "db:status": "bash scripts/db-status.sh",
+    "db:fixtures": "bash scripts/db-fixtures.sh",
     "db:init": "bash scripts/db-init.sh",
     "gateway:generate": "node scripts/generate-api-gateway.mjs",
     "readme:api": "node scripts/readme-api-table.mjs README.md",

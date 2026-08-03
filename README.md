@@ -478,9 +478,10 @@ npm run db:create
 npm run db:status
 npm run db:migrate
 npm run db:init
+npm run db:fixtures
 ```
 
-`db:init` creates missing databases and then applies migrations. Fixtures are intentionally not included because they can rewrite development data.
+`db:init` creates missing databases and then applies migrations. `db:fixtures` loads fixtures separately and is intentionally not included in `db:init` because it can rewrite development data.
 
 Start PostgreSQL and create the database if it does not exist yet:
 
@@ -1076,9 +1077,10 @@ npm run db:create
 npm run db:status
 npm run db:migrate
 npm run db:init
+npm run db:fixtures
 ```
 
-`db:init` создает отсутствующие базы и затем применяет миграции. Fixtures специально не включены, потому что они могут перезаписать development-данные.
+`db:init` создает отсутствующие базы и затем применяет миграции. `db:fixtures` загружает fixtures отдельно и специально не включен в `db:init`, потому что может перезаписать development-данные.
 
 Поднимите PostgreSQL и создайте базу, если она еще не существует:
 
