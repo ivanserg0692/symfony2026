@@ -122,10 +122,10 @@ Gateway routing is described in `api-gateway/routes.json`. The base public OpenA
 
 Run `npm run gateway:generate` to regenerate both Gateway artifacts from the same source configuration:
 
-- nginx route config: `docker/nginx/snippets/generated-api-gateway-routes.conf`;
+- nginx route config: `api-gateway/nginx/snippets/generated-api-gateway-routes.conf`;
 - public Gateway OpenAPI contract: `symfony/public/api-gateway/openapi.json`.
 
-The generator implementation lives in `scripts/generate-api-gateway.mjs`. Shared nginx proxy/auth settings live in `docker/nginx/snippets/`.
+The generator implementation lives in `scripts/generate-api-gateway.mjs`. Shared nginx proxy/auth settings live in `api-gateway/nginx/snippets/`.
 
 Service OpenAPI specs remain internal source contracts. The generated Gateway OpenAPI spec is the public client contract.
 
@@ -737,10 +737,10 @@ API отдает новости, аутентификацию, текущего 
 
 Команда `npm run gateway:generate` пересобирает оба gateway artifact из одной source configuration:
 
-- nginx route config: `docker/nginx/snippets/generated-api-gateway-routes.conf`;
+- nginx route config: `api-gateway/nginx/snippets/generated-api-gateway-routes.conf`;
 - публичный Gateway OpenAPI contract: `symfony/public/api-gateway/openapi.json`.
 
-Реализация генератора находится в `scripts/generate-api-gateway.mjs`. Общие nginx proxy/auth настройки находятся в `docker/nginx/snippets/`.
+Реализация генератора находится в `scripts/generate-api-gateway.mjs`. Общие nginx proxy/auth настройки находятся в `api-gateway/nginx/snippets/`.
 
 OpenAPI-спеки сервисов остаются внутренними source contracts. Сгенерированная Gateway OpenAPI spec является публичным клиентским контрактом.
 

@@ -30,7 +30,7 @@ Implemented:
 - added the `api-gateway` Docker Compose service based on nginx;
 - added nginx Gateway configuration with upstreams for `symfony-web`, `catalog-web`, and `cart-web`;
 - described public Gateway routes in `api-gateway/routes.json`;
-- generated nginx routes into `docker/nginx/snippets/generated-api-gateway-routes.conf`;
+- generated nginx routes into `api-gateway/nginx/snippets/generated-api-gateway-routes.conf`;
 - generated the Gateway-level OpenAPI contract into `symfony/public/api-gateway/openapi.json`;
 - extracted the base OpenAPI header into `api-gateway/openapi-header.json`;
 - extracted common nginx proxy/auth settings into snippets;

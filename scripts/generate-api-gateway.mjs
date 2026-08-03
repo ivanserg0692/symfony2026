@@ -7,7 +7,7 @@ import { dirname, resolve } from 'node:path';
 const METHOD_ORDER = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
 const CONFIG_PATH = 'api-gateway/routes.json';
 const OPENAPI_HEADER_PATH = 'api-gateway/openapi-header.json';
-const NGINX_ROUTES_OUTPUT_PATH = 'docker/nginx/snippets/generated-api-gateway-routes.conf';
+const NGINX_ROUTES_OUTPUT_PATH = 'api-gateway/nginx/snippets/generated-api-gateway-routes.conf';
 const OPENAPI_OUTPUT_PATH = 'symfony/public/api-gateway/openapi.json';
 
 function main() {

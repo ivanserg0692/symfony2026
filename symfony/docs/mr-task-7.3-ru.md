@@ -30,7 +30,7 @@ Merge request добавляет внешний REST/HTTP API Gateway на ба�
 - добавлен Docker Compose service `api-gateway` на базе nginx;
 - добавлена nginx-конфигурация gateway с upstreams для `symfony-web`, `catalog-web` и `cart-web`;
 - публичные gateway routes описаны в `api-gateway/routes.json`;
-- nginx routes генерируются в `docker/nginx/snippets/generated-api-gateway-routes.conf`;
+- nginx routes генерируются в `api-gateway/nginx/snippets/generated-api-gateway-routes.conf`;
 - gateway-level OpenAPI генерируется в `symfony/public/api-gateway/openapi.json`;
 - базовая OpenAPI-шапка вынесена в `api-gateway/openapi-header.json`;
 - общие nginx proxy/auth настройки вынесены в snippets;

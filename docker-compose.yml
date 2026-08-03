@@ -115,8 +115,8 @@ services:
     ports:
       - "${API_GATEWAY_HTTP_PORT:-8001}:80"
     volumes:
-      - ./docker/nginx/api-gateway.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./docker/nginx/snippets:/etc/nginx/snippets:ro
+      - ./api-gateway/nginx/api-gateway.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./api-gateway/nginx/snippets:/etc/nginx/snippets:ro
 
   # Local Catalog service web server for REST/API access during development.
   catalog-web:
