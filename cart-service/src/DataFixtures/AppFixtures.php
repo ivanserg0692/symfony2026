@@ -31,14 +31,8 @@ class AppFixtures extends Fixture
     // Converts decimal money values to minor units for integer-safe fixture calculations.
     private const MONEY_SCALE_FACTOR = 100;
 
-    // Internal Docker URL used by Cart Service fixtures to read products, prices, stocks, and snapshots.
-    private const CATALOG_SERVICE_BASE_URL = "http://catalog-web:8000";
-
     // Maximum catalog elements requested before filtering unavailable products locally.
     private const CATALOG_PRODUCT_LIMIT = 50;
-
-    // Internal Docker URL used by Cart Service fixtures to read real user ids.
-    private const MAIN_SERVICE_BASE_URL = "http://symfony-web:8000";
 
     // Size of the user pool requested from Main Service; fixtures sample owners from this pool.
     private const USER_LIMIT = 100;
@@ -52,6 +46,8 @@ class AppFixtures extends Fixture
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly CatalogInventoryClient $catalogInventoryClient,
+        private readonly string $catalogServiceBaseUrl,
+        private readonly string $mainServiceBaseUrl,
     ) {
     }
 
@@ -81,7 +77,7 @@ class AppFixtures extends Fixture
      */
     private function fetchOwnerIds(): array
     {
-        $payload = $this->requestJson(self::MAIN_SERVICE_BASE_URL, "/api/v1/users", [
+        $payload = $this->requestJson($this->mainServiceBaseUrl, "/api/v1/users", [
             "limit" => (string) self::USER_LIMIT,
             "sort" => "id",
             "direction" => "ASC",
@@ -115,7 +111,7 @@ class AppFixtures extends Fixture
      */
     private function fetchAvailableCatalogProducts(): array
     {
-        $payload = $this->requestJson(self::CATALOG_SERVICE_BASE_URL, "/api/catalog/elements", [
+        $payload = $this->requestJson($this->catalogServiceBaseUrl, "/api/catalog/elements", [
             "active" => "true",
             "limit" => (string) self::CATALOG_PRODUCT_LIMIT,
         ]);

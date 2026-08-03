@@ -4,6 +4,7 @@ services:
     image: postgres:16-alpine
     container_name: symfony-db
     env_file:
+      - .env
       - .env.local
     ports:
       - "5432:5432"
@@ -20,6 +21,7 @@ services:
     image: postgres:16-alpine
     container_name: catalog-db
     env_file:
+      - .env
       - .env.local
     environment:
       POSTGRES_DB: ${CATALOG_POSTGRES_DB:-catalog}
@@ -40,6 +42,7 @@ services:
     image: postgres:16-alpine
     container_name: cart-db
     env_file:
+      - .env
       - .env.local
     environment:
       POSTGRES_DB: ${CART_POSTGRES_DB:-cart}
@@ -74,6 +77,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file:
+      - .env
       - .env.local
     environment:
       GIT_AUTHOR_NAME: ${GIT_AUTHOR_NAME:-}
@@ -161,6 +165,7 @@ services:
       catalog-db:
         condition: service_healthy
     env_file:
+      - .env
       - .env.local
       - ./catalog-service/.env.rr
     environment:
@@ -225,6 +230,7 @@ services:
     image: rabbitmq:4-management
     container_name: symfony-rabbitmq
     env_file:
+      - .env
       - .env.local
     ports:
       - "15672:15672"
@@ -236,6 +242,7 @@ services:
     image: quay.io/minio/minio:latest
     container_name: symfony-minio
     env_file:
+      - .env
       - .env.local
     command: server /data --console-address ":9001"
     ports:
@@ -255,6 +262,7 @@ services:
   minio-client:
     image: quay.io/minio/mc:latest
     env_file:
+      - .env
       - .env.local
     depends_on:
       minio:
