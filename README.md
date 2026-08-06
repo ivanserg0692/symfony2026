@@ -28,6 +28,7 @@
       - [`Task 7.1`: Develop Catalog Service and Order/Cart Service backend services - completed](#task-71-develop-catalog-service-and-ordercart-service-backend-services---completed)
       - [`Task 7.2`: Complete Cart/Order endpoints that require gRPC integrations - completed](#task-72-complete-cartorder-endpoints-that-require-grpc-integrations---completed)
       - [`Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - completed](#task-73-implement-the-external-api-gateway-for-the-public-resthttp-contract---completed)
+    - [`Task 8`: Monitoring and load testing for the online store - planned](#task-8-monitoring-and-load-testing-for-the-online-store---planned)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
   - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
@@ -69,6 +70,7 @@
       - [`Task 7.1`: Разработка backend-сервисов Catalog Service и Order/Cart Service - completed](#task-71-%D1%80%D0%B0%D0%B7%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-backend-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-catalog-service-%D0%B8-ordercart-service---completed)
       - [`Task 7.2`: Доработка Cart/Order endpoints, которым нужны gRPC-интеграции - completed](#task-72-%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-cartorder-endpoints-%D0%BA%D0%BE%D1%82%D0%BE%D1%80%D1%8B%D0%BC-%D0%BD%D1%83%D0%B6%D0%BD%D1%8B-grpc-%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D0%B8---completed)
       - [`Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - completed](#task-73-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B5%D0%B3%D0%BE-api-gateway-%D0%B4%D0%BB%D1%8F-%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D0%BE%D0%B3%D0%BE-resthttp-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D0%B0---completed)
+    - [`Task 8`: Мониторинг и нагрузочное тестирование интернет-магазина - planned](#task-8-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0---planned)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
   - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
@@ -392,6 +394,14 @@ The notification recipients are administrators resolved by the application, not 
 - Task file: [symfony/docs/task-7.3.md](symfony/docs/task-7.3.md)
 - MR result (EN): [symfony/docs/mr-task-7.3-en.md](symfony/docs/mr-task-7.3-en.md)
 - MR result (RU): [symfony/docs/mr-task-7.3-ru.md](symfony/docs/mr-task-7.3-ru.md)
+
+#### `Task 8`: Monitoring and load testing for the online store - planned
+- Brief info: Plan Prometheus, Grafana, and k6 coverage for application, gateway, database, gRPC, and system metrics.
+- Backend Merge Request 8: TBD
+- Frontend Merge Request 8: TBD
+- Task file: [symfony/docs/task-8.md](symfony/docs/task-8.md)
+- MR result (EN): [symfony/docs/mr-task-8-en.md](symfony/docs/mr-task-8-en.md)
+- MR result (RU): [symfony/docs/mr-task-8-ru.md](symfony/docs/mr-task-8-ru.md)
 
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
@@ -1007,6 +1017,14 @@ Product snapshots не отдаются через отдельную публи
 - Файл задачи: [symfony/docs/task-7.3.md](symfony/docs/task-7.3.md)
 - Результат MR (EN): [symfony/docs/mr-task-7.3-en.md](symfony/docs/mr-task-7.3-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-7.3-ru.md](symfony/docs/mr-task-7.3-ru.md)
+
+#### `Task 8`: Мониторинг и нагрузочное тестирование интернет-магазина - planned
+- Brief info: Запланировать Prometheus, Grafana и k6 coverage для application, gateway, database, gRPC и system metrics.
+- Backend Merge Request 8: TBD
+- Frontend Merge Request 8: TBD
+- Файл задачи: [symfony/docs/task-8.md](symfony/docs/task-8.md)
+- Результат MR (EN): [symfony/docs/mr-task-8-en.md](symfony/docs/mr-task-8-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-8-ru.md](symfony/docs/mr-task-8-ru.md)
 
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:
