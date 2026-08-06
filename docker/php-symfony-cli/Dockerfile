@@ -28,8 +28,8 @@ RUN docker-php-ext-install \
     xsl \
     zip
 
-RUN pecl install amqp grpc xdebug \
-    && docker-php-ext-enable amqp grpc xdebug
+RUN pecl install amqp grpc redis xdebug \
+    && docker-php-ext-enable amqp grpc redis xdebug
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 COPY --from=roadrunner /usr/bin/rr /usr/local/bin/rr

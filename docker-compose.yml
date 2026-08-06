@@ -58,6 +58,21 @@ services:
     volumes:
       - cart_database_data:/var/lib/postgresql/data
 
+
+  # Redis storage for Prometheus metrics collected by Symfony services.
+  redis:
+    image: redis:7-alpine
+    container_name: symfony-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - redis_data:/data
+
   # CLI PHP workspace for running Symfony, Composer, console commands, and tests.
   # Usage examples:
   # docker compose run --rm symfony-cli php bin/console
@@ -95,6 +110,9 @@ services:
   symfony-web:
     <<: *symfony-base
     container_name: symfony-web
+    depends_on:
+      redis:
+        condition: service_healthy
     command:
       - sh
       - -lc
@@ -136,6 +154,8 @@ services:
     depends_on:
       catalog-db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
       DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
@@ -173,6 +193,8 @@ services:
     depends_on:
       catalog-db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file:
       - .env
       - .env.local
@@ -198,6 +220,8 @@ services:
       - ./cart-service:/workspace
     depends_on:
       cart-db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     environment:
       APP_SECRET: "${CART_APP_SECRET:-cart-dev-secret-change-me}"
@@ -373,5 +397,6 @@ volumes:
   cart_database_data:
   rabbitmq_data:
   minio_data:
+  redis_data:
   prometheus_data:
   grafana_data:
