@@ -118,6 +118,15 @@ services:
       - ./api-gateway/nginx/api-gateway.conf:/etc/nginx/conf.d/default.conf:ro
       - ./api-gateway/nginx/snippets:/etc/nginx/snippets:ro
 
+  # Prometheus exporter for API Gateway / Nginx runtime metrics.
+  api-gateway-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: api-gateway-exporter
+    depends_on:
+      - api-gateway
+    command:
+      - --nginx.scrape-uri=http://api-gateway/nginx_status
+
   # Local Catalog service web server for REST/API access during development.
   catalog-web:
     <<: *symfony-base
@@ -283,9 +292,86 @@ services:
     volumes:
       - .:/workspace
 
+
+  # Prometheus time-series storage and scraper for local service metrics.
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: symfony-prometheus
+    depends_on:
+      - symfony-web
+      - catalog-web
+      - cart-web
+      - api-gateway-exporter
+      - node-exporter
+      - postgres-exporter
+      - catalog-postgres-exporter
+      - cart-postgres-exporter
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  # Grafana dashboards for local monitoring.
+  grafana:
+    image: grafana/grafana:latest
+    container_name: symfony-grafana
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+
+  # Host/system exporter for CPU, RAM, filesystem, and network metrics.
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: symfony-node-exporter
+    command:
+      - --path.rootfs=/host
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+
+  # PostgreSQL exporter for the main Symfony database.
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: symfony-postgres-exporter
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?sslmode=disable"
+
+  # PostgreSQL exporter for the Catalog database.
+  catalog-postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: catalog-postgres-exporter
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${CATALOG_POSTGRES_USER:-catalog}:${CATALOG_POSTGRES_PASSWORD:-catalog}@catalog-db:5432/${CATALOG_POSTGRES_DB:-catalog}?sslmode=disable"
+
+  # PostgreSQL exporter for the Cart database.
+  cart-postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: cart-postgres-exporter
+    depends_on:
+      cart-db:
+        condition: service_healthy
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${CART_POSTGRES_USER:-cart}:${CART_POSTGRES_PASSWORD:-cart}@cart-db:5432/${CART_POSTGRES_DB:-cart}?sslmode=disable"
+
 volumes:
   database_data:
   catalog_database_data:
   cart_database_data:
   rabbitmq_data:
   minio_data:
+  prometheus_data:
+  grafana_data:

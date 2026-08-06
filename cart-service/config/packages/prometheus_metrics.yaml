@@ -1,5 +1,5 @@
 artprima_prometheus_metrics:
-    namespace: myapp
+    namespace: cart
     storage: '%env(PROM_METRICS_DSN)%'
 
     ignored_routes:
