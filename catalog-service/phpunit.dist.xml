@@ -11,6 +11,10 @@
         <server name="APP_ENV" value="test" force="true" />
         <server name="KERNEL_CLASS" value="App\Kernel" />
         <server name="SHELL_VERBOSITY" value="-1" />
+
+        <!-- ###+ artprima/prometheus-metrics-bundle ### -->
+        <env name="PROM_METRICS_DSN" value="apcu"/>
+        <!-- ###- artprima/prometheus-metrics-bundle ### -->
     </php>
 
     <testsuites>
