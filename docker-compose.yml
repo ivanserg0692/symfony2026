@@ -345,11 +345,23 @@ services:
     container_name: symfony-grafana
     depends_on:
       - prometheus
+      - grafana-image-renderer
     ports:
       - "3000:3000"
+    environment:
+      GF_RENDERING_SERVER_URL: http://grafana-image-renderer:8081/render
+      GF_RENDERING_CALLBACK_URL: http://grafana:3000/
+      GF_RENDERING_RENDERER_TOKEN: symfony2026-renderer-token
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+
+  # Remote image renderer for Grafana dashboard and panel exports.
+  grafana-image-renderer:
+    image: grafana/grafana-image-renderer:latest
+    container_name: symfony-grafana-image-renderer
+    environment:
+      AUTH_TOKEN: symfony2026-renderer-token
 
   # Host/system exporter for CPU, RAM, filesystem, and network metrics.
   node-exporter:
