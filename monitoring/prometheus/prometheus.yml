@@ -41,6 +41,14 @@ scrape_configs:
         labels:
           project: api-gateway
 
+  - job_name: api-gateway-vts
+    metrics_path: /vts/metrics
+    static_configs:
+      - targets:
+          - api-gateway:8080
+        labels:
+          project: api-gateway-vts
+
   - job_name: node
     static_configs:
       - targets:
