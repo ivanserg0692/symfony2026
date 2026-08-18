@@ -82,6 +82,7 @@ services:
     build:
       context: .
       dockerfile: docker/php-symfony-cli/Dockerfile
+      target: prod
       args:
         UBUNTU_VERSION: "24.04"
     image: symfony-cli:dev

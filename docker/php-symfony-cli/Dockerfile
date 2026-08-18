@@ -1,23 +1,18 @@
 FROM ghcr.io/roadrunner-server/roadrunner:2025.1.1 AS roadrunner
 
-FROM php:8.4-cli-bookworm
+FROM php:8.4-cli-bookworm AS php-base
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV PATH="/root/.symfony5/bin:${PATH}"
-
 RUN apt-get update && apt-get install -y \
     bash \
     ca-certificates \
     curl \
-    git \
     libicu-dev \
     libonig-dev \
     libpq-dev \
     librabbitmq-dev \
     libxslt1-dev \
     libzip-dev \
-    unzip \
-    wget \
     && rm -rf /var/lib/apt/lists/*
 
 RUN docker-php-ext-install \
@@ -28,15 +23,31 @@ RUN docker-php-ext-install \
     xsl \
     zip
 
-RUN pecl install amqp grpc redis xdebug \
-    && docker-php-ext-enable amqp grpc redis xdebug
+RUN pecl install amqp grpc redis \
+    && docker-php-ext-enable amqp grpc redis
+
+COPY --from=roadrunner /usr/bin/rr /usr/local/bin/rr
+
+WORKDIR /workspace
+
+FROM php-base AS prod
+
+FROM php-base AS dev
+
+ENV PATH="/root/.symfony5/bin:${PATH}"
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
-COPY --from=roadrunner /usr/bin/rr /usr/local/bin/rr
+
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN wget https://get.symfony.com/cli/installer -O - | bash
 
-WORKDIR /workspace
+RUN pecl install xdebug \
+    && docker-php-ext-enable xdebug
 
 COPY docker/php-symfony-cli/entrypoint.sh /usr/local/bin/symfony-entrypoint
 COPY docker/php-symfony-cli/xdebug.ini /usr/local/etc/php/conf.d/99-xdebug.ini
