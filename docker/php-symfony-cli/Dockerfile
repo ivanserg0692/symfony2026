@@ -28,9 +28,17 @@ RUN pecl install amqp grpc redis \
 
 COPY --from=roadrunner /usr/bin/rr /usr/local/bin/rr
 
+COPY docker/php-symfony-cli/entrypoint.sh /usr/local/bin/symfony-entrypoint
+RUN chmod +x /usr/local/bin/symfony-entrypoint
+
 WORKDIR /workspace
 
 FROM php-base AS prod
+
+RUN docker-php-ext-install opcache
+
+ENV APP_ENV=prod
+ENV APP_DEBUG=0
 
 FROM php-base AS dev
 
@@ -49,6 +57,4 @@ RUN wget https://get.symfony.com/cli/installer -O - | bash
 RUN pecl install xdebug \
     && docker-php-ext-enable xdebug
 
-COPY docker/php-symfony-cli/entrypoint.sh /usr/local/bin/symfony-entrypoint
 COPY docker/php-symfony-cli/xdebug.ini /usr/local/etc/php/conf.d/99-xdebug.ini
-RUN chmod +x /usr/local/bin/symfony-entrypoint
