@@ -36,6 +36,7 @@ WORKDIR /workspace
 FROM php-base AS prod
 
 RUN docker-php-ext-install opcache
+COPY docker/php-symfony-cli/opcache-prod.ini /usr/local/etc/php/conf.d/99-opcache-prod.ini
 
 ENV APP_ENV=prod
 ENV APP_DEBUG=0
