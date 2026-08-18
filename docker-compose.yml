@@ -76,16 +76,14 @@ services:
   # CLI PHP workspace for running Symfony, Composer, console commands, and tests.
   # Usage examples:
   # docker compose run --rm symfony-cli php bin/console
-  # docker compose run --rm symfony-cli composer install
-  # docker compose run --rm symfony-cli php bin/phpunit
   symfony-cli: &symfony-base
     build:
       context: .
       dockerfile: docker/php-symfony-cli/Dockerfile
-      target: prod
+      target: ${PHP_IMAGE_TARGET:-prod}
       args:
         UBUNTU_VERSION: "24.04"
-    image: symfony-cli:dev
+    image: symfony-runtime:${PHP_IMAGE_TARGET:-prod}
     container_name: symfony-cli
     working_dir: /workspace
     volumes:
@@ -116,9 +114,7 @@ services:
       redis:
         condition: service_healthy
     command:
-      - sh
-      - -lc
-      - /root/.symfony5/bin/symfony server:stop || true; /root/.symfony5/bin/symfony serve --allow-http --no-tls --listen-ip=0.0.0.0 --port=8000 --daemon; exec tail -f /dev/null
+      - ${PHP_WEB_COMMAND:-symfony-prod-server}
     ports:
       - "8000:8000"
     stdin_open: false
@@ -167,9 +163,7 @@ services:
       APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
       DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
     command:
-      - sh
-      - -lc
-      - /root/.symfony5/bin/symfony server:stop || true; /root/.symfony5/bin/symfony serve --allow-http --no-tls --listen-ip=0.0.0.0 --port=8000 --daemon; exec tail -f /dev/null
+      - ${PHP_WEB_COMMAND:-symfony-prod-server}
     ports:
       - "8010:8000"
     stdin_open: false
@@ -234,9 +228,7 @@ services:
       APP_SECRET: "${CART_APP_SECRET:-cart-dev-secret-change-me}"
       DATABASE_URL: "${CART_DATABASE_URL:-postgresql://cart:cart@cart-db:5432/cart?serverVersion=16&charset=utf8}"
     command:
-      - sh
-      - -lc
-      - /root/.symfony5/bin/symfony server:stop || true; /root/.symfony5/bin/symfony serve --allow-http --no-tls --listen-ip=0.0.0.0 --port=8000 --daemon; exec tail -f /dev/null
+      - ${PHP_WEB_COMMAND:-symfony-prod-server}
     ports:
       - "8020:8000"
     stdin_open: false

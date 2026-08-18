@@ -1,6 +1,6 @@
 FROM ghcr.io/roadrunner-server/roadrunner:2025.1.1 AS roadrunner
 
-FROM php:8.4-cli-bookworm AS php-base
+FROM php:8.4-fpm-bookworm AS php-base
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
@@ -36,10 +36,19 @@ WORKDIR /workspace
 FROM php-base AS prod
 
 RUN docker-php-ext-install opcache
-COPY docker/php-symfony-cli/opcache-prod.ini /usr/local/etc/php/conf.d/99-opcache-prod.ini
 
 ENV APP_ENV=prod
 ENV APP_DEBUG=0
+RUN apt-get update && apt-get install -y \
+    nginx \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY docker/php-symfony-cli/opcache-prod.ini /usr/local/etc/php/conf.d/99-opcache-prod.ini
+COPY docker/php-symfony-cli/nginx-prod.conf /etc/nginx/sites-available/default
+COPY docker/php-symfony-cli/php-fpm-prod.conf /usr/local/etc/php-fpm.d/zz-prod.conf
+COPY docker/php-symfony-cli/prod-web-server.sh /usr/local/bin/symfony-prod-server
+RUN chmod +x /usr/local/bin/symfony-prod-server
+
 
 FROM php-base AS dev
 
@@ -59,3 +68,5 @@ RUN pecl install xdebug \
     && docker-php-ext-enable xdebug
 
 COPY docker/php-symfony-cli/xdebug.ini /usr/local/etc/php/conf.d/99-xdebug.ini
+COPY docker/php-symfony-cli/dev-web-server.sh /usr/local/bin/symfony-dev-server
+RUN chmod +x /usr/local/bin/symfony-dev-server
