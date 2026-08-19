@@ -2,7 +2,6 @@ services:
   # PostgreSQL database used by the Symfony application.
   database:
     image: postgres:16-alpine
-    container_name: symfony-db
     env_file:
       - .env
       - .env.local
@@ -19,7 +18,6 @@ services:
   # PostgreSQL database used by the Catalog service.
   catalog-db:
     image: postgres:16-alpine
-    container_name: catalog-db
     env_file:
       - .env
       - .env.local
@@ -40,7 +38,6 @@ services:
   # PostgreSQL database used by the Cart service.
   cart-db:
     image: postgres:16-alpine
-    container_name: cart-db
     env_file:
       - .env
       - .env.local
@@ -62,7 +59,6 @@ services:
   # Redis storage for Prometheus metrics collected by Symfony services.
   redis:
     image: redis:7-alpine
-    container_name: symfony-redis
     ports:
       - "6379:6379"
     healthcheck:
@@ -84,7 +80,6 @@ services:
       args:
         UBUNTU_VERSION: "24.04"
     image: symfony-runtime:prod
-    container_name: symfony-cli
     working_dir: /workspace
     volumes:
       - ./symfony:/workspace
@@ -110,7 +105,6 @@ services:
   # Local Symfony web server for browser/API access during development.
   symfony-web:
     <<: *symfony-base
-    container_name: symfony-web
     depends_on:
       redis:
         condition: service_healthy
@@ -127,7 +121,6 @@ services:
       context: .
       dockerfile: docker/nginx-api-gateway/Dockerfile
     image: symfony-api-gateway-nginx:1.27-vts
-    container_name: api-gateway
     depends_on:
       - symfony-web
       - catalog-web
@@ -143,7 +136,6 @@ services:
   # Prometheus exporter for API Gateway / Nginx runtime metrics.
   api-gateway-exporter:
     image: nginx/nginx-prometheus-exporter:latest
-    container_name: api-gateway-exporter
     depends_on:
       - api-gateway
     command:
@@ -152,7 +144,6 @@ services:
   # Local Catalog service web server for REST/API access during development.
   catalog-web:
     <<: *symfony-base
-    container_name: catalog-web
     volumes:
       - ./catalog-service:/workspace
     depends_on:
@@ -175,7 +166,6 @@ services:
   # CLI PHP workspace for running Catalog service console commands.
   catalog-cli:
     <<: *symfony-base
-    container_name: catalog-cli
     volumes:
       - ./catalog-service:/workspace
     depends_on:
@@ -192,7 +182,6 @@ services:
   # Local Catalog gRPC server powered by RoadRunner.
   catalog-grpc:
     <<: *symfony-base
-    container_name: catalog-grpc
     volumes:
       - ./catalog-service:/workspace
       - ./grpc-contracts:/grpc-contracts:ro
@@ -223,7 +212,6 @@ services:
   # Local Cart service web server for REST/API access during development.
   cart-web:
     <<: *symfony-base
-    container_name: cart-web
     volumes:
       - ./cart-service:/workspace
     depends_on:
@@ -246,7 +234,6 @@ services:
   # CLI PHP workspace for running Cart service console commands.
   cart-cli:
     <<: *symfony-base
-    container_name: cart-cli
     volumes:
       - ./cart-service:/workspace
     depends_on:
@@ -263,7 +250,6 @@ services:
   # Local SMTP catcher and web UI for inspecting outgoing development emails.
   mailpit:
     image: axllent/mailpit:latest
-    container_name: symfony-mailpit
     command: ["--smtp-max-recipients", "1000"]
     ports:
       - "8025:8025"
@@ -271,7 +257,6 @@ services:
   # RabbitMQ broker for Symfony Messenger async jobs.
   rabbitmq:
     image: rabbitmq:4-management
-    container_name: symfony-rabbitmq
     env_file:
       - .env
       - .env.local
@@ -283,7 +268,6 @@ services:
   # S3-compatible object storage for development file uploads and exports.
   minio:
     image: quay.io/minio/minio:latest
-    container_name: symfony-minio
     env_file:
       - .env
       - .env.local
@@ -330,7 +314,6 @@ services:
   # Prometheus time-series storage and scraper for local service metrics.
   prometheus:
     image: prom/prometheus:latest
-    container_name: symfony-prometheus
     depends_on:
       - symfony-web
       - catalog-web
@@ -353,7 +336,6 @@ services:
   # Grafana dashboards for local monitoring.
   grafana:
     image: grafana/grafana:latest
-    container_name: symfony-grafana
     depends_on:
       - prometheus
       - grafana-image-renderer
@@ -370,14 +352,12 @@ services:
   # Remote image renderer for Grafana dashboard and panel exports.
   grafana-image-renderer:
     image: grafana/grafana-image-renderer:latest
-    container_name: symfony-grafana-image-renderer
     environment:
       AUTH_TOKEN: symfony2026-renderer-token
 
   # Host/system exporter for CPU, RAM, filesystem, and network metrics.
   node-exporter:
     image: prom/node-exporter:latest
-    container_name: symfony-node-exporter
     command:
       - --path.rootfs=/host
     pid: host
@@ -387,7 +367,6 @@ services:
   # PostgreSQL exporter for the main Symfony database.
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
-    container_name: symfony-postgres-exporter
     depends_on:
       database:
         condition: service_healthy
@@ -397,7 +376,6 @@ services:
   # PostgreSQL exporter for the Catalog database.
   catalog-postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
-    container_name: catalog-postgres-exporter
     depends_on:
       catalog-db:
         condition: service_healthy
@@ -407,7 +385,6 @@ services:
   # PostgreSQL exporter for the Cart database.
   cart-postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
-    container_name: cart-postgres-exporter
     depends_on:
       cart-db:
         condition: service_healthy
