@@ -9,6 +9,7 @@
 - [Load Testing Scope](#load-testing-scope)
 - [Verification Plan](#verification-plan)
 - [Out Of Scope](#out-of-scope)
+- [2026-08-19 - Task Completion](#2026-08-19---task-completion)
 
 <!-- END doctoc -->
 
@@ -83,3 +84,34 @@ The implementation should be verified by checking that:
 This planned task does not define concrete installation commands, Docker configuration, Prometheus scrape configuration, Grafana dashboard JSON, or k6 scripts yet.
 
 Business logic changes in the services are out of scope unless they are separately approved during implementation.
+
+## 2026-08-19 - Task Completion
+
+Monitoring and load testing have been implemented. Docker Compose now includes Prometheus, Grafana, Grafana Image Renderer, the Nginx VTS exporter, Node Exporter, and dedicated PostgreSQL exporters for the main database, Catalog Service, and Cart/Order Service.
+
+Prometheus collects metrics from the following monitored nodes:
+
+- API Gateway and Nginx;
+- the main Symfony service;
+- Catalog Service;
+- Cart/Order Service;
+- the main, catalog, and cart PostgreSQL databases;
+- host resources: CPU, RAM, swap, filesystem, disk I/O, and network.
+
+A consolidated Grafana dashboard was built with the following panel groups:
+
+- incoming API Gateway RPS, Symfony service RPS, and per-endpoint RPS;
+- HTTP responses by status class and the API Gateway error percentage;
+- p50, p95, and p99 latency, plus per-endpoint p95 latency;
+- CPU, RAM, swap, system load, uptime, and PSI resource pressure;
+- filesystem usage, disk throughput, IOPS, and disk utilization;
+- incoming and outgoing network traffic and network saturation;
+- PostgreSQL tuple operations and approximate average execution time per tuple operation.
+
+k6 scenarios were added for catalog browsing, the shopping flow, checkout, and mixed traffic. The scenarios support authenticated users and allow load test results to be correlated with Grafana metrics.
+
+The current intermediate load test result is approximately **80 RPS**. This is a preliminary measurement, not the confirmed maximum stable capacity of the system. Further RPS optimization and bottleneck analysis will continue separately from the completed monitoring task.
+
+The dashboard screenshot shows a load test interval where incoming traffic through API Gateway and the Symfony services can be correlated with latency, HTTP errors, PostgreSQL activity, and system resource usage. These panels make it possible to identify the layer where degradation starts as load increases.
+
+![Grafana dashboard for monitoring and load testing](../../docs/images/task-8-monitoring-dashboard.png)

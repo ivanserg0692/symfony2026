@@ -9,6 +9,7 @@
 - [Load Testing Scope](#load-testing-scope)
 - [План проверки](#%D0%BF%D0%BB%D0%B0%D0%BD-%D0%BF%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%BA%D0%B8)
 - [Вне Scope](#%D0%B2%D0%BD%D0%B5-scope)
+- [2026-08-19 - Завершение задачи](#2026-08-19---%D0%B7%D0%B0%D0%B2%D0%B5%D1%80%D1%88%D0%B5%D0%BD%D0%B8%D0%B5-%D0%B7%D0%B0%D0%B4%D0%B0%D1%87%D0%B8)
 
 <!-- END doctoc -->
 
@@ -83,3 +84,34 @@ Load profiles должны постепенно увеличивать траф�
 Эта планируемая задача пока не фиксирует конкретные команды установки, Docker-конфигурацию, Prometheus scrape configuration, Grafana dashboard JSON или k6 scripts.
 
 Изменения бизнес-логики сервисов находятся вне scope, если они не будут отдельно согласованы во время реализации.
+
+## 2026-08-19 - Завершение задачи
+
+Мониторинг и нагрузочное тестирование реализованы. В Docker Compose добавлены Prometheus, Grafana, Grafana Image Renderer, Nginx VTS exporter, Node Exporter и отдельные PostgreSQL exporters для основной базы данных, Catalog Service и Cart/Order Service.
+
+Prometheus собирает метрики следующих наблюдаемых узлов:
+
+- API Gateway и Nginx;
+- основной Symfony-сервис;
+- Catalog Service;
+- Cart/Order Service;
+- основная, catalog и cart PostgreSQL-базы данных;
+- ресурсы хоста: CPU, RAM, swap, filesystem, disk I/O и network.
+
+В Grafana построен общий дашборд со следующими группами панелей:
+
+- входящий RPS API Gateway, RPS Symfony-сервисов и RPS отдельных endpoints;
+- HTTP responses по классам статусов и процент ошибок API Gateway;
+- latency p50, p95 и p99, а также p95 по отдельным endpoints;
+- CPU, RAM, swap, system load, uptime и PSI resource pressure;
+- использование filesystem, disk throughput, IOPS и disk utilization;
+- входящий и исходящий network traffic и network saturation;
+- PostgreSQL tuple operations и приблизительное среднее время выполнения tuple operation.
+
+Добавлены k6-сценарии просмотра каталога, shopping flow, checkout и смешанной нагрузки. Сценарии поддерживают авторизованных пользователей и позволяют сопоставлять результаты нагрузочного теста с метриками Grafana.
+
+Промежуточный результат нагрузочного тестирования составляет около **80 RPS**. Это текущий замер, а не зафиксированный максимальный стабильный предел системы. Дальнейшая работа по повышению RPS и поиску bottleneck продолжается отдельно от завершенной задачи мониторинга.
+
+На скриншоте дашборда показан тестовый интервал нагрузки: входящий трафик через API Gateway и Symfony-сервисы сопоставляется с latency, HTTP errors, активностью PostgreSQL и использованием системных ресурсов. Такой набор панелей позволяет определить, на каком уровне начинается деградация при дальнейшем увеличении нагрузки.
+
+![Grafana dashboard for monitoring and load testing](../../docs/images/task-8-monitoring-dashboard.png)
