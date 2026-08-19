@@ -180,6 +180,18 @@ The production-oriented Docker environment includes Prometheus and Grafana for m
 
 The Grafana dashboard covers request rate, HTTP statuses and errors, p50/p95/p99 latency, CPU and memory usage, filesystem and disk activity, network traffic, and PostgreSQL operations. Load scenarios are executed with k6 against the public API Gateway and include catalog browsing, cart operations, checkout, and mixed traffic.
 
+The Docker runtime is separated into production and development targets. Production is the default Compose environment and uses the `prod` image target with PHP-FPM, Nginx, OPcache, `APP_ENV=prod`, and `APP_DEBUG=0`. Development is enabled through `.env.dev` and `docker-compose.dev.yml`; it uses the `dev` image target with Symfony CLI, Composer, Xdebug, `APP_ENV=dev`, and `APP_DEBUG=1`. The environments use the separate `symfony2026` and `symfony2026-dev` Compose project names, so their resources do not conflict.
+
+```bash
+# Production
+docker compose up -d
+docker compose down
+
+# Development
+docker compose --env-file .env --env-file .env.dev up -d
+docker compose --env-file .env --env-file .env.dev down
+```
+
 ![Grafana monitoring dashboard](docs/images/task-8-monitoring-overview.png)
 
 The current result of approximately **80 RPS** is an intermediate local measurement, not the maximum production capacity. The test was performed on a laptop with an Intel Core i5 processor and 8 GB of RAM, with a catalog of approximately 1 million products. The API, databases, monitoring stack, and k6 load generator all ran on the same computer under WSL, so they competed for the same CPU, memory, disk, and network resources. A representative production benchmark requires separate application and load-generator hosts and production-equivalent infrastructure.
@@ -856,6 +868,18 @@ Product snapshots не отдаются через отдельную публи
 Production-окружение Docker включает Prometheus и Grafana для мониторинга API Gateway, сервисов приложения, баз данных PostgreSQL и ресурсов хоста. Метрики собираются через Node Exporter, Nginx VTS Exporter и PostgreSQL Exporter.
 
 Дашборд Grafana показывает RPS, HTTP-статусы и ошибки, задержки p50/p95/p99, использование CPU и памяти, состояние файловой системы и дисков, сетевой трафик и операции PostgreSQL. Нагрузочные сценарии k6 выполняются через публичный API Gateway и охватывают просмотр каталога, работу с корзиной, оформление заказа и смешанный трафик.
+
+Docker runtime разделен на production- и development-targets. Production является Compose-окружением по умолчанию и использует image target `prod` с PHP-FPM, Nginx, OPcache, `APP_ENV=prod` и `APP_DEBUG=0`. Development подключается через `.env.dev` и `docker-compose.dev.yml`; он использует image target `dev` с Symfony CLI, Composer, Xdebug, `APP_ENV=dev` и `APP_DEBUG=1`. Окружениям заданы разные Compose project names: `symfony2026` и `symfony2026-dev`, поэтому их ресурсы не конфликтуют.
+
+```bash
+# Production
+docker compose up -d
+docker compose down
+
+# Development
+docker compose --env-file .env --env-file .env.dev up -d
+docker compose --env-file .env --env-file .env.dev down
+```
 
 ![Дашборд мониторинга Grafana](docs/images/task-8-monitoring-overview.png)
 

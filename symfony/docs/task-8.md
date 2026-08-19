@@ -32,9 +32,9 @@
 
 ### Описание задачи
 
-Задокументировать и подготовить этап внедрения мониторинга и нагрузочного тестирования интернет-магазина. На этом этапе необходимо определить, какие компоненты системы должны отдавать метрики, какие показатели нужно собирать, как визуализировать состояние системы и как проводить нагрузочные проверки, имитирующие реальную работу пользователей.
+Внедрить мониторинг и нагрузочное тестирование интернет-магазина: определить источники метрик, настроить сбор и визуализацию показателей, а также подготовить k6-сценарии, имитирующие реальную работу пользователей.
 
-Задача не включает непосредственную реализацию, установку зависимостей, настройку конфигурационных файлов или запуск инфраструктуры. Конкретные технические решения, команды установки и детали конфигурации должны быть определены во время выполнения задачи.
+В рамках задачи Docker runtime разделен на production- и development-окружения. Production запускается по умолчанию через PHP-FPM и Nginx с OPcache, а development подключает Symfony CLI, Composer и Xdebug через отдельный Compose override.
 
 ### Цель
 
@@ -49,6 +49,8 @@
 Prometheus должен использоваться для сбора и хранения метрик. Grafana должна использоваться для визуализации состояния системы, сравнения нагрузки между сервисами и анализа деградации под нагрузкой. k6 должен использоваться для нагрузочного тестирования с постепенным увеличением нагрузки и сценариями, похожими на реальную работу пользователей интернет-магазина.
 
 Системные и exporter-метрики должны покрывать Nginx/API Gateway, PostgreSQL, CPU, RAM и другие необходимые компоненты окружения, чтобы результаты нагрузочного тестирования можно было связать с использованием ресурсов.
+
+Production и development используют общую Compose-архитектуру, но разные PHP image targets и runtime-параметры. Базовый `.env` и `docker-compose.yml` описывают production, а `.env.dev` и `docker-compose.dev.yml` переключают ту же инфраструктуру в development-режим.
 
 ### Критерии приемки
 
@@ -65,7 +67,9 @@ Prometheus должен использоваться для сбора и хра
 - Нагрузочное тестирование должно помогать определить, какой компонент становится bottleneck.
 - k6-сценарии должны имитировать реальную работу пользователей интернет-магазина, включая работу разных авторизованных пользователей.
 - Результаты нагрузочных тестов должны связываться с ресурсными метриками сервера и отдельных компонентов.
-- Задача остается высокоуровневым описанием и не фиксирует конкретные файлы конфигурации, команды установки или финальную реализацию.
+- Production по умолчанию использует target `prod`, PHP-FPM, Nginx, OPcache, `APP_ENV=prod` и `APP_DEBUG=0`.
+- Development использует target `dev`, Symfony CLI, Composer, Xdebug, `APP_ENV=dev` и `APP_DEBUG=1`.
+- Production и development используют разные Compose project names и могут запускаться без конфликта имен ресурсов.
 
 ### Технический подход
 
@@ -78,6 +82,8 @@ Prometheus должен использоваться для сбора и хра
 - Сформировать k6 load profiles с постепенным ростом нагрузки.
 - Сформировать k6 user scenarios, отражающие типовые действия интернет-магазина: просмотр каталога, поиск, просмотр товара, работа с корзиной, оформление заказа и действия авторизованных пользователей.
 - Сравнивать результаты нагрузочных тестов с метриками Prometheus/Grafana, чтобы находить bottleneck по сервисам и ресурсам.
+- Использовать multi-stage PHP image с targets `prod` и `dev` для разделения production runtime и development-инструментов.
+- Хранить production Compose-конфигурацию в `.env` и `docker-compose.yml`, а development overrides - в `.env.dev` и `docker-compose.dev.yml`.
 - Не менять бизнес-логику сервисов в рамках подготовки мониторинга и нагрузочного тестирования без отдельного согласования.
 
 ### Как тестировать
@@ -91,13 +97,16 @@ Prometheus должен использоваться для сбора и хра
 - Проверить, что результаты тестов позволяют определить момент роста latency и появления ошибок.
 - Проверить, что Grafana dashboards позволяют сопоставить нагрузку, ошибки и использование ресурсов.
 - Проверить, что итоговый анализ позволяет назвать вероятный bottleneck при разных уровнях нагрузки.
+- Проверить production-запуск командой `docker compose up -d` и значения `APP_ENV=prod`, `APP_DEBUG=0`.
+- Проверить development-запуск командой `docker compose --env-file .env --env-file .env.dev up -d` и значения `APP_ENV=dev`, `APP_DEBUG=1`.
+- Проверить, что Compose project names различаются и окружения не конфликтуют.
 
 ### Примечания
 
-- Эта задача фиксирует scope мониторинга и нагрузочного тестирования, а не конкретную реализацию.
-- Команды установки, Docker-конфигурация, Prometheus scrape config, Grafana dashboards и k6 scripts должны определяться на этапе реализации.
-- Мониторинг должен помогать анализировать как внешний пользовательский трафик через API Gateway, так и внутренние REST/gRPC взаимодействия сервисов.
-- Нагрузочные тесты должны использоваться не только для поиска максимального RPS, но и для понимания деградации системы и потребления ресурсов.
+- Мониторинг, Grafana dashboards, Prometheus scrape config, k6 scripts и разделение Docker-окружений реализованы в рамках задачи.
+- Production остается окружением по умолчанию; development подключается только при явном указании `.env.dev`.
+- Мониторинг помогает анализировать как внешний пользовательский трафик через API Gateway, так и внутренние REST/gRPC взаимодействия сервисов.
+- Нагрузочные тесты используются не только для поиска максимального RPS, но и для понимания деградации системы и потребления ресурсов.
 
 ## EN
 
@@ -107,9 +116,9 @@ Monitoring and load testing for the online store.
 
 ### Task Description
 
-Document and prepare the stage for introducing monitoring and load testing for the online store. This stage must define which system components should expose metrics, which indicators must be collected, how the system state should be visualized, and how load tests should simulate realistic user behavior.
+Implement monitoring and load testing for the online store: define metric sources, configure metric collection and visualization, and prepare k6 scenarios that simulate realistic user behavior.
 
-This task does not include implementation, dependency installation, configuration file changes, or infrastructure startup. Specific technical choices, installation commands, and configuration details must be defined during the implementation stage.
+As part of the task, the Docker runtime is separated into production and development environments. Production runs by default through PHP-FPM and Nginx with OPcache, while development provides Symfony CLI, Composer, and Xdebug through a separate Compose override.
 
 ### Goal
 
@@ -124,6 +133,8 @@ Monitoring must cover both the user path through API Gateway and the state of in
 Prometheus must be used to collect and store metrics. Grafana must be used to visualize system state, compare load across services, and analyze degradation under load. k6 must be used for load testing with gradual load increase and scenarios close to real online store user behavior.
 
 System and exporter metrics must cover Nginx/API Gateway, PostgreSQL, CPU, RAM, and other required environment components so that load test results can be correlated with resource usage.
+
+Production and development share the same Compose architecture but use different PHP image targets and runtime parameters. The base `.env` and `docker-compose.yml` describe production, while `.env.dev` and `docker-compose.dev.yml` switch the same infrastructure to development mode.
 
 ### Acceptance Criteria
 
@@ -140,7 +151,9 @@ System and exporter metrics must cover Nginx/API Gateway, PostgreSQL, CPU, RAM, 
 - Load testing must help determine which component becomes the bottleneck.
 - k6 scenarios must simulate realistic online store usage, including different authenticated users.
 - Load test results must be correlated with server and component resource metrics.
-- The task remains a high-level description and does not lock specific configuration files, installation commands, or final implementation details.
+- Production uses the `prod` target, PHP-FPM, Nginx, OPcache, `APP_ENV=prod`, and `APP_DEBUG=0` by default.
+- Development uses the `dev` target, Symfony CLI, Composer, Xdebug, `APP_ENV=dev`, and `APP_DEBUG=1`.
+- Production and development use different Compose project names and can run without resource-name conflicts.
 
 ### Technical Approach
 
@@ -153,6 +166,8 @@ System and exporter metrics must cover Nginx/API Gateway, PostgreSQL, CPU, RAM, 
 - Define k6 load profiles with gradual load growth.
 - Define k6 user scenarios that represent typical online store actions: catalog browsing, search, product view, cart operations, checkout, and authenticated user actions.
 - Compare load test results with Prometheus/Grafana metrics to identify bottlenecks by service and resource.
+- Use a multi-stage PHP image with `prod` and `dev` targets to separate the production runtime from development tooling.
+- Keep the production Compose configuration in `.env` and `docker-compose.yml`, and development overrides in `.env.dev` and `docker-compose.dev.yml`.
 - Do not change service business logic as part of monitoring and load testing preparation without separate approval.
 
 ### How To Test
@@ -166,10 +181,13 @@ System and exporter metrics must cover Nginx/API Gateway, PostgreSQL, CPU, RAM, 
 - Verify that test results can identify when latency grows and errors appear.
 - Verify that Grafana dashboards can correlate load, errors, and resource usage.
 - Verify that the final analysis can name the likely bottleneck at different load levels.
+- Verify the production startup with `docker compose up -d` and confirm `APP_ENV=prod` and `APP_DEBUG=0`.
+- Verify the development startup with `docker compose --env-file .env --env-file .env.dev up -d` and confirm `APP_ENV=dev` and `APP_DEBUG=1`.
+- Verify that the Compose project names differ and the environments do not conflict.
 
 ### Notes
 
-- This task defines the scope for monitoring and load testing, not the concrete implementation.
-- Installation commands, Docker configuration, Prometheus scrape config, Grafana dashboards, and k6 scripts must be defined during implementation.
-- Monitoring must help analyze both external user traffic through API Gateway and internal REST/gRPC service interactions.
-- Load tests should be used not only to find maximum RPS, but also to understand system degradation and resource usage.
+- Monitoring, Grafana dashboards, Prometheus scrape configuration, k6 scripts, and Docker environment separation are implemented as part of this task.
+- Production remains the default environment; development is enabled only when `.env.dev` is explicitly selected.
+- Monitoring helps analyze both external user traffic through API Gateway and internal REST/gRPC service interactions.
+- Load tests are used not only to find maximum RPS, but also to understand system degradation and resource usage.
