@@ -80,10 +80,10 @@ services:
     build:
       context: .
       dockerfile: docker/php-symfony-cli/Dockerfile
-      target: ${PHP_IMAGE_TARGET:-prod}
+      target: prod
       args:
         UBUNTU_VERSION: "24.04"
-    image: symfony-runtime:${PHP_IMAGE_TARGET:-prod}
+    image: symfony-runtime:prod
     container_name: symfony-cli
     working_dir: /workspace
     volumes:
@@ -98,7 +98,8 @@ services:
       GIT_AUTHOR_EMAIL: ${GIT_AUTHOR_EMAIL:-}
       GIT_COMMITTER_NAME: ${GIT_COMMITTER_NAME:-}
       GIT_COMMITTER_EMAIL: ${GIT_COMMITTER_EMAIL:-}
-      XDEBUG_MODE: ${XDEBUG_MODE:-off}
+      APP_ENV: prod
+      APP_DEBUG: "0"
     entrypoint:
       - /usr/local/bin/symfony-entrypoint
     command:
@@ -114,7 +115,7 @@ services:
       redis:
         condition: service_healthy
     command:
-      - ${PHP_WEB_COMMAND:-symfony-prod-server}
+      - symfony-prod-server
     ports:
       - "8000:8000"
     stdin_open: false
@@ -160,10 +161,12 @@ services:
       redis:
         condition: service_healthy
     environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
       APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
       DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
     command:
-      - ${PHP_WEB_COMMAND:-symfony-prod-server}
+      - symfony-prod-server
     ports:
       - "8010:8000"
     stdin_open: false
@@ -179,6 +182,8 @@ services:
       catalog-db:
         condition: service_healthy
     environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
       APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
       DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
     command:
@@ -201,6 +206,8 @@ services:
       - .env.local
       - ./catalog-service/.env.rr
     environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
       APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
       DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
     command:
@@ -225,10 +232,12 @@ services:
       redis:
         condition: service_healthy
     environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
       APP_SECRET: "${CART_APP_SECRET:-cart-dev-secret-change-me}"
       DATABASE_URL: "${CART_DATABASE_URL:-postgresql://cart:cart@cart-db:5432/cart?serverVersion=16&charset=utf8}"
     command:
-      - ${PHP_WEB_COMMAND:-symfony-prod-server}
+      - symfony-prod-server
     ports:
       - "8020:8000"
     stdin_open: false
@@ -244,6 +253,8 @@ services:
       cart-db:
         condition: service_healthy
     environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
       APP_SECRET: "${CART_APP_SECRET:-cart-dev-secret-change-me}"
       DATABASE_URL: "${CART_DATABASE_URL:-postgresql://cart:cart@cart-db:5432/cart?serverVersion=16&charset=utf8}"
     command:

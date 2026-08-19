@@ -475,6 +475,15 @@ docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
 ```
 
+Clear Symfony cache for all application containers with a 1 GB PHP memory limit:
+
+```bash
+docker compose exec symfony-cli php -d memory_limit=1G bin/console cache:clear
+docker compose exec catalog-cli php -d memory_limit=1G bin/console cache:clear
+docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear
+docker compose restart symfony-web catalog-web catalog-grpc cart-web api-gateway
+```
+
 Initialize JWT keys after dependencies are installed:
 
 ```bash
@@ -1096,6 +1105,15 @@ docker compose run --rm symfony-cli symfony <command>
 docker compose run --rm symfony-cli composer install
 docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
+```
+
+Очистите Symfony cache во всех application containers с лимитом памяти PHP 1 GB:
+
+```bash
+docker compose exec symfony-cli php -d memory_limit=1G bin/console cache:clear
+docker compose exec catalog-cli php -d memory_limit=1G bin/console cache:clear
+docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear
+docker compose restart symfony-web catalog-web catalog-grpc cart-web api-gateway
 ```
 
 После установки зависимостей инициализируйте JWT-ключи:
