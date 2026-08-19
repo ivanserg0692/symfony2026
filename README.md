@@ -447,30 +447,58 @@ The export handler uses Symfony Messenger batch handling so several news message
 
 ### Run With Docker Compose
 
-Start the runner from the repository root.
+The production stack is the default Compose environment. Development is enabled explicitly through `.env.dev` and `docker-compose.dev.yml`.
+
+| Environment | Compose project | PHP runtime | Configuration |
+|---|---|---|---|
+| Production (default) | `symfony2026` | PHP-FPM with Nginx and OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
+| Development | `symfony2026-dev` | Symfony CLI with Xdebug available; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
+
+`COMPOSE_PROJECT_NAME` gives each environment its own Compose project, generated networks, and named volumes. The stacks still use the same explicit container names and host ports, so stop the current environment before starting the other one.
+
+Prepare `.env` and start production from the repository root:
 
 ```bash
 cp .env.example .env
 docker compose up --build -d
 ```
 
-Open a shell inside the container:
+Stop production, build the development PHP image, and start development:
+
+```bash
+docker compose down
+npm run docker:dev:build
+npm run docker:dev:up
+```
+
+Stop development:
+
+```bash
+docker compose --env-file .env --env-file .env.dev down
+```
+
+Use the full development prefix for Compose operations that do not have an npm script:
+
+```bash
+docker compose --env-file .env --env-file .env.dev <command>
+```
+
+Open a shell inside the production CLI container:
 
 ```bash
 docker compose exec symfony-cli bash
 ```
 
-Run Symfony CLI commands directly:
+Symfony CLI and Composer are installed in the development image. Run them in development with:
 
 ```bash
-docker compose run --rm symfony-cli symfony --help
-docker compose run --rm symfony-cli symfony <command>
+docker compose --env-file .env --env-file .env.dev run --rm symfony-cli symfony --help
+docker compose --env-file .env --env-file .env.dev run --rm symfony-cli composer install
 ```
 
-Run common project commands:
+PHP console commands work in both images. The following commands target production by default:
 
 ```bash
-docker compose run --rm symfony-cli composer install
 docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
 ```
@@ -487,13 +515,13 @@ docker compose restart symfony-web catalog-web catalog-grpc cart-web api-gateway
 Initialize JWT keys after dependencies are installed:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
+docker compose exec -T symfony-cli bash bin/init-jwt
 ```
 
 Sync the bootstrap admin user from environment variables:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console app:user:sync-admin
+docker compose exec -T symfony-cli php bin/console app:user:sync-admin
 ```
 
 ### Doctrine Database Setup
@@ -510,27 +538,34 @@ npm run db:init
 npm run db:fixtures
 ```
 
+For development, use the corresponding `db:dev:*` scripts, for example:
+
+```bash
+npm run db:dev:init
+npm run db:dev:migrate
+```
+
 `db:init` creates missing databases and then applies migrations. `db:fixtures` loads fixtures separately and is intentionally not included in `db:init` because it can rewrite development data.
 
 Start PostgreSQL and create the database if it does not exist yet:
 
 ```bash
-docker compose -f app/docker-compose.yml up -d database
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:database:create --if-not-exists
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:status
+docker compose up -d database
+docker compose exec -T symfony-cli php bin/console doctrine:database:create --if-not-exists
+docker compose exec -T symfony-cli php bin/console doctrine:migrations:status
 ```
 
 Generate and apply migrations:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console make:migration
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:migrate --no-interaction
+docker compose exec -T symfony-cli php bin/console make:migration
+docker compose exec -T symfony-cli php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
 Quick database connection check:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console dbal:run-sql "SELECT 1"
+docker compose exec -T symfony-cli php bin/console dbal:run-sql "SELECT 1"
 ```
 
 Start the Symfony local web server:
@@ -545,10 +580,10 @@ Open the app in your browser:
 http://localhost:8000
 ```
 
-To stream production-mode logs from the Symfony local web server inside `symfony-web`, use:
+To stream production-mode web server logs, use:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -it symfony-web sh -lc "/root/.symfony5/bin/symfony server:log"
+docker compose logs -f symfony-web
 ```
 
 ### API Documentation
@@ -610,7 +645,7 @@ APP_ADMIN_PASSWORD=!ChangeMeAdmin!
 Then synchronize the admin user:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console app:user:sync-admin
+docker compose exec -T symfony-cli php bin/console app:user:sync-admin
 ```
 
 How it works:
@@ -621,7 +656,7 @@ How it works:
 Then initialize the JWT keypair:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
+docker compose exec -T symfony-cli bash bin/init-jwt
 ```
 
 Available authentication endpoints:
@@ -1079,30 +1114,58 @@ Handler экспорта использует batch-обработку Symfony M
 
 ### Запуск через Docker Compose
 
-Запускайте контейнер из корня репозитория:
+Production является Compose-окружением по умолчанию. Development подключается явно через `.env.dev` и `docker-compose.dev.yml`.
+
+| Окружение | Compose project | PHP runtime | Конфигурация |
+|---|---|---|---|
+| Production (по умолчанию) | `symfony2026` | PHP-FPM с Nginx и OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
+| Development | `symfony2026-dev` | Symfony CLI с доступным Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
+
+`COMPOSE_PROJECT_NAME` создает отдельный Compose project, сгенерированные сети и именованные volumes для каждого окружения. При этом используются одинаковые явные имена контейнеров и host ports, поэтому перед запуском другого окружения текущее нужно остановить.
+
+Подготовьте `.env` и запустите production из корня репозитория:
 
 ```bash
 cp .env.example .env
 docker compose up --build -d
 ```
 
-Откройте shell внутри контейнера:
+Остановите production, соберите development PHP image и запустите development:
+
+```bash
+docker compose down
+npm run docker:dev:build
+npm run docker:dev:up
+```
+
+Остановите development:
+
+```bash
+docker compose --env-file .env --env-file .env.dev down
+```
+
+Для Compose-операций без npm script используйте полный development-префикс:
+
+```bash
+docker compose --env-file .env --env-file .env.dev <command>
+```
+
+Откройте shell внутри production CLI container:
 
 ```bash
 docker compose exec symfony-cli bash
 ```
 
-Запускайте команды Symfony CLI напрямую:
+Symfony CLI и Composer установлены в development image. Запускайте их в development так:
 
 ```bash
-docker compose run --rm symfony-cli symfony --help
-docker compose run --rm symfony-cli symfony <command>
+docker compose --env-file .env --env-file .env.dev run --rm symfony-cli symfony --help
+docker compose --env-file .env --env-file .env.dev run --rm symfony-cli composer install
 ```
 
-Запускайте типовые команды проекта:
+PHP console commands работают в обоих images. Следующие команды по умолчанию выполняются в production:
 
 ```bash
-docker compose run --rm symfony-cli composer install
 docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
 ```
@@ -1119,7 +1182,7 @@ docker compose restart symfony-web catalog-web catalog-grpc cart-web api-gateway
 После установки зависимостей инициализируйте JWT-ключи:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
+docker compose exec -T symfony-cli bash bin/init-jwt
 ```
 
 ### Настройка Doctrine и базы данных
@@ -1136,27 +1199,34 @@ npm run db:init
 npm run db:fixtures
 ```
 
+Для development используйте соответствующие `db:dev:*` scripts, например:
+
+```bash
+npm run db:dev:init
+npm run db:dev:migrate
+```
+
 `db:init` создает отсутствующие базы и затем применяет миграции. `db:fixtures` загружает fixtures отдельно и специально не включен в `db:init`, потому что может перезаписать development-данные.
 
 Поднимите PostgreSQL и создайте базу, если она еще не существует:
 
 ```bash
-docker compose -f app/docker-compose.yml up -d database
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:database:create --if-not-exists
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:status
+docker compose up -d database
+docker compose exec -T symfony-cli php bin/console doctrine:database:create --if-not-exists
+docker compose exec -T symfony-cli php bin/console doctrine:migrations:status
 ```
 
 Сгенерируйте и примените миграции:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console make:migration
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:migrate --no-interaction
+docker compose exec -T symfony-cli php bin/console make:migration
+docker compose exec -T symfony-cli php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
 Быстрая проверка подключения к базе:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console dbal:run-sql "SELECT 1"
+docker compose exec -T symfony-cli php bin/console dbal:run-sql "SELECT 1"
 ```
 
 Запустите локальный Symfony web server:
@@ -1171,10 +1241,10 @@ docker compose up --build symfony-web
 http://localhost:8000
 ```
 
-Чтобы смотреть логи production-режима из локального Symfony web server внутри `symfony-web`, используйте:
+Чтобы смотреть логи production web server, используйте:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -it symfony-web sh -lc "/root/.symfony5/bin/symfony server:log"
+docker compose logs -f symfony-web
 ```
 
 ### API Documentation
@@ -1229,7 +1299,7 @@ FRONTEND_ORIGIN=http://localhost:3000
 Затем инициализируйте JWT keypair:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
+docker compose exec -T symfony-cli bash bin/init-jwt
 ```
 
 Доступные ручки авторизации:
