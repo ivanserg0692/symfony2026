@@ -9,6 +9,7 @@
   - [Project Features](#project-features)
   - [Application Areas](#application-areas)
   - [Online Store Domain](#online-store-domain)
+  - [Monitoring and Load Testing](#monitoring-and-load-testing)
   - [API Endpoints](#api-endpoints)
     - [API Gateway Public API](#api-gateway-public-api)
     - [Symfony API](#symfony-api)
@@ -28,6 +29,7 @@
       - [`Task 7.1`: Develop Catalog Service and Order/Cart Service backend services - completed](#task-71-develop-catalog-service-and-ordercart-service-backend-services---completed)
       - [`Task 7.2`: Complete Cart/Order endpoints that require gRPC integrations - completed](#task-72-complete-cartorder-endpoints-that-require-grpc-integrations---completed)
       - [`Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - completed](#task-73-implement-the-external-api-gateway-for-the-public-resthttp-contract---completed)
+    - [`Task 8`: Monitoring and load testing for the online store - completed](#task-8-monitoring-and-load-testing-for-the-online-store---completed)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
   - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
@@ -50,6 +52,7 @@
   - [Возможности проекта](#%D0%B2%D0%BE%D0%B7%D0%BC%D0%BE%D0%B6%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0)
   - [Области приложения](#%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F)
   - [Домен интернет-магазина](#%D0%B4%D0%BE%D0%BC%D0%B5%D0%BD-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0)
+  - [Мониторинг и нагрузочное тестирование](#%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5)
   - [API Endpoints](#api-endpoints-1)
     - [API Gateway Public API](#api-gateway-public-api-1)
     - [Symfony API](#symfony-api-1)
@@ -69,6 +72,7 @@
       - [`Task 7.1`: Разработка backend-сервисов Catalog Service и Order/Cart Service - completed](#task-71-%D1%80%D0%B0%D0%B7%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-backend-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-catalog-service-%D0%B8-ordercart-service---completed)
       - [`Task 7.2`: Доработка Cart/Order endpoints, которым нужны gRPC-интеграции - completed](#task-72-%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-cartorder-endpoints-%D0%BA%D0%BE%D1%82%D0%BE%D1%80%D1%8B%D0%BC-%D0%BD%D1%83%D0%B6%D0%BD%D1%8B-grpc-%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D0%B8---completed)
       - [`Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - completed](#task-73-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B5%D0%B3%D0%BE-api-gateway-%D0%B4%D0%BB%D1%8F-%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D0%BE%D0%B3%D0%BE-resthttp-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D0%B0---completed)
+    - [`Task 8`: Мониторинг и нагрузочное тестирование интернет-магазина - completed](#task-8-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0---completed)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
   - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
@@ -169,6 +173,28 @@ The current checkout implementation creates the order and leaves it in the `pend
 <!-- plantuml src="symfony/docs/plantuml/store-domain/workflow.puml" alt="Online store workflow" out="symfony/docs/images/plantuml/store-domain/workflow.png" -->
 ![Online store workflow](symfony/docs/images/plantuml/store-domain/workflow.png)
 <!-- /plantuml -->
+
+### Monitoring and Load Testing
+
+The production-oriented Docker environment includes Prometheus and Grafana for monitoring the API Gateway, application services, PostgreSQL databases, and host resources. Metrics are collected through Node Exporter, Nginx VTS Exporter, and PostgreSQL Exporter.
+
+The Grafana dashboard covers request rate, HTTP statuses and errors, p50/p95/p99 latency, CPU and memory usage, filesystem and disk activity, network traffic, and PostgreSQL operations. Load scenarios are executed with k6 against the public API Gateway and include catalog browsing, cart operations, checkout, and mixed traffic.
+
+The Docker runtime is separated into production and development targets. Production is the default Compose environment and uses the `prod` image target with PHP-FPM, Nginx, OPcache, `APP_ENV=prod`, and `APP_DEBUG=0`. Development is enabled through `.env.dev` and `docker-compose.dev.yml`; it uses the `dev` image target with Symfony CLI, Composer, Xdebug, `APP_ENV=dev`, and `APP_DEBUG=1`. The environments use the separate `symfony2026` and `symfony2026-dev` Compose project names, so their resources do not conflict.
+
+```bash
+# Production
+docker compose up -d
+docker compose down
+
+# Development
+docker compose --env-file .env --env-file .env.dev up -d
+docker compose --env-file .env --env-file .env.dev down
+```
+
+![Grafana monitoring dashboard](docs/images/task-8-monitoring-overview.png)
+
+The current result of approximately **80 RPS** is an intermediate local measurement, not the maximum production capacity. The test was performed on a laptop with an Intel Core i5 processor and 8 GB of RAM, with a catalog of approximately 1 million products. The API, databases, monitoring stack, and k6 load generator all ran on the same computer under WSL, so they competed for the same CPU, memory, disk, and network resources. A representative production benchmark requires separate application and load-generator hosts and production-equivalent infrastructure.
 
 ### API Endpoints
 
@@ -393,6 +419,14 @@ The notification recipients are administrators resolved by the application, not 
 - MR result (EN): [symfony/docs/mr-task-7.3-en.md](symfony/docs/mr-task-7.3-en.md)
 - MR result (RU): [symfony/docs/mr-task-7.3-ru.md](symfony/docs/mr-task-7.3-ru.md)
 
+#### `Task 8`: Monitoring and load testing for the online store - completed
+- Brief info: Implement Prometheus, Grafana, and k6 coverage for application, gateway, database, gRPC, and system metrics.
+- Backend Merge Request 8: <https://github.com/ivanserg0692/symfony2026/pull/12>
+- Frontend Merge Request 8: TBD
+- Task file: [symfony/docs/task-8.md](symfony/docs/task-8.md)
+- MR result (EN): [symfony/docs/mr-task-8-en.md](symfony/docs/mr-task-8-en.md)
+- MR result (RU): [symfony/docs/mr-task-8-ru.md](symfony/docs/mr-task-8-ru.md)
+
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
 <https://github.com/ivanserg0692/symfony2026-frontend>
@@ -437,44 +471,81 @@ The export handler uses Symfony Messenger batch handling so several news message
 
 ### Run With Docker Compose
 
-Start the runner from the repository root.
+The production stack is the default Compose environment. Development is enabled explicitly through `.env.dev` and `docker-compose.dev.yml`.
+
+| Environment | Compose project | PHP runtime | Configuration |
+|---|---|---|---|
+| Production (default) | `symfony2026` | PHP-FPM with Nginx and OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
+| Development | `symfony2026-dev` | Symfony CLI with Xdebug available; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
+
+`COMPOSE_PROJECT_NAME` gives each environment its own Compose project, generated networks, and named volumes. The stacks still use the same explicit container names and host ports, so stop the current environment before starting the other one.
+
+Prepare `.env` and start production from the repository root:
 
 ```bash
 cp .env.example .env
 docker compose up --build -d
 ```
 
-Open a shell inside the container:
+Stop production, build the development PHP image, and start development:
+
+```bash
+docker compose down
+npm run docker:dev:build
+npm run docker:dev:up
+```
+
+Stop development:
+
+```bash
+docker compose --env-file .env --env-file .env.dev down
+```
+
+Use the full development prefix for Compose operations that do not have an npm script:
+
+```bash
+docker compose --env-file .env --env-file .env.dev <command>
+```
+
+Open a shell inside the production CLI container:
 
 ```bash
 docker compose exec symfony-cli bash
 ```
 
-Run Symfony CLI commands directly:
+Symfony CLI and Composer are installed in the development image. Run them in development with:
 
 ```bash
-docker compose run --rm symfony-cli symfony --help
-docker compose run --rm symfony-cli symfony <command>
+docker compose --env-file .env --env-file .env.dev run --rm symfony-cli symfony --help
+docker compose --env-file .env --env-file .env.dev run --rm symfony-cli composer install
 ```
 
-Run common project commands:
+PHP console commands work in both images. The following commands target production by default:
 
 ```bash
-docker compose run --rm symfony-cli composer install
 docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
+```
+
+Clear Symfony cache for all application containers with a 1 GB PHP memory limit:
+
+```bash
+docker compose exec symfony-cli php -d memory_limit=1G bin/console cache:clear
+docker compose exec catalog-cli php -d memory_limit=1G bin/console cache:clear
+docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear
+docker compose restart symfony-web catalog-web catalog-grpc cart-web api-gateway
 ```
 
 Initialize JWT keys after dependencies are installed:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
+docker compose exec -T symfony-cli bash bin/init-jwt
 ```
 
 Sync the bootstrap admin user from environment variables:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console app:user:sync-admin
+docker compose exec -T symfony-cli php bin/console app:user:sync-admin
 ```
 
 ### Doctrine Database Setup
@@ -491,27 +562,34 @@ npm run db:init
 npm run db:fixtures
 ```
 
+For development, use the corresponding `db:dev:*` scripts, for example:
+
+```bash
+npm run db:dev:init
+npm run db:dev:migrate
+```
+
 `db:init` creates missing databases and then applies migrations. `db:fixtures` loads fixtures separately and is intentionally not included in `db:init` because it can rewrite development data.
 
 Start PostgreSQL and create the database if it does not exist yet:
 
 ```bash
-docker compose -f app/docker-compose.yml up -d database
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:database:create --if-not-exists
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:status
+docker compose up -d database
+docker compose exec -T symfony-cli php bin/console doctrine:database:create --if-not-exists
+docker compose exec -T symfony-cli php bin/console doctrine:migrations:status
 ```
 
 Generate and apply migrations:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console make:migration
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:migrate --no-interaction
+docker compose exec -T symfony-cli php bin/console make:migration
+docker compose exec -T symfony-cli php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
 Quick database connection check:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console dbal:run-sql "SELECT 1"
+docker compose exec -T symfony-cli php bin/console dbal:run-sql "SELECT 1"
 ```
 
 Start the Symfony local web server:
@@ -526,10 +604,10 @@ Open the app in your browser:
 http://localhost:8000
 ```
 
-To stream production-mode logs from the Symfony local web server inside `symfony-web`, use:
+To stream production-mode web server logs, use:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -it symfony-web sh -lc "/root/.symfony5/bin/symfony server:log"
+docker compose logs -f symfony-web
 ```
 
 ### API Documentation
@@ -591,7 +669,7 @@ APP_ADMIN_PASSWORD=!ChangeMeAdmin!
 Then synchronize the admin user:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console app:user:sync-admin
+docker compose exec -T symfony-cli php bin/console app:user:sync-admin
 ```
 
 How it works:
@@ -602,7 +680,7 @@ How it works:
 Then initialize the JWT keypair:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
+docker compose exec -T symfony-cli bash bin/init-jwt
 ```
 
 Available authentication endpoints:
@@ -784,6 +862,28 @@ Product snapshots не отдаются через отдельную публи
 <!-- plantuml src="symfony/docs/plantuml/store-domain/workflow.puml" alt="Workflow интернет-магазина" out="symfony/docs/images/plantuml/store-domain/workflow.png" -->
 ![Workflow интернет-магазина](symfony/docs/images/plantuml/store-domain/workflow.png)
 <!-- /plantuml -->
+
+### Мониторинг и нагрузочное тестирование
+
+Production-окружение Docker включает Prometheus и Grafana для мониторинга API Gateway, сервисов приложения, баз данных PostgreSQL и ресурсов хоста. Метрики собираются через Node Exporter, Nginx VTS Exporter и PostgreSQL Exporter.
+
+Дашборд Grafana показывает RPS, HTTP-статусы и ошибки, задержки p50/p95/p99, использование CPU и памяти, состояние файловой системы и дисков, сетевой трафик и операции PostgreSQL. Нагрузочные сценарии k6 выполняются через публичный API Gateway и охватывают просмотр каталога, работу с корзиной, оформление заказа и смешанный трафик.
+
+Docker runtime разделен на production- и development-targets. Production является Compose-окружением по умолчанию и использует image target `prod` с PHP-FPM, Nginx, OPcache, `APP_ENV=prod` и `APP_DEBUG=0`. Development подключается через `.env.dev` и `docker-compose.dev.yml`; он использует image target `dev` с Symfony CLI, Composer, Xdebug, `APP_ENV=dev` и `APP_DEBUG=1`. Окружениям заданы разные Compose project names: `symfony2026` и `symfony2026-dev`, поэтому их ресурсы не конфликтуют.
+
+```bash
+# Production
+docker compose up -d
+docker compose down
+
+# Development
+docker compose --env-file .env --env-file .env.dev up -d
+docker compose --env-file .env --env-file .env.dev down
+```
+
+![Дашборд мониторинга Grafana](docs/images/task-8-monitoring-overview.png)
+
+Текущий результат около **80 RPS** является промежуточным локальным замером, а не максимальной производительностью production-системы. Тест выполнялся на ноутбуке с процессором Intel Core i5 и 8 ГБ RAM, каталог содержал примерно 1 млн товаров. API, базы данных, стек мониторинга и генератор нагрузки k6 одновременно работали на одном компьютере в WSL и конкурировали за общие ресурсы CPU, памяти, диска и сети. Для репрезентативного production-теста необходимо разнести приложение и генератор нагрузки по разным узлам и использовать инфраструктуру, сопоставимую с production.
 
 ### API Endpoints
 
@@ -1008,6 +1108,14 @@ Product snapshots не отдаются через отдельную публи
 - Результат MR (EN): [symfony/docs/mr-task-7.3-en.md](symfony/docs/mr-task-7.3-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-7.3-ru.md](symfony/docs/mr-task-7.3-ru.md)
 
+#### `Task 8`: Мониторинг и нагрузочное тестирование интернет-магазина - completed
+- Brief info: Реализовать мониторинг application, gateway, database, gRPC и system metrics через Prometheus и Grafana, а также нагрузочные сценарии k6.
+- Backend Merge Request 8: <https://github.com/ivanserg0692/symfony2026/pull/12>
+- Frontend Merge Request 8: TBD
+- Файл задачи: [symfony/docs/task-8.md](symfony/docs/task-8.md)
+- Результат MR (EN): [symfony/docs/mr-task-8-en.md](symfony/docs/mr-task-8-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-8-ru.md](symfony/docs/mr-task-8-ru.md)
+
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:
 <https://github.com/ivanserg0692/symfony2026-frontend>
@@ -1052,38 +1160,75 @@ Handler экспорта использует batch-обработку Symfony M
 
 ### Запуск через Docker Compose
 
-Запускайте контейнер из корня репозитория:
+Production является Compose-окружением по умолчанию. Development подключается явно через `.env.dev` и `docker-compose.dev.yml`.
+
+| Окружение | Compose project | PHP runtime | Конфигурация |
+|---|---|---|---|
+| Production (по умолчанию) | `symfony2026` | PHP-FPM с Nginx и OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
+| Development | `symfony2026-dev` | Symfony CLI с доступным Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
+
+`COMPOSE_PROJECT_NAME` создает отдельный Compose project, сгенерированные сети и именованные volumes для каждого окружения. При этом используются одинаковые явные имена контейнеров и host ports, поэтому перед запуском другого окружения текущее нужно остановить.
+
+Подготовьте `.env` и запустите production из корня репозитория:
 
 ```bash
 cp .env.example .env
 docker compose up --build -d
 ```
 
-Откройте shell внутри контейнера:
+Остановите production, соберите development PHP image и запустите development:
+
+```bash
+docker compose down
+npm run docker:dev:build
+npm run docker:dev:up
+```
+
+Остановите development:
+
+```bash
+docker compose --env-file .env --env-file .env.dev down
+```
+
+Для Compose-операций без npm script используйте полный development-префикс:
+
+```bash
+docker compose --env-file .env --env-file .env.dev <command>
+```
+
+Откройте shell внутри production CLI container:
 
 ```bash
 docker compose exec symfony-cli bash
 ```
 
-Запускайте команды Symfony CLI напрямую:
+Symfony CLI и Composer установлены в development image. Запускайте их в development так:
 
 ```bash
-docker compose run --rm symfony-cli symfony --help
-docker compose run --rm symfony-cli symfony <command>
+docker compose --env-file .env --env-file .env.dev run --rm symfony-cli symfony --help
+docker compose --env-file .env --env-file .env.dev run --rm symfony-cli composer install
 ```
 
-Запускайте типовые команды проекта:
+PHP console commands работают в обоих images. Следующие команды по умолчанию выполняются в production:
 
 ```bash
-docker compose run --rm symfony-cli composer install
 docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
+```
+
+Очистите Symfony cache во всех application containers с лимитом памяти PHP 1 GB:
+
+```bash
+docker compose exec symfony-cli php -d memory_limit=1G bin/console cache:clear
+docker compose exec catalog-cli php -d memory_limit=1G bin/console cache:clear
+docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear
+docker compose restart symfony-web catalog-web catalog-grpc cart-web api-gateway
 ```
 
 После установки зависимостей инициализируйте JWT-ключи:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
+docker compose exec -T symfony-cli bash bin/init-jwt
 ```
 
 ### Настройка Doctrine и базы данных
@@ -1100,27 +1245,34 @@ npm run db:init
 npm run db:fixtures
 ```
 
+Для development используйте соответствующие `db:dev:*` scripts, например:
+
+```bash
+npm run db:dev:init
+npm run db:dev:migrate
+```
+
 `db:init` создает отсутствующие базы и затем применяет миграции. `db:fixtures` загружает fixtures отдельно и специально не включен в `db:init`, потому что может перезаписать development-данные.
 
 Поднимите PostgreSQL и создайте базу, если она еще не существует:
 
 ```bash
-docker compose -f app/docker-compose.yml up -d database
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:database:create --if-not-exists
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:status
+docker compose up -d database
+docker compose exec -T symfony-cli php bin/console doctrine:database:create --if-not-exists
+docker compose exec -T symfony-cli php bin/console doctrine:migrations:status
 ```
 
 Сгенерируйте и примените миграции:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console make:migration
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console doctrine:migrations:migrate --no-interaction
+docker compose exec -T symfony-cli php bin/console make:migration
+docker compose exec -T symfony-cli php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
 Быстрая проверка подключения к базе:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli php bin/console dbal:run-sql "SELECT 1"
+docker compose exec -T symfony-cli php bin/console dbal:run-sql "SELECT 1"
 ```
 
 Запустите локальный Symfony web server:
@@ -1135,10 +1287,10 @@ docker compose up --build symfony-web
 http://localhost:8000
 ```
 
-Чтобы смотреть логи production-режима из локального Symfony web server внутри `symfony-web`, используйте:
+Чтобы смотреть логи production web server, используйте:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -it symfony-web sh -lc "/root/.symfony5/bin/symfony server:log"
+docker compose logs -f symfony-web
 ```
 
 ### API Documentation
@@ -1193,7 +1345,7 @@ FRONTEND_ORIGIN=http://localhost:3000
 Затем инициализируйте JWT keypair:
 
 ```bash
-docker compose -f app/docker-compose.yml exec -T symfony-cli bash bin/init-jwt
+docker compose exec -T symfony-cli bash bin/init-jwt
 ```
 
 Доступные ручки авторизации:

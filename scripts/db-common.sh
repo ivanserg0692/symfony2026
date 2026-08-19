@@ -23,6 +23,8 @@ load_database_service_targets() {
 
 run_for_database_services() {
   local command="$1"
+  shift
+
   local targets
   targets="$(load_database_service_targets)"
 
@@ -49,6 +51,6 @@ run_for_database_services() {
     fi
 
     printf '\n==> %s (%s)\n' "${label}" "${service}"
-    docker compose exec -T "${service}" php bin/console ${command}
+    docker compose exec -T "${service}" php "$@" bin/console ${command}
   done
 }

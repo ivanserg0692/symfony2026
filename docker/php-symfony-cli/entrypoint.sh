@@ -3,17 +3,14 @@ set -euo pipefail
 
 export PATH="/root/.symfony5/bin:${PATH}"
 
-if ! command -v symfony >/dev/null 2>&1; then
-  echo "Symfony CLI is not available in PATH." >&2
-  exit 1
-fi
+if command -v git >/dev/null 2>&1; then
+  if [[ -n "${GIT_AUTHOR_NAME:-}" ]]; then
+    git config --global user.name "${GIT_AUTHOR_NAME}"
+  fi
 
-if [[ -n "${GIT_AUTHOR_NAME:-}" ]]; then
-  git config --global user.name "${GIT_AUTHOR_NAME}"
-fi
-
-if [[ -n "${GIT_AUTHOR_EMAIL:-}" ]]; then
-  git config --global user.email "${GIT_AUTHOR_EMAIL}"
+  if [[ -n "${GIT_AUTHOR_EMAIL:-}" ]]; then
+    git config --global user.email "${GIT_AUTHOR_EMAIL}"
+  fi
 fi
 
 if [[ -n "${GIT_COMMITTER_NAME:-}" ]]; then

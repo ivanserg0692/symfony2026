@@ -1,0 +1,36 @@
+x-php-dev-runtime: &php-dev-runtime
+  build:
+    target: dev
+  image: symfony-runtime:dev
+  environment:
+    APP_ENV: dev
+    APP_DEBUG: "1"
+    XDEBUG_MODE: ${XDEBUG_MODE:-off}
+
+services:
+  symfony-cli:
+    <<: *php-dev-runtime
+
+  symfony-web:
+    <<: *php-dev-runtime
+    command:
+      - symfony-dev-server
+
+  catalog-web:
+    <<: *php-dev-runtime
+    command:
+      - symfony-dev-server
+
+  catalog-cli:
+    <<: *php-dev-runtime
+
+  catalog-grpc:
+    <<: *php-dev-runtime
+
+  cart-web:
+    <<: *php-dev-runtime
+    command:
+      - symfony-dev-server
+
+  cart-cli:
+    <<: *php-dev-runtime

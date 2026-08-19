@@ -29,7 +29,7 @@ class UserGroupsFixtures extends Fixture
             $group->setIsAdmin($groupData['isAdmin']);
 
             $manager->persist($group);
-            $this->addReference(self::GROUP_REFERENCE_PREFIX.$index, $group);
+            $this->addReference(self::GROUP_REFERENCE_PREFIX . $index, $group);
         }
 
         $manager->flush();
