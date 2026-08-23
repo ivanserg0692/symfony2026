@@ -9,6 +9,7 @@
 - [Performance Validation](#performance-validation)
 - [Verification Plan](#verification-plan)
 - [Out Of Scope](#out-of-scope)
+- [2026-08-23 — Multi-stage Build Documentation](#2026-08-23--multi-stage-build-documentation)
 
 <!-- END doctoc -->
 
@@ -84,3 +85,10 @@ The implementation should be verified by checking that:
 - changing business logic or public API contracts;
 - treating an unconfirmed absolute RPS value as the only success criterion;
 - applying speculative optimizations unsupported by profiling or monitoring data.
+
+## 2026-08-23 — Multi-stage Build Documentation
+
+- Added dedicated bilingual documentation for the PHP multi-stage image build.
+- Documented every builder and runtime stage, extension artifacts, system package boundaries, ABI requirements, Compose targets, layer-cache behavior, and verification commands.
+- Added a localized PlantUML stage graph and linked the build documentation from the main README.
+- Build documentation: [php-multi-stage-build.md](php-multi-stage-build.md)

@@ -10,6 +10,7 @@
   - [Application Areas](#application-areas)
   - [Online Store Domain](#online-store-domain)
   - [Monitoring and Load Testing](#monitoring-and-load-testing)
+  - [PHP Image Multi-stage Build](#php-image-multi-stage-build)
   - [API Endpoints](#api-endpoints)
     - [API Gateway Public API](#api-gateway-public-api)
     - [Symfony API](#symfony-api)
@@ -54,6 +55,7 @@
   - [Области приложения](#%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F)
   - [Домен интернет-магазина](#%D0%B4%D0%BE%D0%BC%D0%B5%D0%BD-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0)
   - [Мониторинг и нагрузочное тестирование](#%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5)
+  - [Multi-stage сборка PHP image](#multi-stage-%D1%81%D0%B1%D0%BE%D1%80%D0%BA%D0%B0-php-image)
   - [API Endpoints](#api-endpoints-1)
     - [API Gateway Public API](#api-gateway-public-api-1)
     - [Symfony API](#symfony-api-1)
@@ -197,6 +199,32 @@ docker compose --env-file .env --env-file .env.dev down
 ![Grafana monitoring dashboard](docs/images/task-8-monitoring-overview.png)
 
 The current result of approximately **80 RPS** is an intermediate local measurement, not the maximum production capacity. The test was performed on a laptop with an Intel Core i5 processor and 8 GB of RAM, with a catalog of approximately 1 million products. The API, databases, monitoring stack, and k6 load generator all ran on the same computer under WSL, so they competed for the same CPU, memory, disk, and network resources. A representative production benchmark requires separate application and load-generator hosts and production-equivalent infrastructure.
+
+### PHP Image Multi-stage Build
+
+The shared PHP Dockerfile separates extension compilation from the final runtime images. Common extensions are built once, production adds OPcache, development adds Xdebug, and only the required compiled artifacts and runtime libraries are copied into the final targets.
+
+<!-- plantuml src="symfony/docs/plantuml/php-multi-stage-build/stages.puml" alt="PHP multi-stage image build" out="symfony/docs/images/plantuml/php-multi-stage-build/stages.png" -->
+![PHP multi-stage image build](symfony/docs/images/plantuml/php-multi-stage-build/stages.png)
+<!-- /plantuml -->
+
+| Target | Runtime contents | Excluded by design |
+| --- | --- | --- |
+| `prod` | PHP-FPM, Nginx, RoadRunner, common extensions, OPcache, and required shared libraries | Xdebug, Composer, Symfony CLI, compilers, headers, and `*-dev` packages |
+| `dev` | Common runtime and extensions, Xdebug, Composer, Symfony CLI, Git, and development utilities | Production-only OPcache configuration and Nginx runtime |
+
+Project references:
+
+- [Detailed PHP multi-stage build documentation](symfony/docs/php-multi-stage-build.md)
+- [PHP Dockerfile](docker/php-symfony-cli/Dockerfile)
+- [Production Compose configuration](docker-compose.yml)
+- [Development Compose override](docker-compose.dev.yml)
+- [Production OPcache configuration](docker/php-symfony-cli/opcache-prod.ini)
+- [Production PHP-FPM configuration](docker/php-symfony-cli/php-fpm-prod.conf)
+- [Production Nginx configuration](docker/php-symfony-cli/nginx-prod.conf)
+- [Development Xdebug configuration](docker/php-symfony-cli/xdebug.ini)
+- [PlantUML source](symfony/docs/plantuml/php-multi-stage-build/stages.puml)
+- [Pull Request 13](https://github.com/ivanserg0692/symfony2026/pull/13)
 
 ### API Endpoints
 
@@ -431,7 +459,7 @@ The notification recipients are administrators resolved by the application, not 
 
 #### `Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - planned
 - Brief info: Establish a reproducible performance baseline, remove confirmed bottlenecks, tune the PHP production environment, and verify the RPS improvement with repeatable load tests.
-- Backend Merge Request 9: TBD
+- Backend Merge Request 9: <https://github.com/ivanserg0692/symfony2026/pull/13>
 - Frontend Merge Request 9: TBD
 - Task file: [symfony/docs/task-9.md](symfony/docs/task-9.md)
 - MR result (EN): [symfony/docs/mr-task-9-en.md](symfony/docs/mr-task-9-en.md)
@@ -895,6 +923,32 @@ docker compose --env-file .env --env-file .env.dev down
 
 Текущий результат около **80 RPS** является промежуточным локальным замером, а не максимальной производительностью production-системы. Тест выполнялся на ноутбуке с процессором Intel Core i5 и 8 ГБ RAM, каталог содержал примерно 1 млн товаров. API, базы данных, стек мониторинга и генератор нагрузки k6 одновременно работали на одном компьютере в WSL и конкурировали за общие ресурсы CPU, памяти, диска и сети. Для репрезентативного production-теста необходимо разнести приложение и генератор нагрузки по разным узлам и использовать инфраструктуру, сопоставимую с production.
 
+### Multi-stage сборка PHP image
+
+Общий PHP Dockerfile отделяет компиляцию extensions от итоговых runtime images. Общие extensions собираются один раз, production получает OPcache, development получает Xdebug, а в финальные targets копируются только необходимые собранные artifacts и runtime libraries.
+
+<!-- plantuml src="symfony/docs/plantuml/php-multi-stage-build-ru/stages.puml" alt="Multi-stage сборка PHP image" out="symfony/docs/images/plantuml/php-multi-stage-build-ru/stages.png" -->
+![Multi-stage сборка PHP image](symfony/docs/images/plantuml/php-multi-stage-build-ru/stages.png)
+<!-- /plantuml -->
+
+| Target | Содержимое runtime | Намеренно исключено |
+| --- | --- | --- |
+| `prod` | PHP-FPM, Nginx, RoadRunner, общие extensions, OPcache и требуемые shared libraries | Xdebug, Composer, Symfony CLI, компиляторы, headers и `*-dev` packages |
+| `dev` | Общий runtime и extensions, Xdebug, Composer, Symfony CLI, Git и development utilities | Production-only конфигурация OPcache и Nginx runtime |
+
+Проектные ссылки:
+
+- [Подробная документация multi-stage сборки PHP](symfony/docs/php-multi-stage-build.md)
+- [PHP Dockerfile](docker/php-symfony-cli/Dockerfile)
+- [Production Compose configuration](docker-compose.yml)
+- [Development Compose override](docker-compose.dev.yml)
+- [Production OPcache configuration](docker/php-symfony-cli/opcache-prod.ini)
+- [Production PHP-FPM configuration](docker/php-symfony-cli/php-fpm-prod.conf)
+- [Production Nginx configuration](docker/php-symfony-cli/nginx-prod.conf)
+- [Development Xdebug configuration](docker/php-symfony-cli/xdebug.ini)
+- [PlantUML source](symfony/docs/plantuml/php-multi-stage-build-ru/stages.puml)
+- [Pull Request 13](https://github.com/ivanserg0692/symfony2026/pull/13)
+
 ### API Endpoints
 
 Таблица API Gateway ниже описывает внешнюю публичную API-поверхность для REST/HTTP клиентов. Она генерируется из Gateway OpenAPI contract.
@@ -1128,7 +1182,7 @@ docker compose --env-file .env --env-file .env.dev down
 
 #### `Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - planned
 - Brief info: Зафиксировать воспроизводимый baseline, устранить подтвержденные bottleneck, настроить production PHP-окружение и подтвердить рост RPS повторяемыми нагрузочными тестами.
-- Backend Merge Request 9: TBD
+- Backend Merge Request 9: <https://github.com/ivanserg0692/symfony2026/pull/13>
 - Frontend Merge Request 9: TBD
 - Файл задачи: [symfony/docs/task-9.md](symfony/docs/task-9.md)
 - Результат MR (EN): [symfony/docs/mr-task-9-en.md](symfony/docs/mr-task-9-en.md)

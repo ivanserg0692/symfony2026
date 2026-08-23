@@ -9,6 +9,7 @@
 - [Проверка производительности](#%D0%BF%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%BA%D0%B0-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8)
 - [План проверки](#%D0%BF%D0%BB%D0%B0%D0%BD-%D0%BF%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%BA%D0%B8)
 - [Вне Scope](#%D0%B2%D0%BD%D0%B5-scope)
+- [2026-08-23 — Документация multi-stage сборки](#2026-08-23--%D0%B4%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D0%B8%D1%8F-multi-stage-%D1%81%D0%B1%D0%BE%D1%80%D0%BA%D0%B8)
 
 <!-- END doctoc -->
 
@@ -84,3 +85,10 @@ PHP image планируется как multi-stage build с разделени�
 - изменение бизнес-логики или публичных API-контрактов;
 - использование неподтвержденного абсолютного RPS как единственного критерия успеха;
 - применение speculative optimization без подтверждения profiling- или monitoring-данными.
+
+## 2026-08-23 — Документация multi-stage сборки
+
+- Добавлена отдельная двуязычная документация multi-stage сборки PHP image.
+- Описаны все builder- и runtime-stages, artifacts расширений, границы системных пакетов, требования ABI, Compose targets, поведение layer cache и команды проверки.
+- Добавлена локализованная PlantUML-диаграмма stages, а документация сборки связана с основным README.
+- Документация сборки: [php-multi-stage-build.md](php-multi-stage-build.md)

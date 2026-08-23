@@ -1,0 +1,68 @@
+@startuml
+legend bottom right
+  |<#D9EAF7> External image |
+  |<#FFE0A3> Common builder |
+  |<#D8EFD3> Production builder / target |
+  |<#DDDDF7> Development builder |
+  |<#DDD5E8> Shared runtime |
+  |<#C7DCF4> Development target |
+  |<#455A64> FROM |<#7B1FA2> COPY |
+endlegend
+
+!theme plain
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam componentStyle rectangle
+skinparam wrapWidth 180
+skinparam maxMessageSize 180
+
+title PHP Multi-stage Image Build
+
+rectangle "External images" #F2F7FC {
+  component "php:8.4-fpm-bookworm" as PhpImage #D9EAF7
+  component "RoadRunner\n2025.1.1" as RoadRunner #D9EAF7
+  component "Composer 2" as Composer #D9EAF7
+}
+
+rectangle "Build stages" #FFF8E8 {
+  component "php-builder\nBuild dependencies\nCommon PHP extensions" as PhpBuilder #FFE0A3
+  component "php-prod-builder\nOPcache" as ProdBuilder #D8EFD3
+  component "php-dev-builder\nXdebug" as DevBuilder #DDDDF7
+}
+
+rectangle "Shared runtime" #F4F2F8 {
+  component "php-runtime-base\nRuntime libraries\nRoadRunner + entrypoint\nNo build toolchain" as RuntimeBase #DDD5E8
+}
+
+rectangle "Final targets" #F3F8F4 {
+  component "prod\nPHP-FPM + Nginx\nOPcache\nAPP_ENV=prod" as Prod #BFE3C5
+  component "dev\nComposer + Symfony CLI\nXdebug\nAPP_ENV=dev" as Dev #C7DCF4
+}
+
+PhpImage -[#455A64]-> PhpBuilder : FROM
+PhpBuilder -[#455A64]-> ProdBuilder : FROM
+PhpBuilder -[#455A64]-> DevBuilder : FROM
+
+PhpImage -[#455A64]-> RuntimeBase : FROM
+RoadRunner -[#7B1FA2]-> RuntimeBase : COPY rr
+
+RuntimeBase -[#455A64]-> Prod : FROM
+ProdBuilder -[#7B1FA2]-> Prod : COPY extensions\nand conf.d
+
+RuntimeBase -[#455A64]-> Dev : FROM
+DevBuilder -[#7B1FA2]-> Dev : COPY extensions\nand conf.d
+Composer -[#7B1FA2]-> Dev : COPY composer
+
+note bottom of PhpBuilder #FFF4CC
+Compilers, headers, *-dev packages,
+docker-php-ext-install and PECL
+remain on the build side.
+end note
+
+note bottom of RuntimeBase #EEF0F5
+Only shared runtime libraries needed
+by the compiled extensions are installed.
+end note
+
+@enduml
