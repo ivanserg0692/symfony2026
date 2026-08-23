@@ -30,6 +30,7 @@
       - [`Task 7.2`: Complete Cart/Order endpoints that require gRPC integrations - completed](#task-72-complete-cartorder-endpoints-that-require-grpc-integrations---completed)
       - [`Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - completed](#task-73-implement-the-external-api-gateway-for-the-public-resthttp-contract---completed)
     - [`Task 8`: Monitoring and load testing for the online store - completed](#task-8-monitoring-and-load-testing-for-the-online-store---completed)
+    - [`Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - planned](#task-9-application-performance-optimization-rps-improvement-and-php-environment-tuning---planned)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
   - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
@@ -73,6 +74,7 @@
       - [`Task 7.2`: Доработка Cart/Order endpoints, которым нужны gRPC-интеграции - completed](#task-72-%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-cartorder-endpoints-%D0%BA%D0%BE%D1%82%D0%BE%D1%80%D1%8B%D0%BC-%D0%BD%D1%83%D0%B6%D0%BD%D1%8B-grpc-%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D0%B8---completed)
       - [`Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - completed](#task-73-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B5%D0%B3%D0%BE-api-gateway-%D0%B4%D0%BB%D1%8F-%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D0%BE%D0%B3%D0%BE-resthttp-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D0%B0---completed)
     - [`Task 8`: Мониторинг и нагрузочное тестирование интернет-магазина - completed](#task-8-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0---completed)
+    - [`Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - planned](#task-9-%D0%BE%D0%BF%D1%82%D0%B8%D0%BC%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BF%D0%BE%D0%B2%D1%8B%D1%88%D0%B5%D0%BD%D0%B8%D0%B5-rps-%D0%B8-%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-php-%D0%BE%D0%BA%D1%80%D1%83%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F---planned)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
   - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
@@ -426,6 +428,14 @@ The notification recipients are administrators resolved by the application, not 
 - Task file: [symfony/docs/task-8.md](symfony/docs/task-8.md)
 - MR result (EN): [symfony/docs/mr-task-8-en.md](symfony/docs/mr-task-8-en.md)
 - MR result (RU): [symfony/docs/mr-task-8-ru.md](symfony/docs/mr-task-8-ru.md)
+
+#### `Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - planned
+- Brief info: Establish a reproducible performance baseline, remove confirmed bottlenecks, tune the PHP production environment, and verify the RPS improvement with repeatable load tests.
+- Backend Merge Request 9: TBD
+- Frontend Merge Request 9: TBD
+- Task file: [symfony/docs/task-9.md](symfony/docs/task-9.md)
+- MR result (EN): [symfony/docs/mr-task-9-en.md](symfony/docs/mr-task-9-en.md)
+- MR result (RU): [symfony/docs/mr-task-9-ru.md](symfony/docs/mr-task-9-ru.md)
 
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
@@ -1115,6 +1125,14 @@ docker compose --env-file .env --env-file .env.dev down
 - Файл задачи: [symfony/docs/task-8.md](symfony/docs/task-8.md)
 - Результат MR (EN): [symfony/docs/mr-task-8-en.md](symfony/docs/mr-task-8-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-8-ru.md](symfony/docs/mr-task-8-ru.md)
+
+#### `Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - planned
+- Brief info: Зафиксировать воспроизводимый baseline, устранить подтвержденные bottleneck, настроить production PHP-окружение и подтвердить рост RPS повторяемыми нагрузочными тестами.
+- Backend Merge Request 9: TBD
+- Frontend Merge Request 9: TBD
+- Файл задачи: [symfony/docs/task-9.md](symfony/docs/task-9.md)
+- Результат MR (EN): [symfony/docs/mr-task-9-en.md](symfony/docs/mr-task-9-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-9-ru.md](symfony/docs/mr-task-9-ru.md)
 
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:
