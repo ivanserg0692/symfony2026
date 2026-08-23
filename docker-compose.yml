@@ -1,3 +1,11 @@
+x-redis-base: &redis-base
+  image: redis:7-alpine
+  healthcheck:
+    test: ["CMD", "redis-cli", "ping"]
+    timeout: 5s
+    retries: 5
+    start_period: 10s
+
 services:
   # PostgreSQL database used by the Symfony application.
   database:
@@ -56,16 +64,29 @@ services:
       - cart_database_data:/var/lib/postgresql/data
 
 
-  # Redis storage for Prometheus metrics collected by Symfony services.
-  redis:
-    image: redis:7-alpine
+  # Dedicated application cache for the main Symfony service.
+  redis-symfony:
+    <<: *redis-base
+    volumes:
+      - redis_symfony_data:/data
+
+  # Dedicated application cache for the Catalog service.
+  redis-catalog:
+    <<: *redis-base
+    volumes:
+      - redis_catalog_data:/data
+
+  # Dedicated application cache for the Cart service.
+  redis-cart:
+    <<: *redis-base
+    volumes:
+      - redis_cart_data:/data
+
+  # Shared metrics storage; service metrics remain separated by Redis database.
+  redis-metrics:
+    <<: *redis-base
     ports:
       - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      timeout: 5s
-      retries: 5
-      start_period: 10s
     volumes:
       - redis_data:/data
 
@@ -95,6 +116,9 @@ services:
       GIT_COMMITTER_EMAIL: ${GIT_COMMITTER_EMAIL:-}
       APP_ENV: prod
       APP_DEBUG: "0"
+    depends_on:
+      redis-symfony:
+        condition: service_healthy
     entrypoint:
       - /usr/local/bin/symfony-entrypoint
     command:
@@ -106,7 +130,9 @@ services:
   symfony-web:
     <<: *symfony-base
     depends_on:
-      redis:
+      redis-symfony:
+        condition: service_healthy
+      redis-metrics:
         condition: service_healthy
     command:
       - symfony-prod-server
@@ -149,7 +175,9 @@ services:
     depends_on:
       catalog-db:
         condition: service_healthy
-      redis:
+      redis-catalog:
+        condition: service_healthy
+      redis-metrics:
         condition: service_healthy
     environment:
       APP_ENV: prod
@@ -171,6 +199,8 @@ services:
     depends_on:
       catalog-db:
         condition: service_healthy
+      redis-catalog:
+        condition: service_healthy
     environment:
       APP_ENV: prod
       APP_DEBUG: "0"
@@ -188,7 +218,9 @@ services:
     depends_on:
       catalog-db:
         condition: service_healthy
-      redis:
+      redis-catalog:
+        condition: service_healthy
+      redis-metrics:
         condition: service_healthy
     env_file:
       - .env
@@ -217,7 +249,9 @@ services:
     depends_on:
       cart-db:
         condition: service_healthy
-      redis:
+      redis-cart:
+        condition: service_healthy
+      redis-metrics:
         condition: service_healthy
     environment:
       APP_ENV: prod
@@ -238,6 +272,8 @@ services:
       - ./cart-service:/workspace
     depends_on:
       cart-db:
+        condition: service_healthy
+      redis-cart:
         condition: service_healthy
     environment:
       APP_ENV: prod
@@ -398,5 +434,8 @@ volumes:
   rabbitmq_data:
   minio_data:
   redis_data:
+  redis_symfony_data:
+  redis_catalog_data:
+  redis_cart_data:
   prometheus_data:
   grafana_data:
