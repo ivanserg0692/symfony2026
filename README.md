@@ -699,7 +699,7 @@ JWT authentication is configured for the API and uses key files stored in `symfo
 
 Login attempts are rate-limited: up to `5` failed requests per `15 minutes` for `POST /api/v1/auth/login`.
 
-Browser clients can receive both the access JWT and the refresh token through `HttpOnly` cookies. The frontend origin for cross-origin requests is configured through `FRONTEND_ORIGIN`.
+Browser clients can receive both the access JWT and the refresh token through `HttpOnly` cookies. Trusted origins for stateless CSRF validation are configured through `CSRF_TRUSTED_ORIGINS`; origins allowed by CORS are configured through the `CORS_ALLOW_ORIGIN` regular expression shared by all Symfony services.
 
 Authentication stack used in this project:
 - `symfony/security-bundle` provides the firewall system, access control, user provider integration, and the custom login authenticator entry point
@@ -718,10 +718,11 @@ Before generating the keypair, set `JWT_PASSPHRASE` in `app/.env.local`:
 JWT_PASSPHRASE=!ChangeMe!
 ```
 
-For cross-origin frontend requests, also set:
+For browser security, also set the trusted CSRF origins as a comma-separated list and the allowed CORS origins as a regular expression:
 
 ```env
-FRONTEND_ORIGIN=http://localhost:3000
+CSRF_TRUSTED_ORIGINS=http://localhost:3000
+CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
 ```
 
 For the first admin bootstrap, set:
@@ -1443,7 +1444,7 @@ JWT-аутентификация настроена для API и использ
 
 Для логина включено ограничение запросов: не более `5` неуспешных попыток за `15 минут` на `POST /api/v1/auth/login`.
 
-Для браузерных клиентов access JWT и refresh token могут выдаваться через `HttpOnly` cookie. Origin фронта для cross-origin запросов задается через `FRONTEND_ORIGIN`.
+Для браузерных клиентов access JWT и refresh token могут выдаваться через `HttpOnly` cookie. Доверенные origins для stateless CSRF-проверки задаются через `CSRF_TRUSTED_ORIGINS`, а разрешенные CORS origins — через регулярное выражение `CORS_ALLOW_ORIGIN`, общее для всех Symfony-сервисов.
 
 Стек, который используется для аутентификации:
 - `symfony/security-bundle` дает firewall-механику, `access_control`, интеграцию с user provider и точку входа для кастомного аутентификатора логина
@@ -1462,10 +1463,11 @@ JWT-аутентификация настроена для API и использ
 JWT_PASSPHRASE=!ChangeMe!
 ```
 
-Для фронта на другом домене также задайте:
+Для безопасности браузерных запросов также задайте доверенные CSRF origins списком через запятую и разрешенные CORS origins регулярным выражением:
 
 ```env
-FRONTEND_ORIGIN=http://localhost:3000
+CSRF_TRUSTED_ORIGINS=http://localhost:3000
+CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
 ```
 
 Затем инициализируйте JWT keypair:
