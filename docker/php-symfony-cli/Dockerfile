@@ -84,8 +84,8 @@ FROM php-runtime-base AS prod
 COPY --from=php-prod-builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
 COPY --from=php-prod-builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
 
-ENV APP_ENV=prod
-ENV APP_DEBUG=0
+ENV APP_ENV=prod \
+    APP_DEBUG=0
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
     && rm -rf /var/lib/apt/lists/*
@@ -121,5 +121,4 @@ RUN chmod +x /usr/local/bin/symfony-dev-server
 
 FROM prod AS load-test
 
-ENV APP_ENV=prod
-ENV APP_DEBUG=0
+ENV CLOUDFLARE_TURNSTILE_ENABLED=0

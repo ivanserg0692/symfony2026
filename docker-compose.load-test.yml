@@ -6,17 +6,9 @@ x-php-load-test-runtime: &php-load-test-runtime
 services:
   symfony-cli:
     <<: *php-load-test-runtime
-    environment:
-      APP_ENV: prod
-      APP_DEBUG: "0"
-      CLOUDFLARE_TURNSTILE_ENABLED: "0"
 
   symfony-web:
     <<: *php-load-test-runtime
-    environment:
-      APP_ENV: prod
-      APP_DEBUG: "0"
-      CLOUDFLARE_TURNSTILE_ENABLED: "0"
 
   catalog-web:
     <<: *php-load-test-runtime
