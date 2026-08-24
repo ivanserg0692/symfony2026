@@ -3,6 +3,8 @@
     "set:prod": "bash -c 'set -a; . ./.env; . ./.env.local; set +a; exec bash -i'",
     "set:dev": "bash -c 'set -a; . ./.env; . ./.env.local; . ./.env.dev; set +a; exec bash -i'",
     "set:load-test": "bash -c 'set -a; . ./.env; . ./.env.local; . ./.env.load_test; set +a; exec bash -i'",
+    "docker:restart:php": "docker compose restart symfony-cli symfony-web catalog-cli catalog-web catalog-grpc cart-cli cart-web",
+    "docker:recreate": "docker compose up -d --force-recreate",
     "vendors:install": "docker compose run --rm symfony-cli composer install && docker compose run --rm catalog-cli composer install && docker compose run --rm cart-cli composer install",
     "vendors:install:prod": "docker compose run --rm symfony-cli composer install --no-dev --optimize-autoloader --no-interaction && docker compose run --rm catalog-cli composer install --no-dev --optimize-autoloader --no-interaction && docker compose run --rm cart-cli composer install --no-dev --optimize-autoloader --no-interaction",
     "minio": "docker compose run --rm minio-client",

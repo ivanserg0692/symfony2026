@@ -597,6 +597,20 @@ docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear
 docker compose restart symfony-web catalog-web catalog-grpc cart-web api-gateway
 ```
 
+Restart only the PHP nodes after updating application code:
+
+```bash
+npm run docker:restart:php
+```
+
+Recreate the entire active stack after changing environment variables or Compose configuration:
+
+```bash
+npm run docker:recreate
+```
+
+Both commands use the Compose environment already activated in the current shell and do not load `.env` files themselves.
+
 Initialize JWT keys after dependencies are installed:
 
 ```bash
@@ -1347,6 +1361,20 @@ docker compose exec catalog-cli php -d memory_limit=1G bin/console cache:clear
 docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear
 docker compose restart symfony-web catalog-web catalog-grpc cart-web api-gateway
 ```
+
+После обновления application code перезапустите только PHP-ноды:
+
+```bash
+npm run docker:restart:php
+```
+
+После изменения переменных окружения или Compose-конфигурации пересоздайте весь активный стек:
+
+```bash
+npm run docker:recreate
+```
+
+Обе команды используют Compose-окружение, уже активированное в текущей shell-сессии, и сами не загружают `.env`-файлы.
 
 После установки зависимостей инициализируйте JWT-ключи:
 
