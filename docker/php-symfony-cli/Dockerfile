@@ -73,6 +73,7 @@ RUN set -eux; \
         /usr/local/bin/phpize
 
 COPY --from=roadrunner /usr/bin/rr /usr/local/bin/rr
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 COPY docker/php-symfony-cli/entrypoint.sh /usr/local/bin/symfony-entrypoint
 RUN chmod +x /usr/local/bin/symfony-entrypoint
@@ -103,8 +104,6 @@ COPY --from=php-dev-builder /usr/local/lib/php/extensions/ /usr/local/lib/php/ex
 COPY --from=php-dev-builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
 
 ENV PATH="/root/.symfony5/bin:${PATH}"
-
-COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 RUN apt-get update && apt-get install -y \
     git \
