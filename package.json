@@ -1,10 +1,10 @@
 {
   "scripts": {
-    "set:prod": "bash -c 'set -a; . ./.env; set +a; exec bash -i'",
-    "set:dev": "bash -c 'set -a; . ./.env; . ./.env.dev; set +a; exec bash -i'",
-    "set:load-test": "bash -c 'set -a; . ./.env; . ./.env.load_test; set +a; exec bash -i'",
-    "vendors:install": "docker compose --env-file .env --env-file .env.local run --rm symfony-cli composer install && docker compose --env-file .env --env-file .env.local run --rm catalog-cli composer install && docker compose --env-file .env --env-file .env.local run --rm cart-cli composer install",
-    "vendors:install:prod": "docker compose --env-file .env --env-file .env.local run --rm symfony-cli composer install --no-dev --optimize-autoloader --no-interaction && docker compose --env-file .env --env-file .env.local run --rm catalog-cli composer install --no-dev --optimize-autoloader --no-interaction && docker compose --env-file .env --env-file .env.local run --rm cart-cli composer install --no-dev --optimize-autoloader --no-interaction",
+    "set:prod": "bash -c 'set -a; . ./.env; . ./.env.local; set +a; exec bash -i'",
+    "set:dev": "bash -c 'set -a; . ./.env; . ./.env.local; . ./.env.dev; set +a; exec bash -i'",
+    "set:load-test": "bash -c 'set -a; . ./.env; . ./.env.local; . ./.env.load_test; set +a; exec bash -i'",
+    "vendors:install": "docker compose run --rm symfony-cli composer install && docker compose run --rm catalog-cli composer install && docker compose run --rm cart-cli composer install",
+    "vendors:install:prod": "docker compose run --rm symfony-cli composer install --no-dev --optimize-autoloader --no-interaction && docker compose run --rm catalog-cli composer install --no-dev --optimize-autoloader --no-interaction && docker compose run --rm cart-cli composer install --no-dev --optimize-autoloader --no-interaction",
     "minio": "docker compose run --rm minio-client",
     "minio:bucket:create": "docker compose run --rm minio-client mb --ignore-existing local/app",
     "minio:bucket:ls": "docker compose run --rm minio-client ls local/app",
