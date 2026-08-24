@@ -588,13 +588,10 @@ docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
 ```
 
-Clear Symfony cache for all application containers with a 1 GB PHP memory limit:
+Clear Symfony cache for all applications with a 1 GB PHP memory limit, then restart all PHP nodes to reset their runtime caches:
 
 ```bash
-docker compose exec symfony-cli php -d memory_limit=1G bin/console cache:clear
-docker compose exec catalog-cli php -d memory_limit=1G bin/console cache:clear
-docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear
-docker compose restart symfony-web catalog-web catalog-grpc cart-web api-gateway
+npm run docker:cache:clear:php
 ```
 
 Restart only the PHP nodes after updating application code:
@@ -609,7 +606,7 @@ Recreate the entire active stack after changing environment variables or Compose
 npm run docker:recreate
 ```
 
-Both commands use the Compose environment already activated in the current shell and do not load `.env` files themselves.
+These commands use the Compose environment already activated in the current shell and do not load `.env` files themselves.
 
 Initialize JWT keys after dependencies are installed:
 
@@ -1353,13 +1350,10 @@ docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
 ```
 
-Очистите Symfony cache во всех application containers с лимитом памяти PHP 1 GB:
+Очистите Symfony cache во всех приложениях с лимитом памяти PHP 1 GB, затем перезапустите все PHP-ноды для сброса их runtime cache:
 
 ```bash
-docker compose exec symfony-cli php -d memory_limit=1G bin/console cache:clear
-docker compose exec catalog-cli php -d memory_limit=1G bin/console cache:clear
-docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear
-docker compose restart symfony-web catalog-web catalog-grpc cart-web api-gateway
+npm run docker:cache:clear:php
 ```
 
 После обновления application code перезапустите только PHP-ноды:
@@ -1374,7 +1368,7 @@ npm run docker:restart:php
 npm run docker:recreate
 ```
 
-Обе команды используют Compose-окружение, уже активированное в текущей shell-сессии, и сами не загружают `.env`-файлы.
+Эти команды используют Compose-окружение, уже активированное в текущей shell-сессии, и сами не загружают `.env`-файлы.
 
 После установки зависимостей инициализируйте JWT-ключи:
 
