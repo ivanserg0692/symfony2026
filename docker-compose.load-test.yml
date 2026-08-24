@@ -1,0 +1,34 @@
+x-php-load-test-runtime: &php-load-test-runtime
+  build:
+    target: load-test
+  image: symfony-runtime:load-test
+
+services:
+  symfony-cli:
+    <<: *php-load-test-runtime
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
+      CLOUDFLARE_TURNSTILE_ENABLED: "0"
+
+  symfony-web:
+    <<: *php-load-test-runtime
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
+      CLOUDFLARE_TURNSTILE_ENABLED: "0"
+
+  catalog-web:
+    <<: *php-load-test-runtime
+
+  catalog-cli:
+    <<: *php-load-test-runtime
+
+  catalog-grpc:
+    <<: *php-load-test-runtime
+
+  cart-web:
+    <<: *php-load-test-runtime
+
+  cart-cli:
+    <<: *php-load-test-runtime

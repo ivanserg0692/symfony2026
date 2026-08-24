@@ -111,17 +111,33 @@ The `dev` target contains the common runtime and PHP extensions plus Xdebug, Com
 
 ### Docker Compose Targets
 
-Production is the default configuration in `docker-compose.yml` and selects `target: prod`. Development loads `.env.dev`, which adds `docker-compose.dev.yml` through `COMPOSE_FILE`; the override selects `target: dev` for the PHP services.
+Production is the default configuration in `docker-compose.yml` and selects `target: prod`. Development loads `.env.dev`, which adds `docker-compose.dev.yml` through `COMPOSE_FILE`; the override selects `target: dev` for the PHP services. Load testing loads `.env.load_test`, adds `docker-compose.load-test.yml`, and selects `target: load-test` while keeping `APP_ENV=prod` and `APP_DEBUG=0`.
 
 ```bash
-# Production configuration and build
+# Activate production, then inspect and build it
+set -a
+. ./.env
+set +a
 docker compose config
 docker compose build symfony-cli
 
-# Development configuration and build
-docker compose --env-file .env --env-file .env.dev config
-docker compose --env-file .env --env-file .env.dev build symfony-cli
+# Activate development, then inspect and build it
+set -a
+. ./.env
+. ./.env.dev
+set +a
+docker compose config
+docker compose build symfony-cli
+
+# Activate load testing, then inspect it
+set -a
+. ./.env
+. ./.env.load_test
+set +a
+docker compose config
 ```
+
+The selected variables remain exported for subsequent `docker compose` and npm commands in the same terminal. Repeat activation in every new shell. `set +a` does not unset the loaded variables.
 
 ### Layer Cache
 
@@ -143,6 +159,11 @@ When adding or updating a PHP extension:
 After rebuilding the images, verify at least:
 
 ```bash
+# Activate production
+set -a
+. ./.env
+set +a
+
 # Loaded production extensions and OPcache
 docker compose run --rm symfony-cli php -m
 docker compose run --rm symfony-cli php --ri opcache
@@ -150,9 +171,15 @@ docker compose run --rm symfony-cli php --ri opcache
 # Xdebug must be absent from production
 docker compose run --rm symfony-cli php --ri xdebug
 
+# Activate development
+set -a
+. ./.env
+. ./.env.dev
+set +a
+
 # Loaded development extensions and Xdebug
-docker compose --env-file .env --env-file .env.dev run --rm symfony-cli php -m
-docker compose --env-file .env --env-file .env.dev run --rm symfony-cli php --ri xdebug
+docker compose run --rm symfony-cli php -m
+docker compose run --rm symfony-cli php --ri xdebug
 ```
 
 Use `ldd` on the critical extension `.so` files in both targets and confirm that it reports no `not found` entries. Also inspect the production package list and command paths to confirm that compilers, headers, `*-dev` packages, Composer, Symfony CLI, and Xdebug are absent.
@@ -246,17 +273,33 @@ Target `dev` содержит общий runtime и PHP extensions, а такж�
 
 ### Docker Compose targets
 
-Production является конфигурацией по умолчанию в `docker-compose.yml` и выбирает `target: prod`. Development загружает `.env.dev`, который через `COMPOSE_FILE` подключает `docker-compose.dev.yml`; override выбирает `target: dev` для PHP services.
+Production является конфигурацией по умолчанию в `docker-compose.yml` и выбирает `target: prod`. Development загружает `.env.dev`, который через `COMPOSE_FILE` подключает `docker-compose.dev.yml`; override выбирает `target: dev` для PHP services. Load-test загружает `.env.load_test`, подключает `docker-compose.load-test.yml` и выбирает `target: load-test`, сохраняя `APP_ENV=prod` и `APP_DEBUG=0`.
 
 ```bash
-# Production configuration и build
+# Активировать production, затем проверить и собрать его
+set -a
+. ./.env
+set +a
 docker compose config
 docker compose build symfony-cli
 
-# Development configuration и build
-docker compose --env-file .env --env-file .env.dev config
-docker compose --env-file .env --env-file .env.dev build symfony-cli
+# Активировать development, затем проверить и собрать его
+set -a
+. ./.env
+. ./.env.dev
+set +a
+docker compose config
+docker compose build symfony-cli
+
+# Активировать load-test, затем проверить его
+set -a
+. ./.env
+. ./.env.load_test
+set +a
+docker compose config
 ```
+
+Выбранные переменные остаются экспортированными для следующих команд `docker compose` и npm в текущем терминале. Активацию нужно повторять в каждой новой shell-сессии. `set +a` не удаляет загруженные переменные.
 
 ### Layer cache
 
@@ -278,6 +321,11 @@ docker compose --env-file .env --env-file .env.dev build symfony-cli
 После пересборки images необходимо проверить как минимум:
 
 ```bash
+# Активировать production
+set -a
+. ./.env
+set +a
+
 # Загруженные production extensions и OPcache
 docker compose run --rm symfony-cli php -m
 docker compose run --rm symfony-cli php --ri opcache
@@ -285,9 +333,15 @@ docker compose run --rm symfony-cli php --ri opcache
 # Xdebug должен отсутствовать в production
 docker compose run --rm symfony-cli php --ri xdebug
 
+# Активировать development
+set -a
+. ./.env
+. ./.env.dev
+set +a
+
 # Загруженные development extensions и Xdebug
-docker compose --env-file .env --env-file .env.dev run --rm symfony-cli php -m
-docker compose --env-file .env --env-file .env.dev run --rm symfony-cli php --ri xdebug
+docker compose run --rm symfony-cli php -m
+docker compose run --rm symfony-cli php --ri xdebug
 ```
 
 Для критичных `.so` extensions нужно выполнить `ldd` в обоих targets и убедиться, что вывод не содержит `not found`. Также следует проверить список production packages и доступные команды, чтобы подтвердить отсутствие компиляторов, headers, `*-dev` packages, Composer, Symfony CLI и Xdebug.

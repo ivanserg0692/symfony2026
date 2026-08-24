@@ -117,3 +117,9 @@ RUN wget https://get.symfony.com/cli/installer -O - | bash
 COPY docker/php-symfony-cli/xdebug.ini /usr/local/etc/php/conf.d/99-xdebug.ini
 COPY docker/php-symfony-cli/dev-web-server.sh /usr/local/bin/symfony-dev-server
 RUN chmod +x /usr/local/bin/symfony-dev-server
+
+
+FROM prod AS load-test
+
+ENV APP_ENV=prod
+ENV APP_DEBUG=0

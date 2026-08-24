@@ -184,16 +184,23 @@ The production-oriented Docker environment includes Prometheus and Grafana for m
 
 The Grafana dashboard covers request rate, HTTP statuses and errors, p50/p95/p99 latency, CPU and memory usage, filesystem and disk activity, network traffic, and PostgreSQL operations. Load scenarios are executed with k6 against the public API Gateway and include catalog browsing, cart operations, checkout, and mixed traffic.
 
-The Docker runtime is separated into production and development targets. Production is the default Compose environment and uses the `prod` image target with PHP-FPM, Nginx, OPcache, `APP_ENV=prod`, and `APP_DEBUG=0`. Development is enabled through `.env.dev` and `docker-compose.dev.yml`; it uses the `dev` image target with Symfony CLI, Composer, Xdebug, `APP_ENV=dev`, and `APP_DEBUG=1`. The environments use the separate `symfony2026` and `symfony2026-dev` Compose project names, so their resources do not conflict.
+The Docker runtime is separated into production, development, and load-test targets. Production is the default Compose environment and uses the `prod` image target with PHP-FPM, Nginx, OPcache, `APP_ENV=prod`, and `APP_DEBUG=0`. Development is enabled through `.env.dev` and `docker-compose.dev.yml`; it uses the `dev` image target with Symfony CLI, Composer, Xdebug, `APP_ENV=dev`, and `APP_DEBUG=1`. Load testing uses `.env.load_test` and `docker-compose.load-test.yml`, keeps production PHP behavior, and runs as the separate `symfony2026-load-test` Compose project.
 
 ```bash
 # Production
+set -a
+. ./.env
+set +a
 docker compose up -d
 docker compose down
 
 # Development
-docker compose --env-file .env --env-file .env.dev up -d
-docker compose --env-file .env --env-file .env.dev down
+set -a
+. ./.env
+. ./.env.dev
+set +a
+docker compose up -d
+docker compose down
 ```
 
 ![Grafana monitoring dashboard](docs/images/task-8-monitoring-overview.png)
@@ -509,19 +516,23 @@ The export handler uses Symfony Messenger batch handling so several news message
 
 ### Run With Docker Compose
 
-The production stack is the default Compose environment. Development is enabled explicitly through `.env.dev` and `docker-compose.dev.yml`.
+The production stack is the default Compose environment. Development and load testing are enabled explicitly through their environment override files. Activate one context in the current terminal, then use ordinary `docker compose` and environment-neutral npm commands.
 
 | Environment | Compose project | PHP runtime | Configuration |
 |---|---|---|---|
 | Production (default) | `symfony2026` | PHP-FPM with Nginx and OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
 | Development | `symfony2026-dev` | Symfony CLI with Xdebug available; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
+| Load test | `symfony2026-load-test` | Production-oriented PHP runtime; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
 
-`COMPOSE_PROJECT_NAME` gives each environment its own Compose project, generated networks, and named volumes. The stacks still use the same explicit container names and host ports, so stop the current environment before starting the other one.
+`COMPOSE_PROJECT_NAME` gives each environment its own Compose project, generated networks, and named volumes. The stacks still use the same explicit container names and host ports, so stop the current environment before starting another one. Environment variables remain active until the current shell is closed or another context is sourced.
 
 Prepare `.env` and start production from the repository root:
 
 ```bash
 cp .env.example .env
+set -a
+. ./.env
+set +a
 docker compose up --build -d
 ```
 
@@ -529,21 +540,33 @@ Stop production, build the development PHP image, and start development:
 
 ```bash
 docker compose down
-npm run docker:dev:build
-npm run docker:dev:up
+set -a
+. ./.env
+. ./.env.dev
+set +a
+docker compose build symfony-cli
+docker compose up -d
 ```
 
 Stop development:
 
 ```bash
-docker compose --env-file .env --env-file .env.dev down
+docker compose down
 ```
 
-Use the full development prefix for Compose operations that do not have an npm script:
+Activate the load-test context before starting it or running shared database scripts:
 
 ```bash
-docker compose --env-file .env --env-file .env.dev <command>
+set -a
+. ./.env
+. ./.env.load_test
+set +a
+docker compose up -d
+npm run db:migrate
+npm run db:fixtures
 ```
+
+The activation commands must be repeated in every new terminal. `set +a` only disables automatic export for later assignments; it does not remove the loaded variables.
 
 Open a shell inside the production CLI container:
 
@@ -554,8 +577,8 @@ docker compose exec symfony-cli bash
 Symfony CLI and Composer are installed in the development image. Run them in development with:
 
 ```bash
-docker compose --env-file .env --env-file .env.dev run --rm symfony-cli symfony --help
-docker compose --env-file .env --env-file .env.dev run --rm symfony-cli composer install
+docker compose run --rm symfony-cli symfony --help
+docker compose run --rm symfony-cli composer install
 ```
 
 PHP console commands work in both images. The following commands target production by default:
@@ -600,11 +623,15 @@ npm run db:init
 npm run db:fixtures
 ```
 
-For development, use the corresponding `db:dev:*` scripts, for example:
+For development, activate its Compose context first and use the same database scripts:
 
 ```bash
-npm run db:dev:init
-npm run db:dev:migrate
+set -a
+. ./.env
+. ./.env.dev
+set +a
+npm run db:init
+npm run db:migrate
 ```
 
 `db:init` creates missing databases and then applies migrations. `db:fixtures` loads fixtures separately and is intentionally not included in `db:init` because it can rewrite development data.
@@ -907,16 +934,23 @@ Production-окружение Docker включает Prometheus и Grafana дл
 
 Дашборд Grafana показывает RPS, HTTP-статусы и ошибки, задержки p50/p95/p99, использование CPU и памяти, состояние файловой системы и дисков, сетевой трафик и операции PostgreSQL. Нагрузочные сценарии k6 выполняются через публичный API Gateway и охватывают просмотр каталога, работу с корзиной, оформление заказа и смешанный трафик.
 
-Docker runtime разделен на production- и development-targets. Production является Compose-окружением по умолчанию и использует image target `prod` с PHP-FPM, Nginx, OPcache, `APP_ENV=prod` и `APP_DEBUG=0`. Development подключается через `.env.dev` и `docker-compose.dev.yml`; он использует image target `dev` с Symfony CLI, Composer, Xdebug, `APP_ENV=dev` и `APP_DEBUG=1`. Окружениям заданы разные Compose project names: `symfony2026` и `symfony2026-dev`, поэтому их ресурсы не конфликтуют.
+Docker runtime разделен на production-, development- и load-test-targets. Production является Compose-окружением по умолчанию и использует image target `prod` с PHP-FPM, Nginx, OPcache, `APP_ENV=prod` и `APP_DEBUG=0`. Development подключается через `.env.dev` и `docker-compose.dev.yml`; он использует image target `dev` с Symfony CLI, Composer, Xdebug, `APP_ENV=dev` и `APP_DEBUG=1`. Нагрузочное тестирование использует `.env.load_test` и `docker-compose.load-test.yml`, сохраняет production-поведение PHP и запускается как отдельный Compose project `symfony2026-load-test`.
 
 ```bash
 # Production
+set -a
+. ./.env
+set +a
 docker compose up -d
 docker compose down
 
 # Development
-docker compose --env-file .env --env-file .env.dev up -d
-docker compose --env-file .env --env-file .env.dev down
+set -a
+. ./.env
+. ./.env.dev
+set +a
+docker compose up -d
+docker compose down
 ```
 
 ![Дашборд мониторинга Grafana](docs/images/task-8-monitoring-overview.png)
@@ -1232,19 +1266,23 @@ Handler экспорта использует batch-обработку Symfony M
 
 ### Запуск через Docker Compose
 
-Production является Compose-окружением по умолчанию. Development подключается явно через `.env.dev` и `docker-compose.dev.yml`.
+Production является Compose-окружением по умолчанию. Development и load-test подключаются явно через соответствующие environment override-файлы. Сначала активируйте один контекст в текущем терминале, а затем используйте обычные команды `docker compose` и универсальные npm-команды.
 
 | Окружение | Compose project | PHP runtime | Конфигурация |
 |---|---|---|---|
 | Production (по умолчанию) | `symfony2026` | PHP-FPM с Nginx и OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
 | Development | `symfony2026-dev` | Symfony CLI с доступным Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
+| Load test | `symfony2026-load-test` | Production-ориентированный PHP runtime; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
 
-`COMPOSE_PROJECT_NAME` создает отдельный Compose project, сгенерированные сети и именованные volumes для каждого окружения. При этом используются одинаковые явные имена контейнеров и host ports, поэтому перед запуском другого окружения текущее нужно остановить.
+`COMPOSE_PROJECT_NAME` создает отдельный Compose project, сгенерированные сети и именованные volumes для каждого окружения. При этом используются одинаковые явные имена контейнеров и host ports, поэтому перед запуском другого окружения текущее нужно остановить. Переменные окружения остаются активными до закрытия текущей shell-сессии или загрузки другого контекста.
 
 Подготовьте `.env` и запустите production из корня репозитория:
 
 ```bash
 cp .env.example .env
+set -a
+. ./.env
+set +a
 docker compose up --build -d
 ```
 
@@ -1252,21 +1290,33 @@ docker compose up --build -d
 
 ```bash
 docker compose down
-npm run docker:dev:build
-npm run docker:dev:up
+set -a
+. ./.env
+. ./.env.dev
+set +a
+docker compose build symfony-cli
+docker compose up -d
 ```
 
 Остановите development:
 
 ```bash
-docker compose --env-file .env --env-file .env.dev down
+docker compose down
 ```
 
-Для Compose-операций без npm script используйте полный development-префикс:
+Перед запуском load-test или общих скриптов базы данных активируйте load-test-контекст:
 
 ```bash
-docker compose --env-file .env --env-file .env.dev <command>
+set -a
+. ./.env
+. ./.env.load_test
+set +a
+docker compose up -d
+npm run db:migrate
+npm run db:fixtures
 ```
+
+Команды активации нужно повторять в каждом новом терминале. `set +a` только отключает автоматический экспорт следующих присваиваний и не удаляет уже загруженные переменные.
 
 Откройте shell внутри production CLI container:
 
@@ -1277,8 +1327,8 @@ docker compose exec symfony-cli bash
 Symfony CLI и Composer установлены в development image. Запускайте их в development так:
 
 ```bash
-docker compose --env-file .env --env-file .env.dev run --rm symfony-cli symfony --help
-docker compose --env-file .env --env-file .env.dev run --rm symfony-cli composer install
+docker compose run --rm symfony-cli symfony --help
+docker compose run --rm symfony-cli composer install
 ```
 
 PHP console commands работают в обоих images. Следующие команды по умолчанию выполняются в production:
@@ -1317,11 +1367,15 @@ npm run db:init
 npm run db:fixtures
 ```
 
-Для development используйте соответствующие `db:dev:*` scripts, например:
+Для development сначала активируйте его Compose-контекст, а затем используйте те же database scripts:
 
 ```bash
-npm run db:dev:init
-npm run db:dev:migrate
+set -a
+. ./.env
+. ./.env.dev
+set +a
+npm run db:init
+npm run db:migrate
 ```
 
 `db:init` создает отсутствующие базы и затем применяет миграции. `db:fixtures` загружает fixtures отдельно и специально не включен в `db:init`, потому что может перезаписать development-данные.
