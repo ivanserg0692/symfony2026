@@ -27,7 +27,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
  */
 class LoadTestUsersFixture extends Fixture implements DependentFixtureInterface
 {
-    private const USER_COUNT = 100;
+    private const USER_COUNT = 1000;
     private const EMAIL_TEMPLATE = 'load-user-%03d@test.local';
     private const MAX_GROUPS_PER_USER = 3;
 
