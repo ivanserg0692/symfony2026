@@ -1284,7 +1284,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     monolog?: MonologConfig,
  *     stof_doctrine_extensions?: StofDoctrineExtensionsConfig,
  *     nelmio_cors?: NelmioCorsConfig,
- *     twig?: TwigConfig,
  *     artprima_prometheus_metrics?: ArtprimaPrometheusMetricsConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
@@ -1314,7 +1313,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         monolog?: MonologConfig,
  *         stof_doctrine_extensions?: StofDoctrineExtensionsConfig,
  *         nelmio_cors?: NelmioCorsConfig,
- *         twig?: TwigConfig,
  *         artprima_prometheus_metrics?: ArtprimaPrometheusMetricsConfig,
  *     },
  *     "when@test"?: array{
