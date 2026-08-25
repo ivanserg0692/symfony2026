@@ -19,6 +19,10 @@ class CatalogElementsController extends AbstractController
     private const DEFAULT_LIMIT = 20;
     private const MAX_LIMIT = 100;
 
+    public function __construct(private readonly bool $useHasNextPagePagination)
+    {
+    }
+
     #[Route("", name: "api_catalog_elements_list", methods: ["GET"])]
     #[OA\Get(
         summary: "List catalog elements",
@@ -38,12 +42,26 @@ class CatalogElementsController extends AbstractController
                         new OA\Property(property: "items", type: "array", items: new OA\Items(ref: new Model(type: CatalogElements::class, groups: ["catalog_element:list"]))),
                         new OA\Property(
                             property: "pagination",
-                            properties: [
-                                new OA\Property(property: "page", type: "integer"),
-                                new OA\Property(property: "limit", type: "integer"),
-                                new OA\Property(property: "total", type: "integer"),
+                            oneOf: [
+                                new OA\Schema(
+                                    required: ["page", "limit", "total"],
+                                    properties: [
+                                        new OA\Property(property: "page", type: "integer"),
+                                        new OA\Property(property: "limit", type: "integer"),
+                                        new OA\Property(property: "total", type: "integer"),
+                                    ],
+                                    type: "object"
+                                ),
+                                new OA\Schema(
+                                    required: ["page", "limit", "hasNextPage"],
+                                    properties: [
+                                        new OA\Property(property: "page", type: "integer"),
+                                        new OA\Property(property: "limit", type: "integer"),
+                                        new OA\Property(property: "hasNextPage", type: "boolean"),
+                                    ],
+                                    type: "object"
+                                ),
                             ],
-                            type: "object"
                         ),
                     ],
                     type: "object"
@@ -58,18 +76,37 @@ class CatalogElementsController extends AbstractController
         $sectionId = $request->query->has("sectionId") ? max(1, $request->query->getInt("sectionId")) : null;
         $active = $this->getNullableBooleanQuery($request, "active");
 
-        $ids = $catalogElementsRepository->findPageIds($sectionId, $active, $page, $limit);
+        $ids = $catalogElementsRepository->findPageIds(
+            $sectionId,
+            $active,
+            $page,
+            $limit,
+            $this->useHasNextPagePagination,
+        );
+
+        $hasNextPage = $this->useHasNextPagePagination && \count($ids) > $limit;
+
+        if ($hasNextPage) {
+            $ids = \array_slice($ids, 0, $limit);
+        }
+
         $items = $catalogElementsRepository->findListByIds($ids);
-        $total = $catalogElementsRepository->countMatchingListFilters($sectionId, $active);
+
+        $pagination = [
+            "page" => $page,
+            "limit" => $limit,
+        ];
+
+        if ($this->useHasNextPagePagination) {
+            $pagination["hasNextPage"] = $hasNextPage;
+        } else {
+            $pagination["total"] = $catalogElementsRepository->countMatchingListFilters($sectionId, $active);
+        }
 
         return $this->json(
             [
                 "items" => $items,
-                "pagination" => [
-                    "page" => $page,
-                    "limit" => $limit,
-                    "total" => $total,
-                ],
+                "pagination" => $pagination,
             ],
             context: ["groups" => ["catalog_element:list"]]
         );

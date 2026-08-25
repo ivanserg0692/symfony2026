@@ -179,6 +179,7 @@ services:
         condition: service_healthy
     environment:
       APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
+      CATALOG_PAGINATION_USE_HAS_NEXT_PAGE: "${CATALOG_PAGINATION_USE_HAS_NEXT_PAGE:-false}"
       DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
     command:
       - symfony-prod-server
@@ -199,6 +200,7 @@ services:
         condition: service_healthy
     environment:
       APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
+      CATALOG_PAGINATION_USE_HAS_NEXT_PAGE: "${CATALOG_PAGINATION_USE_HAS_NEXT_PAGE:-false}"
       DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
     command:
       - bash
@@ -222,6 +224,7 @@ services:
       - ./catalog-service/.env.rr
     environment:
       APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
+      CATALOG_PAGINATION_USE_HAS_NEXT_PAGE: "${CATALOG_PAGINATION_USE_HAS_NEXT_PAGE:-false}"
       DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
     command:
       - rr
