@@ -9,8 +9,10 @@
         "ext-iconv": "*",
         "artprima/prometheus-metrics-bundle": "^1.22",
         "doctrine/doctrine-bundle": "^3.2",
+        "doctrine/doctrine-fixtures-bundle": "^4.3",
         "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.6",
+        "fakerphp/faker": "^1.24",
         "google/protobuf": "^5.35",
         "nelmio/api-doc-bundle": "^5.10",
         "nelmio/cors-bundle": "^2.6",
@@ -82,8 +84,6 @@
         }
     },
     "require-dev": {
-        "doctrine/doctrine-fixtures-bundle": "^4.3",
-        "fakerphp/faker": "^1.24",
         "symfony/debug-bundle": "8.1.*",
         "symfony/maker-bundle": "^1.67",
         "symfony/phpunit-bridge": "^8.1",

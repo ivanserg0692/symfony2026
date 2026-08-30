@@ -9,6 +9,10 @@
     {
       "url": "http://localhost:8001",
       "description": "Local API Gateway"
+    },
+    {
+      "url": "http://desktop-s6v2euu:8001",
+      "description": "Desktop API Gateway"
     }
   ]
 }

@@ -10,6 +10,8 @@
   - [Application Areas](#application-areas)
   - [Online Store Domain](#online-store-domain)
   - [Monitoring and Load Testing](#monitoring-and-load-testing)
+    - [Task 9 Performance Result](#task-9-performance-result)
+  - [PHP Image Multi-stage Build](#php-image-multi-stage-build)
   - [API Endpoints](#api-endpoints)
     - [API Gateway Public API](#api-gateway-public-api)
     - [Symfony API](#symfony-api)
@@ -30,6 +32,7 @@
       - [`Task 7.2`: Complete Cart/Order endpoints that require gRPC integrations - completed](#task-72-complete-cartorder-endpoints-that-require-grpc-integrations---completed)
       - [`Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - completed](#task-73-implement-the-external-api-gateway-for-the-public-resthttp-contract---completed)
     - [`Task 8`: Monitoring and load testing for the online store - completed](#task-8-monitoring-and-load-testing-for-the-online-store---completed)
+    - [`Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - completed](#task-9-application-performance-optimization-rps-improvement-and-php-environment-tuning---completed)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
   - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
@@ -53,6 +56,8 @@
   - [Области приложения](#%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F)
   - [Домен интернет-магазина](#%D0%B4%D0%BE%D0%BC%D0%B5%D0%BD-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0)
   - [Мониторинг и нагрузочное тестирование](#%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5)
+    - [Результат производительности Task 9](#%D1%80%D0%B5%D0%B7%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%82-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-task-9)
+  - [Multi-stage сборка PHP image](#multi-stage-%D1%81%D0%B1%D0%BE%D1%80%D0%BA%D0%B0-php-image)
   - [API Endpoints](#api-endpoints-1)
     - [API Gateway Public API](#api-gateway-public-api-1)
     - [Symfony API](#symfony-api-1)
@@ -73,6 +78,7 @@
       - [`Task 7.2`: Доработка Cart/Order endpoints, которым нужны gRPC-интеграции - completed](#task-72-%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-cartorder-endpoints-%D0%BA%D0%BE%D1%82%D0%BE%D1%80%D1%8B%D0%BC-%D0%BD%D1%83%D0%B6%D0%BD%D1%8B-grpc-%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D0%B8---completed)
       - [`Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - completed](#task-73-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B5%D0%B3%D0%BE-api-gateway-%D0%B4%D0%BB%D1%8F-%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D0%BE%D0%B3%D0%BE-resthttp-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D0%B0---completed)
     - [`Task 8`: Мониторинг и нагрузочное тестирование интернет-магазина - completed](#task-8-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0---completed)
+    - [`Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - completed](#task-9-%D0%BE%D0%BF%D1%82%D0%B8%D0%BC%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BF%D0%BE%D0%B2%D1%8B%D1%88%D0%B5%D0%BD%D0%B8%D0%B5-rps-%D0%B8-%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-php-%D0%BE%D0%BA%D1%80%D1%83%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F---completed)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
   - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
@@ -180,21 +186,72 @@ The production-oriented Docker environment includes Prometheus and Grafana for m
 
 The Grafana dashboard covers request rate, HTTP statuses and errors, p50/p95/p99 latency, CPU and memory usage, filesystem and disk activity, network traffic, and PostgreSQL operations. Load scenarios are executed with k6 against the public API Gateway and include catalog browsing, cart operations, checkout, and mixed traffic.
 
-The Docker runtime is separated into production and development targets. Production is the default Compose environment and uses the `prod` image target with PHP-FPM, Nginx, OPcache, `APP_ENV=prod`, and `APP_DEBUG=0`. Development is enabled through `.env.dev` and `docker-compose.dev.yml`; it uses the `dev` image target with Symfony CLI, Composer, Xdebug, `APP_ENV=dev`, and `APP_DEBUG=1`. The environments use the separate `symfony2026` and `symfony2026-dev` Compose project names, so their resources do not conflict.
+The project provides three standard runtime profiles. Production is the default Compose environment and uses the `prod` image target with PHP-FPM, Nginx, OPcache, `APP_ENV=prod`, and `APP_DEBUG=0`. Load testing is a dedicated performance-test profile: it uses `.env.load_test` and `docker-compose.load-test.yml`, keeps production-like PHP behavior without development diagnostics, and runs as the isolated `symfony2026-load-test` Compose project. Development is enabled through `.env.dev` and `docker-compose.dev.yml`; it uses the `dev` image target with Symfony CLI, Composer, Xdebug, the Symfony profiler, detailed application logs, `APP_ENV=dev`, and `APP_DEBUG=1`.
 
 ```bash
 # Production
+set -a
+. ./.env
+set +a
 docker compose up -d
 docker compose down
 
 # Development
-docker compose --env-file .env --env-file .env.dev up -d
-docker compose --env-file .env --env-file .env.dev down
+set -a
+. ./.env
+. ./.env.dev
+set +a
+docker compose up -d
+docker compose down
 ```
 
 ![Grafana monitoring dashboard](docs/images/task-8-monitoring-overview.png)
 
-The current result of approximately **80 RPS** is an intermediate local measurement, not the maximum production capacity. The test was performed on a laptop with an Intel Core i5 processor and 8 GB of RAM, with a catalog of approximately 1 million products. The API, databases, monitoring stack, and k6 load generator all ran on the same computer under WSL, so they competed for the same CPU, memory, disk, and network resources. A representative production benchmark requires separate application and load-generator hosts and production-equivalent infrastructure.
+#### Task 9 Performance Result
+
+The Task 8 measurement of approximately **80 RPS** is retained as the initial reference point. It was obtained on an Intel Core i5 laptop with 8 GB RAM, while the API, databases, monitoring stack, and k6 shared one WSL host. Detailed baseline percentiles were not recorded, so this value is not a controlled before/after benchmark.
+
+The final Task 9 mixed-load run was executed in the dedicated `load_test` profile on an Intel Core i9 machine with 64 GB RAM and a catalog of approximately 1 million products. The run used 300 virtual users (225 browsing, 60 shopping, and 15 checkout) for approximately five minutes. k6 completed 29,001 iterations and 159,646 HTTP requests at an average of **525.54 requests/s** with **0.00% HTTP failures**. Average request latency was **202.80 ms**, median latency was **169.55 ms**, p90 was **273.56 ms**, and p95 was **307.64 ms**. Grafana recorded approximately **643–678 gateway RPS** near the upper part of the run.
+
+The latency dashboard must be interpreted per endpoint: catalog requests were approximately **200 ms**, while the value near **2 seconds** belongs to authorization traffic and is not catalog latency.
+
+![Task 9 k6 mixed-load result](docs/images/k6-results.png)
+
+![Task 9 Grafana request rate and CPU](docs/images/rps-results.png)
+
+![Task 9 Grafana errors and latency](docs/images/grafana-latency.png)
+
+The work introduced a shared multi-stage PHP build with separate production, development, and load-test targets; production OPcache and development Xdebug configuration; dedicated application Redis instances separated from Redis metrics storage; a production-like load-test environment; profiler and SQL-correlation tooling; and an optional catalog look-ahead pagination mode that fetches `limit + 1` rows and returns `hasNextPage` without running an exact total count. Supporting environment, restart, cache-reset, fixture, CORS/CSRF, Swagger, and diagnostics scripts were also aligned for repeatable testing.
+
+The experiments showed that runtime and cache isolation remove avoidable application overhead, while skipping the exact catalog count materially reduces the common catalog-list path. The main remaining catalog bottleneck is PostgreSQL work for heavy `COUNT`, filtering, and aggregation queries. Further optimization belongs to a separate task that will introduce a specialized catalog read model/search engine based on Elasticsearch. Elasticsearch is intentionally not implemented as part of Task 9.
+
+These figures demonstrate the achieved capacity on the final machine, but they are not a strict speedup ratio against the Task 8 result because the hardware and measurement detail differ. The application and load generator still shared one host, authorization remained the slowest observed endpoint group, CPU approached saturation during the high-load interval, and exact totals or complex filtered/aggregated catalog queries can still be expensive in PostgreSQL.
+
+### PHP Image Multi-stage Build
+
+The shared PHP Dockerfile separates extension compilation from the final runtime images. Common extensions are built once, production adds OPcache, development adds Xdebug, and only the required compiled artifacts and runtime libraries are copied into the final targets.
+
+<!-- plantuml src="symfony/docs/plantuml/php-multi-stage-build/stages.puml" alt="PHP multi-stage image build" out="symfony/docs/images/plantuml/php-multi-stage-build/stages.png" -->
+![PHP multi-stage image build](symfony/docs/images/plantuml/php-multi-stage-build/stages.png)
+<!-- /plantuml -->
+
+| Target | Runtime contents | Excluded by design |
+| --- | --- | --- |
+| `prod` | PHP-FPM, Nginx, RoadRunner, Composer, common extensions, OPcache, and required shared libraries | Xdebug, Symfony CLI, compilers, headers, and `*-dev` packages |
+| `dev` | Common runtime and extensions, Xdebug, Composer, Symfony CLI, Git, and development utilities | Production-only OPcache configuration and Nginx runtime |
+
+Project references:
+
+- [Detailed PHP multi-stage build documentation](symfony/docs/php-multi-stage-build.md)
+- [PHP Dockerfile](docker/php-symfony-cli/Dockerfile)
+- [Production Compose configuration](docker-compose.yml)
+- [Development Compose override](docker-compose.dev.yml)
+- [Production OPcache configuration](docker/php-symfony-cli/opcache-prod.ini)
+- [Production PHP-FPM configuration](docker/php-symfony-cli/php-fpm-prod.conf)
+- [Production Nginx configuration](docker/php-symfony-cli/nginx-prod.conf)
+- [Development Xdebug configuration](docker/php-symfony-cli/xdebug.ini)
+- [PlantUML source](symfony/docs/plantuml/php-multi-stage-build/stages.puml)
+- [Pull Request 13](https://github.com/ivanserg0692/symfony2026/pull/13)
 
 ### API Endpoints
 
@@ -427,6 +484,14 @@ The notification recipients are administrators resolved by the application, not 
 - MR result (EN): [symfony/docs/mr-task-8-en.md](symfony/docs/mr-task-8-en.md)
 - MR result (RU): [symfony/docs/mr-task-8-ru.md](symfony/docs/mr-task-8-ru.md)
 
+#### `Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - completed
+- Brief info: Reached 525.54 average requests/s with 0.00% HTTP failures in the final mixed-load run; identified heavy PostgreSQL `COUNT`, filtering, and aggregations as the main remaining catalog bottleneck and deferred the Elasticsearch read model to a separate task.
+- Backend Merge Request 9: <https://github.com/ivanserg0692/symfony2026/pull/13>
+- Frontend Merge Request 9: TBD
+- Task file: [symfony/docs/task-9.md](symfony/docs/task-9.md)
+- MR result (EN): [symfony/docs/mr-task-9-en.md](symfony/docs/mr-task-9-en.md)
+- MR result (RU): [symfony/docs/mr-task-9-ru.md](symfony/docs/mr-task-9-ru.md)
+
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
 <https://github.com/ivanserg0692/symfony2026-frontend>
@@ -471,19 +536,33 @@ The export handler uses Symfony Messenger batch handling so several news message
 
 ### Run With Docker Compose
 
-The production stack is the default Compose environment. Development is enabled explicitly through `.env.dev` and `docker-compose.dev.yml`.
+The production stack is the default Compose environment. Development and load testing are enabled explicitly through their environment override files. Activate one context in the current terminal, then use ordinary `docker compose` and environment-neutral npm commands.
 
 | Environment | Compose project | PHP runtime | Configuration |
 |---|---|---|---|
-| Production (default) | `symfony2026` | PHP-FPM with Nginx and OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
-| Development | `symfony2026-dev` | Symfony CLI with Xdebug available; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
+| Production (default) | `symfony2026` | Regular production traffic; PHP-FPM with Nginx and OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
+| Performance test | `symfony2026-load-test` | Isolated measurements with production-like PHP behavior and no development diagnostics; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
+| Development | `symfony2026-dev` | Symfony CLI, detailed application logs, Symfony profiler, and Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
 
-`COMPOSE_PROJECT_NAME` gives each environment its own Compose project, generated networks, and named volumes. The stacks still use the same explicit container names and host ports, so stop the current environment before starting the other one.
+`COMPOSE_PROJECT_NAME` gives each environment its own Compose project, generated networks, and named volumes. The stacks still use the same explicit container names and host ports, so stop the current environment before starting another one. Environment variables remain active until the current shell is closed or another context is sourced.
+
+The repository provides npm helpers that automatically load the required environment files and open a configured interactive shell:
+
+```bash
+npm run set:prod
+npm run set:dev
+npm run set:load-test
+```
+
+Each helper loads `.env` and `.env.local`, then applies the selected override for development or performance testing. Commands such as `docker compose`, `npm run db:migrate`, and `npm run db:fixtures` executed inside that shell use the selected Compose project and configuration. The helpers select the environment only; they do not build or start containers. Run `exit` to leave the configured shell and return to the previous terminal context.
 
 Prepare `.env` and start production from the repository root:
 
 ```bash
 cp .env.example .env
+set -a
+. ./.env
+set +a
 docker compose up --build -d
 ```
 
@@ -491,21 +570,33 @@ Stop production, build the development PHP image, and start development:
 
 ```bash
 docker compose down
-npm run docker:dev:build
-npm run docker:dev:up
+set -a
+. ./.env
+. ./.env.dev
+set +a
+docker compose build symfony-cli
+docker compose up -d
 ```
 
 Stop development:
 
 ```bash
-docker compose --env-file .env --env-file .env.dev down
+docker compose down
 ```
 
-Use the full development prefix for Compose operations that do not have an npm script:
+Activate the load-test context before starting it or running shared database scripts:
 
 ```bash
-docker compose --env-file .env --env-file .env.dev <command>
+set -a
+. ./.env
+. ./.env.load_test
+set +a
+docker compose up -d
+npm run db:migrate
+npm run db:fixtures
 ```
+
+The activation commands must be repeated in every new terminal. `set +a` only disables automatic export for later assignments; it does not remove the loaded variables.
 
 Open a shell inside the production CLI container:
 
@@ -516,8 +607,8 @@ docker compose exec symfony-cli bash
 Symfony CLI and Composer are installed in the development image. Run them in development with:
 
 ```bash
-docker compose --env-file .env --env-file .env.dev run --rm symfony-cli symfony --help
-docker compose --env-file .env --env-file .env.dev run --rm symfony-cli composer install
+docker compose run --rm symfony-cli symfony --help
+docker compose run --rm symfony-cli composer install
 ```
 
 PHP console commands work in both images. The following commands target production by default:
@@ -527,14 +618,25 @@ docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
 ```
 
-Clear Symfony cache for all application containers with a 1 GB PHP memory limit:
+Clear Symfony cache for all applications with a 1 GB PHP memory limit, then restart all PHP nodes to reset their runtime caches:
 
 ```bash
-docker compose exec symfony-cli php -d memory_limit=1G bin/console cache:clear
-docker compose exec catalog-cli php -d memory_limit=1G bin/console cache:clear
-docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear
-docker compose restart symfony-web catalog-web catalog-grpc cart-web api-gateway
+npm run docker:cache:clear:php
 ```
+
+Restart only the PHP nodes after updating application code:
+
+```bash
+npm run docker:restart:php
+```
+
+Recreate the entire active stack after changing environment variables or Compose configuration:
+
+```bash
+npm run docker:recreate
+```
+
+These commands use the Compose environment already activated in the current shell and do not load `.env` files themselves.
 
 Initialize JWT keys after dependencies are installed:
 
@@ -562,11 +664,15 @@ npm run db:init
 npm run db:fixtures
 ```
 
-For development, use the corresponding `db:dev:*` scripts, for example:
+For development, activate its Compose context first and use the same database scripts:
 
 ```bash
-npm run db:dev:init
-npm run db:dev:migrate
+set -a
+. ./.env
+. ./.env.dev
+set +a
+npm run db:init
+npm run db:migrate
 ```
 
 `db:init` creates missing databases and then applies migrations. `db:fixtures` loads fixtures separately and is intentionally not included in `db:init` because it can rewrite development data.
@@ -634,7 +740,7 @@ JWT authentication is configured for the API and uses key files stored in `symfo
 
 Login attempts are rate-limited: up to `5` failed requests per `15 minutes` for `POST /api/v1/auth/login`.
 
-Browser clients can receive both the access JWT and the refresh token through `HttpOnly` cookies. The frontend origin for cross-origin requests is configured through `FRONTEND_ORIGIN`.
+Browser clients can receive both the access JWT and the refresh token through `HttpOnly` cookies. Trusted origins for stateless CSRF validation are configured through `CSRF_TRUSTED_ORIGINS`; origins allowed by CORS are configured through the `CORS_ALLOW_ORIGIN` regular expression shared by all Symfony services.
 
 Authentication stack used in this project:
 - `symfony/security-bundle` provides the firewall system, access control, user provider integration, and the custom login authenticator entry point
@@ -653,10 +759,11 @@ Before generating the keypair, set `JWT_PASSPHRASE` in `app/.env.local`:
 JWT_PASSPHRASE=!ChangeMe!
 ```
 
-For cross-origin frontend requests, also set:
+For browser security, also set the trusted CSRF origins as a comma-separated list and the allowed CORS origins as a regular expression:
 
 ```env
-FRONTEND_ORIGIN=http://localhost:3000
+CSRF_TRUSTED_ORIGINS=http://localhost:3000
+CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
 ```
 
 For the first admin bootstrap, set:
@@ -869,21 +976,72 @@ Production-окружение Docker включает Prometheus и Grafana дл
 
 Дашборд Grafana показывает RPS, HTTP-статусы и ошибки, задержки p50/p95/p99, использование CPU и памяти, состояние файловой системы и дисков, сетевой трафик и операции PostgreSQL. Нагрузочные сценарии k6 выполняются через публичный API Gateway и охватывают просмотр каталога, работу с корзиной, оформление заказа и смешанный трафик.
 
-Docker runtime разделен на production- и development-targets. Production является Compose-окружением по умолчанию и использует image target `prod` с PHP-FPM, Nginx, OPcache, `APP_ENV=prod` и `APP_DEBUG=0`. Development подключается через `.env.dev` и `docker-compose.dev.yml`; он использует image target `dev` с Symfony CLI, Composer, Xdebug, `APP_ENV=dev` и `APP_DEBUG=1`. Окружениям заданы разные Compose project names: `symfony2026` и `symfony2026-dev`, поэтому их ресурсы не конфликтуют.
+Проект предоставляет три стандартных runtime-профиля. Production является Compose-окружением по умолчанию и использует image target `prod` с PHP-FPM, Nginx, OPcache, `APP_ENV=prod` и `APP_DEBUG=0`. Для нагрузочного тестирования предусмотрен отдельный performance-test профиль: он использует `.env.load_test` и `docker-compose.load-test.yml`, сохраняет production-like поведение PHP без development-диагностики и запускается как изолированный Compose project `symfony2026-load-test`. Development подключается через `.env.dev` и `docker-compose.dev.yml`; он использует image target `dev` с Symfony CLI, Composer, Xdebug, Symfony profiler, подробными логами приложения, `APP_ENV=dev` и `APP_DEBUG=1`.
 
 ```bash
 # Production
+set -a
+. ./.env
+set +a
 docker compose up -d
 docker compose down
 
 # Development
-docker compose --env-file .env --env-file .env.dev up -d
-docker compose --env-file .env --env-file .env.dev down
+set -a
+. ./.env
+. ./.env.dev
+set +a
+docker compose up -d
+docker compose down
 ```
 
 ![Дашборд мониторинга Grafana](docs/images/task-8-monitoring-overview.png)
 
-Текущий результат около **80 RPS** является промежуточным локальным замером, а не максимальной производительностью production-системы. Тест выполнялся на ноутбуке с процессором Intel Core i5 и 8 ГБ RAM, каталог содержал примерно 1 млн товаров. API, базы данных, стек мониторинга и генератор нагрузки k6 одновременно работали на одном компьютере в WSL и конкурировали за общие ресурсы CPU, памяти, диска и сети. Для репрезентативного production-теста необходимо разнести приложение и генератор нагрузки по разным узлам и использовать инфраструктуру, сопоставимую с production.
+#### Результат производительности Task 9
+
+Замер Task 8 около **80 RPS** сохранён как исходный ориентир. Он был получен на ноутбуке Intel Core i5 с 8 ГБ RAM, где API, базы данных, мониторинг и k6 одновременно работали на одном WSL-хосте. Подробные baseline-перцентили не были зафиксированы, поэтому это значение нельзя считать контролируемым before/after benchmark.
+
+Итоговый mixed-load запуск Task 9 выполнялся в отдельном профиле `load_test` на Intel Core i9 с 64 ГБ RAM и каталогом примерно в 1 млн товаров. В течение примерно пяти минут использовалось 300 виртуальных пользователей (225 browsing, 60 shopping и 15 checkout). k6 завершил 29 001 итерацию и выполнил 159 646 HTTP-запросов со средней скоростью **525,54 запроса/с** и **0,00% HTTP-ошибок**. Средняя latency составила **202,80 мс**, медиана — **169,55 мс**, p90 — **273,56 мс**, p95 — **307,64 мс**. В верхней части прогона Grafana зафиксировала примерно **643–678 gateway RPS**.
+
+График latency нужно интерпретировать по endpoint: запросы каталога выполнялись примерно за **200 мс**, а значение около **2 секунд** относится к авторизации и не является latency каталога.
+
+![Результат mixed-load теста k6 для Task 9](docs/images/k6-results.png)
+
+![RPS и CPU в Grafana для Task 9](docs/images/rps-results.png)
+
+![Ошибки и latency в Grafana для Task 9](docs/images/grafana-latency.png)
+
+В рамках задачи добавлены общий multi-stage PHP build с отдельными production-, development- и load-test-targets; OPcache для production и Xdebug для development; отдельные Redis-инстансы прикладного кеша, изолированные от Redis-хранилища метрик; production-like load-test окружение; инструменты сопоставления profiler- и SQL-данных; а также опциональный look-ahead режим пагинации каталога, который загружает `limit + 1` строку и возвращает `hasNextPage`, не выполняя точный подсчёт общего количества. Для повторяемого тестирования также согласованы environment-, restart-, cache-reset-, fixtures-, CORS/CSRF-, Swagger- и diagnostic-скрипты.
+
+Эксперименты показали, что настройка runtime и изоляция кешей убирают лишние application overhead, а отказ от точного `COUNT` заметно облегчает основной путь списка каталога. Главным оставшимся bottleneck каталога является работа PostgreSQL с тяжёлыми запросами `COUNT`, фильтрацией и агрегациями. Дальнейшая оптимизация будет отдельной задачей по созданию специализированной read-модели/search engine каталога на Elasticsearch. Elasticsearch намеренно не реализуется в рамках Task 9.
+
+Эти показатели отражают достигнутую производительность на итоговом компьютере, но не являются строгим коэффициентом ускорения относительно Task 8 из-за разного оборудования и состава исходных метрик. Приложение и генератор нагрузки по-прежнему работали на одном хосте, авторизация осталась самой медленной наблюдаемой группой endpoint, CPU приближался к насыщению на высокой нагрузке, а точные totals и сложные filtered/aggregated запросы каталога всё ещё могут быть тяжёлыми для PostgreSQL.
+
+### Multi-stage сборка PHP image
+
+Общий PHP Dockerfile отделяет компиляцию extensions от итоговых runtime images. Общие extensions собираются один раз, production получает OPcache, development получает Xdebug, а в финальные targets копируются только необходимые собранные artifacts и runtime libraries.
+
+<!-- plantuml src="symfony/docs/plantuml/php-multi-stage-build-ru/stages.puml" alt="Multi-stage сборка PHP image" out="symfony/docs/images/plantuml/php-multi-stage-build-ru/stages.png" -->
+![Multi-stage сборка PHP image](symfony/docs/images/plantuml/php-multi-stage-build-ru/stages.png)
+<!-- /plantuml -->
+
+| Target | Содержимое runtime | Намеренно исключено |
+| --- | --- | --- |
+| `prod` | PHP-FPM, Nginx, RoadRunner, Composer, общие extensions, OPcache и требуемые shared libraries | Xdebug, Symfony CLI, компиляторы, headers и `*-dev` packages |
+| `dev` | Общий runtime и extensions, Xdebug, Composer, Symfony CLI, Git и development utilities | Production-only конфигурация OPcache и Nginx runtime |
+
+Проектные ссылки:
+
+- [Подробная документация multi-stage сборки PHP](symfony/docs/php-multi-stage-build.md)
+- [PHP Dockerfile](docker/php-symfony-cli/Dockerfile)
+- [Production Compose configuration](docker-compose.yml)
+- [Development Compose override](docker-compose.dev.yml)
+- [Production OPcache configuration](docker/php-symfony-cli/opcache-prod.ini)
+- [Production PHP-FPM configuration](docker/php-symfony-cli/php-fpm-prod.conf)
+- [Production Nginx configuration](docker/php-symfony-cli/nginx-prod.conf)
+- [Development Xdebug configuration](docker/php-symfony-cli/xdebug.ini)
+- [PlantUML source](symfony/docs/plantuml/php-multi-stage-build-ru/stages.puml)
+- [Pull Request 13](https://github.com/ivanserg0692/symfony2026/pull/13)
 
 ### API Endpoints
 
@@ -1116,6 +1274,14 @@ docker compose --env-file .env --env-file .env.dev down
 - Результат MR (EN): [symfony/docs/mr-task-8-en.md](symfony/docs/mr-task-8-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-8-ru.md](symfony/docs/mr-task-8-ru.md)
 
+#### `Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - completed
+- Brief info: В итоговом mixed-load тесте достигнуто в среднем 525,54 запроса/с при 0,00% HTTP-ошибок; главным оставшимся bottleneck каталога признаны тяжёлые PostgreSQL `COUNT`, фильтрация и агрегации, а Elasticsearch read model вынесена в отдельную задачу.
+- Backend Merge Request 9: <https://github.com/ivanserg0692/symfony2026/pull/13>
+- Frontend Merge Request 9: TBD
+- Файл задачи: [symfony/docs/task-9.md](symfony/docs/task-9.md)
+- Результат MR (EN): [symfony/docs/mr-task-9-en.md](symfony/docs/mr-task-9-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-9-ru.md](symfony/docs/mr-task-9-ru.md)
+
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:
 <https://github.com/ivanserg0692/symfony2026-frontend>
@@ -1160,19 +1326,33 @@ Handler экспорта использует batch-обработку Symfony M
 
 ### Запуск через Docker Compose
 
-Production является Compose-окружением по умолчанию. Development подключается явно через `.env.dev` и `docker-compose.dev.yml`.
+Production является Compose-окружением по умолчанию. Development и load-test подключаются явно через соответствующие environment override-файлы. Сначала активируйте один контекст в текущем терминале, а затем используйте обычные команды `docker compose` и универсальные npm-команды.
 
 | Окружение | Compose project | PHP runtime | Конфигурация |
 |---|---|---|---|
-| Production (по умолчанию) | `symfony2026` | PHP-FPM с Nginx и OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
-| Development | `symfony2026-dev` | Symfony CLI с доступным Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
+| Production (по умолчанию) | `symfony2026` | Обычная боевая нагрузка; PHP-FPM с Nginx и OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
+| Тест производительности | `symfony2026-load-test` | Изолированные замеры с production-like поведением PHP и без development-диагностики; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
+| Development | `symfony2026-dev` | Symfony CLI, подробные логи приложения, Symfony profiler и Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
 
-`COMPOSE_PROJECT_NAME` создает отдельный Compose project, сгенерированные сети и именованные volumes для каждого окружения. При этом используются одинаковые явные имена контейнеров и host ports, поэтому перед запуском другого окружения текущее нужно остановить.
+`COMPOSE_PROJECT_NAME` создает отдельный Compose project, сгенерированные сети и именованные volumes для каждого окружения. При этом используются одинаковые явные имена контейнеров и host ports, поэтому перед запуском другого окружения текущее нужно остановить. Переменные окружения остаются активными до закрытия текущей shell-сессии или загрузки другого контекста.
+
+В репозитории предусмотрены npm-команды, которые автоматически загружают необходимые environment-файлы и открывают настроенный интерактивный shell:
+
+```bash
+npm run set:prod
+npm run set:dev
+npm run set:load-test
+```
+
+Каждая команда загружает `.env` и `.env.local`, а для development или тестирования производительности дополнительно применяет соответствующий override. Запущенные внутри этого shell команды `docker compose`, `npm run db:migrate`, `npm run db:fixtures` и другие универсальные скрипты используют выбранные Compose project и конфигурацию. Эти helper-команды только выбирают окружение и сами не собирают и не запускают контейнеры. Выполните `exit`, чтобы закрыть настроенный shell и вернуться в предыдущий контекст терминала.
 
 Подготовьте `.env` и запустите production из корня репозитория:
 
 ```bash
 cp .env.example .env
+set -a
+. ./.env
+set +a
 docker compose up --build -d
 ```
 
@@ -1180,21 +1360,33 @@ docker compose up --build -d
 
 ```bash
 docker compose down
-npm run docker:dev:build
-npm run docker:dev:up
+set -a
+. ./.env
+. ./.env.dev
+set +a
+docker compose build symfony-cli
+docker compose up -d
 ```
 
 Остановите development:
 
 ```bash
-docker compose --env-file .env --env-file .env.dev down
+docker compose down
 ```
 
-Для Compose-операций без npm script используйте полный development-префикс:
+Перед запуском load-test или общих скриптов базы данных активируйте load-test-контекст:
 
 ```bash
-docker compose --env-file .env --env-file .env.dev <command>
+set -a
+. ./.env
+. ./.env.load_test
+set +a
+docker compose up -d
+npm run db:migrate
+npm run db:fixtures
 ```
+
+Команды активации нужно повторять в каждом новом терминале. `set +a` только отключает автоматический экспорт следующих присваиваний и не удаляет уже загруженные переменные.
 
 Откройте shell внутри production CLI container:
 
@@ -1205,8 +1397,8 @@ docker compose exec symfony-cli bash
 Symfony CLI и Composer установлены в development image. Запускайте их в development так:
 
 ```bash
-docker compose --env-file .env --env-file .env.dev run --rm symfony-cli symfony --help
-docker compose --env-file .env --env-file .env.dev run --rm symfony-cli composer install
+docker compose run --rm symfony-cli symfony --help
+docker compose run --rm symfony-cli composer install
 ```
 
 PHP console commands работают в обоих images. Следующие команды по умолчанию выполняются в production:
@@ -1216,14 +1408,25 @@ docker compose run --rm symfony-cli php bin/console about
 docker compose run --rm symfony-cli php bin/console cache:clear
 ```
 
-Очистите Symfony cache во всех application containers с лимитом памяти PHP 1 GB:
+Очистите Symfony cache во всех приложениях с лимитом памяти PHP 1 GB, затем перезапустите все PHP-ноды для сброса их runtime cache:
 
 ```bash
-docker compose exec symfony-cli php -d memory_limit=1G bin/console cache:clear
-docker compose exec catalog-cli php -d memory_limit=1G bin/console cache:clear
-docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear
-docker compose restart symfony-web catalog-web catalog-grpc cart-web api-gateway
+npm run docker:cache:clear:php
 ```
+
+После обновления application code перезапустите только PHP-ноды:
+
+```bash
+npm run docker:restart:php
+```
+
+После изменения переменных окружения или Compose-конфигурации пересоздайте весь активный стек:
+
+```bash
+npm run docker:recreate
+```
+
+Эти команды используют Compose-окружение, уже активированное в текущей shell-сессии, и сами не загружают `.env`-файлы.
 
 После установки зависимостей инициализируйте JWT-ключи:
 
@@ -1245,11 +1448,15 @@ npm run db:init
 npm run db:fixtures
 ```
 
-Для development используйте соответствующие `db:dev:*` scripts, например:
+Для development сначала активируйте его Compose-контекст, а затем используйте те же database scripts:
 
 ```bash
-npm run db:dev:init
-npm run db:dev:migrate
+set -a
+. ./.env
+. ./.env.dev
+set +a
+npm run db:init
+npm run db:migrate
 ```
 
 `db:init` создает отсутствующие базы и затем применяет миграции. `db:fixtures` загружает fixtures отдельно и специально не включен в `db:init`, потому что может перезаписать development-данные.
@@ -1317,7 +1524,7 @@ JWT-аутентификация настроена для API и использ
 
 Для логина включено ограничение запросов: не более `5` неуспешных попыток за `15 минут` на `POST /api/v1/auth/login`.
 
-Для браузерных клиентов access JWT и refresh token могут выдаваться через `HttpOnly` cookie. Origin фронта для cross-origin запросов задается через `FRONTEND_ORIGIN`.
+Для браузерных клиентов access JWT и refresh token могут выдаваться через `HttpOnly` cookie. Доверенные origins для stateless CSRF-проверки задаются через `CSRF_TRUSTED_ORIGINS`, а разрешенные CORS origins — через регулярное выражение `CORS_ALLOW_ORIGIN`, общее для всех Symfony-сервисов.
 
 Стек, который используется для аутентификации:
 - `symfony/security-bundle` дает firewall-механику, `access_control`, интеграцию с user provider и точку входа для кастомного аутентификатора логина
@@ -1336,10 +1543,11 @@ JWT-аутентификация настроена для API и использ
 JWT_PASSPHRASE=!ChangeMe!
 ```
 
-Для фронта на другом домене также задайте:
+Для безопасности браузерных запросов также задайте доверенные CSRF origins списком через запятую и разрешенные CORS origins регулярным выражением:
 
 ```env
-FRONTEND_ORIGIN=http://localhost:3000
+CSRF_TRUSTED_ORIGINS=http://localhost:3000
+CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
 ```
 
 Затем инициализируйте JWT keypair:

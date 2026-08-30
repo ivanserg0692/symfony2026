@@ -9,6 +9,7 @@
         "ext-iconv": "*",
         "artprima/prometheus-metrics-bundle": "^1.22",
         "doctrine/doctrine-bundle": "^3.2",
+        "doctrine/doctrine-fixtures-bundle": "^4.3",
         "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.6",
         "google/protobuf": "^5.35",
@@ -84,7 +85,6 @@
         }
     },
     "require-dev": {
-        "doctrine/doctrine-fixtures-bundle": "^4.3",
         "fakerphp/faker": "^1.24",
         "phpunit/phpunit": "^13.2",
         "symfony/browser-kit": "8.1.*",

@@ -1,3 +1,4 @@
 pixel_open_cloudflare_turnstile:
+    enable: '%env(bool:CLOUDFLARE_TURNSTILE_ENABLED)%'
     key: "%env(TURNSTILE_KEY)%"
     secret: "%env(TURNSTILE_SECRET)%"

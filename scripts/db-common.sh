@@ -25,6 +25,11 @@ run_for_database_services() {
   local command="$1"
   shift
 
+  local -a compose_exec_args=(-T)
+  if [[ -n "${CONSOLE_APP_ENV:-}" ]]; then
+    compose_exec_args+=(-e "APP_ENV=${CONSOLE_APP_ENV}")
+  fi
+
   local targets
   targets="$(load_database_service_targets)"
 
@@ -51,6 +56,6 @@ run_for_database_services() {
     fi
 
     printf '\n==> %s (%s)\n' "${label}" "${service}"
-    docker compose exec -T "${service}" php "$@" bin/console ${command}
+    docker compose exec "${compose_exec_args[@]}" "${service}" php "$@" bin/console ${command}
   done
 }

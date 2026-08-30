@@ -33,7 +33,13 @@ class CatalogElementsRepository extends ServiceEntityRepository
     /**
      * @return int[]
      */
-    public function findPageIds(?int $sectionId, ?bool $active, int $page, int $limit): array
+    public function findPageIds(
+        ?int $sectionId,
+        ?bool $active,
+        int $page,
+        int $limit,
+        bool $lookAhead = false,
+    ): array
     {
         $queryBuilder = $this->createQueryBuilder("element")
             ->select("element.id AS id")
@@ -45,7 +51,7 @@ class CatalogElementsRepository extends ServiceEntityRepository
             ->orderBy("element.sort", "DESC")
             ->addOrderBy("element.id", "ASC")
             ->setFirstResult(($page - 1) * $limit)
-            ->setMaxResults($limit)
+            ->setMaxResults($lookAhead ? $limit + 1 : $limit)
             ->getQuery()
             ->getScalarResult();
 
