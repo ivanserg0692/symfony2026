@@ -10,6 +10,7 @@
   - [Application Areas](#application-areas)
   - [Online Store Domain](#online-store-domain)
   - [Monitoring and Load Testing](#monitoring-and-load-testing)
+    - [Task 9 Performance Result](#task-9-performance-result)
   - [PHP Image Multi-stage Build](#php-image-multi-stage-build)
   - [API Endpoints](#api-endpoints)
     - [API Gateway Public API](#api-gateway-public-api)
@@ -31,7 +32,7 @@
       - [`Task 7.2`: Complete Cart/Order endpoints that require gRPC integrations - completed](#task-72-complete-cartorder-endpoints-that-require-grpc-integrations---completed)
       - [`Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - completed](#task-73-implement-the-external-api-gateway-for-the-public-resthttp-contract---completed)
     - [`Task 8`: Monitoring and load testing for the online store - completed](#task-8-monitoring-and-load-testing-for-the-online-store---completed)
-    - [`Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - planned](#task-9-application-performance-optimization-rps-improvement-and-php-environment-tuning---planned)
+    - [`Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - completed](#task-9-application-performance-optimization-rps-improvement-and-php-environment-tuning---completed)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
   - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
@@ -55,6 +56,7 @@
   - [Области приложения](#%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F)
   - [Домен интернет-магазина](#%D0%B4%D0%BE%D0%BC%D0%B5%D0%BD-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0)
   - [Мониторинг и нагрузочное тестирование](#%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5)
+    - [Результат производительности Task 9](#%D1%80%D0%B5%D0%B7%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%82-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-task-9)
   - [Multi-stage сборка PHP image](#multi-stage-%D1%81%D0%B1%D0%BE%D1%80%D0%BA%D0%B0-php-image)
   - [API Endpoints](#api-endpoints-1)
     - [API Gateway Public API](#api-gateway-public-api-1)
@@ -76,7 +78,7 @@
       - [`Task 7.2`: Доработка Cart/Order endpoints, которым нужны gRPC-интеграции - completed](#task-72-%D0%B4%D0%BE%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-cartorder-endpoints-%D0%BA%D0%BE%D1%82%D0%BE%D1%80%D1%8B%D0%BC-%D0%BD%D1%83%D0%B6%D0%BD%D1%8B-grpc-%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D0%B8---completed)
       - [`Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - completed](#task-73-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B5%D0%B3%D0%BE-api-gateway-%D0%B4%D0%BB%D1%8F-%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D0%BE%D0%B3%D0%BE-resthttp-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D0%B0---completed)
     - [`Task 8`: Мониторинг и нагрузочное тестирование интернет-магазина - completed](#task-8-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0---completed)
-    - [`Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - planned](#task-9-%D0%BE%D0%BF%D1%82%D0%B8%D0%BC%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BF%D0%BE%D0%B2%D1%8B%D1%88%D0%B5%D0%BD%D0%B8%D0%B5-rps-%D0%B8-%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-php-%D0%BE%D0%BA%D1%80%D1%83%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F---planned)
+    - [`Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - completed](#task-9-%D0%BE%D0%BF%D1%82%D0%B8%D0%BC%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BF%D0%BE%D0%B2%D1%8B%D1%88%D0%B5%D0%BD%D0%B8%D0%B5-rps-%D0%B8-%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-php-%D0%BE%D0%BA%D1%80%D1%83%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F---completed)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
   - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
@@ -205,7 +207,25 @@ docker compose down
 
 ![Grafana monitoring dashboard](docs/images/task-8-monitoring-overview.png)
 
-The current result of approximately **80 RPS** is an intermediate local measurement, not the maximum production capacity. The test was performed on a laptop with an Intel Core i5 processor and 8 GB of RAM, with a catalog of approximately 1 million products. The API, databases, monitoring stack, and k6 load generator all ran on the same computer under WSL, so they competed for the same CPU, memory, disk, and network resources. A representative production benchmark requires separate application and load-generator hosts and production-equivalent infrastructure.
+#### Task 9 Performance Result
+
+The Task 8 measurement of approximately **80 RPS** is retained as the initial reference point. It was obtained on an Intel Core i5 laptop with 8 GB RAM, while the API, databases, monitoring stack, and k6 shared one WSL host. Detailed baseline percentiles were not recorded, so this value is not a controlled before/after benchmark.
+
+The final Task 9 mixed-load run used an Intel Core i9 machine with 64 GB RAM, a catalog of approximately 1 million products, 300 virtual users (225 browsing, 60 shopping, and 15 checkout), and a duration of approximately five minutes. k6 completed 29,001 iterations and 159,646 HTTP requests at an average of **525.54 requests/s** with **0.00% HTTP failures**. Average request latency was **202.80 ms**, median latency was **169.55 ms**, p90 was **273.56 ms**, and p95 was **307.64 ms**. Grafana recorded approximately **643–678 gateway RPS** near the upper part of the run.
+
+The latency dashboard must be interpreted per endpoint: catalog requests were approximately **200 ms**, while the value near **2 seconds** belongs to authorization traffic and is not catalog latency.
+
+![Task 9 k6 mixed-load result](docs/images/k6-results.png)
+
+![Task 9 Grafana request rate and CPU](docs/images/rps-results.png)
+
+![Task 9 Grafana errors and latency](docs/images/grafana-latency.png)
+
+The work introduced a shared multi-stage PHP build with separate production, development, and load-test targets; production OPcache and development Xdebug configuration; dedicated application Redis instances separated from Redis metrics storage; a production-like load-test environment; profiler and SQL-correlation tooling; and an optional catalog look-ahead pagination mode that fetches `limit + 1` rows and returns `hasNextPage` without running an exact total count. Supporting environment, restart, cache-reset, fixture, CORS/CSRF, Swagger, and diagnostics scripts were also aligned for repeatable testing.
+
+The experiments showed that runtime and cache isolation remove avoidable application overhead, while skipping the exact catalog count materially reduces the common catalog-list path. The main remaining catalog bottleneck is PostgreSQL work for heavy `COUNT`, filtering, and aggregation queries. Further optimization belongs to a separate task that will introduce a specialized catalog read model/search engine based on Elasticsearch. Elasticsearch is intentionally not implemented as part of Task 9.
+
+These figures demonstrate the achieved capacity on the final machine, but they are not a strict speedup ratio against the Task 8 result because the hardware and measurement detail differ. The application and load generator still shared one host, authorization remained the slowest observed endpoint group, CPU approached saturation during the high-load interval, and exact totals or complex filtered/aggregated catalog queries can still be expensive in PostgreSQL.
 
 ### PHP Image Multi-stage Build
 
@@ -217,7 +237,7 @@ The shared PHP Dockerfile separates extension compilation from the final runtime
 
 | Target | Runtime contents | Excluded by design |
 | --- | --- | --- |
-| `prod` | PHP-FPM, Nginx, RoadRunner, common extensions, OPcache, and required shared libraries | Xdebug, Composer, Symfony CLI, compilers, headers, and `*-dev` packages |
+| `prod` | PHP-FPM, Nginx, RoadRunner, Composer, common extensions, OPcache, and required shared libraries | Xdebug, Symfony CLI, compilers, headers, and `*-dev` packages |
 | `dev` | Common runtime and extensions, Xdebug, Composer, Symfony CLI, Git, and development utilities | Production-only OPcache configuration and Nginx runtime |
 
 Project references:
@@ -464,8 +484,8 @@ The notification recipients are administrators resolved by the application, not 
 - MR result (EN): [symfony/docs/mr-task-8-en.md](symfony/docs/mr-task-8-en.md)
 - MR result (RU): [symfony/docs/mr-task-8-ru.md](symfony/docs/mr-task-8-ru.md)
 
-#### `Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - planned
-- Brief info: Establish a reproducible performance baseline, remove confirmed bottlenecks, tune the PHP production environment, and verify the RPS improvement with repeatable load tests.
+#### `Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - completed
+- Brief info: Reached 525.54 average requests/s with 0.00% HTTP failures in the final mixed-load run; identified heavy PostgreSQL `COUNT`, filtering, and aggregations as the main remaining catalog bottleneck and deferred the Elasticsearch read model to a separate task.
 - Backend Merge Request 9: <https://github.com/ivanserg0692/symfony2026/pull/13>
 - Frontend Merge Request 9: TBD
 - Task file: [symfony/docs/task-9.md](symfony/docs/task-9.md)
@@ -967,7 +987,25 @@ docker compose down
 
 ![Дашборд мониторинга Grafana](docs/images/task-8-monitoring-overview.png)
 
-Текущий результат около **80 RPS** является промежуточным локальным замером, а не максимальной производительностью production-системы. Тест выполнялся на ноутбуке с процессором Intel Core i5 и 8 ГБ RAM, каталог содержал примерно 1 млн товаров. API, базы данных, стек мониторинга и генератор нагрузки k6 одновременно работали на одном компьютере в WSL и конкурировали за общие ресурсы CPU, памяти, диска и сети. Для репрезентативного production-теста необходимо разнести приложение и генератор нагрузки по разным узлам и использовать инфраструктуру, сопоставимую с production.
+#### Результат производительности Task 9
+
+Замер Task 8 около **80 RPS** сохранён как исходный ориентир. Он был получен на ноутбуке Intel Core i5 с 8 ГБ RAM, где API, базы данных, мониторинг и k6 одновременно работали на одном WSL-хосте. Подробные baseline-перцентили не были зафиксированы, поэтому это значение нельзя считать контролируемым before/after benchmark.
+
+Итоговый mixed-load запуск Task 9 выполнялся на Intel Core i9 с 64 ГБ RAM, с каталогом примерно в 1 млн товаров, 300 виртуальными пользователями (225 browsing, 60 shopping и 15 checkout) и длительностью около пяти минут. k6 завершил 29 001 итерацию и выполнил 159 646 HTTP-запросов со средней скоростью **525,54 запроса/с** и **0,00% HTTP-ошибок**. Средняя latency составила **202,80 мс**, медиана — **169,55 мс**, p90 — **273,56 мс**, p95 — **307,64 мс**. В верхней части прогона Grafana зафиксировала примерно **643–678 gateway RPS**.
+
+График latency нужно интерпретировать по endpoint: запросы каталога выполнялись примерно за **200 мс**, а значение около **2 секунд** относится к авторизации и не является latency каталога.
+
+![Результат mixed-load теста k6 для Task 9](docs/images/k6-results.png)
+
+![RPS и CPU в Grafana для Task 9](docs/images/rps-results.png)
+
+![Ошибки и latency в Grafana для Task 9](docs/images/grafana-latency.png)
+
+В рамках задачи добавлены общий multi-stage PHP build с отдельными production-, development- и load-test-targets; OPcache для production и Xdebug для development; отдельные Redis-инстансы прикладного кеша, изолированные от Redis-хранилища метрик; production-like load-test окружение; инструменты сопоставления profiler- и SQL-данных; а также опциональный look-ahead режим пагинации каталога, который загружает `limit + 1` строку и возвращает `hasNextPage`, не выполняя точный подсчёт общего количества. Для повторяемого тестирования также согласованы environment-, restart-, cache-reset-, fixtures-, CORS/CSRF-, Swagger- и diagnostic-скрипты.
+
+Эксперименты показали, что настройка runtime и изоляция кешей убирают лишние application overhead, а отказ от точного `COUNT` заметно облегчает основной путь списка каталога. Главным оставшимся bottleneck каталога является работа PostgreSQL с тяжёлыми запросами `COUNT`, фильтрацией и агрегациями. Дальнейшая оптимизация будет отдельной задачей по созданию специализированной read-модели/search engine каталога на Elasticsearch. Elasticsearch намеренно не реализуется в рамках Task 9.
+
+Эти показатели отражают достигнутую производительность на итоговом компьютере, но не являются строгим коэффициентом ускорения относительно Task 8 из-за разного оборудования и состава исходных метрик. Приложение и генератор нагрузки по-прежнему работали на одном хосте, авторизация осталась самой медленной наблюдаемой группой endpoint, CPU приближался к насыщению на высокой нагрузке, а точные totals и сложные filtered/aggregated запросы каталога всё ещё могут быть тяжёлыми для PostgreSQL.
 
 ### Multi-stage сборка PHP image
 
@@ -979,7 +1017,7 @@ docker compose down
 
 | Target | Содержимое runtime | Намеренно исключено |
 | --- | --- | --- |
-| `prod` | PHP-FPM, Nginx, RoadRunner, общие extensions, OPcache и требуемые shared libraries | Xdebug, Composer, Symfony CLI, компиляторы, headers и `*-dev` packages |
+| `prod` | PHP-FPM, Nginx, RoadRunner, Composer, общие extensions, OPcache и требуемые shared libraries | Xdebug, Symfony CLI, компиляторы, headers и `*-dev` packages |
 | `dev` | Общий runtime и extensions, Xdebug, Composer, Symfony CLI, Git и development utilities | Production-only конфигурация OPcache и Nginx runtime |
 
 Проектные ссылки:
@@ -1226,8 +1264,8 @@ docker compose down
 - Результат MR (EN): [symfony/docs/mr-task-8-en.md](symfony/docs/mr-task-8-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-8-ru.md](symfony/docs/mr-task-8-ru.md)
 
-#### `Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - planned
-- Brief info: Зафиксировать воспроизводимый baseline, устранить подтвержденные bottleneck, настроить production PHP-окружение и подтвердить рост RPS повторяемыми нагрузочными тестами.
+#### `Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - completed
+- Brief info: В итоговом mixed-load тесте достигнуто в среднем 525,54 запроса/с при 0,00% HTTP-ошибок; главным оставшимся bottleneck каталога признаны тяжёлые PostgreSQL `COUNT`, фильтрация и агрегации, а Elasticsearch read model вынесена в отдельную задачу.
 - Backend Merge Request 9: <https://github.com/ivanserg0692/symfony2026/pull/13>
 - Frontend Merge Request 9: TBD
 - Файл задачи: [symfony/docs/task-9.md](symfony/docs/task-9.md)

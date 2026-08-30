@@ -4,6 +4,7 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 - [RU](#ru)
+  - [Статус](#%D1%81%D1%82%D0%B0%D1%82%D1%83%D1%81)
   - [Название](#%D0%BD%D0%B0%D0%B7%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5)
   - [Описание задачи](#%D0%BE%D0%BF%D0%B8%D1%81%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B7%D0%B0%D0%B4%D0%B0%D1%87%D0%B8)
   - [Цель](#%D1%86%D0%B5%D0%BB%D1%8C)
@@ -12,7 +13,9 @@
   - [Технический подход](#%D1%82%D0%B5%D1%85%D0%BD%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9-%D0%BF%D0%BE%D0%B4%D1%85%D0%BE%D0%B4)
   - [Как тестировать](#%D0%BA%D0%B0%D0%BA-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D1%82%D1%8C)
   - [Примечания](#%D0%BF%D1%80%D0%B8%D0%BC%D0%B5%D1%87%D0%B0%D0%BD%D0%B8%D1%8F)
+  - [Итог выполнения](#%D0%B8%D1%82%D0%BE%D0%B3-%D0%B2%D1%8B%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F)
 - [EN](#en)
+  - [Status](#status)
   - [Title](#title)
   - [Task Description](#task-description)
   - [Goal](#goal)
@@ -21,10 +24,15 @@
   - [Technical Approach](#technical-approach)
   - [How To Test](#how-to-test)
   - [Notes](#notes)
+  - [Completion Result](#completion-result)
 
 <!-- END doctoc -->
 
 ## RU
+
+### Статус
+
+**Completed — 2026-08-30.**
 
 ### Название
 
@@ -128,7 +136,25 @@ Production и development должны собираться из одного mu
 - Более высокий RPS не считается успешным результатом, если он достигнут ценой ошибок, неконтролируемого роста latency или изменения функциональности.
 - Изменения Composer dependencies, бизнес-логики и API-контрактов требуют отдельного обоснования и не входят в базовый scope задачи.
 
+### Итог выполнения
+
+Исходным ориентиром оставался результат Task 8 около 80 RPS на Intel Core i5 и 8 ГБ RAM с совместным запуском приложения, инфраструктуры, мониторинга и k6 в WSL. Полный набор исходных latency-перцентилей не сохранился. Итоговый тест выполнялся на Intel Core i9 с 64 ГБ RAM и каталогом примерно в 1 млн товаров, поэтому абсолютные результаты нельзя трактовать как строго сопоставимый коэффициент ускорения.
+
+В рамках задачи выполнены multi-stage реорганизация PHP image, production-настройка OPcache, разделение dev/prod/load-test targets, выделение отдельных Redis-инстансов прикладного кеша, подготовка production-like load-test окружения и инструментов корреляции Symfony profiler с SQL. Для каталога проверен режим look-ahead пагинации: запрос загружает `limit + 1` строку и возвращает `hasNextPage`, что позволяет не выполнять точный `COUNT` на основном пути списка. Режим управляется feature flag и сохраняет прежний вариант ответа при отключении.
+
+Mixed-load эксперимент продолжительностью около пяти минут использовал 300 VU: 225 browsing, 60 shopping и 15 checkout. Результат: 159 646 HTTP-запросов, 525,54 запроса/с в среднем, 0,00% HTTP-ошибок, average 202,80 мс, median 169,55 мс, p90 273,56 мс и p95 307,64 мс. Grafana показывала примерно 643–678 gateway RPS в верхней части прогона. Latency каталога составляла около 200 мс; показатель около 2 секунд на дашборде относится к авторизации.
+
+Главным оставшимся ограничением каталога являются тяжёлые `COUNT`, фильтрация и агрегации в PostgreSQL. Их дальнейшая оптимизация требует специализированной read-модели/search engine на Elasticsearch и вынесена в отдельную задачу. Elasticsearch в Task 9 не реализован.
+
+При закрытии задачи dev- и load-test Compose configurations успешно прошли `docker compose config --quiet`. Catalog suite прошёл полностью: 24 теста и 63 assertions. PHP lint прошёл для всех изменённых PHP-файлов. Smoke-запрос списка каталога через API Gateway вернул HTTP 200 примерно за 202 мс, а защищённый `/api/v1/auth/me` без токена ожидаемо вернул HTTP 401.
+
+Оставшиеся ограничения: исходный и итоговый тесты выполнены на разном оборудовании; генератор нагрузки и приложение разделяли один хост; CPU приближался к насыщению; p99 на итоговом скриншоте k6 отдельно не зафиксирован; production image после последних изменений не пересобирался в рамках закрытия задачи; Composer фактически находится в общем runtime-base и доступен в production target, несмотря на первоначальный критерий его исключения; Cart suite не был запущен, потому что в текущем контейнере отсутствует `vendor/bin/simple-phpunit`, а установка dependencies не входит в процедуру закрытия.
+
 ## EN
+
+### Status
+
+**Completed — 2026-08-30.**
 
 ### Title
 
@@ -231,3 +257,17 @@ Application code, data query, and infrastructure optimizations are applied only 
 - Performance is compared only on the same hardware, dataset, container configuration, and load profile.
 - Higher RPS is not considered successful if it causes errors, uncontrolled latency growth, or functionality changes.
 - Composer dependency, business logic, and API contract changes require separate justification and are outside the base task scope.
+
+### Completion Result
+
+The Task 8 result of approximately 80 RPS on an Intel Core i5 machine with 8 GB RAM remained the initial reference. The application, infrastructure, monitoring, and k6 shared one WSL host, and the complete initial latency percentiles were not retained. The final test ran on an Intel Core i9 machine with 64 GB RAM and a catalog of approximately 1 million products, so the absolute values must not be interpreted as a strictly comparable speedup ratio.
+
+The task delivered a multi-stage PHP image reorganization, production OPcache configuration, separate dev/prod/load-test targets, dedicated application Redis instances, a production-like load-test environment, and tooling that correlates Symfony profiler records with SQL. A catalog look-ahead pagination mode was tested: it fetches `limit + 1` rows and returns `hasNextPage`, avoiding an exact `COUNT` on the common listing path. A feature flag controls the mode and preserves the previous response variant when disabled.
+
+The approximately five-minute mixed-load experiment used 300 VUs: 225 browsing, 60 shopping, and 15 checkout. It produced 159,646 HTTP requests at 525.54 requests/s on average, with 0.00% HTTP failures, 202.80 ms average latency, 169.55 ms median latency, 273.56 ms p90, and 307.64 ms p95. Grafana showed approximately 643–678 gateway RPS in the upper part of the run. Catalog latency was approximately 200 ms; the value near 2 seconds on the dashboard belongs to authorization traffic.
+
+The main remaining catalog limitation is heavy PostgreSQL `COUNT`, filtering, and aggregation work. Further optimization requires a specialized Elasticsearch-based read model/search engine and is deferred to a separate task. Elasticsearch was not implemented in Task 9.
+
+During task closure, the dev and load-test Compose configurations passed `docker compose config --quiet`. The complete Catalog suite passed with 24 tests and 63 assertions. PHP lint passed for every changed PHP file. A catalog-list smoke request through the API Gateway returned HTTP 200 in approximately 202 ms, while protected `/api/v1/auth/me` correctly returned HTTP 401 without a token.
+
+Remaining limitations: the initial and final tests used different hardware; the load generator and application shared one host; CPU approached saturation; the final k6 screenshot did not record a separate p99 value; the production image was not rebuilt during task closure; Composer currently resides in the shared runtime base and is therefore available in the production target despite the initial exclusion criterion; and the Cart suite was not run because `vendor/bin/simple-phpunit` is absent from the current container and dependency installation is outside the closure procedure.
