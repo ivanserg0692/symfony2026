@@ -186,7 +186,7 @@ The production-oriented Docker environment includes Prometheus and Grafana for m
 
 The Grafana dashboard covers request rate, HTTP statuses and errors, p50/p95/p99 latency, CPU and memory usage, filesystem and disk activity, network traffic, and PostgreSQL operations. Load scenarios are executed with k6 against the public API Gateway and include catalog browsing, cart operations, checkout, and mixed traffic.
 
-The Docker runtime is separated into production, development, and load-test targets. Production is the default Compose environment and uses the `prod` image target with PHP-FPM, Nginx, OPcache, `APP_ENV=prod`, and `APP_DEBUG=0`. Development is enabled through `.env.dev` and `docker-compose.dev.yml`; it uses the `dev` image target with Symfony CLI, Composer, Xdebug, `APP_ENV=dev`, and `APP_DEBUG=1`. Load testing uses `.env.load_test` and `docker-compose.load-test.yml`, keeps production PHP behavior, and runs as the separate `symfony2026-load-test` Compose project.
+The project provides three standard runtime profiles. Production is the default Compose environment and uses the `prod` image target with PHP-FPM, Nginx, OPcache, `APP_ENV=prod`, and `APP_DEBUG=0`. Load testing is a dedicated performance-test profile: it uses `.env.load_test` and `docker-compose.load-test.yml`, keeps production-like PHP behavior without development diagnostics, and runs as the isolated `symfony2026-load-test` Compose project. Development is enabled through `.env.dev` and `docker-compose.dev.yml`; it uses the `dev` image target with Symfony CLI, Composer, Xdebug, the Symfony profiler, detailed application logs, `APP_ENV=dev`, and `APP_DEBUG=1`.
 
 ```bash
 # Production
@@ -211,7 +211,7 @@ docker compose down
 
 The Task 8 measurement of approximately **80 RPS** is retained as the initial reference point. It was obtained on an Intel Core i5 laptop with 8 GB RAM, while the API, databases, monitoring stack, and k6 shared one WSL host. Detailed baseline percentiles were not recorded, so this value is not a controlled before/after benchmark.
 
-The final Task 9 mixed-load run used an Intel Core i9 machine with 64 GB RAM, a catalog of approximately 1 million products, 300 virtual users (225 browsing, 60 shopping, and 15 checkout), and a duration of approximately five minutes. k6 completed 29,001 iterations and 159,646 HTTP requests at an average of **525.54 requests/s** with **0.00% HTTP failures**. Average request latency was **202.80 ms**, median latency was **169.55 ms**, p90 was **273.56 ms**, and p95 was **307.64 ms**. Grafana recorded approximately **643–678 gateway RPS** near the upper part of the run.
+The final Task 9 mixed-load run was executed in the dedicated `load_test` profile on an Intel Core i9 machine with 64 GB RAM and a catalog of approximately 1 million products. The run used 300 virtual users (225 browsing, 60 shopping, and 15 checkout) for approximately five minutes. k6 completed 29,001 iterations and 159,646 HTTP requests at an average of **525.54 requests/s** with **0.00% HTTP failures**. Average request latency was **202.80 ms**, median latency was **169.55 ms**, p90 was **273.56 ms**, and p95 was **307.64 ms**. Grafana recorded approximately **643–678 gateway RPS** near the upper part of the run.
 
 The latency dashboard must be interpreted per endpoint: catalog requests were approximately **200 ms**, while the value near **2 seconds** belongs to authorization traffic and is not catalog latency.
 
@@ -540,11 +540,21 @@ The production stack is the default Compose environment. Development and load te
 
 | Environment | Compose project | PHP runtime | Configuration |
 |---|---|---|---|
-| Production (default) | `symfony2026` | PHP-FPM with Nginx and OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
-| Development | `symfony2026-dev` | Symfony CLI with Xdebug available; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
-| Load test | `symfony2026-load-test` | Production-oriented PHP runtime; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
+| Production (default) | `symfony2026` | Regular production traffic; PHP-FPM with Nginx and OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
+| Performance test | `symfony2026-load-test` | Isolated measurements with production-like PHP behavior and no development diagnostics; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
+| Development | `symfony2026-dev` | Symfony CLI, detailed application logs, Symfony profiler, and Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
 
 `COMPOSE_PROJECT_NAME` gives each environment its own Compose project, generated networks, and named volumes. The stacks still use the same explicit container names and host ports, so stop the current environment before starting another one. Environment variables remain active until the current shell is closed or another context is sourced.
+
+The repository provides npm helpers that automatically load the required environment files and open a configured interactive shell:
+
+```bash
+npm run set:prod
+npm run set:dev
+npm run set:load-test
+```
+
+Each helper loads `.env` and `.env.local`, then applies the selected override for development or performance testing. Commands such as `docker compose`, `npm run db:migrate`, and `npm run db:fixtures` executed inside that shell use the selected Compose project and configuration. The helpers select the environment only; they do not build or start containers. Run `exit` to leave the configured shell and return to the previous terminal context.
 
 Prepare `.env` and start production from the repository root:
 
@@ -966,7 +976,7 @@ Production-окружение Docker включает Prometheus и Grafana дл
 
 Дашборд Grafana показывает RPS, HTTP-статусы и ошибки, задержки p50/p95/p99, использование CPU и памяти, состояние файловой системы и дисков, сетевой трафик и операции PostgreSQL. Нагрузочные сценарии k6 выполняются через публичный API Gateway и охватывают просмотр каталога, работу с корзиной, оформление заказа и смешанный трафик.
 
-Docker runtime разделен на production-, development- и load-test-targets. Production является Compose-окружением по умолчанию и использует image target `prod` с PHP-FPM, Nginx, OPcache, `APP_ENV=prod` и `APP_DEBUG=0`. Development подключается через `.env.dev` и `docker-compose.dev.yml`; он использует image target `dev` с Symfony CLI, Composer, Xdebug, `APP_ENV=dev` и `APP_DEBUG=1`. Нагрузочное тестирование использует `.env.load_test` и `docker-compose.load-test.yml`, сохраняет production-поведение PHP и запускается как отдельный Compose project `symfony2026-load-test`.
+Проект предоставляет три стандартных runtime-профиля. Production является Compose-окружением по умолчанию и использует image target `prod` с PHP-FPM, Nginx, OPcache, `APP_ENV=prod` и `APP_DEBUG=0`. Для нагрузочного тестирования предусмотрен отдельный performance-test профиль: он использует `.env.load_test` и `docker-compose.load-test.yml`, сохраняет production-like поведение PHP без development-диагностики и запускается как изолированный Compose project `symfony2026-load-test`. Development подключается через `.env.dev` и `docker-compose.dev.yml`; он использует image target `dev` с Symfony CLI, Composer, Xdebug, Symfony profiler, подробными логами приложения, `APP_ENV=dev` и `APP_DEBUG=1`.
 
 ```bash
 # Production
@@ -991,7 +1001,7 @@ docker compose down
 
 Замер Task 8 около **80 RPS** сохранён как исходный ориентир. Он был получен на ноутбуке Intel Core i5 с 8 ГБ RAM, где API, базы данных, мониторинг и k6 одновременно работали на одном WSL-хосте. Подробные baseline-перцентили не были зафиксированы, поэтому это значение нельзя считать контролируемым before/after benchmark.
 
-Итоговый mixed-load запуск Task 9 выполнялся на Intel Core i9 с 64 ГБ RAM, с каталогом примерно в 1 млн товаров, 300 виртуальными пользователями (225 browsing, 60 shopping и 15 checkout) и длительностью около пяти минут. k6 завершил 29 001 итерацию и выполнил 159 646 HTTP-запросов со средней скоростью **525,54 запроса/с** и **0,00% HTTP-ошибок**. Средняя latency составила **202,80 мс**, медиана — **169,55 мс**, p90 — **273,56 мс**, p95 — **307,64 мс**. В верхней части прогона Grafana зафиксировала примерно **643–678 gateway RPS**.
+Итоговый mixed-load запуск Task 9 выполнялся в отдельном профиле `load_test` на Intel Core i9 с 64 ГБ RAM и каталогом примерно в 1 млн товаров. В течение примерно пяти минут использовалось 300 виртуальных пользователей (225 browsing, 60 shopping и 15 checkout). k6 завершил 29 001 итерацию и выполнил 159 646 HTTP-запросов со средней скоростью **525,54 запроса/с** и **0,00% HTTP-ошибок**. Средняя latency составила **202,80 мс**, медиана — **169,55 мс**, p90 — **273,56 мс**, p95 — **307,64 мс**. В верхней части прогона Grafana зафиксировала примерно **643–678 gateway RPS**.
 
 График latency нужно интерпретировать по endpoint: запросы каталога выполнялись примерно за **200 мс**, а значение около **2 секунд** относится к авторизации и не является latency каталога.
 
@@ -1320,11 +1330,21 @@ Production является Compose-окружением по умолчанию
 
 | Окружение | Compose project | PHP runtime | Конфигурация |
 |---|---|---|---|
-| Production (по умолчанию) | `symfony2026` | PHP-FPM с Nginx и OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
-| Development | `symfony2026-dev` | Symfony CLI с доступным Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
-| Load test | `symfony2026-load-test` | Production-ориентированный PHP runtime; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
+| Production (по умолчанию) | `symfony2026` | Обычная боевая нагрузка; PHP-FPM с Nginx и OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
+| Тест производительности | `symfony2026-load-test` | Изолированные замеры с production-like поведением PHP и без development-диагностики; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
+| Development | `symfony2026-dev` | Symfony CLI, подробные логи приложения, Symfony profiler и Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
 
 `COMPOSE_PROJECT_NAME` создает отдельный Compose project, сгенерированные сети и именованные volumes для каждого окружения. При этом используются одинаковые явные имена контейнеров и host ports, поэтому перед запуском другого окружения текущее нужно остановить. Переменные окружения остаются активными до закрытия текущей shell-сессии или загрузки другого контекста.
+
+В репозитории предусмотрены npm-команды, которые автоматически загружают необходимые environment-файлы и открывают настроенный интерактивный shell:
+
+```bash
+npm run set:prod
+npm run set:dev
+npm run set:load-test
+```
+
+Каждая команда загружает `.env` и `.env.local`, а для development или тестирования производительности дополнительно применяет соответствующий override. Запущенные внутри этого shell команды `docker compose`, `npm run db:migrate`, `npm run db:fixtures` и другие универсальные скрипты используют выбранные Compose project и конфигурацию. Эти helper-команды только выбирают окружение и сами не собирают и не запускают контейнеры. Выполните `exit`, чтобы закрыть настроенный shell и вернуться в предыдущий контекст терминала.
 
 Подготовьте `.env` и запустите production из корня репозитория:
 

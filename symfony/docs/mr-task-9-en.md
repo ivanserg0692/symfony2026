@@ -11,6 +11,8 @@
 - [Out Of Scope](#out-of-scope)
 - [2026-08-23 — Multi-stage Build Documentation](#2026-08-23--multi-stage-build-documentation)
 - [2026-08-30 — Final Performance Result and Task Completion](#2026-08-30--final-performance-result-and-task-completion)
+- [2026-08-30 — Runtime Profiles Clarification](#2026-08-30--runtime-profiles-clarification)
+- [2026-08-30 — Environment Activation Commands](#2026-08-30--environment-activation-commands)
 
 <!-- END doctoc -->
 
@@ -105,3 +107,13 @@ The implementation should be verified by checking that:
 - Confirmed that the primary remaining catalog bottleneck is heavy PostgreSQL `COUNT`, filtering, and aggregation work. A specialized Elasticsearch read model/search engine is deferred to a separate task and was not implemented here.
 - Verified dev and load-test Compose configuration, linted all changed PHP files, passed the Catalog suite with 24 tests and 63 assertions, and received HTTP 200 from the catalog smoke request in approximately 202 ms. The protected authentication check correctly returned HTTP 401 without a token.
 - Recorded limitations: different baseline/final hardware, shared application/load-generator host, CPU saturation pressure, missing standalone p99 in the final k6 capture, no production image rebuild during closure, Composer remaining in the shared production runtime base, and the unavailable Cart test runner (`vendor/bin/simple-phpunit`) in the current container.
+
+## 2026-08-30 — Runtime Profiles Clarification
+
+- Documented the three standard runtime profiles: production by default, isolated `load_test` for performance measurements, and development with detailed application logs, the Symfony profiler, and Xdebug.
+- Clarified that the final Task 9 measurements were collected in `load_test`, which preserves production-like PHP behavior without development diagnostics.
+
+## 2026-08-30 — Environment Activation Commands
+
+- Documented `npm run set:prod`, `npm run set:dev`, and `npm run set:load-test` as the standard helpers for loading the selected environment in a dedicated interactive shell.
+- Clarified that these commands select the Compose context but do not build or start containers, and that `exit` returns to the previous terminal context.
