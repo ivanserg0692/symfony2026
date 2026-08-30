@@ -496,9 +496,11 @@ The notification recipients are administrators resolved by the application, not 
 
 #### `Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - planned
 - Brief info: Move heavy catalog search, `COUNT`, filtering, facets, and aggregations from PostgreSQL to an Elasticsearch read model while keeping PostgreSQL as the source of truth and adding controlled system filter presets.
-- Backend Merge Request 10: TBD
+- Backend Merge Request 10: <https://github.com/ivanserg0692/symfony2026/pull/14>
 - Frontend Merge Request 10: TBD
 - Task file: [symfony/docs/task-10.md](symfony/docs/task-10.md)
+- MR result (EN): [symfony/docs/mr-task-10-en.md](symfony/docs/mr-task-10-en.md)
+- MR result (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
 
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
@@ -1292,9 +1294,11 @@ docker compose down
 
 #### `Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - planned
 - Brief info: Перенести тяжёлые каталоговые поиск, `COUNT`, фильтрацию, фасеты и агрегации из PostgreSQL в Elasticsearch read-модель, сохранив PostgreSQL источником истины и добавив контролируемые системные пресеты фильтрации.
-- Backend Merge Request 10: TBD
+- Backend Merge Request 10: <https://github.com/ivanserg0692/symfony2026/pull/14>
 - Frontend Merge Request 10: TBD
 - Файл задачи: [symfony/docs/task-10.md](symfony/docs/task-10.md)
+- Результат MR (EN): [symfony/docs/mr-task-10-en.md](symfony/docs/mr-task-10-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
 
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:
