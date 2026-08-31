@@ -1,8 +1,8 @@
 {
   "scripts": {
-    "set:prod": "bash -c 'set -a; . ./.env; . ./.env.local; set +a; exec bash -i'",
-    "set:dev": "bash -c 'set -a; . ./.env; . ./.env.local; . ./.env.dev; set +a; exec bash -i'",
-    "set:load-test": "bash -c 'set -a; . ./.env; . ./.env.local; . ./.env.load_test; set +a; exec bash -i'",
+    "set:prod": "bash -c 'set -a; . ./.env.compose; set +a; unset COMPOSE_PROJECT_NAME COMPOSE_FILE; exec bash -i'",
+    "set:dev": "bash -c 'set -a; . ./.env.compose; . ./.env.dev; set +a; exec bash -i'",
+    "set:load-test": "bash -c 'set -a; . ./.env.compose; . ./.env.load_test; set +a; exec bash -i'",
     "docker:restart:php": "docker compose restart symfony-cli symfony-web catalog-cli catalog-web catalog-grpc cart-cli cart-web",
     "docker:cache:clear:php": "docker compose exec symfony-cli php -d memory_limit=1G bin/console cache:clear && docker compose exec catalog-cli php -d memory_limit=1G bin/console cache:clear && docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear && npm run docker:restart:php",
     "docker:recreate": "docker compose up -d --force-recreate",

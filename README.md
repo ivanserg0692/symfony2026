@@ -550,11 +550,11 @@ The production stack is the default Compose environment. Development and load te
 
 | Environment | Compose project | PHP runtime | Configuration |
 |---|---|---|---|
-| Production (default) | `symfony2026` | Regular production traffic; PHP-FPM with Nginx and OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
-| Performance test | `symfony2026-load-test` | Isolated measurements with production-like PHP behavior and no development diagnostics; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
-| Development | `symfony2026-dev` | Symfony CLI, detailed application logs, Symfony profiler, and Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
+| Production (default) | `symfony2026` | Regular production traffic; PHP-FPM with Nginx and OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env.compose`, `.env`, `.env.local`, `docker-compose.yml` |
+| Performance test | `symfony2026-load-test` | Isolated measurements with production-like PHP behavior and no development diagnostics; `APP_ENV=prod`, `APP_DEBUG=0` | `.env.compose`, `.env`, `.env.local`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
+| Development | `symfony2026-dev` | Symfony CLI, detailed application logs, Symfony profiler, and Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env.compose`, `.env`, `.env.local`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
 
-`COMPOSE_PROJECT_NAME` gives each environment its own Compose project, generated networks, and named volumes. The stacks still use the same explicit container names and host ports, so stop the current environment before starting another one. Environment variables remain active until the current shell is closed or another context is sourced.
+`COMPOSE_PROJECT_NAME` gives each environment its own Compose project, generated networks, and named volumes. The stacks still use the same explicit container names and host ports, so stop the current environment before starting another one. Only Compose control and environment selector variables remain active until the current shell is closed or another context is sourced.
 
 The repository provides npm helpers that automatically load the required environment files and open a configured interactive shell:
 
@@ -564,15 +564,16 @@ npm run set:dev
 npm run set:load-test
 ```
 
-Each helper loads `.env` and `.env.local`, then applies the selected override for development or performance testing. Commands such as `docker compose`, `npm run db:migrate`, and `npm run db:fixtures` executed inside that shell use the selected Compose project and configuration. The helpers select the environment only; they do not build or start containers. Run `exit` to leave the configured shell and return to the previous terminal context.
+Each helper loads `.env.compose` and, for development or performance testing, the corresponding selector override. `COMPOSE_ENV_FILES` then tells Docker Compose to read `.env` and `.env.local` for interpolation, with `.env.local` taking precedence. Secrets from `.env.local` are not exported into the interactive shell; they enter only Compose and the services that explicitly receive them. Commands such as `docker compose`, `npm run db:migrate`, and `npm run db:fixtures` executed inside that shell use the selected Compose project and configuration. The helpers select the environment only; they do not build or start containers. Run `exit` to leave the configured shell and return to the previous terminal context.
 
 Prepare `.env` and start production from the repository root:
 
 ```bash
 cp .env.example .env
 set -a
-. ./.env
+. ./.env.compose
 set +a
+unset COMPOSE_PROJECT_NAME COMPOSE_FILE
 docker compose up --build -d
 ```
 
@@ -581,7 +582,7 @@ Stop production, build the development PHP image, and start development:
 ```bash
 docker compose down
 set -a
-. ./.env
+. ./.env.compose
 . ./.env.dev
 set +a
 docker compose build symfony-cli
@@ -598,7 +599,7 @@ Activate the load-test context before starting it or running shared database scr
 
 ```bash
 set -a
-. ./.env
+. ./.env.compose
 . ./.env.load_test
 set +a
 docker compose up -d
@@ -606,7 +607,7 @@ npm run db:migrate
 npm run db:fixtures
 ```
 
-The activation commands must be repeated in every new terminal. `set +a` only disables automatic export for later assignments; it does not remove the loaded variables.
+The activation commands must be repeated in every new terminal. `set +a` only disables automatic export for later assignments; it does not remove the loaded Compose control and selector variables. Do not source `.env.local` into the interactive shell.
 
 Open a shell inside the production CLI container:
 
@@ -1348,11 +1349,11 @@ Production является Compose-окружением по умолчанию
 
 | Окружение | Compose project | PHP runtime | Конфигурация |
 |---|---|---|---|
-| Production (по умолчанию) | `symfony2026` | Обычная боевая нагрузка; PHP-FPM с Nginx и OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
-| Тест производительности | `symfony2026-load-test` | Изолированные замеры с production-like поведением PHP и без development-диагностики; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
-| Development | `symfony2026-dev` | Symfony CLI, подробные логи приложения, Symfony profiler и Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
+| Production (по умолчанию) | `symfony2026` | Обычная боевая нагрузка; PHP-FPM с Nginx и OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env.compose`, `.env`, `.env.local`, `docker-compose.yml` |
+| Тест производительности | `symfony2026-load-test` | Изолированные замеры с production-like поведением PHP и без development-диагностики; `APP_ENV=prod`, `APP_DEBUG=0` | `.env.compose`, `.env`, `.env.local`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
+| Development | `symfony2026-dev` | Symfony CLI, подробные логи приложения, Symfony profiler и Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env.compose`, `.env`, `.env.local`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
 
-`COMPOSE_PROJECT_NAME` создает отдельный Compose project, сгенерированные сети и именованные volumes для каждого окружения. При этом используются одинаковые явные имена контейнеров и host ports, поэтому перед запуском другого окружения текущее нужно остановить. Переменные окружения остаются активными до закрытия текущей shell-сессии или загрузки другого контекста.
+`COMPOSE_PROJECT_NAME` создает отдельный Compose project, сгенерированные сети и именованные volumes для каждого окружения. При этом используются одинаковые явные имена контейнеров и host ports, поэтому перед запуском другого окружения текущее нужно остановить. До закрытия текущей shell-сессии или загрузки другого контекста активными остаются только управляющие переменные Compose и selector-переменные окружения.
 
 В репозитории предусмотрены npm-команды, которые автоматически загружают необходимые environment-файлы и открывают настроенный интерактивный shell:
 
@@ -1362,15 +1363,16 @@ npm run set:dev
 npm run set:load-test
 ```
 
-Каждая команда загружает `.env` и `.env.local`, а для development или тестирования производительности дополнительно применяет соответствующий override. Запущенные внутри этого shell команды `docker compose`, `npm run db:migrate`, `npm run db:fixtures` и другие универсальные скрипты используют выбранные Compose project и конфигурацию. Эти helper-команды только выбирают окружение и сами не собирают и не запускают контейнеры. Выполните `exit`, чтобы закрыть настроенный shell и вернуться в предыдущий контекст терминала.
+Каждая команда загружает `.env.compose`, а для development или тестирования производительности — соответствующий selector override. Затем `COMPOSE_ENV_FILES` указывает Docker Compose прочитать `.env` и `.env.local` для подстановки переменных; значения из `.env.local` имеют более высокий приоритет. Секреты из `.env.local` не экспортируются в интерактивный shell: они попадают только в Compose и в явно получающие их сервисы. Запущенные внутри этого shell команды `docker compose`, `npm run db:migrate`, `npm run db:fixtures` и другие универсальные скрипты используют выбранные Compose project и конфигурацию. Эти helper-команды только выбирают окружение и сами не собирают и не запускают контейнеры. Выполните `exit`, чтобы закрыть настроенный shell и вернуться в предыдущий контекст терминала.
 
 Подготовьте `.env` и запустите production из корня репозитория:
 
 ```bash
 cp .env.example .env
 set -a
-. ./.env
+. ./.env.compose
 set +a
+unset COMPOSE_PROJECT_NAME COMPOSE_FILE
 docker compose up --build -d
 ```
 
@@ -1379,7 +1381,7 @@ docker compose up --build -d
 ```bash
 docker compose down
 set -a
-. ./.env
+. ./.env.compose
 . ./.env.dev
 set +a
 docker compose build symfony-cli
@@ -1396,7 +1398,7 @@ docker compose down
 
 ```bash
 set -a
-. ./.env
+. ./.env.compose
 . ./.env.load_test
 set +a
 docker compose up -d
@@ -1404,7 +1406,7 @@ npm run db:migrate
 npm run db:fixtures
 ```
 
-Команды активации нужно повторять в каждом новом терминале. `set +a` только отключает автоматический экспорт следующих присваиваний и не удаляет уже загруженные переменные.
+Команды активации нужно повторять в каждом новом терминале. `set +a` только отключает автоматический экспорт следующих присваиваний и не удаляет уже загруженные управляющие и selector-переменные Compose. Не подключайте `.env.local` напрямую к интерактивному shell.
 
 Откройте shell внутри production CLI container:
 
