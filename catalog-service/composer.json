@@ -12,6 +12,7 @@
         "doctrine/doctrine-fixtures-bundle": "^4.3",
         "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.6",
+        "elasticsearch/elasticsearch": "^9.5",
         "fakerphp/faker": "^1.24",
         "google/protobuf": "^5.35",
         "nelmio/api-doc-bundle": "^5.10",
