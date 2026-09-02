@@ -246,6 +246,12 @@ services:
       APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
       CATALOG_PAGINATION_USE_HAS_NEXT_PAGE: "${CATALOG_PAGINATION_USE_HAS_NEXT_PAGE:-false}"
       DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
+      ELASTICSEARCH_URL: "${ELASTICSEARCH_URL:-http://elasticsearch:9200}"
+      ELASTICSEARCH_USERNAME: "${ELASTICSEARCH_USERNAME:-elastic}"
+      ELASTICSEARCH_PASSWORD: "${ELASTIC_PASSWORD}"
+      PRODUCT_SEARCH_INDEX_PREFIX: "${PRODUCT_SEARCH_INDEX_PREFIX:-products}"
+      PRODUCT_SEARCH_INDEX_ALIAS: "${PRODUCT_SEARCH_INDEX_ALIAS:-products}"
+      PRODUCT_SEARCH_BATCH_SIZE: "${PRODUCT_SEARCH_BATCH_SIZE:-500}"
     command:
       - symfony-prod-server
     ports:
@@ -267,6 +273,12 @@ services:
       APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
       CATALOG_PAGINATION_USE_HAS_NEXT_PAGE: "${CATALOG_PAGINATION_USE_HAS_NEXT_PAGE:-false}"
       DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
+      ELASTICSEARCH_URL: "${ELASTICSEARCH_URL:-http://elasticsearch:9200}"
+      ELASTICSEARCH_USERNAME: "${ELASTICSEARCH_USERNAME:-elastic}"
+      ELASTICSEARCH_PASSWORD: "${ELASTIC_PASSWORD}"
+      PRODUCT_SEARCH_INDEX_PREFIX: "${PRODUCT_SEARCH_INDEX_PREFIX:-products}"
+      PRODUCT_SEARCH_INDEX_ALIAS: "${PRODUCT_SEARCH_INDEX_ALIAS:-products}"
+      PRODUCT_SEARCH_BATCH_SIZE: "${PRODUCT_SEARCH_BATCH_SIZE:-500}"
     command:
       - bash
 
@@ -291,6 +303,12 @@ services:
       APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
       CATALOG_PAGINATION_USE_HAS_NEXT_PAGE: "${CATALOG_PAGINATION_USE_HAS_NEXT_PAGE:-false}"
       DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
+      ELASTICSEARCH_URL: "${ELASTICSEARCH_URL:-http://elasticsearch:9200}"
+      ELASTICSEARCH_USERNAME: "${ELASTICSEARCH_USERNAME:-elastic}"
+      ELASTICSEARCH_PASSWORD: "${ELASTIC_PASSWORD}"
+      PRODUCT_SEARCH_INDEX_PREFIX: "${PRODUCT_SEARCH_INDEX_PREFIX:-products}"
+      PRODUCT_SEARCH_INDEX_ALIAS: "${PRODUCT_SEARCH_INDEX_ALIAS:-products}"
+      PRODUCT_SEARCH_BATCH_SIZE: "${PRODUCT_SEARCH_BATCH_SIZE:-500}"
     command:
       - rr
       - serve

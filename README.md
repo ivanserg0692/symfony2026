@@ -501,6 +501,7 @@ The notification recipients are administrators resolved by the application, not 
 - Task file: [symfony/docs/task-10.md](symfony/docs/task-10.md)
 - MR result (EN): [symfony/docs/mr-task-10-en.md](symfony/docs/mr-task-10-en.md)
 - MR result (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
+- Product catalog full reindex runbook: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
 
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
@@ -1300,6 +1301,7 @@ docker compose down
 - Файл задачи: [symfony/docs/task-10.md](symfony/docs/task-10.md)
 - Результат MR (EN): [symfony/docs/mr-task-10-en.md](symfony/docs/mr-task-10-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
+- Runbook полной переиндексации каталога: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
 
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:

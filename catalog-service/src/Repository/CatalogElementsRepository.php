@@ -83,6 +83,66 @@ class CatalogElementsRepository extends ServiceEntityRepository
         return $this->sortElementsByIds($elements, $ids);
     }
 
+    /**
+     * @return int[]
+     */
+    public function findSearchIndexIdsAfter(int $lastId, int $limit): array
+    {
+        $rows = $this->createQueryBuilder("element")
+            ->select("element.id AS id")
+            ->andWhere("element.id > :lastId")
+            ->setParameter("lastId", $lastId)
+            ->orderBy("element.id", "ASC")
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_map("intval", array_column($rows, "id"));
+    }
+
+    /**
+     * Loads a bounded batch in separate relation queries to avoid an N+1 query
+     * pattern and a sections x prices x stocks Cartesian product.
+     *
+     * @param int[] $ids
+     *
+     * @return CatalogElements[]
+     */
+    public function findForSearchIndexingByIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $elementsQueryBuilder = $this->createQueryBuilder("element");
+        $this->addProductRelation($elementsQueryBuilder);
+        $this->addSectionsRelation($elementsQueryBuilder);
+
+        $elements = $elementsQueryBuilder
+            ->andWhere("element.id IN (:ids)")
+            ->setParameter("ids", $ids)
+            ->getQuery()
+            ->getResult();
+
+        $pricesQueryBuilder = $this->createQueryBuilder("priceElement");
+        $this->addProductPriceRelations($pricesQueryBuilder, "priceElement");
+        $pricesQueryBuilder
+            ->andWhere("priceElement.id IN (:ids)")
+            ->setParameter("ids", $ids)
+            ->getQuery()
+            ->getResult();
+
+        $stocksQueryBuilder = $this->createQueryBuilder("stockElement");
+        $this->addStoreRelations($stocksQueryBuilder, "stockElement");
+        $stocksQueryBuilder
+            ->andWhere("stockElement.id IN (:ids)")
+            ->setParameter("ids", $ids)
+            ->getQuery()
+            ->getResult();
+
+        return $this->sortElementsByIds($elements, $ids);
+    }
+
     public function countMatchingListFilters(?int $sectionId, ?bool $active): int
     {
         $queryBuilder = $this->createQueryBuilder("element")

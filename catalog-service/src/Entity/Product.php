@@ -51,8 +51,8 @@ class Product
      */
     #[ORM\ManyToMany(targetEntity: CatalogSections::class, inversedBy: 'products')]
     #[ORM\JoinTable(name: 'product_catalog_sections')]
-    #[ORM\JoinColumn(name: 'product_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
-    #[ORM\InverseJoinColumn(name: 'catalog_section_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    #[ORM\JoinColumn(name: 'product_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(name: 'catalog_section_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     #[Groups(["catalog_element:item"])]
     private Collection $sections;
 

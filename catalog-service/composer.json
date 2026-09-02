@@ -63,6 +63,10 @@
         "symfony/polyfill-php84": "*"
     },
     "scripts": {
+        "test": "simple-phpunit",
+        "test:unit": "simple-phpunit --testsuite Unit",
+        "test:integration": "simple-phpunit --testsuite Integration",
+        "test:functional": "simple-phpunit --testsuite Functional",
         "auto-scripts": {
             "cache:clear": "symfony-cmd",
             "assets:install %PUBLIC_DIR%": "symfony-cmd"
