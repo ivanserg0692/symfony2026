@@ -36,6 +36,7 @@
     - [`Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - in progress](#task-10-elasticsearch-catalog-read-model-for-search-filtering-aggregations-and-presets---in-progress)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
+  - [Elasticsearch Catalog Reindex](#elasticsearch-catalog-reindex)
   - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
   - [News Export and Batch Processing](#news-export-and-batch-processing)
   - [Run With Docker Compose](#run-with-docker-compose)
@@ -83,6 +84,7 @@
     - [`Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - in progress](#task-10-elasticsearch-read-%D0%BC%D0%BE%D0%B4%D0%B5%D0%BB%D1%8C-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B4%D0%BB%D1%8F-%D0%BF%D0%BE%D0%B8%D1%81%D0%BA%D0%B0-%D1%84%D0%B8%D0%BB%D1%8C%D1%82%D1%80%D0%B0%D1%86%D0%B8%D0%B8-%D0%B0%D0%B3%D1%80%D0%B5%D0%B3%D0%B0%D1%86%D0%B8%D0%B9-%D0%B8-%D0%BF%D1%80%D0%B5%D1%81%D0%B5%D1%82%D0%BE%D0%B2---in-progress)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
+  - [Полная переиндексация каталога в Elasticsearch](#%D0%BF%D0%BE%D0%BB%D0%BD%D0%B0%D1%8F-%D0%BF%D0%B5%D1%80%D0%B5%D0%B8%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0%D1%86%D0%B8%D1%8F-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B2-elasticsearch)
   - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
   - [Экспорт новостей и batch-обработка](#%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D1%80%D1%82-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B5%D0%B9-%D0%B8-batch-%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0)
   - [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
@@ -495,15 +497,13 @@ The notification recipients are administrators resolved by the application, not 
 - MR result (RU): [symfony/docs/mr-task-9-ru.md](symfony/docs/mr-task-9-ru.md)
 
 #### `Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - in progress
-- Brief info: The full reindex phase is implemented and verified on `1,000,000` products with `0` failures in `00:09:18` at approximately `1,792 docs/s`; incremental synchronization and catalog query migration remain in progress.
+- Brief info: The full reindex phase is implemented; incremental synchronization and catalog query migration remain in progress.
 - Backend Merge Request 10: <https://github.com/ivanserg0692/symfony2026/pull/14>
 - Frontend Merge Request 10: TBD
 - Task file: [symfony/docs/task-10.md](symfony/docs/task-10.md)
 - MR result (EN): [symfony/docs/mr-task-10-en.md](symfony/docs/mr-task-10-en.md)
 - MR result (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
 - Product catalog full reindex runbook: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
-
-![Elasticsearch full reindex of one million products](catalog-service/docs/images/reindex-result.png)
 
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
@@ -513,6 +513,27 @@ A separate frontend application was developed with React and Refine:
 ![Frontend news list](symfony/docs/images/frontend/news_list.png)
 
 ![Frontend notification list](symfony/docs/images/frontend/notification_list.png)
+
+### Elasticsearch Catalog Reindex
+
+The first operational stage of the Elasticsearch catalog read model is complete. Catalog Service can fully rebuild the derived product index from PostgreSQL using bounded keyset batches and the Elasticsearch Bulk API. The rebuild writes to a new versioned index, validates the result, and atomically switches the `products` alias only after successful completion; PostgreSQL remains the source of truth.
+
+The screenshot below records a successful full rebuild of a catalog containing one million products. Every document was indexed without a bulk-item failure, the document-count validation passed, and the alias was switched to the new index.
+
+| Result | Value |
+|---|---:|
+| Processed | `1,000,000` |
+| Indexed | `1,000,000` |
+| Failed | `0` |
+| Average rate | approximately `1,792 docs/s` |
+| Elapsed time | `00:09:18` |
+| Alias switched | `yes` |
+
+![Elasticsearch full reindex of one million products](catalog-service/docs/images/reindex-result.png)
+
+*Verified full reindex result for one million catalog products.*
+
+For configuration, execution, validation, failure handling, and rollback instructions, see the [product catalog full reindex runbook](catalog-service/docs/elasticsearch-reindex.md).
 
 ### gRPC Contracts and Service Flows
 
@@ -1297,15 +1318,13 @@ docker compose down
 - Результат MR (RU): [symfony/docs/mr-task-9-ru.md](symfony/docs/mr-task-9-ru.md)
 
 #### `Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - in progress
-- Brief info: Этап полной переиндексации реализован и проверен на `1 000 000` товаров: `0` ошибок, время `00:09:18`, средняя скорость около `1 792 docs/s`; инкрементальная синхронизация и перевод запросов каталога остаются в работе.
+- Brief info: Этап полной переиндексации реализован; инкрементальная синхронизация и перевод запросов каталога остаются в работе.
 - Backend Merge Request 10: <https://github.com/ivanserg0692/symfony2026/pull/14>
 - Frontend Merge Request 10: TBD
 - Файл задачи: [symfony/docs/task-10.md](symfony/docs/task-10.md)
 - Результат MR (EN): [symfony/docs/mr-task-10-en.md](symfony/docs/mr-task-10-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
 - Runbook полной переиндексации каталога: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
-
-![Полная индексация одного миллиона товаров в Elasticsearch](catalog-service/docs/images/reindex-result.png)
 
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:
@@ -1315,6 +1334,27 @@ docker compose down
 ![Список новостей frontend](symfony/docs/images/frontend/news_list.png)
 
 ![Список уведомлений frontend](symfony/docs/images/frontend/notification_list.png)
+
+### Полная переиндексация каталога в Elasticsearch
+
+Завершён первый эксплуатационный этап создания Elasticsearch read-модели каталога. Catalog Service умеет полностью восстанавливать производный индекс товаров из PostgreSQL ограниченными keyset batch через Elasticsearch Bulk API. Rebuild выполняется в новый versioned index, проверяет результат и атомарно переключает alias `products` только после успешного завершения; PostgreSQL остаётся источником истины.
+
+На скриншоте ниже показан успешный полный rebuild каталога из одного миллиона товаров. Все документы проиндексированы без ошибок отдельных bulk-операций, проверка количества документов пройдена, после чего alias переключён на новый индекс.
+
+| Результат | Значение |
+|---|---:|
+| Обработано | `1 000 000` |
+| Проиндексировано | `1 000 000` |
+| Ошибок | `0` |
+| Средняя скорость | около `1 792 docs/s` |
+| Время выполнения | `00:09:18` |
+| Alias переключён | `yes` |
+
+![Полная индексация одного миллиона товаров в Elasticsearch](catalog-service/docs/images/reindex-result.png)
+
+*Подтверждённый результат полной переиндексации одного миллиона товаров каталога.*
+
+Настройка, запуск, проверка результата, обработка ошибок и rollback описаны в [runbook полной переиндексации каталога](catalog-service/docs/elasticsearch-reindex.md).
 
 ### gRPC-контракты и сервисные сценарии
 
