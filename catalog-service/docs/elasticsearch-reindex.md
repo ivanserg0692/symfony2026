@@ -1,5 +1,27 @@
 # Elasticsearch Product Catalog Reindex
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [English](#english)
+  - [Purpose](#purpose)
+  - [Configuration](#configuration)
+  - [Run](#run)
+  - [Verified result](#verified-result)
+  - [Verify in Elasticsearch](#verify-in-elasticsearch)
+  - [Failure and rollback](#failure-and-rollback)
+  - [Concurrent changes and incremental indexing](#concurrent-changes-and-incremental-indexing)
+- [Русский](#%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9)
+  - [Назначение](#%D0%BD%D0%B0%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D0%B5)
+  - [Конфигурация](#%D0%BA%D0%BE%D0%BD%D1%84%D0%B8%D0%B3%D1%83%D1%80%D0%B0%D1%86%D0%B8%D1%8F)
+  - [Запуск](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA)
+  - [Подтверждённый результат](#%D0%BF%D0%BE%D0%B4%D1%82%D0%B2%D0%B5%D1%80%D0%B6%D0%B4%D1%91%D0%BD%D0%BD%D1%8B%D0%B9-%D1%80%D0%B5%D0%B7%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%82)
+  - [Проверка в Elasticsearch](#%D0%BF%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%BA%D0%B0-%D0%B2-elasticsearch)
+  - [Ошибки и rollback](#%D0%BE%D1%88%D0%B8%D0%B1%D0%BA%D0%B8-%D0%B8-rollback)
+  - [Конкурентные изменения и incremental indexing](#%D0%BA%D0%BE%D0%BD%D0%BA%D1%83%D1%80%D0%B5%D0%BD%D1%82%D0%BD%D1%8B%D0%B5-%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F-%D0%B8-incremental-indexing)
+
+<!-- END doctoc -->
+
 ## English
 
 ### Purpose
@@ -29,18 +51,34 @@ PRODUCT_SEARCH_BATCH_SIZE=500
 
 ### Run
 
-Use the production Docker Compose context from the repository root:
+Run the rebuild from the repository root in the currently active Docker Compose context:
 
 ```bash
-set -a
-. ./.env.compose
-set +a
-unset COMPOSE_PROJECT_NAME COMPOSE_FILE
+npm run catalog:elasticsearch:reindex
+```
 
-docker compose run --rm catalog-cli php bin/console app:elasticsearch:reindex
+The operational script uses a batch size of `100`, a PHP memory limit of `512M`, and Symfony's production environment without debug mode. Override these values when needed:
+
+```bash
+PRODUCT_SEARCH_BATCH_SIZE=50 \
+PRODUCT_SEARCH_REINDEX_MEMORY_LIMIT=1G \
+npm run catalog:elasticsearch:reindex
 ```
 
 The command exits successfully only when every bulk item succeeded, the target count equals the successful indexing count, and the alias switch completed.
+
+### Verified result
+
+The full rebuild was verified on a catalog containing one million products:
+
+- processed: `1,000,000`;
+- indexed: `1,000,000`;
+- failed: `0`;
+- average rate: approximately `1,792 docs/s`;
+- elapsed time: `00:09:18`;
+- alias switched: `yes`.
+
+![Elasticsearch full reindex of one million products](images/reindex-result.png)
 
 ### Verify in Elasticsearch
 
@@ -108,18 +146,34 @@ PRODUCT_SEARCH_BATCH_SIZE=500
 
 ### Запуск
 
-Из корня репозитория активируйте production Docker Compose context и выполните:
+Запустите rebuild из корня репозитория в текущем активном Docker Compose context:
 
 ```bash
-set -a
-. ./.env.compose
-set +a
-unset COMPOSE_PROJECT_NAME COMPOSE_FILE
+npm run catalog:elasticsearch:reindex
+```
 
-docker compose run --rm catalog-cli php bin/console app:elasticsearch:reindex
+Эксплуатационный скрипт использует batch size `100`, PHP memory limit `512M` и production-окружение Symfony без debug mode. При необходимости значения можно переопределить:
+
+```bash
+PRODUCT_SEARCH_BATCH_SIZE=50 \
+PRODUCT_SEARCH_REINDEX_MEMORY_LIMIT=1G \
+npm run catalog:elasticsearch:reindex
 ```
 
 Команда завершится успешно только если все элементы bulk-запросов проиндексированы, count целевого индекса совпал с числом успешных операций и alias был переключён.
+
+### Подтверждённый результат
+
+Полный rebuild проверен на каталоге из одного миллиона товаров:
+
+- обработано: `1 000 000`;
+- проиндексировано: `1 000 000`;
+- ошибок: `0`;
+- средняя скорость: около `1 792 docs/s`;
+- время выполнения: `00:09:18`;
+- alias переключён: `yes`.
+
+![Полная индексация одного миллиона товаров в Elasticsearch](images/reindex-result.png)
 
 ### Проверка в Elasticsearch
 

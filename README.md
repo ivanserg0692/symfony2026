@@ -33,7 +33,7 @@
       - [`Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - completed](#task-73-implement-the-external-api-gateway-for-the-public-resthttp-contract---completed)
     - [`Task 8`: Monitoring and load testing for the online store - completed](#task-8-monitoring-and-load-testing-for-the-online-store---completed)
     - [`Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - completed](#task-9-application-performance-optimization-rps-improvement-and-php-environment-tuning---completed)
-    - [`Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - planned](#task-10-elasticsearch-catalog-read-model-for-search-filtering-aggregations-and-presets---planned)
+    - [`Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - in progress](#task-10-elasticsearch-catalog-read-model-for-search-filtering-aggregations-and-presets---in-progress)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
   - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
@@ -80,7 +80,7 @@
       - [`Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - completed](#task-73-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B5%D0%B3%D0%BE-api-gateway-%D0%B4%D0%BB%D1%8F-%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D0%BE%D0%B3%D0%BE-resthttp-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D0%B0---completed)
     - [`Task 8`: Мониторинг и нагрузочное тестирование интернет-магазина - completed](#task-8-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0---completed)
     - [`Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - completed](#task-9-%D0%BE%D0%BF%D1%82%D0%B8%D0%BC%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BF%D0%BE%D0%B2%D1%8B%D1%88%D0%B5%D0%BD%D0%B8%D0%B5-rps-%D0%B8-%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-php-%D0%BE%D0%BA%D1%80%D1%83%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F---completed)
-    - [`Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - planned](#task-10-elasticsearch-read-%D0%BC%D0%BE%D0%B4%D0%B5%D0%BB%D1%8C-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B4%D0%BB%D1%8F-%D0%BF%D0%BE%D0%B8%D1%81%D0%BA%D0%B0-%D1%84%D0%B8%D0%BB%D1%8C%D1%82%D1%80%D0%B0%D1%86%D0%B8%D0%B8-%D0%B0%D0%B3%D1%80%D0%B5%D0%B3%D0%B0%D1%86%D0%B8%D0%B9-%D0%B8-%D0%BF%D1%80%D0%B5%D1%81%D0%B5%D1%82%D0%BE%D0%B2---planned)
+    - [`Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - in progress](#task-10-elasticsearch-read-%D0%BC%D0%BE%D0%B4%D0%B5%D0%BB%D1%8C-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B4%D0%BB%D1%8F-%D0%BF%D0%BE%D0%B8%D1%81%D0%BA%D0%B0-%D1%84%D0%B8%D0%BB%D1%8C%D1%82%D1%80%D0%B0%D1%86%D0%B8%D0%B8-%D0%B0%D0%B3%D1%80%D0%B5%D0%B3%D0%B0%D1%86%D0%B8%D0%B9-%D0%B8-%D0%BF%D1%80%D0%B5%D1%81%D0%B5%D1%82%D0%BE%D0%B2---in-progress)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
   - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
@@ -494,14 +494,16 @@ The notification recipients are administrators resolved by the application, not 
 - MR result (EN): [symfony/docs/mr-task-9-en.md](symfony/docs/mr-task-9-en.md)
 - MR result (RU): [symfony/docs/mr-task-9-ru.md](symfony/docs/mr-task-9-ru.md)
 
-#### `Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - planned
-- Brief info: Move heavy catalog search, `COUNT`, filtering, facets, and aggregations from PostgreSQL to an Elasticsearch read model while keeping PostgreSQL as the source of truth and adding controlled system filter presets.
+#### `Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - in progress
+- Brief info: The full reindex phase is implemented and verified on `1,000,000` products with `0` failures in `00:09:18` at approximately `1,792 docs/s`; incremental synchronization and catalog query migration remain in progress.
 - Backend Merge Request 10: <https://github.com/ivanserg0692/symfony2026/pull/14>
 - Frontend Merge Request 10: TBD
 - Task file: [symfony/docs/task-10.md](symfony/docs/task-10.md)
 - MR result (EN): [symfony/docs/mr-task-10-en.md](symfony/docs/mr-task-10-en.md)
 - MR result (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
 - Product catalog full reindex runbook: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
+
+![Elasticsearch full reindex of one million products](catalog-service/docs/images/reindex-result.png)
 
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
@@ -1294,14 +1296,16 @@ docker compose down
 - Результат MR (EN): [symfony/docs/mr-task-9-en.md](symfony/docs/mr-task-9-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-9-ru.md](symfony/docs/mr-task-9-ru.md)
 
-#### `Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - planned
-- Brief info: Перенести тяжёлые каталоговые поиск, `COUNT`, фильтрацию, фасеты и агрегации из PostgreSQL в Elasticsearch read-модель, сохранив PostgreSQL источником истины и добавив контролируемые системные пресеты фильтрации.
+#### `Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - in progress
+- Brief info: Этап полной переиндексации реализован и проверен на `1 000 000` товаров: `0` ошибок, время `00:09:18`, средняя скорость около `1 792 docs/s`; инкрементальная синхронизация и перевод запросов каталога остаются в работе.
 - Backend Merge Request 10: <https://github.com/ivanserg0692/symfony2026/pull/14>
 - Frontend Merge Request 10: TBD
 - Файл задачи: [symfony/docs/task-10.md](symfony/docs/task-10.md)
 - Результат MR (EN): [symfony/docs/mr-task-10-en.md](symfony/docs/mr-task-10-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
 - Runbook полной переиндексации каталога: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
+
+![Полная индексация одного миллиона товаров в Elasticsearch](catalog-service/docs/images/reindex-result.png)
 
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:

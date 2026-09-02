@@ -5,6 +5,7 @@
 
 - [RU](#ru)
   - [Статус](#%D1%81%D1%82%D0%B0%D1%82%D1%83%D1%81)
+  - [Прогресс реализации](#%D0%BF%D1%80%D0%BE%D0%B3%D1%80%D0%B5%D1%81%D1%81-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8)
   - [Название](#%D0%BD%D0%B0%D0%B7%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5)
   - [Описание задачи](#%D0%BE%D0%BF%D0%B8%D1%81%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B7%D0%B0%D0%B4%D0%B0%D1%87%D0%B8)
   - [Цель](#%D1%86%D0%B5%D0%BB%D1%8C)
@@ -15,6 +16,7 @@
   - [Примечания](#%D0%BF%D1%80%D0%B8%D0%BC%D0%B5%D1%87%D0%B0%D0%BD%D0%B8%D1%8F)
 - [EN](#en)
   - [Status](#status)
+  - [Implementation Progress](#implementation-progress)
   - [Title](#title)
   - [Task Description](#task-description)
   - [Goal](#goal)
@@ -30,7 +32,15 @@
 
 ### Статус
 
-**Planned.**
+**In progress.**
+
+### Прогресс реализации
+
+Первый эксплуатационный этап завершён: добавлена инфраструктура Elasticsearch и реализован полный rebuild поисковой read-модели каталога из PostgreSQL. Rebuild использует keyset pagination, ограниченные batch, Bulk API, отдельный builder поискового документа, versioned index, проверку ошибок и атомарное переключение alias.
+
+Контрольный запуск успешно обработал и проиндексировал `1 000 000` товаров без ошибок за `00:09:18` со средней скоростью около `1 792 docs/s`. Подробная инструкция и скриншот результата находятся в [runbook полной переиндексации](../../catalog-service/docs/elasticsearch-reindex.md).
+
+Следующими этапами остаются инкрементальная синхронизация через Messenger/RabbitMQ и перевод поиска, фильтрации, сортировки, `COUNT`, facets и aggregations на Elasticsearch read-model.
 
 ### Название
 
@@ -138,7 +148,15 @@ Elasticsearch в этой задаче является поисковой read-
 
 ### Status
 
-**Planned.**
+**In progress.**
+
+### Implementation Progress
+
+The first operational phase is complete: Elasticsearch infrastructure is available and the full rebuild of the catalog search read model from PostgreSQL is implemented. The rebuild uses keyset pagination, bounded batches, the Bulk API, a dedicated search-document builder, versioned indices, error validation, and an atomic alias switch.
+
+The verified run successfully processed and indexed `1,000,000` products with no failures in `00:09:18`, averaging approximately `1,792 docs/s`. The detailed procedure and result screenshot are available in the [full reindex runbook](../../catalog-service/docs/elasticsearch-reindex.md).
+
+The remaining stages are incremental synchronization through Messenger/RabbitMQ and moving search, filtering, sorting, `COUNT`, facets, and aggregations to the Elasticsearch read model.
 
 ### Title
 
