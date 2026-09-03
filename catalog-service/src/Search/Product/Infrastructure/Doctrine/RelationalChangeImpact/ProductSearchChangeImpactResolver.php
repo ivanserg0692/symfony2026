@@ -3,13 +3,13 @@
 namespace App\Search\Product\Infrastructure\Doctrine\RelationalChangeImpact;
 
 use App\Entity\Product;
-use App\Search\Product\Infrastructure\Doctrine\ProductSearchAffectedElementResolver;
+use App\Repository\CatalogElementsRepository;
 use Doctrine\ORM\PersistentCollection;
 
 final readonly class ProductSearchChangeImpactResolver extends AbstractProductSearchChangeImpactResolver
 {
     public function __construct(
-        private ProductSearchAffectedElementResolver $affectedElementResolver,
+        private CatalogElementsRepository $catalogElementsRepository,
     ) {
     }
 
@@ -25,7 +25,9 @@ final readonly class ProductSearchChangeImpactResolver extends AbstractProductSe
 
     protected function doResolveEntityChange(object $entity, array $changeSet, bool $insertion): array
     {
-        return $this->affectedElementResolver->byProductIds($this->entityIds([$entity]));
+        /** @var Product $entity */
+
+        return $this->entityIds($this->catalogElementsRepository->findByProducts([$entity]));
     }
 
     public function supportsCollection(PersistentCollection $collection): bool
@@ -40,6 +42,6 @@ final readonly class ProductSearchChangeImpactResolver extends AbstractProductSe
             throw new \LogicException(sprintf('%s does not support this collection.', static::class));
         }
 
-        return $this->affectedElementResolver->byProductIds($this->entityIds([$collection->getOwner()]));
+        return $this->entityIds($this->catalogElementsRepository->findByProducts([$collection->getOwner()]));
     }
 }

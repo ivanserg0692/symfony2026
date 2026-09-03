@@ -30,11 +30,6 @@ interface ProductSearchChangeImpactResolverInterface
      */
     public function resolveEntityChange(object $entity, array $changeSet, bool $insertion): array;
 
-    /**
-     * @return int[]
-     */
-    public function resolvePostPersist(object $entity): array;
-
     public function supportsCollection(PersistentCollection $collection): bool;
 
     /**

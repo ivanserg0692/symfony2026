@@ -5,13 +5,11 @@ namespace App\Search\Product\Infrastructure\Doctrine;
 use App\Search\Product\Infrastructure\Doctrine\RelationalChangeImpact\ProductSearchChangeImpactResolverInterface;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Event\OnFlushEventArgs;
-use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\PersistentCollection;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
 #[AsDoctrineListener(event: Events::onFlush, priority: -100)]
-#[AsDoctrineListener(event: Events::postPersist, priority: -100)]
 final readonly class ProductSearchOutboxDoctrineListener
 {
     /** @var ProductSearchChangeImpactResolverInterface[] */
@@ -31,7 +29,8 @@ final readonly class ProductSearchOutboxDoctrineListener
 
     public function onFlush(OnFlushEventArgs $event): void
     {
-        $unitOfWork = $event->getObjectManager()->getUnitOfWork();
+        $entityManager = $event->getObjectManager();
+        $unitOfWork = $entityManager->getUnitOfWork();
         $catalogElementIds = [];
 
         foreach ($unitOfWork->getScheduledEntityInsertions() as $entity) {
@@ -66,17 +65,7 @@ final readonly class ProductSearchOutboxDoctrineListener
         }
 
         foreach (array_keys($catalogElementIds) as $catalogElementId) {
-            $this->outboxWriter->enqueue($catalogElementId);
-        }
-    }
-
-    public function postPersist(PostPersistEventArgs $event): void
-    {
-        $entity = $event->getObject();
-        $resolver = $this->resolverForEntity($entity);
-
-        foreach ($resolver?->resolvePostPersist($entity) ?? [] as $catalogElementId) {
-            $this->outboxWriter->enqueue($catalogElementId);
+            $this->outboxWriter->schedule($entityManager, $catalogElementId);
         }
     }
 

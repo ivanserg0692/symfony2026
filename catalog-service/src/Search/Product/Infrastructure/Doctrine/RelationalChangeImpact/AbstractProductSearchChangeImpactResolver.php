@@ -27,11 +27,6 @@ abstract readonly class AbstractProductSearchChangeImpactResolver implements Pro
         return $this->doResolveEntityChange($entity, $changeSet, $insertion);
     }
 
-    public function resolvePostPersist(object $entity): array
-    {
-        return [];
-    }
-
     public function supportsCollection(PersistentCollection $collection): bool
     {
         return false;

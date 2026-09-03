@@ -23,14 +23,4 @@ final readonly class CatalogElementSearchChangeImpactResolver extends AbstractPr
         return !$insertion && $id !== null ? [$id] : [];
     }
 
-    public function resolvePostPersist(object $entity): array
-    {
-        if (!$this->supportsEntity($entity)) {
-            return [];
-        }
-
-        $id = $this->entityId($entity);
-
-        return $id !== null ? [$id] : [];
-    }
 }
