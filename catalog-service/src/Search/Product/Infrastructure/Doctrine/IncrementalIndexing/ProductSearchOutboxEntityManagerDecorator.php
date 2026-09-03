@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Search\Product\Infrastructure\Doctrine;
+namespace App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing;
 
 use Doctrine\ORM\Decorator\EntityManagerDecorator;
 use Doctrine\ORM\EntityManagerInterface;

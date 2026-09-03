@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Search\Product\Infrastructure\Doctrine\RelationalChangeImpact;
+namespace App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing\RelationalChangeImpact;
 
 use Doctrine\ORM\PersistentCollection;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;

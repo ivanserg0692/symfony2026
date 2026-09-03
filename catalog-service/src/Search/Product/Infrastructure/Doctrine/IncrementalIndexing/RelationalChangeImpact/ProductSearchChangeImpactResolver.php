@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Search\Product\Infrastructure\Doctrine\RelationalChangeImpact;
+namespace App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing\RelationalChangeImpact;
 
 use App\Entity\Product;
 use App\Repository\CatalogElementsRepository;

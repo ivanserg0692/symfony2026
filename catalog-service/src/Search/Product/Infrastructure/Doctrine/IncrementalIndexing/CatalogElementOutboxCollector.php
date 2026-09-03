@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Search\Product\Infrastructure\Doctrine;
+namespace App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing;
 
 /**
  * Collects identity IDs assigned during one Doctrine flush.

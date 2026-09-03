@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Search\Product\Infrastructure\Doctrine;
+namespace App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing;
 
 use App\Entity\ProductSearchOutboxEvent;
 use Doctrine\ORM\EntityManagerInterface;

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Tests\Unit\Search\Product\Infrastructure\Doctrine;
+namespace App\Tests\Unit\Search\Product\Infrastructure\Doctrine\IncrementalIndexing;
 
 use App\Entity\ProductSearchOutboxEvent;
-use App\Search\Product\Infrastructure\Doctrine\CatalogElementOutboxCollector;
-use App\Search\Product\Infrastructure\Doctrine\ProductSearchOutboxEntityManagerDecorator;
-use App\Search\Product\Infrastructure\Doctrine\ProductSearchOutboxWriter;
+use App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing\CatalogElementOutboxCollector;
+use App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing\ProductSearchOutboxEntityManagerDecorator;
+use App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing\ProductSearchOutboxWriter;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
