@@ -32,6 +32,11 @@ services:
     Grpc\Catalog\V1\InventoryServiceInterface:
         alias: App\Grpc\InventoryService
 
+    App\Search\Product\Infrastructure\Doctrine\ProductSearchOutboxEntityManagerDecorator:
+        decorates: doctrine.orm.default_entity_manager
+        arguments:
+            $wrapped: '@App\Search\Product\Infrastructure\Doctrine\ProductSearchOutboxEntityManagerDecorator.inner'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 

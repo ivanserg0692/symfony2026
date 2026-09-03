@@ -65,7 +65,7 @@ final readonly class ProductSearchOutboxDoctrineListener
         }
 
         foreach (array_keys($catalogElementIds) as $catalogElementId) {
-            $this->outboxWriter->schedule($entityManager, $catalogElementId);
+            $this->outboxWriter->scheduleInCurrentFlush($entityManager, $catalogElementId);
         }
     }
 
