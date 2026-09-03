@@ -2,12 +2,14 @@
 
 namespace App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing;
 
+use App\Search\Product\Application\Message\ProductSearchOutboxEvent;
 use App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing\RelationalChangeImpact\ProductSearchChangeImpactResolverInterface;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\PersistentCollection;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 #[AsDoctrineListener(event: Events::onFlush, priority: -100)]
 final readonly class ProductSearchOutboxDoctrineListener
@@ -20,10 +22,9 @@ final readonly class ProductSearchOutboxDoctrineListener
      */
     public function __construct(
         #[AutowireIterator('app.product_search.change_impact_resolver')]
-        iterable                          $changeImpactResolvers,
-        private ProductSearchOutboxWriter $outboxWriter,
-    )
-    {
+        iterable $changeImpactResolvers,
+        private MessageBusInterface $messageBus,
+    ) {
         $this->changeImpactResolvers = [...$changeImpactResolvers];
     }
 
@@ -65,7 +66,7 @@ final readonly class ProductSearchOutboxDoctrineListener
         }
 
         foreach (array_keys($catalogElementIds) as $catalogElementId) {
-            $this->outboxWriter->scheduleInCurrentFlush($entityManager, $catalogElementId);
+            $this->messageBus->dispatch(new ProductSearchOutboxEvent($catalogElementId));
         }
     }
 

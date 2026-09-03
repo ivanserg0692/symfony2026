@@ -9,14 +9,48 @@ framework:
             # failed: 'doctrine://default?queue_name=failed'
             sync: 'sync://'
 
+            # Transactional PostgreSQL staging. The producer must use the same
+            # named DBAL connection as Doctrine ORM (the "default" connection).
+            catalog_search_outbox:
+                dsn: 'doctrine://default'
+                options:
+                    table_name: messenger_messages
+                    queue_name: catalog_search_outbox
+                    auto_setup: false
+                failure_transport: catalog_search_outbox_failed
+                retry_strategy:
+                    max_retries: 12
+                    delay: 1000
+                    multiplier: 2
+                    max_delay: 60000
+
+            catalog_search_outbox_failed:
+                dsn: 'doctrine://default'
+                options:
+                    table_name: messenger_messages
+                    queue_name: catalog_search_outbox_failed
+                    auto_setup: false
+
         routing:
             # Route your messages to the transports
             # 'App\Message\YourMessage': async
+            App\Search\Product\Application\Message\ProductSearchOutboxEvent: catalog_search_outbox
 
-# when@test:
-#    framework:
-#        messenger:
-#            transports:
-#                # replace with your transport name here (e.g., my_transport: 'in-memory://')
-#                # For more Messenger testing tools, see https://github.com/zenstruck/messenger-test
-#                async: 'in-memory://'
+when@test:
+    framework:
+        messenger:
+            transports:
+                catalog_search_outbox:
+                    dsn: 'doctrine://default'
+                    options:
+                        table_name: messenger_messages
+                        queue_name: catalog_search_outbox
+                        auto_setup: true
+                        use_notify: false
+                catalog_search_outbox_failed:
+                    dsn: 'doctrine://default'
+                    options:
+                        table_name: messenger_messages
+                        queue_name: catalog_search_outbox_failed
+                        auto_setup: true
+                        use_notify: false

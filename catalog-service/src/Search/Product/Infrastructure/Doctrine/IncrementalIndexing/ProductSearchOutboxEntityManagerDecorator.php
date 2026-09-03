@@ -6,15 +6,16 @@ use Doctrine\ORM\Decorator\EntityManagerDecorator;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Persists outbox events for new identity-generated CatalogElements only after
- * their original flush has fully returned, while keeping both flushes atomic.
+ * Starts an outer transaction before Doctrine computes and executes a flush.
+ *
+ * Doctrine's onFlush happens before its implicit transaction begins. The outer
+ * transaction therefore ensures that DBAL writes performed by Messenger's Doctrine
+ * transport in onFlush/postPersist commit or roll back with the business changes.
  */
 final class ProductSearchOutboxEntityManagerDecorator extends EntityManagerDecorator
 {
     public function __construct(
         EntityManagerInterface $wrapped,
-        private readonly CatalogElementOutboxCollector $collector,
-        private readonly ProductSearchOutboxWriter $outboxWriter,
     ) {
         parent::__construct($wrapped);
     }
@@ -28,32 +29,19 @@ final class ProductSearchOutboxEntityManagerDecorator extends EntityManagerDecor
         $ownsTransaction = !$connection->isTransactionActive();
 
         if ($ownsTransaction) {
-            // Two ORM flushes are required for a new CatalogElement: the first one
-            // generates its identity, and the second one persists its outbox event.
-            // Without this surrounding transaction Doctrine could commit the business
-            // data before the outbox flush fails, breaking transactional outbox delivery.
+            // Messenger's Doctrine transport uses this same DBAL connection directly.
+            // Without the outer transaction an onFlush message could be committed
+            // before the ORM flush fails, breaking the transactional outbox guarantee.
             $connection->beginTransaction();
         }
 
         try {
-            $this->collector->begin();
             parent::flush();
-
-            $catalogElementIds = $this->collector->release();
-            foreach ($catalogElementIds as $catalogElementId) {
-                $this->outboxWriter->scheduleForNextFlush($this->wrapped, $catalogElementId);
-            }
-
-            if ($catalogElementIds !== []) {
-                parent::flush();
-            }
 
             if ($ownsTransaction) {
                 $connection->commit();
             }
         } catch (\Throwable $exception) {
-            $this->collector->discard();
-
             if ($ownsTransaction && $connection->isTransactionActive()) {
                 $connection->rollBack();
             }
