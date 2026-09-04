@@ -252,6 +252,7 @@ services:
       PRODUCT_SEARCH_INDEX_PREFIX: "${PRODUCT_SEARCH_INDEX_PREFIX:-products}"
       PRODUCT_SEARCH_INDEX_ALIAS: "${PRODUCT_SEARCH_INDEX_ALIAS:-products}"
       PRODUCT_SEARCH_BATCH_SIZE: "${PRODUCT_SEARCH_BATCH_SIZE:-500}"
+      CATALOG_SEARCH_MESSENGER_TRANSPORT_DSN: "amqp://${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER in .env.local}:${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env.local}@rabbitmq:5672/%2f"
     command:
       - symfony-prod-server
     ports:
@@ -279,8 +280,81 @@ services:
       PRODUCT_SEARCH_INDEX_PREFIX: "${PRODUCT_SEARCH_INDEX_PREFIX:-products}"
       PRODUCT_SEARCH_INDEX_ALIAS: "${PRODUCT_SEARCH_INDEX_ALIAS:-products}"
       PRODUCT_SEARCH_BATCH_SIZE: "${PRODUCT_SEARCH_BATCH_SIZE:-500}"
+      CATALOG_SEARCH_MESSENGER_TRANSPORT_DSN: "amqp://${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER in .env.local}:${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env.local}@rabbitmq:5672/%2f"
     command:
       - bash
+
+  # Relays committed Doctrine transport messages to the durable RabbitMQ queue.
+  catalog-search-outbox-worker:
+    <<: *symfony-base
+    volumes:
+      - ./catalog-service:/workspace
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
+      DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
+      CATALOG_SEARCH_MESSENGER_TRANSPORT_DSN: "amqp://${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER in .env.local}:${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env.local}@rabbitmq:5672/%2f"
+    command:
+      - php
+      - -d
+      - memory_limit=192M
+      - bin/console
+      - --env=prod
+      - --no-debug
+      - messenger:consume
+      - catalog_search_outbox
+      - --time-limit=3600
+      - --memory-limit=160M
+      - --sleep=1
+      - --no-interaction
+    restart: unless-stopped
+    stdin_open: false
+    tty: false
+
+  # Applies Catalog element IDs from RabbitMQ to the current Elasticsearch alias.
+  # The full-reindex orchestration stops only this worker while a new index is built.
+  catalog-search-index-worker:
+    <<: *symfony-base
+    volumes:
+      - ./catalog-service:/workspace
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
+      DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
+      ELASTICSEARCH_URL: "${ELASTICSEARCH_URL:-http://elasticsearch:9200}"
+      ELASTICSEARCH_USERNAME: "${ELASTICSEARCH_USERNAME:-elastic}"
+      ELASTICSEARCH_PASSWORD: "${ELASTIC_PASSWORD}"
+      PRODUCT_SEARCH_INDEX_PREFIX: "${PRODUCT_SEARCH_INDEX_PREFIX:-products}"
+      PRODUCT_SEARCH_INDEX_ALIAS: "${PRODUCT_SEARCH_INDEX_ALIAS:-products}"
+      PRODUCT_SEARCH_BATCH_SIZE: "${PRODUCT_SEARCH_BATCH_SIZE:-500}"
+      PRODUCT_SEARCH_REINDEX_LOCK_ID: "${PRODUCT_SEARCH_REINDEX_LOCK_ID:-1633906547}"
+      CATALOG_SEARCH_MESSENGER_TRANSPORT_DSN: "amqp://${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER in .env.local}:${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env.local}@rabbitmq:5672/%2f"
+    command:
+      - php
+      - -d
+      - memory_limit=192M
+      - bin/console
+      - --env=prod
+      - --no-debug
+      - messenger:consume
+      - catalog_search
+      - --time-limit=3600
+      - --memory-limit=160M
+      - --sleep=1
+      - --no-interaction
+    restart: unless-stopped
+    stdin_open: false
+    tty: false
 
   # Local Catalog gRPC server powered by RoadRunner.
   catalog-grpc:
@@ -309,6 +383,7 @@ services:
       PRODUCT_SEARCH_INDEX_PREFIX: "${PRODUCT_SEARCH_INDEX_PREFIX:-products}"
       PRODUCT_SEARCH_INDEX_ALIAS: "${PRODUCT_SEARCH_INDEX_ALIAS:-products}"
       PRODUCT_SEARCH_BATCH_SIZE: "${PRODUCT_SEARCH_BATCH_SIZE:-500}"
+      CATALOG_SEARCH_MESSENGER_TRANSPORT_DSN: "amqp://${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER in .env.local}:${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env.local}@rabbitmq:5672/%2f"
     command:
       - rr
       - serve
@@ -370,10 +445,18 @@ services:
     env_file:
       - .env
       - .env.local
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER in .env.local}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env.local}"
     ports:
       - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
   # S3-compatible object storage for development file uploads and exports.
   minio:

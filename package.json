@@ -6,7 +6,7 @@
     "docker:restart:php": "docker compose restart symfony-cli symfony-web catalog-cli catalog-web catalog-grpc cart-cli cart-web",
     "docker:cache:clear:php": "docker compose exec symfony-cli php -d memory_limit=1G bin/console cache:clear && docker compose exec catalog-cli php -d memory_limit=1G bin/console cache:clear && docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear && npm run docker:restart:php",
     "docker:recreate": "docker compose up -d --force-recreate",
-    "catalog:elasticsearch:reindex": "docker compose exec -e PRODUCT_SEARCH_BATCH_SIZE=${PRODUCT_SEARCH_BATCH_SIZE:-100} catalog-cli php -d memory_limit=${PRODUCT_SEARCH_REINDEX_MEMORY_LIMIT:-512M} bin/console --env=prod --no-debug app:elasticsearch:reindex",
+    "catalog:elasticsearch:reindex": "bash scripts/catalog-elasticsearch-reindex.sh",
     "vendors:install": "docker compose run --rm symfony-cli composer install && docker compose run --rm catalog-cli composer install && docker compose run --rm cart-cli composer install",
     "vendors:install:prod": "docker compose run --rm symfony-cli composer install --no-dev --optimize-autoloader --no-interaction && docker compose run --rm catalog-cli composer install --no-dev --optimize-autoloader --no-interaction && docker compose run --rm cart-cli composer install --no-dev --optimize-autoloader --no-interaction",
     "minio": "docker compose run --rm minio-client",

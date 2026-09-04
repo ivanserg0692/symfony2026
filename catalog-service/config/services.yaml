@@ -21,6 +21,8 @@ services:
             string $productSearchIndexPrefix: '%env(PRODUCT_SEARCH_INDEX_PREFIX)%'
             string $productSearchIndexAlias: '%env(PRODUCT_SEARCH_INDEX_ALIAS)%'
             int $productSearchBatchSize: '%env(int:PRODUCT_SEARCH_BATCH_SIZE)%'
+            int $productSearchReindexLockId: '%env(int:PRODUCT_SEARCH_REINDEX_LOCK_ID)%'
+            bool $productSearchIncrementalWorkerPaused: '%env(bool:PRODUCT_SEARCH_INCREMENTAL_WORKER_PAUSED)%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name

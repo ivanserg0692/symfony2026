@@ -19,6 +19,7 @@ final class ElasticsearchReindexCommand extends Command
 {
     public function __construct(
         private readonly ProductSearchRebuildInterface $rebuilder,
+        private readonly bool $productSearchIncrementalWorkerPaused,
     ) {
         parent::__construct();
     }
@@ -27,6 +28,13 @@ final class ElasticsearchReindexCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $io->title("Elasticsearch product catalog rebuild");
+
+        if (!$this->productSearchIncrementalWorkerPaused) {
+            $io->error("Incremental Elasticsearch worker is not marked as paused.");
+            $io->note("Run the coordinated rebuild with: npm run catalog:elasticsearch:reindex");
+
+            return Command::FAILURE;
+        }
 
         $progressBar = new ProgressBar($output, $this->rebuilder->countProducts());
         $progressBar->setFormat(
