@@ -14,6 +14,10 @@ interface ProductSearchIndexGatewayInterface
      */
     public function bulkIndex(string $indexName, array $documents): BulkIndexResult;
 
+    public function indexInCurrentIndex(ProductSearchIndexDocumentInterface $document): void;
+
+    public function deleteFromCurrentIndex(int $catalogElementId): void;
+
     public function refresh(string $indexName): void;
 
     public function count(string $indexName): int;

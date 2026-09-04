@@ -69,6 +69,45 @@ final readonly class ElasticsearchProductSearchIndexGateway implements ProductSe
         return $this->bulkResponseParser->parse($response, $productIds);
     }
 
+    public function indexInCurrentIndex(ProductSearchIndexDocumentInterface $document): void
+    {
+        $result = $this->bulkIndex($this->productSearchIndexAlias, [$document]);
+
+        if ($result->getFailedCount() > 0) {
+            throw new \RuntimeException(sprintf(
+                "Elasticsearch incremental indexing failed for catalog element %d: %s",
+                $document->getId(),
+                $result->failures[0]->error,
+            ));
+        }
+    }
+
+    public function deleteFromCurrentIndex(int $catalogElementId): void
+    {
+        $response = $this->client->bulk([
+            "body" => [[
+                "delete" => [
+                    "_index" => $this->productSearchIndexAlias,
+                    "_id" => (string) $catalogElementId,
+                ],
+            ]],
+        ])->asArray();
+
+        $deleteResult = $response["items"][0]["delete"] ?? null;
+        $status = is_array($deleteResult) ? (int) ($deleteResult["status"] ?? 500) : 500;
+        $documentWasAlreadyMissing = $status === 404 && ($deleteResult["result"] ?? null) === "not_found";
+
+        if ($status >= 300 && !$documentWasAlreadyMissing) {
+            $error = is_array($deleteResult) ? $deleteResult["error"] ?? "unknown error" : "malformed Bulk API response";
+
+            throw new \RuntimeException(sprintf(
+                "Elasticsearch incremental deletion failed for catalog element %d: %s",
+                $catalogElementId,
+                is_string($error) ? $error : json_encode($error, JSON_THROW_ON_ERROR),
+            ));
+        }
+    }
+
     public function refresh(string $indexName): void
     {
         $this->client->indices()->refresh(["index" => $indexName]);
