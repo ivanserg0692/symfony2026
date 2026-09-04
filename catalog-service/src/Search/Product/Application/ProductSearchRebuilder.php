@@ -10,6 +10,7 @@ use App\Search\Product\Application\Dto\Rebuild\ProductSearchReindexResult;
 use App\Search\Product\Port\Input\ProductSearchRebuildInterface;
 use App\Search\Product\Port\Output\ProductSearchCatalogSourceInterface;
 use App\Search\Product\Port\Output\ProductSearchIndexGatewayInterface;
+use App\Search\Product\Port\Output\ProductSearchReindexLockInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AsAlias;
 
@@ -20,6 +21,7 @@ final readonly class ProductSearchRebuilder implements ProductSearchRebuildInter
         private ProductSearchCatalogSourceInterface $catalogSource,
         private ProductSearchDocumentBuilder $documentBuilder,
         private ProductSearchIndexGatewayInterface $indexGateway,
+        private ProductSearchReindexLockInterface $reindexLock,
         private LoggerInterface $logger,
         private int $productSearchBatchSize,
     ) {
@@ -37,6 +39,22 @@ final readonly class ProductSearchRebuilder implements ProductSearchRebuildInter
      * @param null|callable(ProductSearchReindexProgress): void $onProgress
      */
     public function rebuild(?callable $onProgress = null): ProductSearchReindexResult
+    {
+        if (!$this->reindexLock->acquire()) {
+            throw new \RuntimeException("Another Elasticsearch product catalog rebuild is already in progress.");
+        }
+
+        try {
+            return $this->rebuildWhileLocked($onProgress);
+        } finally {
+            $this->reindexLock->release();
+        }
+    }
+
+    /**
+     * @param null|callable(ProductSearchReindexProgress): void $onProgress
+     */
+    private function rebuildWhileLocked(?callable $onProgress): ProductSearchReindexResult
     {
         $startedAt = microtime(true);
         $indexName = $this->indexGateway->createRebuildIndex();

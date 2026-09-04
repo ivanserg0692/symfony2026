@@ -10,6 +10,7 @@ use App\Search\Product\Application\ProductSearchRebuilder;
 use App\Search\Product\Port\Input\ProductSearchRebuildInterface;
 use App\Search\Product\Port\Output\ProductSearchCatalogSourceInterface;
 use App\Search\Product\Port\Output\ProductSearchIndexGatewayInterface;
+use App\Search\Product\Port\Output\ProductSearchReindexLockInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -67,7 +68,42 @@ final class ProductSearchRebuilderTest extends TestCase
         }
     }
 
-    private function createRebuilder(TestProductSearchIndexGateway $gateway): ProductSearchRebuilder
+    public function testReleasesReindexLockAfterFailure(): void
+    {
+        $gateway = new TestProductSearchIndexGateway(new BulkIndexResult(1, []), 0);
+        $lock = new TestProductSearchReindexLock();
+
+        try {
+            $this->createRebuilder($gateway, $lock)->rebuild();
+            self::fail("Expected rebuild validation failure.");
+        } catch (\RuntimeException) {
+            self::assertFalse($lock->acquired);
+            self::assertSame(1, $lock->releaseCount);
+        }
+    }
+
+    public function testRejectsConcurrentFullReindex(): void
+    {
+        $lock = new TestProductSearchReindexLock(false);
+        $catalogSource = $this->createStub(ProductSearchCatalogSourceInterface::class);
+        $rebuilder = new ProductSearchRebuilder(
+            $catalogSource,
+            new ProductSearchDocumentBuilder(),
+            new TestProductSearchIndexGateway(new BulkIndexResult(0, []), 0),
+            $lock,
+            new NullLogger(),
+            500,
+        );
+
+        $this->expectExceptionMessage("already in progress");
+
+        $rebuilder->rebuild();
+    }
+
+    private function createRebuilder(
+        TestProductSearchIndexGateway $gateway,
+        ?TestProductSearchReindexLock $lock = null,
+    ): ProductSearchRebuilder
     {
         $element = (new CatalogElements())
             ->setName("Product")
@@ -94,6 +130,7 @@ final class ProductSearchRebuilderTest extends TestCase
             $catalogSource,
             new ProductSearchDocumentBuilder(),
             $gateway,
+            $lock ?? new TestProductSearchReindexLock(),
             new NullLogger(),
             500,
         );
@@ -122,6 +159,14 @@ final class TestProductSearchIndexGateway implements ProductSearchIndexGatewayIn
         return $this->bulkResult;
     }
 
+    public function indexInCurrentIndex(\App\Search\Product\Port\Output\Document\ProductSearchIndexDocumentInterface $document): void
+    {
+    }
+
+    public function deleteFromCurrentIndex(int $catalogElementId): void
+    {
+    }
+
     public function refresh(string $indexName): void
     {
         $this->refreshed = true;
@@ -136,5 +181,29 @@ final class TestProductSearchIndexGateway implements ProductSearchIndexGatewayIn
     {
         $this->aliasSwitched = true;
         $this->targetIndexName = $targetIndexName;
+    }
+}
+
+final class TestProductSearchReindexLock implements ProductSearchReindexLockInterface
+{
+    public bool $acquired = false;
+    public int $releaseCount = 0;
+
+    public function __construct(
+        private readonly bool $canAcquire = true,
+    ) {
+    }
+
+    public function acquire(): bool
+    {
+        $this->acquired = $this->canAcquire;
+
+        return $this->canAcquire;
+    }
+
+    public function release(): void
+    {
+        $this->acquired = false;
+        ++$this->releaseCount;
     }
 }
