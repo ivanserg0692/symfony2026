@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\CatalogElements;
+use App\Entity\Product;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -191,6 +192,35 @@ class CatalogElementsRepository extends ServiceEntityRepository
             ->getScalarResult();
 
         return array_map("intval", array_column($rows, "id"));
+    }
+
+    /**
+     * Bridges the intentionally unidirectional CatalogElements -> Product mapping
+     * in one query, without introducing per-product inverse-relation lookups.
+     *
+     * @param iterable<Product> $products
+     *
+     * @return CatalogElements[]
+     */
+    public function findByProducts(iterable $products): array
+    {
+        $persistedProducts = [];
+
+        foreach ($products as $product) {
+            if ($product->getId() !== null) {
+                $persistedProducts[$product->getId()] = $product;
+            }
+        }
+
+        if ($persistedProducts === []) {
+            return [];
+        }
+
+        return $this->createQueryBuilder("element")
+            ->andWhere("element.product IN (:products)")
+            ->setParameter("products", array_values($persistedProducts))
+            ->getQuery()
+            ->getResult();
     }
 
     public function existsById(int $id): bool
