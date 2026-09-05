@@ -36,11 +36,11 @@
 
 ### Прогресс реализации
 
-Первый эксплуатационный этап завершён: добавлена инфраструктура Elasticsearch и реализован полный rebuild поисковой read-модели каталога из PostgreSQL. Rebuild использует keyset pagination, ограниченные batch, Bulk API, отдельный builder поискового документа, versioned index, проверку ошибок и атомарное переключение alias.
+Завершены full reindex и incremental indexing поисковой read-модели каталога. Incremental pipeline использует transactional outbox в PostgreSQL, Symfony Messenger, durable RabbitMQ-очереди, retry/failure handling и идемпотентный handler, который повторно использует builder полного документа.
 
 Контрольный запуск успешно обработал и проиндексировал `1 000 000` товаров без ошибок за `00:09:18` со средней скоростью около `1 792 docs/s`. Подробная инструкция и скриншот результата находятся в [runbook полной переиндексации](../../catalog-service/docs/elasticsearch-reindex.md).
 
-Следующими этапами остаются инкрементальная синхронизация через Messenger/RabbitMQ и перевод поиска, фильтрации, сортировки, `COUNT`, facets и aggregations на Elasticsearch read-model.
+Full reindex координируется с incremental worker: consumer останавливается на уровне Docker orchestration, outbox relay и RabbitMQ продолжают принимать события, alias переключается только после успешной проверки нового индекса, а накопленные сообщения затем приводят его к актуальному состоянию PostgreSQL. Следующим этапом остаётся перевод поиска, фильтрации, сортировки, `COUNT`, facets и aggregations на Elasticsearch read-model.
 
 ### Название
 
@@ -72,7 +72,7 @@ Task 9 показала, что после оптимизации PHP runtime, �
 - переключение между версиями индекса выполняется через alias без остановки чтения;
 - рассинхронизация допустима только в пределах явно определённого и измеряемого окна eventual consistency.
 
-Синхронная двойная запись в PostgreSQL и Elasticsearch не должна использоваться как механизм консистентности. Конкретный способ гарантированной публикации изменений — например transactional outbox с дальнейшей доставкой через существующую очередь — должен быть подтверждён при проектировании интеграции.
+Синхронная двойная запись в PostgreSQL и Elasticsearch не используется. Гарантированная фиксация изменений реализована через transactional outbox в той же PostgreSQL-транзакции с последующей доставкой ID `CatalogElement` через RabbitMQ.
 
 Elasticsearch в этой задаче является поисковой read-моделью и хранилищем производных поисковых структур, а не заменой PostgreSQL и не универсальным кешем приложения. Документы индекса могут включать нормализованные значения фильтров, данные для сортировки, фасетов и агрегаций, если их происхождение, версия и правила обновления однозначно определены.
 
@@ -152,11 +152,11 @@ Elasticsearch в этой задаче является поисковой read-
 
 ### Implementation Progress
 
-The first operational phase is complete: Elasticsearch infrastructure is available and the full rebuild of the catalog search read model from PostgreSQL is implemented. The rebuild uses keyset pagination, bounded batches, the Bulk API, a dedicated search-document builder, versioned indices, error validation, and an atomic alias switch.
+Full reindex and incremental indexing of the catalog search read model are implemented. The incremental pipeline uses a PostgreSQL transactional outbox, Symfony Messenger, durable RabbitMQ queues, retry/failure handling, and an idempotent handler that reuses the complete-document builder.
 
 The verified run successfully processed and indexed `1,000,000` products with no failures in `00:09:18`, averaging approximately `1,792 docs/s`. The detailed procedure and result screenshot are available in the [full reindex runbook](../../catalog-service/docs/elasticsearch-reindex.md).
 
-The remaining stages are incremental synchronization through Messenger/RabbitMQ and moving search, filtering, sorting, `COUNT`, facets, and aggregations to the Elasticsearch read model.
+Full reindex is coordinated with the incremental worker: Docker orchestration stops the consumer while the outbox relay and RabbitMQ continue accepting events, the alias switches only after successful validation, and accumulated messages then converge the new index to current PostgreSQL state. The remaining stage is moving search, filtering, sorting, `COUNT`, facets, and aggregations to the Elasticsearch read model.
 
 ### Title
 
@@ -188,7 +188,7 @@ The target architecture separates responsibilities:
 - index versions are switched through an alias without stopping reads;
 - synchronization delay is allowed only within an explicitly defined and measurable eventual-consistency window.
 
-Synchronous dual writes to PostgreSQL and Elasticsearch must not be used as the consistency mechanism. The guaranteed change-publication method—for example, a transactional outbox followed by delivery through the existing queue—must be confirmed during integration design.
+Synchronous dual writes to PostgreSQL and Elasticsearch are not used. Changes are durably captured through a transactional outbox in the same PostgreSQL transaction and subsequently delivered as `CatalogElement` IDs through RabbitMQ.
 
 In this task, Elasticsearch is a search read model and a store for derived search structures, not a PostgreSQL replacement or a general-purpose application cache. Index documents may include normalized filter values and data for sorting, facets, and aggregations when their origin, version, and update rules are unambiguous.
 
@@ -223,7 +223,7 @@ In this task, Elasticsearch is a search read model and a store for derived searc
 - Separate analyzed text fields for search from keyword, numeric, and date fields used for filtering, sorting, and aggregations.
 - Version mappings, indices, and event formats so schema changes use reindexing instead of unsafe mutations of an existing index.
 - Implement bounded bulk indexing with checkpoints, progress tracking, and restart from a safe point.
-- Publish changes reliably after a successful PostgreSQL transaction; the preferred direction is an outbox/event pipeline without synchronous dual writes.
+- Capture changes reliably in a transactional outbox and publish minimal `CatalogElement` ID messages to RabbitMQ without synchronous Elasticsearch dual writes.
 - Make indexing handlers idempotent and resilient to duplicate or out-of-order delivery.
 - Use an alias for reads and switch it only after the new index passes completeness and correctness checks.
 - Introduce internal DTOs/value objects for normalized search queries, allowed filters, and selected presets; keep Elasticsearch DSL conversion inside the infrastructure adapter.
