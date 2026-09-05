@@ -10,6 +10,7 @@ use Symfony\Component\DependencyInjection\Attribute\AsAlias;
 final class PostgreSqlProductSearchReindexLock implements ProductSearchReindexLockInterface
 {
     private bool $acquired = false;
+    private bool $sharedAcquired = false;
 
     public function __construct(
         private readonly Connection $connection,
@@ -42,5 +43,32 @@ final class PostgreSqlProductSearchReindexLock implements ProductSearchReindexLo
             ["lockId" => $this->productSearchReindexLockId],
         );
         $this->acquired = false;
+    }
+
+    public function acquireShared(): bool
+    {
+        if ($this->sharedAcquired) {
+            return true;
+        }
+
+        $this->sharedAcquired = (bool) $this->connection->fetchOne(
+            "SELECT pg_try_advisory_lock_shared(:lockId)",
+            ["lockId" => $this->productSearchReindexLockId],
+        );
+
+        return $this->sharedAcquired;
+    }
+
+    public function releaseShared(): void
+    {
+        if (!$this->sharedAcquired) {
+            return;
+        }
+
+        $this->connection->executeQuery(
+            "SELECT pg_advisory_unlock_shared(:lockId)",
+            ["lockId" => $this->productSearchReindexLockId],
+        );
+        $this->sharedAcquired = false;
     }
 }

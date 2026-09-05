@@ -187,7 +187,9 @@ final class TestProductSearchIndexGateway implements ProductSearchIndexGatewayIn
 final class TestProductSearchReindexLock implements ProductSearchReindexLockInterface
 {
     public bool $acquired = false;
+    public bool $sharedAcquired = false;
     public int $releaseCount = 0;
+    public int $sharedReleaseCount = 0;
 
     public function __construct(
         private readonly bool $canAcquire = true,
@@ -205,5 +207,18 @@ final class TestProductSearchReindexLock implements ProductSearchReindexLockInte
     {
         $this->acquired = false;
         ++$this->releaseCount;
+    }
+
+    public function acquireShared(): bool
+    {
+        $this->sharedAcquired = $this->canAcquire;
+
+        return $this->canAcquire;
+    }
+
+    public function releaseShared(): void
+    {
+        $this->sharedAcquired = false;
+        ++$this->sharedReleaseCount;
     }
 }
