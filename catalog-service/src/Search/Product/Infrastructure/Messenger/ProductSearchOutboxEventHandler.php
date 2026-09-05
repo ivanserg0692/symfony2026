@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Search\Product\Application\Message;
+namespace App\Search\Product\Infrastructure\Messenger;
 
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Search\Product\Application\Message;
+namespace App\Search\Product\Infrastructure\Messenger;
 
 /**
  * Transactional staging message written to PostgreSQL by Doctrine transport.

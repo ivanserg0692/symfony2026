@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Search\Product\Infrastructure\Input\Console;
+namespace App\Search\Product\Infrastructure\Console;
 
 use App\Search\Product\Application\Dto\Rebuild\ProductSearchReindexProgress;
 use App\Search\Product\Port\Input\ProductSearchRebuildInterface;

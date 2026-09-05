@@ -2,8 +2,8 @@
 
 namespace App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing;
 
-use App\Search\Product\Application\Message\ProductSearchOutboxEvent;
 use App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing\RelationalChangeImpact\ProductSearchChangeImpactResolverInterface;
+use App\Search\Product\Infrastructure\Messenger\ProductSearchOutboxEvent;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Events;

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Tests\Unit\Search\Product\Application\Message;
+namespace App\Tests\Unit\Search\Product\Infrastructure\Messenger;
 
-use App\Search\Product\Application\Message\ProductSearchOutboxEvent;
-use App\Search\Product\Application\Message\ProductSearchOutboxEventHandler;
-use App\Search\Product\Application\Message\ProductSearchReindexMessage;
+use App\Search\Product\Infrastructure\Messenger\ProductSearchOutboxEvent;
+use App\Search\Product\Infrastructure\Messenger\ProductSearchOutboxEventHandler;
+use App\Search\Product\Infrastructure\Messenger\ProductSearchReindexMessage;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;

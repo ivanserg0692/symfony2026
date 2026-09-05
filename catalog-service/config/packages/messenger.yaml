@@ -34,7 +34,7 @@ framework:
         routing:
             # Route your messages to the transports
             # 'App\Message\YourMessage': async
-            App\Search\Product\Application\Message\ProductSearchOutboxEvent: catalog_search_outbox
+            App\Search\Product\Infrastructure\Messenger\ProductSearchOutboxEvent: catalog_search_outbox
 
 when@test:
     framework:

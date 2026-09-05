@@ -3,7 +3,7 @@
 namespace App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing;
 
 use App\Entity\CatalogElements;
-use App\Search\Product\Application\Message\ProductSearchOutboxEvent;
+use App\Search\Product\Infrastructure\Messenger\ProductSearchOutboxEvent;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Events;
 use Symfony\Component\Messenger\MessageBusInterface;
