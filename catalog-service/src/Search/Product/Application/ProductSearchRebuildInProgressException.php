@@ -2,7 +2,7 @@
 
 namespace App\Search\Product\Application;
 
-final class ProductSearchRebuildInProgress extends \RuntimeException
+final class ProductSearchRebuildInProgressException extends \RuntimeException
 {
     public function __construct()
     {

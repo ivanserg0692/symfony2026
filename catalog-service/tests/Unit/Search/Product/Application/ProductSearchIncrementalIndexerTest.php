@@ -6,7 +6,7 @@ use App\Entity\CatalogElements;
 use App\Search\Product\Application\Dto\Indexing\BulkIndexResult;
 use App\Search\Product\Application\ProductSearchDocumentBuilder;
 use App\Search\Product\Application\ProductSearchIncrementalIndexer;
-use App\Search\Product\Application\ProductSearchRebuildInProgress;
+use App\Search\Product\Application\ProductSearchRebuildInProgressException;
 use App\Search\Product\Port\Output\Document\ProductSearchIndexDocumentInterface;
 use App\Search\Product\Port\Output\ProductSearchCatalogSourceInterface;
 use App\Search\Product\Port\Output\ProductSearchIndexGatewayInterface;
@@ -100,7 +100,7 @@ final class ProductSearchIncrementalIndexerTest extends TestCase
             $lock,
         );
 
-        $this->expectException(ProductSearchRebuildInProgress::class);
+        $this->expectException(ProductSearchRebuildInProgressException::class);
 
         try {
             $indexer->reindex(10);

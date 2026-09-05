@@ -2,7 +2,7 @@
 
 namespace App\Search\Product\Infrastructure\Messenger;
 
-use App\Search\Product\Application\ProductSearchRebuildInProgress;
+use App\Search\Product\Application\ProductSearchRebuildInProgressException;
 use App\Search\Product\Port\Input\ProductSearchIncrementalIndexInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\RecoverableMessageHandlingException;
@@ -21,7 +21,7 @@ final readonly class ProductSearchReindexMessageHandler
     {
         try {
             $this->incrementalIndexer->reindex($message->catalogElementId);
-        } catch (ProductSearchRebuildInProgress $exception) {
+        } catch (ProductSearchRebuildInProgressException $exception) {
             // Orchestration normally pauses the worker. This recoverable retry is a
             // safety net for races, manual worker starts, or orchestration failures.
             throw new RecoverableMessageHandlingException(

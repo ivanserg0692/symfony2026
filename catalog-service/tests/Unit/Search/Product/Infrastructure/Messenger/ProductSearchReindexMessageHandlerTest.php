@@ -2,7 +2,7 @@
 
 namespace App\Tests\Unit\Search\Product\Infrastructure\Messenger;
 
-use App\Search\Product\Application\ProductSearchRebuildInProgress;
+use App\Search\Product\Application\ProductSearchRebuildInProgressException;
 use App\Search\Product\Infrastructure\Messenger\ProductSearchReindexMessage;
 use App\Search\Product\Infrastructure\Messenger\ProductSearchReindexMessageHandler;
 use App\Search\Product\Port\Input\ProductSearchIncrementalIndexInterface;
@@ -33,7 +33,7 @@ final class ProductSearchReindexMessageHandlerTest extends TestCase
         } catch (RecoverableMessageHandlingException $exception) {
             self::assertSame(5000, $exception->getRetryDelay());
             self::assertTrue($exception->forceRetry());
-            self::assertInstanceOf(ProductSearchRebuildInProgress::class, $exception->getPrevious());
+            self::assertInstanceOf(ProductSearchRebuildInProgressException::class, $exception->getPrevious());
         }
     }
 }
@@ -53,7 +53,7 @@ final class TestProductSearchIncrementalIndexer implements ProductSearchIncremen
         $this->catalogElementIds[] = $catalogElementId;
 
         if ($this->rebuildInProgress) {
-            throw new ProductSearchRebuildInProgress();
+            throw new ProductSearchRebuildInProgressException();
         }
     }
 }

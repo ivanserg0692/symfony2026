@@ -22,7 +22,7 @@ final readonly class ProductSearchIncrementalIndexer implements ProductSearchInc
     public function reindex(int $catalogElementId): void
     {
         if (!$this->reindexLock->acquireShared()) {
-            throw new ProductSearchRebuildInProgress();
+            throw new ProductSearchRebuildInProgressException();
         }
 
         try {
