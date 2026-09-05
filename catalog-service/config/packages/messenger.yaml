@@ -1,14 +1,8 @@
 framework:
     messenger:
-        # Uncomment this (and the failed transport below) to send failed messages to this transport for later handling.
-        # failure_transport: failed
+        failure_transport: catalog_search_failed
 
         transports:
-            # https://symfony.com/doc/current/messenger.html#transport-configuration
-            # async: '%env(MESSENGER_TRANSPORT_DSN)%'
-            # failed: 'doctrine://default?queue_name=failed'
-            sync: 'sync://'
-
             # Transactional PostgreSQL staging. The producer must use the same
             # named DBAL connection as Doctrine ORM (the "default" connection).
             catalog_search_outbox:
@@ -31,14 +25,42 @@ framework:
                     queue_name: catalog_search_outbox_failed
                     auto_setup: false
 
+            catalog_search:
+                dsn: '%env(CATALOG_SEARCH_MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: catalog.search.incremental
+                        type: direct
+                        default_publish_routing_key: catalog_element.reindex
+                    queues:
+                        catalog.search.incremental:
+                            binding_keys: [catalog_element.reindex]
+                retry_strategy:
+                    max_retries: 12
+                    delay: 1000
+                    multiplier: 2
+                    max_delay: 60000
+                failure_transport: catalog_search_failed
+
+            catalog_search_failed:
+                dsn: '%env(CATALOG_SEARCH_MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: catalog.search.failed
+                        type: direct
+                        default_publish_routing_key: failed
+                    queues:
+                        catalog.search.failed:
+                            binding_keys: [failed]
+
         routing:
-            # Route your messages to the transports
-            # 'App\Message\YourMessage': async
             App\Search\Product\Infrastructure\Messenger\ProductSearchOutboxEvent: catalog_search_outbox
+            App\Search\Product\Infrastructure\Messenger\ProductSearchReindexMessage: catalog_search
 
 when@test:
     framework:
         messenger:
+            failure_transport: catalog_search_failed
             transports:
                 catalog_search_outbox:
                     dsn: 'doctrine://default'
@@ -54,3 +76,5 @@ when@test:
                         queue_name: catalog_search_outbox_failed
                         auto_setup: true
                         use_notify: false
+                catalog_search: 'in-memory://'
+                catalog_search_failed: 'in-memory://'
