@@ -24,6 +24,12 @@ services:
   catalog-cli:
     <<: *php-dev-runtime
 
+  catalog-search-outbox-worker:
+    <<: *php-dev-runtime
+
+  catalog-search-index-worker:
+    <<: *php-dev-runtime
+
   catalog-grpc:
     <<: *php-dev-runtime
 

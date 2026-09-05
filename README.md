@@ -33,8 +33,10 @@
       - [`Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - completed](#task-73-implement-the-external-api-gateway-for-the-public-resthttp-contract---completed)
     - [`Task 8`: Monitoring and load testing for the online store - completed](#task-8-monitoring-and-load-testing-for-the-online-store---completed)
     - [`Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - completed](#task-9-application-performance-optimization-rps-improvement-and-php-environment-tuning---completed)
+    - [`Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - in progress](#task-10-elasticsearch-catalog-read-model-for-search-filtering-aggregations-and-presets---in-progress)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
+  - [Elasticsearch Catalog Indexing](#elasticsearch-catalog-indexing)
   - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
   - [News Export and Batch Processing](#news-export-and-batch-processing)
   - [Run With Docker Compose](#run-with-docker-compose)
@@ -79,8 +81,10 @@
       - [`Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - completed](#task-73-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B5%D0%B3%D0%BE-api-gateway-%D0%B4%D0%BB%D1%8F-%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D0%BE%D0%B3%D0%BE-resthttp-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D0%B0---completed)
     - [`Task 8`: Мониторинг и нагрузочное тестирование интернет-магазина - completed](#task-8-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0---completed)
     - [`Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - completed](#task-9-%D0%BE%D0%BF%D1%82%D0%B8%D0%BC%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BF%D0%BE%D0%B2%D1%8B%D1%88%D0%B5%D0%BD%D0%B8%D0%B5-rps-%D0%B8-%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-php-%D0%BE%D0%BA%D1%80%D1%83%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F---completed)
+    - [`Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - in progress](#task-10-elasticsearch-read-%D0%BC%D0%BE%D0%B4%D0%B5%D0%BB%D1%8C-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B4%D0%BB%D1%8F-%D0%BF%D0%BE%D0%B8%D1%81%D0%BA%D0%B0-%D1%84%D0%B8%D0%BB%D1%8C%D1%82%D1%80%D0%B0%D1%86%D0%B8%D0%B8-%D0%B0%D0%B3%D1%80%D0%B5%D0%B3%D0%B0%D1%86%D0%B8%D0%B9-%D0%B8-%D0%BF%D1%80%D0%B5%D1%81%D0%B5%D1%82%D0%BE%D0%B2---in-progress)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
+  - [Индексация каталога в Elasticsearch](#%D0%B8%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0%D1%86%D0%B8%D1%8F-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B2-elasticsearch)
   - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
   - [Экспорт новостей и batch-обработка](#%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D1%80%D1%82-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B5%D0%B9-%D0%B8-batch-%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0)
   - [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
@@ -492,6 +496,15 @@ The notification recipients are administrators resolved by the application, not 
 - MR result (EN): [symfony/docs/mr-task-9-en.md](symfony/docs/mr-task-9-en.md)
 - MR result (RU): [symfony/docs/mr-task-9-ru.md](symfony/docs/mr-task-9-ru.md)
 
+#### `Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - in progress
+- Brief info: Full and incremental indexing are implemented; catalog query migration remains in progress.
+- Backend Merge Request 10: <https://github.com/ivanserg0692/symfony2026/pull/14>
+- Frontend Merge Request 10: TBD
+- Task file: [symfony/docs/task-10.md](symfony/docs/task-10.md)
+- MR result (EN): [symfony/docs/mr-task-10-en.md](symfony/docs/mr-task-10-en.md)
+- MR result (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
+- Product catalog full reindex runbook: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
+
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
 <https://github.com/ivanserg0692/symfony2026-frontend>
@@ -500,6 +513,29 @@ A separate frontend application was developed with React and Refine:
 ![Frontend news list](symfony/docs/images/frontend/news_list.png)
 
 ![Frontend notification list](symfony/docs/images/frontend/notification_list.png)
+
+### Elasticsearch Catalog Indexing
+
+Catalog Service keeps the derived Elasticsearch product index synchronized from PostgreSQL through a transactional outbox, Symfony Messenger, and a durable RabbitMQ queue. Incremental messages contain only a `CatalogElement` ID; the handler reads the latest complete aggregate and reuses the same document builder as full reindex. Duplicate delivery is safe, and failed messages remain available for retry.
+
+Full reindex remains a separate recovery mechanism. Its orchestration pauses only the incremental Elasticsearch worker while business writes, outbox capture, and RabbitMQ delivery continue. After validation and atomic `products` alias switching, the accumulated messages converge the new index to current PostgreSQL state. On failure, the old alias remains active and incremental processing resumes safely.
+
+The screenshot below records a successful full rebuild of a catalog containing one million products. Every document was indexed without a bulk-item failure, the document-count validation passed, and the alias was switched to the new index.
+
+| Result | Value |
+|---|---:|
+| Processed | `1,000,000` |
+| Indexed | `1,000,000` |
+| Failed | `0` |
+| Average rate | approximately `1,792 docs/s` |
+| Elapsed time | `00:09:18` |
+| Alias switched | `yes` |
+
+![Elasticsearch full reindex of one million products](catalog-service/docs/images/reindex-result.png)
+
+*Verified full reindex result for one million catalog products.*
+
+For incremental indexing, outbox/RabbitMQ recovery, coordinated full reindex, validation, and rollback instructions, see the [product catalog Elasticsearch indexing runbook](catalog-service/docs/elasticsearch-reindex.md).
 
 ### gRPC Contracts and Service Flows
 
@@ -540,11 +576,11 @@ The production stack is the default Compose environment. Development and load te
 
 | Environment | Compose project | PHP runtime | Configuration |
 |---|---|---|---|
-| Production (default) | `symfony2026` | Regular production traffic; PHP-FPM with Nginx and OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
-| Performance test | `symfony2026-load-test` | Isolated measurements with production-like PHP behavior and no development diagnostics; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
-| Development | `symfony2026-dev` | Symfony CLI, detailed application logs, Symfony profiler, and Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
+| Production (default) | `symfony2026` | Regular production traffic; PHP-FPM with Nginx and OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env.compose`, `.env`, `.env.local`, `docker-compose.yml` |
+| Performance test | `symfony2026-load-test` | Isolated measurements with production-like PHP behavior and no development diagnostics; `APP_ENV=prod`, `APP_DEBUG=0` | `.env.compose`, `.env`, `.env.local`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
+| Development | `symfony2026-dev` | Symfony CLI, detailed application logs, Symfony profiler, and Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env.compose`, `.env`, `.env.local`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
 
-`COMPOSE_PROJECT_NAME` gives each environment its own Compose project, generated networks, and named volumes. The stacks still use the same explicit container names and host ports, so stop the current environment before starting another one. Environment variables remain active until the current shell is closed or another context is sourced.
+`COMPOSE_PROJECT_NAME` gives each environment its own Compose project, generated networks, and named volumes. The stacks still use the same explicit container names and host ports, so stop the current environment before starting another one. Only Compose control and environment selector variables remain active until the current shell is closed or another context is sourced.
 
 The repository provides npm helpers that automatically load the required environment files and open a configured interactive shell:
 
@@ -554,15 +590,16 @@ npm run set:dev
 npm run set:load-test
 ```
 
-Each helper loads `.env` and `.env.local`, then applies the selected override for development or performance testing. Commands such as `docker compose`, `npm run db:migrate`, and `npm run db:fixtures` executed inside that shell use the selected Compose project and configuration. The helpers select the environment only; they do not build or start containers. Run `exit` to leave the configured shell and return to the previous terminal context.
+Each helper loads `.env.compose` and, for development or performance testing, the corresponding selector override. `COMPOSE_ENV_FILES` then tells Docker Compose to read `.env` and `.env.local` for interpolation, with `.env.local` taking precedence. Secrets from `.env.local` are not exported into the interactive shell; they enter only Compose and the services that explicitly receive them. Commands such as `docker compose`, `npm run db:migrate`, and `npm run db:fixtures` executed inside that shell use the selected Compose project and configuration. The helpers select the environment only; they do not build or start containers. Run `exit` to leave the configured shell and return to the previous terminal context.
 
 Prepare `.env` and start production from the repository root:
 
 ```bash
 cp .env.example .env
 set -a
-. ./.env
+. ./.env.compose
 set +a
+unset COMPOSE_PROJECT_NAME COMPOSE_FILE
 docker compose up --build -d
 ```
 
@@ -571,7 +608,7 @@ Stop production, build the development PHP image, and start development:
 ```bash
 docker compose down
 set -a
-. ./.env
+. ./.env.compose
 . ./.env.dev
 set +a
 docker compose build symfony-cli
@@ -588,7 +625,7 @@ Activate the load-test context before starting it or running shared database scr
 
 ```bash
 set -a
-. ./.env
+. ./.env.compose
 . ./.env.load_test
 set +a
 docker compose up -d
@@ -596,7 +633,7 @@ npm run db:migrate
 npm run db:fixtures
 ```
 
-The activation commands must be repeated in every new terminal. `set +a` only disables automatic export for later assignments; it does not remove the loaded variables.
+The activation commands must be repeated in every new terminal. `set +a` only disables automatic export for later assignments; it does not remove the loaded Compose control and selector variables. Do not source `.env.local` into the interactive shell.
 
 Open a shell inside the production CLI container:
 
@@ -1282,6 +1319,15 @@ docker compose down
 - Результат MR (EN): [symfony/docs/mr-task-9-en.md](symfony/docs/mr-task-9-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-9-ru.md](symfony/docs/mr-task-9-ru.md)
 
+#### `Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - in progress
+- Brief info: Full и incremental indexing реализованы; перевод запросов каталога остаётся в работе.
+- Backend Merge Request 10: <https://github.com/ivanserg0692/symfony2026/pull/14>
+- Frontend Merge Request 10: TBD
+- Файл задачи: [symfony/docs/task-10.md](symfony/docs/task-10.md)
+- Результат MR (EN): [symfony/docs/mr-task-10-en.md](symfony/docs/mr-task-10-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
+- Runbook полной переиндексации каталога: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
+
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:
 <https://github.com/ivanserg0692/symfony2026-frontend>
@@ -1290,6 +1336,29 @@ docker compose down
 ![Список новостей frontend](symfony/docs/images/frontend/news_list.png)
 
 ![Список уведомлений frontend](symfony/docs/images/frontend/notification_list.png)
+
+### Индексация каталога в Elasticsearch
+
+Catalog Service поддерживает производный Elasticsearch-индекс товаров в актуальном состоянии через transactional outbox, Symfony Messenger и durable RabbitMQ-очередь. Incremental message содержит только ID `CatalogElement`; handler читает последний полный агрегат и использует тот же builder документа, что и full reindex. Повторная доставка безопасна, а failed messages остаются доступны для retry.
+
+Full reindex остаётся отдельным механизмом восстановления. Orchestration останавливает только incremental Elasticsearch worker, при этом бизнес-записи, outbox capture и доставка в RabbitMQ продолжаются. После проверки и атомарного переключения alias `products` накопленные сообщения приводят новый индекс к актуальному состоянию PostgreSQL. При ошибке старый alias остаётся рабочим, а incremental processing безопасно возобновляется.
+
+На скриншоте ниже показан успешный полный rebuild каталога из одного миллиона товаров. Все документы проиндексированы без ошибок отдельных bulk-операций, проверка количества документов пройдена, после чего alias переключён на новый индекс.
+
+| Результат | Значение |
+|---|---:|
+| Обработано | `1 000 000` |
+| Проиндексировано | `1 000 000` |
+| Ошибок | `0` |
+| Средняя скорость | около `1 792 docs/s` |
+| Время выполнения | `00:09:18` |
+| Alias переключён | `yes` |
+
+![Полная индексация одного миллиона товаров в Elasticsearch](catalog-service/docs/images/reindex-result.png)
+
+*Подтверждённый результат полной переиндексации одного миллиона товаров каталога.*
+
+Incremental indexing, восстановление outbox/RabbitMQ, координация full reindex, проверка и rollback описаны в [runbook индексации каталога](catalog-service/docs/elasticsearch-reindex.md).
 
 ### gRPC-контракты и сервисные сценарии
 
@@ -1330,11 +1399,11 @@ Production является Compose-окружением по умолчанию
 
 | Окружение | Compose project | PHP runtime | Конфигурация |
 |---|---|---|---|
-| Production (по умолчанию) | `symfony2026` | Обычная боевая нагрузка; PHP-FPM с Nginx и OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
-| Тест производительности | `symfony2026-load-test` | Изолированные замеры с production-like поведением PHP и без development-диагностики; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
-| Development | `symfony2026-dev` | Symfony CLI, подробные логи приложения, Symfony profiler и Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
+| Production (по умолчанию) | `symfony2026` | Обычная боевая нагрузка; PHP-FPM с Nginx и OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env.compose`, `.env`, `.env.local`, `docker-compose.yml` |
+| Тест производительности | `symfony2026-load-test` | Изолированные замеры с production-like поведением PHP и без development-диагностики; `APP_ENV=prod`, `APP_DEBUG=0` | `.env.compose`, `.env`, `.env.local`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
+| Development | `symfony2026-dev` | Symfony CLI, подробные логи приложения, Symfony profiler и Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env.compose`, `.env`, `.env.local`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
 
-`COMPOSE_PROJECT_NAME` создает отдельный Compose project, сгенерированные сети и именованные volumes для каждого окружения. При этом используются одинаковые явные имена контейнеров и host ports, поэтому перед запуском другого окружения текущее нужно остановить. Переменные окружения остаются активными до закрытия текущей shell-сессии или загрузки другого контекста.
+`COMPOSE_PROJECT_NAME` создает отдельный Compose project, сгенерированные сети и именованные volumes для каждого окружения. При этом используются одинаковые явные имена контейнеров и host ports, поэтому перед запуском другого окружения текущее нужно остановить. До закрытия текущей shell-сессии или загрузки другого контекста активными остаются только управляющие переменные Compose и selector-переменные окружения.
 
 В репозитории предусмотрены npm-команды, которые автоматически загружают необходимые environment-файлы и открывают настроенный интерактивный shell:
 
@@ -1344,15 +1413,16 @@ npm run set:dev
 npm run set:load-test
 ```
 
-Каждая команда загружает `.env` и `.env.local`, а для development или тестирования производительности дополнительно применяет соответствующий override. Запущенные внутри этого shell команды `docker compose`, `npm run db:migrate`, `npm run db:fixtures` и другие универсальные скрипты используют выбранные Compose project и конфигурацию. Эти helper-команды только выбирают окружение и сами не собирают и не запускают контейнеры. Выполните `exit`, чтобы закрыть настроенный shell и вернуться в предыдущий контекст терминала.
+Каждая команда загружает `.env.compose`, а для development или тестирования производительности — соответствующий selector override. Затем `COMPOSE_ENV_FILES` указывает Docker Compose прочитать `.env` и `.env.local` для подстановки переменных; значения из `.env.local` имеют более высокий приоритет. Секреты из `.env.local` не экспортируются в интерактивный shell: они попадают только в Compose и в явно получающие их сервисы. Запущенные внутри этого shell команды `docker compose`, `npm run db:migrate`, `npm run db:fixtures` и другие универсальные скрипты используют выбранные Compose project и конфигурацию. Эти helper-команды только выбирают окружение и сами не собирают и не запускают контейнеры. Выполните `exit`, чтобы закрыть настроенный shell и вернуться в предыдущий контекст терминала.
 
 Подготовьте `.env` и запустите production из корня репозитория:
 
 ```bash
 cp .env.example .env
 set -a
-. ./.env
+. ./.env.compose
 set +a
+unset COMPOSE_PROJECT_NAME COMPOSE_FILE
 docker compose up --build -d
 ```
 
@@ -1361,7 +1431,7 @@ docker compose up --build -d
 ```bash
 docker compose down
 set -a
-. ./.env
+. ./.env.compose
 . ./.env.dev
 set +a
 docker compose build symfony-cli
@@ -1378,7 +1448,7 @@ docker compose down
 
 ```bash
 set -a
-. ./.env
+. ./.env.compose
 . ./.env.load_test
 set +a
 docker compose up -d
@@ -1386,7 +1456,7 @@ npm run db:migrate
 npm run db:fixtures
 ```
 
-Команды активации нужно повторять в каждом новом терминале. `set +a` только отключает автоматический экспорт следующих присваиваний и не удаляет уже загруженные переменные.
+Команды активации нужно повторять в каждом новом терминале. `set +a` только отключает автоматический экспорт следующих присваиваний и не удаляет уже загруженные управляющие и selector-переменные Compose. Не подключайте `.env.local` напрямую к интерактивному shell.
 
 Откройте shell внутри production CLI container:
 

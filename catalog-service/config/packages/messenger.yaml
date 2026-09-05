@@ -1,0 +1,80 @@
+framework:
+    messenger:
+        failure_transport: catalog_search_failed
+
+        transports:
+            # Transactional PostgreSQL staging. The producer must use the same
+            # named DBAL connection as Doctrine ORM (the "default" connection).
+            catalog_search_outbox:
+                dsn: 'doctrine://default'
+                options:
+                    table_name: messenger_messages
+                    queue_name: catalog_search_outbox
+                    auto_setup: false
+                failure_transport: catalog_search_outbox_failed
+                retry_strategy:
+                    max_retries: 12
+                    delay: 1000
+                    multiplier: 2
+                    max_delay: 60000
+
+            catalog_search_outbox_failed:
+                dsn: 'doctrine://default'
+                options:
+                    table_name: messenger_messages
+                    queue_name: catalog_search_outbox_failed
+                    auto_setup: false
+
+            catalog_search:
+                dsn: '%env(CATALOG_SEARCH_MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: catalog.search.incremental
+                        type: direct
+                        default_publish_routing_key: catalog_element.reindex
+                    queues:
+                        catalog.search.incremental:
+                            binding_keys: [catalog_element.reindex]
+                retry_strategy:
+                    max_retries: 12
+                    delay: 1000
+                    multiplier: 2
+                    max_delay: 60000
+                failure_transport: catalog_search_failed
+
+            catalog_search_failed:
+                dsn: '%env(CATALOG_SEARCH_MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: catalog.search.failed
+                        type: direct
+                        default_publish_routing_key: failed
+                    queues:
+                        catalog.search.failed:
+                            binding_keys: [failed]
+
+        routing:
+            App\Search\Product\Infrastructure\Messenger\ProductSearchOutboxEvent: catalog_search_outbox
+            App\Search\Product\Infrastructure\Messenger\ProductSearchReindexMessage: catalog_search
+
+when@test:
+    framework:
+        messenger:
+            failure_transport: catalog_search_failed
+            transports:
+                catalog_search_outbox:
+                    dsn: 'doctrine://default'
+                    options:
+                        table_name: messenger_messages
+                        queue_name: catalog_search_outbox
+                        auto_setup: true
+                        use_notify: false
+                catalog_search_outbox_failed:
+                    dsn: 'doctrine://default'
+                    options:
+                        table_name: messenger_messages
+                        queue_name: catalog_search_outbox_failed
+                        auto_setup: true
+                        use_notify: false
+                catalog_search: 'in-memory://'
+                catalog_search_failed: 'in-memory://'

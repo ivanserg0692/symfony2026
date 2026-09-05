@@ -1,11 +1,12 @@
 {
   "scripts": {
-    "set:prod": "bash -c 'set -a; . ./.env; . ./.env.local; set +a; exec bash -i'",
-    "set:dev": "bash -c 'set -a; . ./.env; . ./.env.local; . ./.env.dev; set +a; exec bash -i'",
-    "set:load-test": "bash -c 'set -a; . ./.env; . ./.env.local; . ./.env.load_test; set +a; exec bash -i'",
-    "docker:restart:php": "docker compose restart symfony-cli symfony-web catalog-cli catalog-web catalog-grpc cart-cli cart-web",
-    "docker:cache:clear:php": "docker compose exec symfony-cli php -d memory_limit=1G bin/console cache:clear && docker compose exec catalog-cli php -d memory_limit=1G bin/console cache:clear && docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear && npm run docker:restart:php",
+    "set:prod": "bash -c 'set -a; . ./.env.compose; set +a; unset COMPOSE_PROJECT_NAME COMPOSE_FILE; exec bash -i'",
+    "set:dev": "bash -c 'set -a; . ./.env.compose; . ./.env.dev; set +a; exec bash -i'",
+    "set:load-test": "bash -c 'set -a; . ./.env.compose; . ./.env.load_test; set +a; exec bash -i'",
+    "docker:restart:php": "docker compose restart symfony-cli symfony-web catalog-cli catalog-web catalog-grpc catalog-search-outbox-worker catalog-search-index-worker cart-cli cart-web",
+    "docker:cache:clear:php": "docker compose exec symfony-cli php -d memory_limit=1G bin/console cache:clear && docker compose exec symfony-cli sh -lc 'rm -rf /workspace/var/cache/*' && docker compose exec catalog-cli php -d memory_limit=1G bin/console cache:clear && docker compose exec catalog-cli sh -lc 'rm -rf /workspace/var/cache/*' && docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear && docker compose exec cart-cli sh -lc 'rm -rf /workspace/var/cache/*' && npm run docker:restart:php",
     "docker:recreate": "docker compose up -d --force-recreate",
+    "catalog:elasticsearch:reindex": "bash scripts/catalog-elasticsearch-reindex.sh",
     "vendors:install": "docker compose run --rm symfony-cli composer install && docker compose run --rm catalog-cli composer install && docker compose run --rm cart-cli composer install",
     "vendors:install:prod": "docker compose run --rm symfony-cli composer install --no-dev --optimize-autoloader --no-interaction && docker compose run --rm catalog-cli composer install --no-dev --optimize-autoloader --no-interaction && docker compose run --rm cart-cli composer install --no-dev --optimize-autoloader --no-interaction",
     "minio": "docker compose run --rm minio-client",
@@ -19,7 +20,7 @@
     "db:init": "bash scripts/db-init.sh",
     "gateway:generate": "node scripts/generate-api-gateway.mjs",
     "readme:api": "node scripts/readme-api-table.mjs README.md",
-    "readme:toc": "doctoc README.md grpc-contracts/README.md TESTING.md catalog-service/docs/entities-summary-en.md catalog-service/docs/entities-summary-ru.md symfony/docs/catalog-service-tables-en.md symfony/docs/catalog-service-tables-ru.md symfony/docs/php-multi-stage-build.md symfony/docs/mr-task-2.md symfony/docs/mr-task-3-en.md symfony/docs/mr-task-3-ru.md symfony/docs/mr-task-4-en.md symfony/docs/mr-task-4-ru.md symfony/docs/mr-task-5-en.md symfony/docs/mr-task-5-ru.md symfony/docs/mr-task-6-en.md symfony/docs/mr-task-6-ru.md symfony/docs/mr-task-7.2-en.md symfony/docs/mr-task-7.2-ru.md symfony/docs/mr-task-8-en.md symfony/docs/mr-task-8-ru.md symfony/docs/mr-task-9-en.md symfony/docs/mr-task-9-ru.md symfony/docs/task-1.md symfony/docs/task-2.md symfony/docs/task-3.md symfony/docs/task-4.md symfony/docs/task-5.md symfony/docs/task-6.md symfony/docs/task-7.md symfony/docs/task-7-1.md symfony/docs/task-7.2.md symfony/docs/task-7.3.md symfony/docs/task-8.md symfony/docs/task-9.md",
+    "readme:toc": "doctoc README.md grpc-contracts/README.md TESTING.md catalog-service/docs/elasticsearch-reindex.md catalog-service/docs/entities-summary-en.md catalog-service/docs/entities-summary-ru.md symfony/docs/catalog-service-tables-en.md symfony/docs/catalog-service-tables-ru.md symfony/docs/php-multi-stage-build.md symfony/docs/mr-task-2.md symfony/docs/mr-task-3-en.md symfony/docs/mr-task-3-ru.md symfony/docs/mr-task-4-en.md symfony/docs/mr-task-4-ru.md symfony/docs/mr-task-5-en.md symfony/docs/mr-task-5-ru.md symfony/docs/mr-task-6-en.md symfony/docs/mr-task-6-ru.md symfony/docs/mr-task-7.2-en.md symfony/docs/mr-task-7.2-ru.md symfony/docs/mr-task-8-en.md symfony/docs/mr-task-8-ru.md symfony/docs/mr-task-9-en.md symfony/docs/mr-task-9-ru.md symfony/docs/mr-task-10-en.md symfony/docs/mr-task-10-ru.md symfony/docs/task-1.md symfony/docs/task-2.md symfony/docs/task-3.md symfony/docs/task-4.md symfony/docs/task-5.md symfony/docs/task-6.md symfony/docs/task-7.md symfony/docs/task-7-1.md symfony/docs/task-7.2.md symfony/docs/task-7.3.md symfony/docs/task-8.md symfony/docs/task-9.md symfony/docs/task-10.md",
     "readme:update": "npm run gateway:generate && npm run readme:api && npm run docs:plantuml && npm run readme:toc",
     "docs:plantuml": "node scripts/render-plantuml.mjs README.md symfony/docs"
   },
