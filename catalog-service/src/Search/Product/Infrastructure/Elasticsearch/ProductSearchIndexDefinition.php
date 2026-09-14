@@ -6,12 +6,25 @@ final class ProductSearchIndexDefinition
 {
     public const int SCHEMA_VERSION = 2;
 
+    public function __construct(
+        private readonly int $productSearchResultWindow,
+    ) {
+        if ($this->productSearchResultWindow < 1) {
+            throw new \InvalidArgumentException("PRODUCT_SEARCH_RESULT_WINDOW must be greater than zero.");
+        }
+    }
+
     /**
      * @return array<string, mixed>
      */
     public function getConfiguration(): array
     {
         return [
+            "settings" => [
+                "index" => [
+                    "max_result_window" => $this->productSearchResultWindow,
+                ],
+            ],
             "mappings" => [
                 "dynamic" => "strict",
                 "properties" => [

@@ -180,7 +180,7 @@ final class ElasticsearchCatalogReaderTest extends TestCase
         return new ElasticsearchCatalogReader(
             new ProductSearchRepository(
                 new CatalogSearchGateway($client, "products"),
-                new CatalogSearchQueryBuilder(),
+                new CatalogSearchQueryBuilder(10000),
             ),
         );
     }

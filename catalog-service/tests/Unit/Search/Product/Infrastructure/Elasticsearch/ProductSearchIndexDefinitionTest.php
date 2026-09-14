@@ -9,10 +9,12 @@ final class ProductSearchIndexDefinitionTest extends TestCase
 {
     public function testMapsAdditionalRelationFieldsWithoutChangingNestedStructure(): void
     {
-        $mapping = (new ProductSearchIndexDefinition())->getConfiguration()['mappings'];
+        $configuration = (new ProductSearchIndexDefinition(10000))->getConfiguration();
+        $mapping = $configuration['mappings'];
         $properties = $mapping['properties'];
 
         self::assertSame(2, ProductSearchIndexDefinition::SCHEMA_VERSION);
+        self::assertSame(10000, $configuration['settings']['index']['max_result_window']);
         self::assertSame('strict', $mapping['dynamic']);
         self::assertSame('nested', $properties['sections']['type']);
         self::assertSame('nested', $properties['prices']['type']);

@@ -22,6 +22,7 @@ services:
             string $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
             string $productSearchIndexPrefix: '%env(PRODUCT_SEARCH_INDEX_PREFIX)%'
             string $productSearchIndexAlias: '%env(PRODUCT_SEARCH_INDEX_ALIAS)%'
+            int $productSearchResultWindow: '%env(int:PRODUCT_SEARCH_RESULT_WINDOW)%'
             int $productSearchBatchSize: '%env(int:PRODUCT_SEARCH_BATCH_SIZE)%'
             int $productSearchReindexLockId: '%env(int:PRODUCT_SEARCH_REINDEX_LOCK_ID)%'
             bool $productSearchIncrementalWorkerPaused: '%env(bool:PRODUCT_SEARCH_INCREMENTAL_WORKER_PAUSED)%'

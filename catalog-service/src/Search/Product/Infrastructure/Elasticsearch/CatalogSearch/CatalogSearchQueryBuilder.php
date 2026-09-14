@@ -6,8 +6,15 @@ use App\Search\Product\Application\Dto\Read\CatalogListCriteria;
 
 final readonly class CatalogSearchQueryBuilder
 {
-    private const RESULT_WINDOW = 10000;
     private const SEEK_BATCH_SIZE = 1000;
+
+    public function __construct(
+        private int $productSearchResultWindow,
+    ) {
+        if ($this->productSearchResultWindow < 1) {
+            throw new \InvalidArgumentException("PRODUCT_SEARCH_RESULT_WINDOW must be greater than zero.");
+        }
+    }
 
     /** @return array<string, mixed> */
     public function build(CatalogListCriteria $criteria): array
@@ -23,7 +30,7 @@ final readonly class CatalogSearchQueryBuilder
 
     public function requiresDeepPagination(CatalogListCriteria $criteria): bool
     {
-        return $criteria->getOffset() + $criteria->getFetchSize() > self::RESULT_WINDOW;
+        return $criteria->getOffset() + $criteria->getFetchSize() > $this->productSearchResultWindow;
     }
 
     /** @return array<string, mixed> */
