@@ -7,6 +7,7 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    env(CATALOG_READ_MODEL): 'doctrine'
 
 services:
     # default configuration for services in *this* file
@@ -14,7 +15,17 @@ services:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
         bind:
+            string $catalogReadModel: '%env(CATALOG_READ_MODEL)%'
             bool $useHasNextPagePagination: '%env(bool:CATALOG_PAGINATION_USE_HAS_NEXT_PAGE)%'
+            string $elasticsearchUrl: '%env(ELASTICSEARCH_URL)%'
+            string $elasticsearchUsername: '%env(ELASTICSEARCH_USERNAME)%'
+            string $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
+            string $productSearchIndexPrefix: '%env(PRODUCT_SEARCH_INDEX_PREFIX)%'
+            string $productSearchIndexAlias: '%env(PRODUCT_SEARCH_INDEX_ALIAS)%'
+            int $productSearchResultWindow: '%env(int:PRODUCT_SEARCH_RESULT_WINDOW)%'
+            int $productSearchBatchSize: '%env(int:PRODUCT_SEARCH_BATCH_SIZE)%'
+            int $productSearchReindexLockId: '%env(int:PRODUCT_SEARCH_REINDEX_LOCK_ID)%'
+            bool $productSearchIncrementalWorkerPaused: '%env(bool:PRODUCT_SEARCH_INCREMENTAL_WORKER_PAUSED)%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -23,8 +34,12 @@ services:
         exclude:
             - '../src/Grpc/Generated/'
 
-    Grpc\Catalog\V1\InventoryServiceInterface:
-        alias: App\Grpc\InventoryService
+    App\Search\Product\Port\Output\CatalogReadInterface:
+        factory: ['@App\Search\Product\Infrastructure\CatalogReadFactory', 'create']
+
+    app.catalog_read.elasticsearch_client:
+        class: Elastic\Elasticsearch\Client
+        factory: ['@App\Search\Product\Infrastructure\Elasticsearch\ElasticsearchClientFactory', 'create']
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

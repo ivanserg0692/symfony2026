@@ -63,7 +63,18 @@ class ProductPrice
 
     public function setProduct(?CatalogElements $product): static
     {
+        if ($this->product === $product) {
+            return $this;
+        }
+
+        $previousProduct = $this->product;
         $this->product = $product;
+
+        $previousProduct?->removeProductPrice($this);
+
+        if ($product !== null && !$product->getProductPrices()->contains($this)) {
+            $product->addProductPrice($this);
+        }
 
         return $this;
     }
@@ -75,7 +86,18 @@ class ProductPrice
 
     public function setPriceType(?PriceType $priceType): static
     {
+        if ($this->priceType === $priceType) {
+            return $this;
+        }
+
+        $previousPriceType = $this->priceType;
         $this->priceType = $priceType;
+
+        $previousPriceType?->removeProductPrice($this);
+
+        if ($priceType !== null && !$priceType->getProductPrices()->contains($this)) {
+            $priceType->addProductPrice($this);
+        }
 
         return $this;
     }

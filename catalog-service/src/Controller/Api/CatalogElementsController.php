@@ -2,112 +2,48 @@
 
 namespace App\Controller\Api;
 
-use App\Entity\CatalogElements;
-use App\Repository\CatalogElementsRepository;
+use App\Search\Product\Application\CatalogReadService;
+use App\Search\Product\Application\Dto\Read\CatalogElementResponse;
+use App\Search\Product\Application\Dto\Read\CatalogListQuery;
+use App\Search\Product\Application\Dto\Read\CatalogListResponse;
 use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route("/api/catalog/elements")]
 #[OA\Tag(name: "Catalog Elements")]
 class CatalogElementsController extends AbstractController
 {
-    private const DEFAULT_LIMIT = 20;
-    private const MAX_LIMIT = 100;
-
-    public function __construct(private readonly bool $useHasNextPagePagination)
+    public function __construct(
+        private readonly bool $useHasNextPagePagination,
+    )
     {
     }
 
     #[Route("", name: "api_catalog_elements_list", methods: ["GET"])]
     #[OA\Get(
         summary: "List catalog elements",
-        description: "Returns catalog elements filtered by sectionId and active with pagination.",
-        parameters: [
-            new OA\Parameter(name: "sectionId", in: "query", required: false, schema: new OA\Schema(type: "integer", minimum: 1)),
-            new OA\Parameter(name: "active", in: "query", required: false, schema: new OA\Schema(type: "boolean")),
-            new OA\Parameter(name: "page", in: "query", required: false, schema: new OA\Schema(type: "integer", minimum: 1, default: 1)),
-            new OA\Parameter(name: "limit", in: "query", required: false, schema: new OA\Schema(type: "integer", minimum: 1, maximum: self::MAX_LIMIT, default: self::DEFAULT_LIMIT)),
-        ],
+        description: "Returns catalog elements with full-text search and filters by direct sections, activity, prices, price types and stock availability. Legacy sectionId is combined with sectionIds using OR. Results keep the existing sort DESC, id ASC order even when query is present.",
         responses: [
             new OA\Response(
                 response: 200,
                 description: "Paginated catalog elements.",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "items", type: "array", items: new OA\Items(ref: new Model(type: CatalogElements::class, groups: ["catalog_element:list"]))),
-                        new OA\Property(
-                            property: "pagination",
-                            oneOf: [
-                                new OA\Schema(
-                                    required: ["page", "limit", "total"],
-                                    properties: [
-                                        new OA\Property(property: "page", type: "integer"),
-                                        new OA\Property(property: "limit", type: "integer"),
-                                        new OA\Property(property: "total", type: "integer"),
-                                    ],
-                                    type: "object"
-                                ),
-                                new OA\Schema(
-                                    required: ["page", "limit", "hasNextPage"],
-                                    properties: [
-                                        new OA\Property(property: "page", type: "integer"),
-                                        new OA\Property(property: "limit", type: "integer"),
-                                        new OA\Property(property: "hasNextPage", type: "boolean"),
-                                    ],
-                                    type: "object"
-                                ),
-                            ],
-                        ),
-                    ],
-                    type: "object"
-                )
+                content: new OA\JsonContent(ref: new Model(type: CatalogListResponse::class)),
             ),
+            new OA\Response(response: 400, description: "Invalid query parameters."),
         ]
     )]
-    public function list(Request $request, CatalogElementsRepository $catalogElementsRepository): JsonResponse
+    public function list(
+        #[MapQueryString(validationFailedStatusCode: Response::HTTP_BAD_REQUEST)] CatalogListQuery $query,
+        CatalogReadService $catalog,
+    ): JsonResponse
     {
-        $page = max(1, $request->query->getInt("page", 1));
-        $limit = min(self::MAX_LIMIT, max(1, $request->query->getInt("limit", self::DEFAULT_LIMIT)));
-        $sectionId = $request->query->has("sectionId") ? max(1, $request->query->getInt("sectionId")) : null;
-        $active = $this->getNullableBooleanQuery($request, "active");
-
-        $ids = $catalogElementsRepository->findPageIds(
-            $sectionId,
-            $active,
-            $page,
-            $limit,
-            $this->useHasNextPagePagination,
-        );
-
-        $hasNextPage = $this->useHasNextPagePagination && \count($ids) > $limit;
-
-        if ($hasNextPage) {
-            $ids = \array_slice($ids, 0, $limit);
-        }
-
-        $items = $catalogElementsRepository->findListByIds($ids);
-
-        $pagination = [
-            "page" => $page,
-            "limit" => $limit,
-        ];
-
-        if ($this->useHasNextPagePagination) {
-            $pagination["hasNextPage"] = $hasNextPage;
-        } else {
-            $pagination["total"] = $catalogElementsRepository->countMatchingListFilters($sectionId, $active);
-        }
-
         return $this->json(
-            [
-                "items" => $items,
-                "pagination" => $pagination,
-            ],
+            $catalog->list($query->toCriteria($this->useHasNextPagePagination)),
             context: ["groups" => ["catalog_element:list"]]
         );
     }
@@ -120,14 +56,14 @@ class CatalogElementsController extends AbstractController
             new OA\Response(
                 response: 200,
                 description: "Catalog element.",
-                content: new OA\JsonContent(ref: new Model(type: CatalogElements::class, groups: ["catalog_element:item"]))
+                content: new OA\JsonContent(ref: new Model(type: CatalogElementResponse::class, groups: ["catalog_element:item"]))
             ),
             new OA\Response(response: 404, description: "Catalog element was not found."),
         ]
     )]
-    public function item(int $id, CatalogElementsRepository $catalogElementsRepository): JsonResponse
+    public function item(int $id, CatalogReadService $catalog): JsonResponse
     {
-        $element = $catalogElementsRepository->findOneForPublicApi($id);
+        $element = $catalog->item($id);
 
         if ($element === null) {
             return $this->json(["message" => "Catalog element was not found."], Response::HTTP_NOT_FOUND);
@@ -136,14 +72,4 @@ class CatalogElementsController extends AbstractController
         return $this->json($element, context: ["groups" => ["catalog_element:item"]]);
     }
 
-    private function getNullableBooleanQuery(Request $request, string $name): ?bool
-    {
-        if (!$request->query->has($name)) {
-            return null;
-        }
-
-        $value = filter_var($request->query->get($name), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-
-        return is_bool($value) ? $value : null;
-    }
 }
