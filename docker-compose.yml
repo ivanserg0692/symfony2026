@@ -245,6 +245,7 @@ services:
     environment:
       APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
       CATALOG_PAGINATION_USE_HAS_NEXT_PAGE: "${CATALOG_PAGINATION_USE_HAS_NEXT_PAGE:-false}"
+      CATALOG_READ_MODEL: "${CATALOG_READ_MODEL:-doctrine}"
       DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
       ELASTICSEARCH_URL: "${ELASTICSEARCH_URL:-http://elasticsearch:9200}"
       ELASTICSEARCH_USERNAME: "${ELASTICSEARCH_USERNAME:-elastic}"
@@ -273,6 +274,7 @@ services:
     environment:
       APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
       CATALOG_PAGINATION_USE_HAS_NEXT_PAGE: "${CATALOG_PAGINATION_USE_HAS_NEXT_PAGE:-false}"
+      CATALOG_READ_MODEL: "${CATALOG_READ_MODEL:-doctrine}"
       DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
       ELASTICSEARCH_URL: "${ELASTICSEARCH_URL:-http://elasticsearch:9200}"
       ELASTICSEARCH_USERNAME: "${ELASTICSEARCH_USERNAME:-elastic}"
@@ -376,6 +378,7 @@ services:
     environment:
       APP_SECRET: "${CATALOG_APP_SECRET:-catalog-dev-secret-change-me}"
       CATALOG_PAGINATION_USE_HAS_NEXT_PAGE: "${CATALOG_PAGINATION_USE_HAS_NEXT_PAGE:-false}"
+      CATALOG_READ_MODEL: "${CATALOG_READ_MODEL:-doctrine}"
       DATABASE_URL: "${CATALOG_DATABASE_URL:-postgresql://catalog:catalog@catalog-db:5432/catalog?serverVersion=16&charset=utf8}"
       ELASTICSEARCH_URL: "${ELASTICSEARCH_URL:-http://elasticsearch:9200}"
       ELASTICSEARCH_USERNAME: "${ELASTICSEARCH_USERNAME:-elastic}"

@@ -38,7 +38,9 @@ use Psr\Log\LoggerInterface;
 use Spiral\RoadRunner\GRPC;
 use Spiral\RoadRunner\GRPC\Exception\GRPCException;
 use Spiral\RoadRunner\GRPC\StatusCode;
+use Symfony\Component\DependencyInjection\Attribute\AsAlias;
 
+#[AsAlias(InventoryServiceInterface::class)]
 final readonly class InventoryService implements InventoryServiceInterface
 {
     private const MAX_PRODUCT_SNAPSHOT_IDS = 100;

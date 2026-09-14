@@ -4,6 +4,8 @@ namespace App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing;
 
 use Doctrine\ORM\Decorator\EntityManagerDecorator;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
+use Symfony\Component\DependencyInjection\Attribute\AutowireDecorated;
 
 /**
  * Starts an outer transaction before Doctrine computes and executes a flush.
@@ -12,9 +14,11 @@ use Doctrine\ORM\EntityManagerInterface;
  * transaction therefore ensures that DBAL writes performed by Messenger's Doctrine
  * transport in onFlush/postPersist commit or roll back with the business changes.
  */
+#[AsDecorator(decorates: "doctrine.orm.default_entity_manager")]
 final class ProductSearchOutboxEntityManagerDecorator extends EntityManagerDecorator
 {
     public function __construct(
+        #[AutowireDecorated]
         EntityManagerInterface $wrapped,
     ) {
         parent::__construct($wrapped);

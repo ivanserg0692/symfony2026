@@ -4,8 +4,10 @@ namespace App\Tests\Controller\Api;
 
 use App\Controller\Api\CatalogElementsController;
 use App\Repository\CatalogElementsRepository;
+use App\Search\Product\Application\CatalogReadService;
+use App\Search\Product\Application\Dto\Read\CatalogListQuery;
+use App\Search\Product\Infrastructure\Doctrine\DoctrineCatalogReader;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Component\HttpFoundation\Request;
 
 final class CatalogElementsControllerTest extends KernelTestCase
 {
@@ -96,8 +98,9 @@ final class CatalogElementsControllerTest extends KernelTestCase
         self::bootKernel();
         $controller->setContainer(static::getContainer());
 
-        $request = Request::create("/api/catalog/elements", "GET", ["page" => 2, "limit" => 2]);
-        $response = $controller->list($request, $repository);
+        $response = $controller->list(new CatalogListQuery(page: 2, limit: 2), new CatalogReadService(
+            new DoctrineCatalogReader($repository),
+        ));
         $content = $response->getContent();
 
         self::assertIsString($content);
