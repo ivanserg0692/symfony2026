@@ -14,7 +14,7 @@ services:
       - .env
       - .env.local
     ports:
-      - "5432:5432"
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d app -U app"]
       timeout: 5s
@@ -34,7 +34,7 @@ services:
       POSTGRES_USER: ${CATALOG_POSTGRES_USER:-catalog}
       POSTGRES_PASSWORD: ${CATALOG_POSTGRES_PASSWORD:-catalog}
     ports:
-      - "5433:5432"
+      - "${CATALOG_POSTGRES_HOST_PORT:-5433}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d \"$${POSTGRES_DB}\" -U \"$${POSTGRES_USER}\""]
       timeout: 5s
@@ -54,7 +54,7 @@ services:
       POSTGRES_USER: ${CART_POSTGRES_USER:-cart}
       POSTGRES_PASSWORD: ${CART_POSTGRES_PASSWORD:-cart}
     ports:
-      - "5434:5432"
+      - "${CART_POSTGRES_HOST_PORT:-5434}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d \"$${POSTGRES_DB}\" -U \"$${POSTGRES_USER}\""]
       timeout: 5s
