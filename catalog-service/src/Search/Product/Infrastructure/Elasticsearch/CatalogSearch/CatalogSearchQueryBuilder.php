@@ -20,7 +20,7 @@ final readonly class CatalogSearchQueryBuilder
     public function build(CatalogListCriteria $criteria): array
     {
         return [
-            "query" => $this->filters($criteria),
+            "query" => $this->query($criteria),
             // PostgreSQL DESC places NULL first.
             "sort" => [["sort" => ["order" => "desc", "missing" => "_first"]], ["id" => "asc"]],
             "track_total_hits" => !$criteria->lookAhead,
@@ -69,18 +69,103 @@ final readonly class CatalogSearchQueryBuilder
     }
 
     /** @return array<string, mixed> */
-    private function filters(CatalogListCriteria $criteria): array
+    private function query(CatalogListCriteria $criteria): array
     {
-        $filters = [];
-        if ($criteria->sectionId !== null) {
-            $filters[] = ["term" => ["section_ids" => $criteria->sectionId]];
-        }
-        if ($criteria->active !== null) {
-            $filters[] = ["term" => ["active" => $criteria->active]];
+        $must = $this->buildMustClauses($criteria);
+        $filters = $this->buildFilterClauses($criteria);
+
+        if ($must === [] && $filters === []) {
+            return ["match_all" => new \stdClass()];
         }
 
-        // Future correlated price/store conditions belong in one nested query
-        // per relation here, independently of pagination and response mapping.
-        return $filters === [] ? ["match_all" => new \stdClass()] : ["bool" => ["filter" => $filters]];
+        $bool = [];
+        if ($must !== []) {
+            $bool["must"] = $must;
+        }
+        if ($filters !== []) {
+            $bool["filter"] = $filters;
+        }
+
+        return ["bool" => $bool];
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function buildMustClauses(CatalogListCriteria $criteria): array
+    {
+        return $criteria->query === null
+            ? []
+            : [["multi_match" => [
+                "query" => $criteria->query,
+                "fields" => ["name^3", "description"],
+            ]]];
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function buildFilterClauses(CatalogListCriteria $criteria): array
+    {
+        return array_values(array_filter([
+            $this->buildSectionFilter($criteria),
+            $this->buildActiveFilter($criteria),
+            $this->buildPriceFilter($criteria),
+            $this->buildStockFilter($criteria),
+        ], static fn (?array $filter): bool => $filter !== null));
+    }
+
+    /** @return array<string, mixed>|null */
+    private function buildSectionFilter(CatalogListCriteria $criteria): ?array
+    {
+        $sectionIds = $criteria->sectionIds;
+        if ($criteria->sectionId !== null) {
+            $sectionIds[] = $criteria->sectionId;
+        }
+        $sectionIds = array_values(array_unique($sectionIds));
+
+        return $sectionIds === [] ? null : ["terms" => ["section_ids" => $sectionIds]];
+    }
+
+    /** @return array<string, mixed>|null */
+    private function buildActiveFilter(CatalogListCriteria $criteria): ?array
+    {
+        return $criteria->active === null ? null : ["term" => ["active" => $criteria->active]];
+    }
+
+    /** @return array<string, mixed>|null */
+    private function buildPriceFilter(CatalogListCriteria $criteria): ?array
+    {
+        $priceFilters = [];
+        if ($criteria->priceTypeCodes !== []) {
+            $priceFilters[] = ["terms" => ["prices.type_code" => $criteria->priceTypeCodes]];
+        }
+        if ($criteria->priceFrom !== null || $criteria->priceTo !== null) {
+            $range = [];
+            if ($criteria->priceFrom !== null) {
+                $range["gte"] = $criteria->priceFrom;
+            }
+            if ($criteria->priceTo !== null) {
+                $range["lte"] = $criteria->priceTo;
+            }
+            $priceFilters[] = ["range" => ["prices.amount" => $range]];
+        }
+
+        if ($priceFilters === []) {
+            return null;
+        }
+
+        return ["nested" => [
+            "path" => "prices",
+            "query" => ["bool" => ["filter" => $priceFilters]],
+        ]];
+    }
+
+    /** @return array<string, mixed>|null */
+    private function buildStockFilter(CatalogListCriteria $criteria): ?array
+    {
+        if ($criteria->inStock === null) {
+            return null;
+        }
+
+        $operator = $criteria->inStock ? "gt" : "lte";
+
+        return ["range" => ["total_stock" => [$operator => 0]]];
     }
 }

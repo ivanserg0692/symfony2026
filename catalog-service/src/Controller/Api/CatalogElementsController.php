@@ -27,17 +27,18 @@ class CatalogElementsController extends AbstractController
     #[Route("", name: "api_catalog_elements_list", methods: ["GET"])]
     #[OA\Get(
         summary: "List catalog elements",
-        description: "Returns catalog elements filtered by sectionId and active with pagination.",
+        description: "Returns catalog elements with full-text search and filters by direct sections, activity, prices, price types and stock availability. Legacy sectionId is combined with sectionIds using OR. Results keep the existing sort DESC, id ASC order even when query is present.",
         responses: [
             new OA\Response(
                 response: 200,
                 description: "Paginated catalog elements.",
                 content: new OA\JsonContent(ref: new Model(type: CatalogListResponse::class)),
             ),
+            new OA\Response(response: 400, description: "Invalid query parameters."),
         ]
     )]
     public function list(
-        #[MapQueryString] CatalogListQuery $query,
+        #[MapQueryString(validationFailedStatusCode: Response::HTTP_BAD_REQUEST)] CatalogListQuery $query,
         CatalogReadService $catalog,
     ): JsonResponse
     {

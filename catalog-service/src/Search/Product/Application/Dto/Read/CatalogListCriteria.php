@@ -10,6 +10,14 @@ final readonly class CatalogListCriteria
         public int $page,
         public int $limit,
         public bool $lookAhead,
+        public ?string $query = null,
+        /** @var list<int> */
+        public array $sectionIds = [],
+        public ?int $priceFrom = null,
+        public ?int $priceTo = null,
+        /** @var list<string> */
+        public array $priceTypeCodes = [],
+        public ?bool $inStock = null,
     ) {
     }
 

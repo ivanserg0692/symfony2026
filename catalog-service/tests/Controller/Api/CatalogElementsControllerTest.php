@@ -88,17 +88,55 @@ final class CatalogElementsControllerTest extends KernelTestCase
         );
     }
 
+    public function testDoctrineModeKeepsOnlyLegacyFilters(): void
+    {
+        $repository = $this->createMock(CatalogElementsRepository::class);
+        $repository
+            ->expects(self::once())
+            ->method("findPageIds")
+            ->with(12, false, 2, 2, false)
+            ->willReturn([]);
+        $repository
+            ->expects(self::once())
+            ->method("findListByIds")
+            ->with([])
+            ->willReturn([]);
+        $repository
+            ->expects(self::once())
+            ->method("countMatchingListFilters")
+            ->with(12, false)
+            ->willReturn(0);
+
+        $this->requestList(
+            new CatalogElementsController(false),
+            $repository,
+            new CatalogListQuery(
+                sectionId: 12,
+                active: "false",
+                page: 2,
+                limit: 2,
+                query: "ignored in doctrine mode",
+                sectionIds: [24],
+                priceFrom: 1000,
+                priceTo: 5000,
+                priceTypeCodes: ["retail"],
+                inStock: "true",
+            ),
+        );
+    }
+
     /**
      * @return array{items: array<mixed>, pagination: array<string, bool|int>}
      */
     private function requestList(
         CatalogElementsController $controller,
         CatalogElementsRepository $repository,
+        ?CatalogListQuery $query = null,
     ): array {
         self::bootKernel();
         $controller->setContainer(static::getContainer());
 
-        $response = $controller->list(new CatalogListQuery(page: 2, limit: 2), new CatalogReadService(
+        $response = $controller->list($query ?? new CatalogListQuery(page: 2, limit: 2), new CatalogReadService(
             new DoctrineCatalogReader($repository),
         ));
         $content = $response->getContent();

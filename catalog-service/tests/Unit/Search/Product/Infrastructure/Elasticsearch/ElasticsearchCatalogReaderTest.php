@@ -22,7 +22,7 @@ final class ElasticsearchCatalogReaderTest extends TestCase
             self::assertSame("/products/_search", $request->getUri()->getPath());
             $body = json_decode((string) $request->getBody(), true);
             self::assertSame([
-                ["term" => ["section_ids" => 7]],
+                ["terms" => ["section_ids" => [7]]],
                 ["term" => ["active" => false]],
             ], $body["query"]["bool"]["filter"]);
             self::assertSame([["sort" => ["order" => "desc", "missing" => "_first"]], ["id" => "asc"]], $body["sort"]);

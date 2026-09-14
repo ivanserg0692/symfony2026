@@ -73,18 +73,82 @@ final class CatalogReadContractTest extends KernelTestCase
     public static function queryCases(): iterable
     {
         yield [[], new CatalogListCriteria(null, null, 1, 20, false)];
-        yield [["sectionId" => 0, "active" => "false", "page" => -1, "limit" => 999], new CatalogListCriteria(1, false, 1, 100, false)];
-        yield [["sectionId" => 12, "active" => "invalid", "limit" => 0, "price" => 100], new CatalogListCriteria(12, null, 1, 1, false)];
+        yield [["sectionId" => 12, "active" => "false", "page" => 2, "limit" => 100], new CatalogListCriteria(12, false, 2, 100, false)];
+        yield [["sectionId" => 12, "active" => "invalid", "price" => 100], new CatalogListCriteria(12, null, 1, 20, false)];
         yield [["active" => "true"], new CatalogListCriteria(null, true, 1, 20, false)];
+        yield [[
+            "query" => "  jacket  ",
+            "sectionIds" => [5, "5", 7, ""],
+            "priceFrom" => 1000,
+            "priceTo" => 5000,
+            "priceTypeCodes" => [" retail ", "", "retail", "promo"],
+            "inStock" => "false",
+        ], new CatalogListCriteria(
+            sectionId: null,
+            active: null,
+            page: 1,
+            limit: 20,
+            lookAhead: false,
+            query: "jacket",
+            sectionIds: [5, 7],
+            priceFrom: 1000,
+            priceTo: 5000,
+            priceTypeCodes: ["retail", "promo"],
+            inStock: false,
+        )];
+    }
+
+    /** @dataProvider invalidQueryCases */
+    public function testRejectsInvalidListQuery(CatalogListQuery $query, string $expectedProperty): void
+    {
+        self::bootKernel();
+
+        $violations = static::getContainer()->get("validator")->validate($query);
+
+        self::assertGreaterThan(0, $violations->count());
+        self::assertSame($expectedProperty, $violations[0]->getPropertyPath());
+    }
+
+    public static function invalidQueryCases(): iterable
+    {
+        yield "page below one" => [new CatalogListQuery(page: 0), "page"];
+        yield "limit below range" => [new CatalogListQuery(limit: 0), "limit"];
+        yield "limit above range" => [new CatalogListQuery(limit: 101), "limit"];
+        yield "negative minimum price" => [new CatalogListQuery(priceFrom: -1), "priceFrom"];
+        yield "negative maximum price" => [new CatalogListQuery(priceTo: -1), "priceTo"];
+        yield "inverted price range" => [new CatalogListQuery(priceFrom: 5001, priceTo: 5000), "priceTo"];
+    }
+
+    /** @dataProvider validBoundaryQueryCases */
+    public function testAcceptsPartialPriceRangesAndEmptyArrayValues(CatalogListQuery $query): void
+    {
+        self::bootKernel();
+
+        $violations = static::getContainer()->get("validator")->validate($query);
+
+        self::assertCount(0, $violations);
+    }
+
+    public static function validBoundaryQueryCases(): iterable
+    {
+        yield "minimum price only" => [new CatalogListQuery(priceFrom: 1000)];
+        yield "maximum price only" => [new CatalogListQuery(priceTo: 5000)];
+        yield "empty array values" => [new CatalogListQuery(sectionIds: [""], priceTypeCodes: [""])];
     }
 
     private function query(array $query): CatalogListQuery
     {
         return new CatalogListQuery(
-            isset($query["sectionId"]) ? (int) $query["sectionId"] : null,
-            isset($query["active"]) ? (string) $query["active"] : null,
-            isset($query["page"]) ? (int) $query["page"] : 1,
-            isset($query["limit"]) ? (int) $query["limit"] : 20,
+            sectionId: isset($query["sectionId"]) ? (int) $query["sectionId"] : null,
+            active: isset($query["active"]) ? (string) $query["active"] : null,
+            page: isset($query["page"]) ? (int) $query["page"] : 1,
+            limit: isset($query["limit"]) ? (int) $query["limit"] : 20,
+            query: isset($query["query"]) ? (string) $query["query"] : null,
+            sectionIds: $query["sectionIds"] ?? [],
+            priceFrom: isset($query["priceFrom"]) ? (int) $query["priceFrom"] : null,
+            priceTo: isset($query["priceTo"]) ? (int) $query["priceTo"] : null,
+            priceTypeCodes: $query["priceTypeCodes"] ?? [],
+            inStock: isset($query["inStock"]) ? (string) $query["inStock"] : null,
         );
     }
 
