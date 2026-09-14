@@ -23,7 +23,7 @@ final readonly class CatalogSectionSearchChangeImpactResolver extends AbstractPr
 
     protected function indexedFields(): array
     {
-        return ['name', 'slug', 'active', ...self::HIERARCHY_FIELDS, 'sort'];
+        return ['name', 'slug', 'active', ...self::HIERARCHY_FIELDS, 'sort', 'description', 'pictureId'];
     }
 
     protected function doResolveEntityChange(object $entity, array $changeSet, bool $insertion): array

@@ -32,9 +32,11 @@ final class ProductSearchDocumentBuilderTest extends TestCase
         $element->getProduct()?->setId(142);
 
         $element->addSection((new CatalogSections())->setId(20)->setName("Second")->setSlug("second")->setActive(true)->setSort(20));
-        $element->addSection((new CatalogSections())->setId(10)->setName("First")->setSlug("first")->setActive(true)->setSort(10));
+        $element->addSection((new CatalogSections())->setId(10)->setName("First")->setSlug("first")->setActive(true)->setSort(10)
+            ->setDescription("Section description")->setPictureId("section-picture"));
 
-        $priceType = (new PriceType())->setCode("retail")->setName("Retail")->setActive(true);
+        $priceType = (new PriceType())->setCode("retail")->setName("Retail")->setActive(true)
+            ->setSort(0)->setDescription("Retail description");
         $this->setPrivateProperty($priceType, "id", 3);
         $price = (new ProductPrice())
             ->setPriceType($priceType)
@@ -60,12 +62,25 @@ final class ProductSearchDocumentBuilderTest extends TestCase
         self::assertContainsOnlyInstancesOf(ProductSearchStock::class, $document->stocks);
         self::assertSame(142, $source["product_id"]);
         self::assertSame([10, 20], $source["section_ids"]);
+        self::assertSame("Description", $source["description"]);
+        self::assertSame("picture-1", $source["picture_id"]);
+        self::assertSame("Section description", $source["sections"][0]["description"]);
+        self::assertSame("section-picture", $source["sections"][0]["picture_id"]);
+        self::assertNull($source["sections"][1]["description"]);
+        self::assertNull($source["sections"][1]["picture_id"]);
         self::assertSame("retail", $source["prices"][0]["type_code"]);
+        self::assertSame(0, $source["prices"][0]["type_sort"]);
+        self::assertSame("Retail description", $source["prices"][0]["type_description"]);
         self::assertSame(129900, $source["prices"][0]["amount"]);
         self::assertSame(6, $source["total_stock"]);
         self::assertTrue($source["available"]);
         self::assertSame(5, $source["stocks"][0]["store_id"]);
         self::assertSame("2026-08-31T12:30:00+00:00", $source["created_at"]);
+
+        $priceType->setDescription(null);
+        $source = (new ProductSearchDocumentBuilder())->build($element)->toArray();
+        self::assertNull($source["prices"][0]["type_description"]);
+        self::assertSame(0, $source["prices"][0]["type_sort"]);
     }
 
     private function setPrivateProperty(object $object, string $property, mixed $value): void

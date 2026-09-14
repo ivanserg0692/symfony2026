@@ -4,7 +4,7 @@ namespace App\Search\Product\Infrastructure\Elasticsearch;
 
 final class ProductSearchIndexDefinition
 {
-    public const int SCHEMA_VERSION = 1;
+    public const int SCHEMA_VERSION = 2;
 
     /**
      * @return array<string, mixed>
@@ -37,6 +37,8 @@ final class ProductSearchIndexDefinition
                             "slug" => ["type" => "keyword"],
                             "active" => ["type" => "boolean"],
                             "parent_id" => ["type" => "long"],
+                            "description" => ["type" => "text"],
+                            "picture_id" => ["type" => "keyword"],
                             "level" => ["type" => "integer"],
                             "sort" => ["type" => "integer"],
                         ],
@@ -49,6 +51,8 @@ final class ProductSearchIndexDefinition
                             "type_code" => ["type" => "keyword"],
                             "type_name" => ["type" => "keyword"],
                             "type_active" => ["type" => "boolean"],
+                            "type_sort" => ["type" => "integer"],
+                            "type_description" => ["type" => "text"],
                             "amount" => ["type" => "long"],
                             "currency" => ["type" => "keyword"],
                             "active" => ["type" => "boolean"],

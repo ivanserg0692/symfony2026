@@ -34,6 +34,8 @@ final class ProductSearchDocumentBuilder
                 parentId: $section->getParentId(),
                 level: $section->getLevel(),
                 sort: $section->getSort(),
+                description: $section->getDescription(),
+                pictureId: $section->getPictureId(),
             );
         }
         usort($sections, static fn(ProductSearchSection $left, ProductSearchSection $right): int => $left->id <=> $right->id);
@@ -57,6 +59,8 @@ final class ProductSearchDocumentBuilder
                 active: $price->isActive(),
                 validFrom: $price->getValidFrom(),
                 validTo: $price->getValidTo(),
+                typeSort: $priceType->getSort(),
+                typeDescription: $priceType->getDescription(),
             );
         }
         usort($prices, static fn(ProductSearchPrice $left, ProductSearchPrice $right): int => [$left->typeId, $left->id] <=> [$right->typeId, $right->id]);

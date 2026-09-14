@@ -13,7 +13,7 @@ final readonly class PriceTypeSearchChangeImpactResolver extends AbstractProduct
 
     protected function indexedFields(): array
     {
-        return ['code', 'name', 'active'];
+        return ['code', 'name', 'active', 'sort', 'description'];
     }
 
     protected function doResolveEntityChange(object $entity, array $changeSet, bool $insertion): array

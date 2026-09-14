@@ -46,6 +46,8 @@ final readonly class ProductSearchDocument implements ProductSearchIndexDocument
                 "parent_id" => $section->parentId,
                 "level" => $section->level,
                 "sort" => $section->sort,
+                "description" => $section->description,
+                "picture_id" => $section->pictureId,
             ],
             $this->sections,
         );
@@ -57,6 +59,8 @@ final readonly class ProductSearchDocument implements ProductSearchIndexDocument
                 "type_code" => $price->typeCode,
                 "type_name" => $price->typeName,
                 "type_active" => $price->typeActive,
+                "type_sort" => $price->typeSort,
+                "type_description" => $price->typeDescription,
                 "amount" => $price->amount,
                 "currency" => $price->currency,
                 "active" => $price->active,

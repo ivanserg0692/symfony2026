@@ -15,6 +15,8 @@ final readonly class ProductSearchPrice
         public ?bool $active,
         public ?\DateTimeImmutable $validFrom,
         public ?\DateTimeImmutable $validTo,
+        public ?int $typeSort,
+        public ?string $typeDescription,
     ) {
     }
 }
