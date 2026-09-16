@@ -4,7 +4,8 @@ namespace App\Tests\Controller\Api;
 
 use App\Controller\Api\CatalogSectionsController;
 use App\Entity\CatalogSections;
-use App\Repository\CatalogSectionsRepository;
+use App\Search\Product\Application\Dto\Read\CatalogSectionResponse;
+use App\Search\Product\Port\Input\CatalogSectionReadInputInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -18,10 +19,10 @@ final class CatalogSectionsControllerTest extends KernelTestCase
             ->setSlug('section')
             ->setActive(true);
 
-        $repository = $this->createMock(CatalogSectionsRepository::class);
-        $repository->expects(self::once())->method('findActiveForPublicList')->willReturn([$section]);
+        $sections = $this->createMock(CatalogSectionReadInputInterface::class);
+        $sections->expects(self::once())->method('list')->willReturn([CatalogSectionResponse::fromEntity($section)]);
 
-        $response = $this->controller()->list($repository);
+        $response = $this->controller()->list($sections);
 
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
         self::assertSame([7], array_column($this->payload($response), 'id'));
@@ -36,10 +37,10 @@ final class CatalogSectionsControllerTest extends KernelTestCase
             ->setSlug('section')
             ->setActive(false);
 
-        $repository = $this->createMock(CatalogSectionsRepository::class);
-        $repository->expects(self::once())->method('findOneForPublicApi')->with(7)->willReturn($section);
+        $sections = $this->createMock(CatalogSectionReadInputInterface::class);
+        $sections->expects(self::once())->method('item')->with(7)->willReturn(CatalogSectionResponse::fromEntity($section));
 
-        $response = $this->controller()->item(7, $repository);
+        $response = $this->controller()->item(7, $sections);
 
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
         self::assertSame(7, $this->payload($response)['id']);
@@ -48,10 +49,10 @@ final class CatalogSectionsControllerTest extends KernelTestCase
 
     public function testItemStillReturnsNotFound(): void
     {
-        $repository = $this->createMock(CatalogSectionsRepository::class);
-        $repository->expects(self::once())->method('findOneForPublicApi')->with(404)->willReturn(null);
+        $sections = $this->createMock(CatalogSectionReadInputInterface::class);
+        $sections->expects(self::once())->method('item')->with(404)->willReturn(null);
 
-        $response = $this->controller()->item(404, $repository);
+        $response = $this->controller()->item(404, $sections);
 
         self::assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
         self::assertSame(['message' => 'Catalog section was not found.'], $this->payload($response));

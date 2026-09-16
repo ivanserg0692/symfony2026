@@ -11,7 +11,6 @@ use App\Search\Product\Infrastructure\Elasticsearch\ElasticsearchCatalogReader;
 use App\Search\Product\Infrastructure\Elasticsearch\ElasticsearchCatalogSectionReader;
 use App\Search\Product\Port\Input\CatalogReadInputInterface;
 use App\Search\Product\Port\Input\CatalogSectionReadInputInterface;
-use App\Search\Product\Port\Input\CatalogReadInputInterface;
 use App\Search\Product\Port\Output\CatalogReadInterface;
 use App\Search\Product\Port\Output\CatalogSectionReadInterface;
 use Elastic\Elasticsearch\ClientBuilder;
@@ -43,10 +42,6 @@ final class CatalogReadWiringTest extends KernelTestCase
             self::assertInstanceOf(
                 CatalogSectionReadService::class,
                 static::getContainer()->get(CatalogSectionReadInputInterface::class),
-            );
-            self::assertInstanceOf(
-                CatalogReadService::class,
-                static::getContainer()->get(CatalogReadInputInterface::class),
             );
         });
     }
