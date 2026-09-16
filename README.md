@@ -712,7 +712,7 @@ npm run db:init
 npm run db:migrate
 ```
 
-`db:init` creates missing databases and then applies migrations. `db:fixtures` loads fixtures separately and is intentionally not included in `db:init` because it can rewrite development data.
+`db:init` creates missing databases and then applies migrations. `db:fixtures` loads fixtures separately and is intentionally not included in `db:init` because it can rewrite development data. After loading Catalog fixtures, `db:fixtures` runs the full Elasticsearch catalog reindex and starts Cart fixtures only if the reindex succeeds. This can take several minutes for large catalogs.
 
 Start PostgreSQL and create the database if it does not exist yet:
 
@@ -1529,7 +1529,7 @@ npm run db:init
 npm run db:migrate
 ```
 
-`db:init` создает отсутствующие базы и затем применяет миграции. `db:fixtures` загружает fixtures отдельно и специально не включен в `db:init`, потому что может перезаписать development-данные.
+`db:init` создает отсутствующие базы и затем применяет миграции. `db:fixtures` загружает fixtures отдельно и специально не включен в `db:init`, потому что может перезаписать development-данные. После загрузки фикстур Catalog команда `db:fixtures` запускает полную переиндексацию каталога в Elasticsearch и переходит к фикстурам Cart только после ее успешного завершения. Для большого каталога это может занять несколько минут.
 
 Поднимите PostgreSQL и создайте базу, если она еще не существует:
 

@@ -55,7 +55,15 @@ run_for_database_services() {
       exit 1
     fi
 
+    if [[ -n "${DATABASE_SERVICE_BEFORE_HOOK:-}" ]]; then
+      "${DATABASE_SERVICE_BEFORE_HOOK}" "${service}"
+    fi
+
     printf '\n==> %s (%s)\n' "${label}" "${service}"
     docker compose exec "${compose_exec_args[@]}" "${service}" php "$@" bin/console ${command}
+
+    if [[ -n "${DATABASE_SERVICE_AFTER_HOOK:-}" ]]; then
+      "${DATABASE_SERVICE_AFTER_HOOK}" "${service}"
+    fi
   done
 }
