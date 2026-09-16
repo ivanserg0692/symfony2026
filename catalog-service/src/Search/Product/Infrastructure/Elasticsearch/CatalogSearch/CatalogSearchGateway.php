@@ -10,7 +10,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  *
  * Query construction remains in CatalogSearchQueryBuilder, while this class
  * hides client calls and transport-specific response normalization from the
- * CatalogRead adapter.
+ * catalog read adapters.
  */
 final readonly class CatalogSearchGateway
 {
@@ -34,16 +34,37 @@ final readonly class CatalogSearchGateway
     }
 
     /** @param array<string, mixed> $body */
+    public function searchSectionPage(array $body): CatalogSectionAggregationResponse
+    {
+        return CatalogSectionAggregationResponse::fromArray($this->executeRawSearch($body));
+    }
+
+    /** @param array<string, mixed> $body */
+    public function searchSectionById(array $body): CatalogSectionAggregationResponse
+    {
+        return CatalogSectionAggregationResponse::fromArray(
+            $this->executeRawSearch($body, $this->productSearchIndexAlias),
+        );
+    }
+
+    /** @param array<string, mixed> $body */
     private function executeSearch(array $body, ?string $index = null): CatalogSearchResponse
+    {
+        return CatalogSearchResponse::fromArray($this->executeRawSearch($body, $index));
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array<string, mixed>
+     */
+    private function executeRawSearch(array $body, ?string $index = null): array
     {
         $parameters = ["body" => $body];
         if ($index !== null) {
             $parameters["index"] = $index;
         }
 
-        return CatalogSearchResponse::fromArray(
-            $this->client->search($parameters + ["allow_partial_search_results" => false])->asArray(),
-        );
+        return $this->client->search($parameters + ["allow_partial_search_results" => false])->asArray();
     }
 
     public function findById(int $id): ?CatalogSearchHit

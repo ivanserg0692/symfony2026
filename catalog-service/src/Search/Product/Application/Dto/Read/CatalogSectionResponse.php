@@ -29,31 +29,31 @@ final readonly class CatalogSectionResponse
 
     public function __construct(
         #[OA\Property(type: "integer", nullable: true)]
-        #[Groups(["catalog_element:item"])]
+        #[Groups(["catalog_element:item", "catalog_section:list", "catalog_section:item"])]
         public ?int $id,
         #[OA\Property(type: "string", nullable: true)]
-        #[Groups(["catalog_element:item"])]
+        #[Groups(["catalog_element:item", "catalog_section:list", "catalog_section:item"])]
         public ?string $name,
         #[OA\Property(type: "string", nullable: true)]
-        #[Groups(["catalog_element:item"])]
+        #[Groups(["catalog_element:item", "catalog_section:list", "catalog_section:item"])]
         public ?string $slug,
         #[OA\Property(type: "boolean", nullable: true)]
-        #[Groups(["catalog_element:item"])]
+        #[Groups(["catalog_element:item", "catalog_section:list", "catalog_section:item"])]
         public ?bool $active,
         #[OA\Property(type: "string", nullable: true)]
-        #[Groups(["catalog_element:item"])]
+        #[Groups(["catalog_element:item", "catalog_section:list", "catalog_section:item"])]
         public ?string $description,
         #[OA\Property(type: "string", nullable: true)]
-        #[Groups(["catalog_element:item"])]
+        #[Groups(["catalog_element:item", "catalog_section:list", "catalog_section:item"])]
         public ?string $pictureId,
         #[OA\Property(type: "integer", nullable: true)]
-        #[Groups(["catalog_element:item"])]
+        #[Groups(["catalog_element:item", "catalog_section:list", "catalog_section:item"])]
         public ?int $level,
         #[OA\Property(type: "integer", nullable: true)]
-        #[Groups(["catalog_element:item"])]
+        #[Groups(["catalog_element:item", "catalog_section:list", "catalog_section:item"])]
         public ?int $sort,
         #[OA\Property(type: "integer", nullable: true)]
-        #[Groups(["catalog_element:item"])]
+        #[Groups(["catalog_element:item", "catalog_section:list", "catalog_section:item"])]
         public ?int $parentId,
     ) {
     }

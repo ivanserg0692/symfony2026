@@ -38,6 +38,11 @@ services:
     App\Search\Product\Port\Output\CatalogReadInterface:
         factory: ['@App\Search\Product\Infrastructure\CatalogReadFactory', 'create']
 
+    App\Search\Product\Port\Output\CatalogSectionReadInterface:
+        factory: ['@App\Search\Product\Infrastructure\CatalogSectionReadFactory', 'create']
+
+    App\Search\Product\Port\Input\CatalogSectionReadInputInterface: '@App\Search\Product\Application\CatalogSectionReadService'
+
     app.catalog_read.elasticsearch_client:
         class: Elastic\Elasticsearch\Client
         factory: ['@App\Search\Product\Infrastructure\Elasticsearch\ElasticsearchClientFactory', 'create']

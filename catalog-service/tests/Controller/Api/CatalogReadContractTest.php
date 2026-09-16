@@ -3,6 +3,7 @@
 namespace App\Tests\Controller\Api;
 
 use App\Controller\Api\CatalogElementsController;
+use App\Controller\Api\CatalogSectionsController;
 use App\Entity\CatalogElements;
 use App\Entity\CatalogSections;
 use App\Entity\PriceType;
@@ -10,12 +11,15 @@ use App\Entity\ProductPrice;
 use App\Entity\Stores;
 use App\Entity\StoresElementsStocks;
 use App\Search\Product\Application\CatalogReadService;
+use App\Search\Product\Application\CatalogSectionReadService;
 use App\Search\Product\Application\Dto\Read\CatalogListCriteria;
 use App\Search\Product\Application\Dto\Read\CatalogPage;
 use App\Search\Product\Application\Dto\Read\CatalogListQuery;
 use App\Search\Product\Application\ProductSearchDocumentBuilder;
 use App\Search\Product\Application\Dto\Read\CatalogElementResponse;
+use App\Search\Product\Application\Dto\Read\CatalogSectionResponse;
 use App\Search\Product\Port\Output\CatalogReadInterface;
+use App\Search\Product\Port\Output\CatalogSectionReadInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 final class CatalogReadContractTest extends KernelTestCase
@@ -188,6 +192,47 @@ final class CatalogReadContractTest extends KernelTestCase
                 "json", ["groups" => ["catalog_element:list"]]);
             self::assertJsonStringEqualsJsonString($expected, $response->getContent());
         }
+    }
+
+    public function testSectionsKeepListAndItemJsonContract(): void
+    {
+        self::bootKernel();
+        $serializer = static::getContainer()->get('serializer');
+        $section = (new CatalogSections())->setId(42)->setName('Раздел')->setSlug('section')
+            ->setActive(false)->setDescription('Описание')->setPictureId('picture')->setSort(10);
+        $parent = (new CatalogSections())->setId(7);
+        $section->setParent($parent);
+        $document = [
+            'id' => 42, 'name' => 'Раздел', 'slug' => 'section', 'active' => false,
+            'description' => 'Описание', 'picture_id' => 'picture', 'level' => null,
+            'sort' => 10, 'parent_id' => 7,
+        ];
+        $dto = CatalogSectionResponse::fromDocument($document);
+        foreach (['catalog_section:list', 'catalog_section:item'] as $group) {
+            self::assertJsonStringEqualsJsonString(
+                $serializer->serialize($section, 'json', ['groups' => [$group]]),
+                $serializer->serialize($dto, 'json', ['groups' => [$group]]),
+            );
+        }
+
+        $reader = $this->createMock(CatalogSectionReadInterface::class);
+        $reader->expects(self::once())->method('findActive')->willReturn([$dto]);
+        $reader->expects(self::exactly(2))->method('findById')
+            ->willReturnCallback(static fn(int $id): ?CatalogSectionResponse => $id === 42 ? $dto : null);
+        $controller = new CatalogSectionsController();
+        $controller->setContainer(static::getContainer());
+        $service = new CatalogSectionReadService($reader);
+        self::assertJsonStringEqualsJsonString(
+            $serializer->serialize([$section], 'json', ['groups' => ['catalog_section:list']]),
+            $controller->list($service)->getContent(),
+        );
+        self::assertJsonStringEqualsJsonString(
+            $serializer->serialize($section, 'json', ['groups' => ['catalog_section:item']]),
+            $controller->item(42, $service)->getContent(),
+        );
+        $missing = $controller->item(99, $service);
+        self::assertSame(404, $missing->getStatusCode());
+        self::assertSame('{"message":"Catalog section was not found."}', $missing->getContent());
     }
 
     private function element(bool $populated): CatalogElements

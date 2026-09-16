@@ -34,6 +34,8 @@ The Catalog Service rebuilds a derived product search read model from PostgreSQL
 
 The old index is retained for rollback and manual cleanup. A failed or partially failed rebuild never changes the alias.
 
+With `CATALOG_READ_MODEL=elasticsearch`, the sections API also reads the existing product index. It deduplicates nested `sections` by ID: the list includes active sections attached to at least one catalog element, including inactive catalog elements, and keeps `sort DESC, id ASC`. The item endpoint can return an inactive section, but a section with no catalog elements returns 404. There is no separate sections index. During incremental reindexing, copies of the same section in different product documents can temporarily have different values.
+
 ### Incremental indexing
 
 Doctrine changes to indexed product, category, price, price-type, stock, and store data write a `CatalogElement` ID to `product_search_outbox` in the same PostgreSQL transaction. The outbox relay publishes that minimal message to the durable `catalog.search.incremental` RabbitMQ queue. The Messenger handler then reads the latest complete aggregate from PostgreSQL, reuses `ProductSearchDocumentBuilder`, and indexes the full document through the current alias. If the `CatalogElement` no longer exists, the handler deletes its document instead.
@@ -176,6 +178,8 @@ If rebuilding fails, the alias remains on the old index. The application release
 Catalog Service восстанавливает производную поисковую read-model товаров из PostgreSQL. PostgreSQL остаётся источником истины. Каждый запуск создаёт новый versioned index, загружает ограниченные batch по keyset `id`, проверяет число документов и только после этого атомарно переключает alias `products`.
 
 Старый индекс сохраняется для rollback и ручной очистки. Неуспешный или частично успешный rebuild никогда не меняет alias.
+
+При `CATALOG_READ_MODEL=elasticsearch` API разделов также читает существующий индекс товаров. Вложенные `sections` объединяются по ID: список содержит активные разделы, привязанные хотя бы к одному элементу каталога, включая неактивные элементы, с прежней сортировкой `sort DESC, id ASC`. Endpoint по ID может вернуть неактивный раздел, но раздел без элементов каталога даёт 404. Отдельный индекс разделов не создаётся. Пока идёт инкрементальная переиндексация, копии одного раздела в разных документах товаров могут временно различаться.
 
 ### Инкрементальная индексация
 

@@ -3,7 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Entity\CatalogSections;
-use App\Repository\CatalogSectionsRepository;
+use App\Search\Product\Port\Input\CatalogSectionReadInputInterface;
 use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -18,7 +18,7 @@ class CatalogSectionsController extends AbstractController
     #[Route("", name: "api_catalog_sections_list", methods: ["GET"])]
     #[OA\Get(
         summary: "List active catalog sections",
-        description: "Returns a flat list of active catalog sections ordered by sort descending.",
+        description: "Returns a flat list of active catalog sections ordered by sort descending, then ID ascending. In Elasticsearch read mode, only sections assigned to at least one catalog element are included.",
         responses: [
             new OA\Response(
                 response: 200,
@@ -30,10 +30,10 @@ class CatalogSectionsController extends AbstractController
             ),
         ]
     )]
-    public function list(CatalogSectionsRepository $catalogSectionsRepository): JsonResponse
+    public function list(CatalogSectionReadInputInterface $sections): JsonResponse
     {
         return $this->json(
-            $catalogSectionsRepository->findActiveForPublicList(),
+            $sections->list(),
             context: ["groups" => ["catalog_section:list"]]
         );
     }
@@ -41,6 +41,7 @@ class CatalogSectionsController extends AbstractController
     #[Route("/{id<\d+>}", name: "api_catalog_sections_item", methods: ["GET"])]
     #[OA\Get(
         summary: "Get catalog section",
+        description: "Returns a section by ID, including inactive sections. In Elasticsearch read mode, a section without catalog elements is not found.",
         responses: [
             new OA\Response(
                 response: 200,
@@ -50,9 +51,9 @@ class CatalogSectionsController extends AbstractController
             new OA\Response(response: 404, description: "Catalog section was not found."),
         ]
     )]
-    public function item(int $id, CatalogSectionsRepository $catalogSectionsRepository): JsonResponse
+    public function item(int $id, CatalogSectionReadInputInterface $sections): JsonResponse
     {
-        $section = $catalogSectionsRepository->findOneForPublicApi($id);
+        $section = $sections->item($id);
 
         if ($section === null) {
             return $this->json(["message" => "Catalog section was not found."], Response::HTTP_NOT_FOUND);
