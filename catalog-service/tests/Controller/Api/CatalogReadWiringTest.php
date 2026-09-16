@@ -6,6 +6,7 @@ use App\Search\Product\Application\CatalogReadService;
 use App\Search\Product\Application\Dto\Read\CatalogListCriteria;
 use App\Search\Product\Infrastructure\Doctrine\DoctrineCatalogReader;
 use App\Search\Product\Infrastructure\Elasticsearch\ElasticsearchCatalogReader;
+use App\Search\Product\Port\Input\CatalogReadInputInterface;
 use App\Search\Product\Port\Output\CatalogReadInterface;
 use Elastic\Elasticsearch\ClientBuilder;
 use Nyholm\Psr7\Response;
@@ -20,6 +21,10 @@ final class CatalogReadWiringTest extends KernelTestCase
         $this->withModel($model, function () use ($expectedClass): void {
             self::bootKernel();
             self::assertInstanceOf($expectedClass, static::getContainer()->get(CatalogReadInterface::class));
+            self::assertInstanceOf(
+                CatalogReadService::class,
+                static::getContainer()->get(CatalogReadInputInterface::class),
+            );
         });
     }
 
@@ -43,7 +48,7 @@ final class CatalogReadWiringTest extends KernelTestCase
                 ->setHosts(["http://elasticsearch:9200"])->setHttpClient($http)->build());
             $connection = $container->get("doctrine.dbal.default_connection");
             self::assertFalse($connection->isConnected());
-            $service = $container->get(CatalogReadService::class);
+            $service = $container->get(CatalogReadInputInterface::class);
             $page = $service->list(new CatalogListCriteria(null, null, 1, 20, false));
             self::assertSame([], $page->items);
             self::assertSame(["page" => 1, "limit" => 20, "total" => 0], $page->pagination);

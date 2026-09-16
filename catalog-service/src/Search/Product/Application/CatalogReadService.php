@@ -5,9 +5,12 @@ namespace App\Search\Product\Application;
 use App\Search\Product\Application\Dto\Read\CatalogElementResponse;
 use App\Search\Product\Application\Dto\Read\CatalogListCriteria;
 use App\Search\Product\Application\Dto\Read\CatalogListResponse;
+use App\Search\Product\Port\Input\CatalogReadInputInterface;
 use App\Search\Product\Port\Output\CatalogReadInterface;
+use Symfony\Component\DependencyInjection\Attribute\AsAlias;
 
-final readonly class CatalogReadService
+#[AsAlias(CatalogReadInputInterface::class)]
+final readonly class CatalogReadService implements CatalogReadInputInterface
 {
     public function __construct(private CatalogReadInterface $catalog)
     {

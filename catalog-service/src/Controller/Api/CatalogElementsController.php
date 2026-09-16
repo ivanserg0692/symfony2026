@@ -2,10 +2,10 @@
 
 namespace App\Controller\Api;
 
-use App\Search\Product\Application\CatalogReadService;
 use App\Search\Product\Application\Dto\Read\CatalogElementResponse;
 use App\Search\Product\Application\Dto\Read\CatalogListQuery;
 use App\Search\Product\Application\Dto\Read\CatalogListResponse;
+use App\Search\Product\Port\Input\CatalogReadInputInterface;
 use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -39,7 +39,7 @@ class CatalogElementsController extends AbstractController
     )]
     public function list(
         #[MapQueryString(validationFailedStatusCode: Response::HTTP_BAD_REQUEST)] CatalogListQuery $query,
-        CatalogReadService $catalog,
+        CatalogReadInputInterface $catalog,
     ): JsonResponse
     {
         return $this->json(
@@ -61,7 +61,7 @@ class CatalogElementsController extends AbstractController
             new OA\Response(response: 404, description: "Catalog element was not found."),
         ]
     )]
-    public function item(int $id, CatalogReadService $catalog): JsonResponse
+    public function item(int $id, CatalogReadInputInterface $catalog): JsonResponse
     {
         $element = $catalog->item($id);
 
