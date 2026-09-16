@@ -22,17 +22,22 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 final class CatalogReadWiringTest extends KernelTestCase
 {
     /** @dataProvider backends */
-    public function testConfigurationSelectsBackend(string $model, string $expectedClass): void
+    public function testConfigurationSelectsBackends(
+        string $catalogModel,
+        string $sectionModel,
+        string $expectedCatalogClass,
+        string $expectedSectionClass,
+    ): void
     {
-        $this->withModel($model, function () use ($model, $expectedClass): void {
+        $this->withModels($catalogModel, $sectionModel, function () use ($expectedCatalogClass, $expectedSectionClass): void {
             self::bootKernel();
-            self::assertInstanceOf($expectedClass, static::getContainer()->get(CatalogReadInterface::class));
+            self::assertInstanceOf($expectedCatalogClass, static::getContainer()->get(CatalogReadInterface::class));
             self::assertInstanceOf(
                 CatalogReadService::class,
                 static::getContainer()->get(CatalogReadInputInterface::class),
             );
             self::assertInstanceOf(
-                $model === 'doctrine' ? DoctrineCatalogSectionReader::class : ElasticsearchCatalogSectionReader::class,
+                $expectedSectionClass,
                 static::getContainer()->get(CatalogSectionReadInterface::class),
             );
             self::assertInstanceOf(
@@ -48,13 +53,24 @@ final class CatalogReadWiringTest extends KernelTestCase
 
     public static function backends(): iterable
     {
-        yield ["doctrine", DoctrineCatalogReader::class];
-        yield ["elasticsearch", ElasticsearchCatalogReader::class];
+        yield ["doctrine", "doctrine", DoctrineCatalogReader::class, DoctrineCatalogSectionReader::class];
+        yield ["doctrine", "elasticsearch", DoctrineCatalogReader::class, ElasticsearchCatalogSectionReader::class];
+        yield ["elasticsearch", "doctrine", ElasticsearchCatalogReader::class, DoctrineCatalogSectionReader::class];
+        yield ["elasticsearch", "elasticsearch", ElasticsearchCatalogReader::class, ElasticsearchCatalogSectionReader::class];
+    }
+
+    public function testSectionsDefaultToDoctrineWhenSettingIsAbsent(): void
+    {
+        $this->withModels("elasticsearch", null, function (): void {
+            self::bootKernel();
+            self::assertInstanceOf(ElasticsearchCatalogReader::class, static::getContainer()->get(CatalogReadInterface::class));
+            self::assertInstanceOf(DoctrineCatalogSectionReader::class, static::getContainer()->get(CatalogSectionReadInterface::class));
+        });
     }
 
     public function testElasticsearchReadsWithoutOpeningDatabaseConnection(): void
     {
-        $this->withModel("elasticsearch", function (): void {
+        $this->withModels("elasticsearch", "doctrine", function (): void {
             self::bootKernel();
             $container = static::getContainer();
             $http = $this->createMock(ClientInterface::class);
@@ -77,7 +93,7 @@ final class CatalogReadWiringTest extends KernelTestCase
 
     public function testElasticsearchSectionReadDoesNotOpenDatabaseConnection(): void
     {
-        $this->withModel('elasticsearch', function (): void {
+        $this->withModels('doctrine', 'elasticsearch', function (): void {
             self::bootKernel();
             $container = static::getContainer();
             $http = $this->createMock(ClientInterface::class);
@@ -98,25 +114,33 @@ final class CatalogReadWiringTest extends KernelTestCase
         });
     }
 
-    private function withModel(string $model, \Closure $test): void
+    private function withModels(string $catalogModel, ?string $sectionModel, \Closure $test): void
     {
-        $env = $_ENV["CATALOG_READ_MODEL"] ?? null;
-        $server = $_SERVER["CATALOG_READ_MODEL"] ?? null;
-        $process = getenv("CATALOG_READ_MODEL");
-        $_ENV["CATALOG_READ_MODEL"] = $_SERVER["CATALOG_READ_MODEL"] = $model;
-        putenv("CATALOG_READ_MODEL=".$model);
+        $previous = [];
+        foreach (["CATALOG_READ_MODEL" => $catalogModel, "CATALOG_SECTION_READ_MODEL" => $sectionModel] as $name => $value) {
+            $previous[$name] = [$_ENV[$name] ?? null, $_SERVER[$name] ?? null, getenv($name)];
+            if ($value === null) {
+                unset($_ENV[$name], $_SERVER[$name]);
+                putenv($name);
+            } else {
+                $_ENV[$name] = $_SERVER[$name] = $value;
+                putenv($name."=".$value);
+            }
+        }
         try {
             $test();
         } finally {
             self::ensureKernelShutdown();
-            unset($_ENV["CATALOG_READ_MODEL"], $_SERVER["CATALOG_READ_MODEL"]);
-            if ($env !== null) {
-                $_ENV["CATALOG_READ_MODEL"] = $env;
+            foreach ($previous as $name => [$env, $server, $process]) {
+                unset($_ENV[$name], $_SERVER[$name]);
+                if ($env !== null) {
+                    $_ENV[$name] = $env;
+                }
+                if ($server !== null) {
+                    $_SERVER[$name] = $server;
+                }
+                putenv($process === false ? $name : $name."=".$process);
             }
-            if ($server !== null) {
-                $_SERVER["CATALOG_READ_MODEL"] = $server;
-            }
-            putenv($process === false ? "CATALOG_READ_MODEL" : "CATALOG_READ_MODEL=".$process);
         }
     }
 }
