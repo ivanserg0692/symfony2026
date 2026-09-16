@@ -12,7 +12,7 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class CatalogSectionsRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $registry, private readonly int $catalogSectionsCacheTtlSeconds)
     {
         parent::__construct($registry, CatalogSections::class);
     }
@@ -30,6 +30,7 @@ class CatalogSectionsRepository extends ServiceEntityRepository
             ->orderBy("section.sort", "DESC")
             ->addOrderBy("section.id", "ASC")
             ->getQuery()
+            ->enableResultCache($this->catalogSectionsCacheTtlSeconds)
             ->getResult();
     }
 
@@ -41,6 +42,7 @@ class CatalogSectionsRepository extends ServiceEntityRepository
             ->andWhere("section.id = :id")
             ->setParameter("id", $id)
             ->getQuery()
+            ->enableResultCache($this->catalogSectionsCacheTtlSeconds)
             ->getOneOrNullResult();
     }
 

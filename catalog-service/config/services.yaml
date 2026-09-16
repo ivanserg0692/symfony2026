@@ -17,6 +17,7 @@ services:
         bind:
             string $catalogReadModel: '%env(CATALOG_READ_MODEL)%'
             bool $useHasNextPagePagination: '%env(bool:CATALOG_PAGINATION_USE_HAS_NEXT_PAGE)%'
+            int $catalogSectionsCacheTtlSeconds: '%env(int:CATALOG_SECTIONS_CACHE_TTL_SECONDS)%'
             string $elasticsearchUrl: '%env(ELASTICSEARCH_URL)%'
             string $elasticsearchUsername: '%env(ELASTICSEARCH_USERNAME)%'
             string $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
