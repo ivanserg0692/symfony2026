@@ -9,6 +9,7 @@ use App\Search\Product\Infrastructure\Doctrine\DoctrineCatalogReader;
 use App\Search\Product\Infrastructure\Doctrine\DoctrineCatalogSectionReader;
 use App\Search\Product\Infrastructure\Elasticsearch\ElasticsearchCatalogReader;
 use App\Search\Product\Infrastructure\Elasticsearch\ElasticsearchCatalogSectionReader;
+use App\Search\Product\Port\Input\CatalogReadInputInterface;
 use App\Search\Product\Port\Input\CatalogSectionReadInputInterface;
 use App\Search\Product\Port\Input\CatalogReadInputInterface;
 use App\Search\Product\Port\Output\CatalogReadInterface;
@@ -26,6 +27,10 @@ final class CatalogReadWiringTest extends KernelTestCase
         $this->withModel($model, function () use ($model, $expectedClass): void {
             self::bootKernel();
             self::assertInstanceOf($expectedClass, static::getContainer()->get(CatalogReadInterface::class));
+            self::assertInstanceOf(
+                CatalogReadService::class,
+                static::getContainer()->get(CatalogReadInputInterface::class),
+            );
             self::assertInstanceOf(
                 $model === 'doctrine' ? DoctrineCatalogSectionReader::class : ElasticsearchCatalogSectionReader::class,
                 static::getContainer()->get(CatalogSectionReadInterface::class),
