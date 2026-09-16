@@ -25,7 +25,7 @@ run_for_database_services() {
   local command="$1"
   shift
 
-  local -a compose_exec_args=(-T)
+  local -a compose_exec_args=(-T -u "${PHP_RUNTIME_USER:-www-data}")
   if [[ -n "${CONSOLE_APP_ENV:-}" ]]; then
     compose_exec_args+=(-e "APP_ENV=${CONSOLE_APP_ENV}")
   fi

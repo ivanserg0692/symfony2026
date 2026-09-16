@@ -291,6 +291,7 @@ services:
   # Relays committed Doctrine transport messages to the durable RabbitMQ queue.
   catalog-search-outbox-worker:
     <<: *symfony-base
+    user: "${PHP_RUNTIME_USER:-www-data}"
     volumes:
       - ./catalog-service:/workspace
     depends_on:
@@ -323,6 +324,7 @@ services:
   # The full-reindex orchestration stops only this worker while a new index is built.
   catalog-search-index-worker:
     <<: *symfony-base
+    user: "${PHP_RUNTIME_USER:-www-data}"
     volumes:
       - ./catalog-service:/workspace
     depends_on:
@@ -364,6 +366,7 @@ services:
   # Local Catalog gRPC server powered by RoadRunner.
   catalog-grpc:
     <<: *symfony-base
+    user: "${PHP_RUNTIME_USER:-www-data}"
     volumes:
       - ./catalog-service:/workspace
       - ./grpc-contracts:/grpc-contracts:ro

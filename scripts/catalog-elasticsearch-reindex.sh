@@ -26,6 +26,7 @@ if [[ -n "$(docker compose ps --status running --services catalog-search-index-w
 fi
 
 docker compose exec \
+    -u "${PHP_RUNTIME_USER:-www-data}" \
     -e PRODUCT_SEARCH_BATCH_SIZE="${PRODUCT_SEARCH_BATCH_SIZE:-100}" \
     -e PRODUCT_SEARCH_INCREMENTAL_WORKER_PAUSED=1 \
     catalog-cli \
