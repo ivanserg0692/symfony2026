@@ -12,6 +12,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table(name: 'orders')]
+#[ORM\Index(name: 'idx_orders_owner_created_id', columns: ['owner_id', 'created_at', 'id'])]
+#[ORM\Index(name: 'idx_orders_owner_id', columns: ['owner_id', 'id'])]
 class Order
 {
     #[ORM\Id]
