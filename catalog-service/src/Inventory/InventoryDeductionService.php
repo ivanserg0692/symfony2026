@@ -256,14 +256,14 @@ final readonly class InventoryDeductionService
         $snapshots = [];
 
         foreach ($products as $productDeduction) {
-            $catalogElement = $this->catalogElementsRepository->findOneForInventorySnapshot($productDeduction->productId);
+            $catalogElement = $this->catalogElementsRepository->findOneForInventorySnapshot($productDeduction->getProductId());
             $sourceProduct = $catalogElement?->getProduct();
 
             if ($catalogElement === null || $sourceProduct === null) {
                 throw new InventoryDeductionNotFoundException("product not found.");
             }
 
-            $snapshots[$productDeduction->productId] = $this->productSnapshotRepository->createFromCatalogElement(
+            $snapshots[$productDeduction->getProductId()] = $this->productSnapshotRepository->createFromCatalogElement(
                 $catalogElement,
                 $operationId,
             );
@@ -297,7 +297,7 @@ final readonly class InventoryDeductionService
 
         foreach ($products as $product) {
             $result[] = $product->withProductSnapshotId(
-                $productSnapshotIds[$product->productId] ?? throw new \RuntimeException("Product snapshot id is missing."),
+                $productSnapshotIds[$product->getProductId()] ?? throw new \RuntimeException("Product snapshot id is missing."),
             );
         }
 
@@ -310,37 +310,21 @@ final readonly class InventoryDeductionService
      */
     private function mergeProductDeductionsByProductId(array $products): array
     {
-        $merged = [];
+        $mergedByProductId = [];
 
         foreach ($products as $product) {
-            if (!isset($merged[$product->productId])) {
-                $merged[$product->productId] = [
-                    "total" => 0,
-                    "stores" => [],
-                ];
+            $productId = $product->getProductId();
+
+            if (!isset($mergedByProductId[$productId])) {
+                $mergedByProductId[$productId] = $product;
+                continue;
             }
 
-            $merged[$product->productId]["total"] += $product->totalDeductedQuantity;
-
-            foreach ($product->stores as $store) {
-                $merged[$product->productId]["stores"][$store->storeId] = ($merged[$product->productId]["stores"][$store->storeId] ?? 0) + $store->deductedQuantity;
-            }
+            $mergedByProductId[$productId]->addDeduction($product);
         }
 
-        ksort($merged);
-        $result = [];
+        ksort($mergedByProductId);
 
-        foreach ($merged as $productId => $deduction) {
-            ksort($deduction["stores"]);
-            $stores = [];
-
-            foreach ($deduction["stores"] as $storeId => $deductedQuantity) {
-                $stores[] = new StoreStockDeduction((int) $storeId, $deductedQuantity);
-            }
-
-            $result[] = new ProductStockDeduction((int) $productId, $deduction["total"], $stores);
-        }
-
-        return $result;
+        return array_values($mergedByProductId);
     }
 }

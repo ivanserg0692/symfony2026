@@ -204,12 +204,12 @@ final readonly class InventoryService implements InventoryServiceInterface
     private function mapToProductDeduction(ProductStockDeduction $product): ProductDeduction
     {
         return new ProductDeduction([
-            "product_id" => $product->productId,
-            "total_deducted_quantity" => $product->totalDeductedQuantity,
-            "product_snapshot_id" => $product->productSnapshotId,
+            "product_id" => $product->getProductId(),
+            "total_deducted_quantity" => $product->getTotalDeductedQuantity(),
+            "product_snapshot_id" => $product->getProductSnapshotId(),
             "stores" => array_map(
                 fn (StoreStockDeduction $store): StoreDeduction => $this->mapToStoreDeduction($store),
-                $product->stores,
+                $product->getStores(),
             ),
         ]);
     }
