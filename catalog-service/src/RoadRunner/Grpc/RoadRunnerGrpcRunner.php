@@ -2,6 +2,7 @@
 
 namespace App\RoadRunner\Grpc;
 
+use Doctrine\DBAL\Connection;
 use Grpc\Catalog\V1\InventoryServiceInterface;
 use Psr\Log\LoggerInterface;
 use Spiral\RoadRunner\GRPC\Invoker;
@@ -19,6 +20,7 @@ final readonly class RoadRunnerGrpcRunner implements RunnerInterface
 {
     public function __construct(
         private InventoryServiceInterface $inventoryService,
+        private Connection $connection,
         private ServicesResetterInterface $servicesResetter,
         private KernelInterface $kernel,
         private GrpcProfilerContext $profilerContext,
@@ -30,6 +32,8 @@ final readonly class RoadRunnerGrpcRunner implements RunnerInterface
 
     public function run(): int
     {
+        $this->connection->fetchOne('SELECT 1');
+
         $server = new Server($this->createInvoker(), [
             "debug" => $this->kernel->isDebug(),
         ]);
