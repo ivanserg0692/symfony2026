@@ -51,7 +51,7 @@ when@prod:
                 channels: ["!event", "!doctrine"]
             grpc_timing:
                 type: stream
-                path: php://stdout
+                path: php://stderr
                 level: info
                 channels: [grpc_timing]
                 formatter: monolog.formatter.json
