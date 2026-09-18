@@ -3,6 +3,7 @@
 namespace App\RoadRunner\Grpc;
 
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 final class GrpcHandlerTiming
 {
@@ -15,8 +16,11 @@ final class GrpcHandlerTiming
     private ?string $method = null;
     private array $stages = [];
 
-    public function __construct(private LoggerInterface $logger)
-    {
+    public function __construct(
+        #[Autowire(service: 'monolog.logger.grpc_timing')]
+        private LoggerInterface $logger,
+        private bool $appTracingEnabled,
+    ) {
     }
 
     public function start(string $method): void
@@ -28,7 +32,7 @@ final class GrpcHandlerTiming
         $this->method = null;
         $this->stages = [];
 
-        if (!in_array($method, ['GetProductPrices', 'DeductStocks'], true)) {
+        if (!$this->appTracingEnabled || !in_array($method, ['GetProductPrices', 'DeductStocks'], true)) {
             return;
         }
 
@@ -79,6 +83,6 @@ final class GrpcHandlerTiming
         $this->method = null;
         $this->stages = [];
 
-        $this->logger->debug('gRPC handler timing.', $context);
+        $this->logger->info('gRPC handler timing.', $context);
     }
 }

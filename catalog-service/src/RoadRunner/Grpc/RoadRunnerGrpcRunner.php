@@ -47,14 +47,13 @@ final readonly class RoadRunnerGrpcRunner implements RunnerInterface
     private function createInvoker(): InvokerInterface
     {
         $invoker = new Invoker();
+        $profilingEnabled = $this->kernel->isDebug() && $this->profiler !== null;
 
-        if (!$this->kernel->isDebug() || $this->profiler === null) {
-            return $invoker;
+        if ($profilingEnabled) {
+            $this->profilerContext->setDataCollector($this->dataCollector);
         }
 
-        $this->profilerContext->setDataCollector($this->dataCollector);
-
-        return new ProfilingInvoker($invoker, $this->profilerContext, $this->handlerTiming, $this->logger);
+        return new ProfilingInvoker($invoker, $this->profilerContext, $this->handlerTiming, $profilingEnabled, $this->logger);
     }
 
     private function finalizeRequest(?\Throwable $error = null): void

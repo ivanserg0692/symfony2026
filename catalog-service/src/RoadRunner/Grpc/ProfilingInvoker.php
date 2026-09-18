@@ -17,6 +17,7 @@ final readonly class ProfilingInvoker implements InvokerInterface
         private InvokerInterface $inner,
         private GrpcProfilerContext $profilerContext,
         private GrpcHandlerTiming $handlerTiming,
+        private bool $profilingEnabled,
         private ?LoggerInterface $logger = null,
     ) {
     }
@@ -28,6 +29,11 @@ final readonly class ProfilingInvoker implements InvokerInterface
         string|Message|null $input,
     ): string {
         $this->handlerTiming->start($method->name);
+
+        if (!$this->profilingEnabled) {
+            return $this->invokeWithoutProfiler($service, $method, $ctx, $input);
+        }
+
         $serviceName = $this->resolveServiceName($service);
         $request = $this->createRequest($serviceName, $method, $input);
         $this->handlerTiming->mark('invoker.request_created');
@@ -77,6 +83,28 @@ final readonly class ProfilingInvoker implements InvokerInterface
 
         $this->logger?->debug('gRPC server call completed.', $logContext);
         $this->profilerContext->schedule($request, $responseFactory, null, $logContext);
+
+        return $grpcResponse;
+    }
+
+    private function invokeWithoutProfiler(
+        ServiceInterface $service,
+        Method $method,
+        ContextInterface $ctx,
+        string|Message|null $input,
+    ): string {
+        $this->handlerTiming->mark('invoker.handler_call_started');
+
+        try {
+            $grpcResponse = $this->inner->invoke($service, $method, $ctx, $input);
+            $this->handlerTiming->mark('invoker.handler_call_completed');
+        } catch (\Throwable $exception) {
+            $this->handlerTiming->finish($exception);
+
+            throw $exception;
+        }
+
+        $this->handlerTiming->finish();
 
         return $grpcResponse;
     }
