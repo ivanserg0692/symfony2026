@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\CatalogElements;
 use App\Entity\Product;
+use App\RoadRunner\Grpc\GrpcHandlerTiming;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -13,7 +14,7 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class CatalogElementsRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $registry, private GrpcHandlerTiming $handlerTiming)
     {
         parent::__construct($registry, CatalogElements::class);
     }
@@ -184,12 +185,15 @@ class CatalogElementsRepository extends ServiceEntityRepository
             return [];
         }
 
-        $rows = $this->createQueryBuilder("element")
+        $this->handlerTiming->mark('catalog_existing_ids.query_build_started');
+        $query = $this->createQueryBuilder("element")
             ->select("element.id AS id")
             ->andWhere("element.id IN (:ids)")
             ->setParameter("ids", $ids)
-            ->getQuery()
-            ->getScalarResult();
+            ->getQuery();
+        $this->handlerTiming->mark('catalog_existing_ids.query_built');
+        $rows = $query->getScalarResult();
+        $this->handlerTiming->mark('catalog_existing_ids.query_executed_and_hydrated');
 
         return array_map("intval", array_column($rows, "id"));
     }

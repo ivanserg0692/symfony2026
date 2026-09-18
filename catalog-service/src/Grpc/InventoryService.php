@@ -19,6 +19,7 @@ use App\Pricing\CheckoutProductPriceProvider;
 use App\Pricing\CheckoutProductPriceUnavailableException;
 use App\Repository\CatalogElementsRepository;
 use App\Repository\ProductSnapshotRepository;
+use App\RoadRunner\Grpc\GrpcHandlerTiming;
 use Grpc\Catalog\V1\CheckStockRequest;
 use Grpc\Catalog\V1\CheckStockResponse;
 use Grpc\Catalog\V1\DeductStocksRequest;
@@ -50,6 +51,7 @@ final readonly class InventoryService implements InventoryServiceInterface
         private InventoryDeductionService $deductionService,
         private CheckoutProductPriceProvider $checkoutProductPriceProvider,
         private ProductSnapshotRepository $productSnapshotRepository,
+        private GrpcHandlerTiming $handlerTiming,
         private readonly LoggerInterface $logger
     ) {
     }
@@ -73,11 +75,17 @@ final readonly class InventoryService implements InventoryServiceInterface
 
     public function DeductStocks(GRPC\ContextInterface $ctx, DeductStocksRequest $in): DeductStocksResponse
     {
+        $this->handlerTiming->mark('handler.entered');
+
         try {
-            return $this->mapToDeductStocksResponse($this->deductionService->deduct(
-                $in->getOperationId(),
-                $this->mapToStockDeductionRequestItems($in),
-            ));
+            $items = $this->mapToStockDeductionRequestItems($in);
+            $this->handlerTiming->mark('handler.request_mapped');
+            $result = $this->deductionService->deduct($in->getOperationId(), $items);
+            $this->handlerTiming->mark('handler.application_service_completed');
+            $response = $this->mapToDeductStocksResponse($result);
+            $this->handlerTiming->mark('handler.response_created');
+
+            return $response;
         } catch (InvalidInventoryDeductionRequestException $exception) {
             throw new GRPCException($exception->getMessage(), StatusCode::INVALID_ARGUMENT);
         } catch (InventoryDeductionNotFoundException $exception) {
@@ -93,10 +101,16 @@ final readonly class InventoryService implements InventoryServiceInterface
 
     public function GetProductPrices(GRPC\ContextInterface $ctx, GetProductPricesRequest $in): GetProductPricesResponse
     {
+        $this->handlerTiming->mark('handler.entered');
+
         try {
-            return new GetProductPricesResponse([
-                "prices" => $this->fetchGrpcProductPrices($this->normalizeProductIds($in)),
-            ]);
+            $productIds = $this->normalizeProductIds($in);
+            $this->handlerTiming->mark('handler.request_normalized');
+            $prices = $this->fetchGrpcProductPrices($productIds);
+            $response = new GetProductPricesResponse(["prices" => $prices]);
+            $this->handlerTiming->mark('handler.response_created');
+
+            return $response;
         } catch (GRPCException $exception) {
             throw $exception;
         } catch (CheckoutProductNotFoundException $exception) {
@@ -307,10 +321,15 @@ final readonly class InventoryService implements InventoryServiceInterface
      */
     private function fetchGrpcProductPrices(array $productIds): array
     {
-        return array_map(
+        $checkoutPrices = $this->checkoutProductPriceProvider->getPricesForProducts($productIds);
+        $this->handlerTiming->mark('handler.application_service_completed');
+        $grpcPrices = array_map(
             fn (CheckoutProductPrice $price): GrpcProductPrice => $this->mapToGrpcProductPrice($price),
-            array_values($this->checkoutProductPriceProvider->getPricesForProducts($productIds)),
+            array_values($checkoutPrices),
         );
+        $this->handlerTiming->mark('handler.prices_mapped_to_grpc');
+
+        return $grpcPrices;
     }
 
     private function mapToGrpcProductPrice(CheckoutProductPrice $price): GrpcProductPrice

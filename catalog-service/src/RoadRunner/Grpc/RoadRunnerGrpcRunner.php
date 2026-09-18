@@ -24,6 +24,7 @@ final readonly class RoadRunnerGrpcRunner implements RunnerInterface
         private ServicesResetterInterface $servicesResetter,
         private KernelInterface $kernel,
         private GrpcProfilerContext $profilerContext,
+        private GrpcHandlerTiming $handlerTiming,
         private ?Profiler $profiler = null,
         private ?LoggerInterface $logger = null,
         private ?GrpcDataCollector $dataCollector = null,
@@ -53,7 +54,7 @@ final readonly class RoadRunnerGrpcRunner implements RunnerInterface
 
         $this->profilerContext->setDataCollector($this->dataCollector);
 
-        return new ProfilingInvoker($invoker, $this->profilerContext, $this->logger);
+        return new ProfilingInvoker($invoker, $this->profilerContext, $this->handlerTiming, $this->logger);
     }
 
     private function finalizeRequest(?\Throwable $error = null): void

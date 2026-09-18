@@ -16,6 +16,7 @@ final readonly class ProfilingInvoker implements InvokerInterface
     public function __construct(
         private InvokerInterface $inner,
         private GrpcProfilerContext $profilerContext,
+        private GrpcHandlerTiming $handlerTiming,
         private ?LoggerInterface $logger = null,
     ) {
     }
@@ -26,16 +27,21 @@ final readonly class ProfilingInvoker implements InvokerInterface
         ContextInterface $ctx,
         string|Message|null $input,
     ): string {
+        $this->handlerTiming->start($method->name);
         $serviceName = $this->resolveServiceName($service);
         $request = $this->createRequest($serviceName, $method, $input);
+        $this->handlerTiming->mark('invoker.request_created');
         $this->profilerContext->activate($request);
         $this->logger?->debug('got a GRPC request with PID ' . getmypid());
         $startedAt = microtime(true);
+        $this->handlerTiming->mark('invoker.handler_call_started');
 
         try {
             $grpcResponse = $this->inner->invoke($service, $method, $ctx, $input);
+            $this->handlerTiming->mark('invoker.handler_call_completed');
             $this->logger?->debug('the GRPC request is completed');
         } catch (\Throwable $exception) {
+            $this->handlerTiming->finish($exception);
             $handlerDurationMs = $this->durationMs($startedAt);
 
             $responseFactory = static fn (): Response => new Response('', Response::HTTP_INTERNAL_SERVER_ERROR, [
@@ -56,6 +62,7 @@ final readonly class ProfilingInvoker implements InvokerInterface
             throw $exception;
         }
 
+        $this->handlerTiming->finish();
         $handlerDurationMs = $this->durationMs($startedAt);
 
         $responseFactory = fn (): Response => new Response($this->serializeOutput($method, $grpcResponse), Response::HTTP_OK, [

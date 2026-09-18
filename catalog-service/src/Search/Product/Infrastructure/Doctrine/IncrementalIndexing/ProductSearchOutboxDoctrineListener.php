@@ -2,6 +2,7 @@
 
 namespace App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing;
 
+use App\RoadRunner\Grpc\GrpcHandlerTiming;
 use App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing\RelationalChangeImpact\ProductSearchChangeImpactResolverInterface;
 use App\Search\Product\Infrastructure\Messenger\ProductSearchOutboxEvent;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
@@ -24,12 +25,14 @@ final readonly class ProductSearchOutboxDoctrineListener
         #[AutowireIterator('app.product_search.change_impact_resolver')]
         iterable $changeImpactResolvers,
         private MessageBusInterface $messageBus,
+        private GrpcHandlerTiming $handlerTiming,
     ) {
         $this->changeImpactResolvers = [...$changeImpactResolvers];
     }
 
     public function onFlush(OnFlushEventArgs $event): void
     {
+        $this->handlerTiming->mark('outbox_listener.entered');
         $entityManager = $event->getObjectManager();
         $unitOfWork = $entityManager->getUnitOfWork();
         $catalogElementIds = [];
@@ -64,10 +67,12 @@ final readonly class ProductSearchOutboxDoctrineListener
         foreach ([...$unitOfWork->getScheduledCollectionUpdates(), ...$unitOfWork->getScheduledCollectionDeletions()] as $collection) {
             $this->collectCollectionOwnerId($collection, $catalogElementIds);
         }
+        $this->handlerTiming->mark('outbox_listener.affected_ids_resolved');
 
         foreach (array_keys($catalogElementIds) as $catalogElementId) {
             $this->messageBus->dispatch(new ProductSearchOutboxEvent($catalogElementId));
         }
+        $this->handlerTiming->mark('outbox_listener.events_dispatched');
     }
 
     /**
