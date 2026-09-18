@@ -10,6 +10,7 @@ services:
   # PostgreSQL database used by the Symfony application.
   database:
     image: postgres:16-alpine
+    command: ["postgres", "-c", "max_connections=${POSTGRES_MAX_CONNECTIONS}"]
     env_file:
       - .env
       - .env.local
@@ -26,6 +27,7 @@ services:
   # PostgreSQL database used by the Catalog service.
   catalog-db:
     image: postgres:16-alpine
+    command: ["postgres", "-c", "max_connections=${POSTGRES_MAX_CONNECTIONS}"]
     env_file:
       - .env
       - .env.local
@@ -46,6 +48,7 @@ services:
   # PostgreSQL database used by the Cart service.
   cart-db:
     image: postgres:16-alpine
+    command: ["postgres", "-c", "max_connections=${POSTGRES_MAX_CONNECTIONS}"]
     env_file:
       - .env
       - .env.local
