@@ -86,9 +86,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
     && rm -rf /var/lib/apt/lists/*
 
+RUN cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.template
+
 COPY docker/php-symfony-cli/opcache-prod.ini /usr/local/etc/php/conf.d/99-opcache-prod.ini
-COPY docker/php-symfony-cli/nginx-prod.conf /etc/nginx/sites-available/default
-COPY docker/php-symfony-cli/php-fpm-prod.conf /usr/local/etc/php-fpm.d/zz-prod.conf
+COPY docker/php-symfony-cli/nginx-prod.conf /etc/nginx/sites-available/default.template
+COPY docker/php-symfony-cli/php-fpm-prod.conf /usr/local/etc/php-fpm.d/zz-prod.conf.template
 COPY docker/php-symfony-cli/prod-web-server.sh /usr/local/bin/symfony-prod-server
 RUN chmod +x /usr/local/bin/symfony-prod-server
 
