@@ -2,6 +2,7 @@
 
 namespace App\RoadRunner\Grpc;
 
+use Doctrine\DBAL\Connection;
 use Grpc\Catalog\V1\InventoryServiceInterface;
 use Psr\Log\LoggerInterface;
 use Spiral\RoadRunner\GRPC\Invoker;
@@ -19,9 +20,11 @@ final readonly class RoadRunnerGrpcRunner implements RunnerInterface
 {
     public function __construct(
         private InventoryServiceInterface $inventoryService,
+        private Connection $connection,
         private ServicesResetterInterface $servicesResetter,
         private KernelInterface $kernel,
         private GrpcProfilerContext $profilerContext,
+        private GrpcHandlerTiming $handlerTiming,
         private ?Profiler $profiler = null,
         private ?LoggerInterface $logger = null,
         private ?GrpcDataCollector $dataCollector = null,
@@ -30,6 +33,8 @@ final readonly class RoadRunnerGrpcRunner implements RunnerInterface
 
     public function run(): int
     {
+        $this->connection->fetchOne('SELECT 1');
+
         $server = new Server($this->createInvoker(), [
             "debug" => $this->kernel->isDebug(),
         ]);
@@ -42,14 +47,13 @@ final readonly class RoadRunnerGrpcRunner implements RunnerInterface
     private function createInvoker(): InvokerInterface
     {
         $invoker = new Invoker();
+        $profilingEnabled = $this->kernel->isDebug() && $this->profiler !== null;
 
-        if (!$this->kernel->isDebug() || $this->profiler === null) {
-            return $invoker;
+        if ($profilingEnabled) {
+            $this->profilerContext->setDataCollector($this->dataCollector);
         }
 
-        $this->profilerContext->setDataCollector($this->dataCollector);
-
-        return new ProfilingInvoker($invoker, $this->profilerContext, $this->logger);
+        return new ProfilingInvoker($invoker, $this->profilerContext, $this->handlerTiming, $profilingEnabled, $this->logger);
     }
 
     private function finalizeRequest(?\Throwable $error = null): void

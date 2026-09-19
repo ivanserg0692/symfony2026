@@ -32,7 +32,18 @@ class StoresElementsStocks
 
     public function setStore(?Stores $store): static
     {
+        if ($this->store === $store) {
+            return $this;
+        }
+
+        $previousStore = $this->store;
         $this->store = $store;
+
+        $previousStore?->removeElementStock($this);
+
+        if ($store !== null && !$store->getElementStocks()->contains($this)) {
+            $store->addElementStock($this);
+        }
 
         return $this;
     }
@@ -44,7 +55,18 @@ class StoresElementsStocks
 
     public function setElement(?CatalogElements $element): static
     {
+        if ($this->element === $element) {
+            return $this;
+        }
+
+        $previousElement = $this->element;
         $this->element = $element;
+
+        $previousElement?->removeStoreStock($this);
+
+        if ($element !== null && !$element->getStoreStocks()->contains($this)) {
+            $element->addStoreStock($this);
+        }
 
         return $this;
     }

@@ -1139,7 +1139,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     doctrine_migrations?: DoctrineMigrationsConfig,
  *     nelmio_api_doc?: NelmioApiDocConfig,
  *     nelmio_cors?: NelmioCorsConfig,
- *     twig?: TwigConfig,
  *     stof_doctrine_extensions?: StofDoctrineExtensionsConfig,
  *     artprima_prometheus_metrics?: ArtprimaPrometheusMetricsConfig,
  *     "when@dev"?: array{
@@ -1167,7 +1166,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         doctrine_migrations?: DoctrineMigrationsConfig,
  *         nelmio_api_doc?: NelmioApiDocConfig,
  *         nelmio_cors?: NelmioCorsConfig,
- *         twig?: TwigConfig,
  *         stof_doctrine_extensions?: StofDoctrineExtensionsConfig,
  *         artprima_prometheus_metrics?: ArtprimaPrometheusMetricsConfig,
  *     },

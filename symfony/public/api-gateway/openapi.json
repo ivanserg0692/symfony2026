@@ -490,45 +490,146 @@
           "Catalog Elements"
         ],
         "summary": "List catalog elements",
-        "description": "Returns catalog elements filtered by sectionId and active with pagination.",
+        "description": "Returns catalog elements with full-text search and filters by direct sections, activity, prices, price types and stock availability. Legacy sectionId is combined with sectionIds using OR. Results keep the existing sort DESC, id ASC order even when query is present.",
         "operationId": "get_api_catalog_elements_list",
         "parameters": [
           {
             "name": "sectionId",
             "in": "query",
+            "description": "Legacy direct-section filter. Combined with sectionIds using OR.",
             "required": false,
+            "deprecated": true,
             "schema": {
+              "description": "Legacy direct-section filter. Combined with sectionIds using OR.",
               "type": "integer",
-              "minimum": 1
+              "nullable": true,
+              "deprecated": true,
+              "default": null,
+              "minimum": 0,
+              "exclusiveMinimum": true
             }
           },
           {
             "name": "active",
             "in": "query",
+            "description": "Filter by active state.",
             "required": false,
             "schema": {
-              "type": "boolean"
+              "description": "Filter by active state.",
+              "type": "boolean",
+              "nullable": true,
+              "default": null
             }
           },
           {
             "name": "page",
             "in": "query",
+            "description": "Page number starting from 1.",
             "required": false,
             "schema": {
+              "description": "Page number starting from 1.",
               "type": "integer",
               "default": 1,
-              "minimum": 1
+              "minimum": 0,
+              "exclusiveMinimum": true
             }
           },
           {
             "name": "limit",
             "in": "query",
+            "description": "Number of items per page.",
             "required": false,
             "schema": {
+              "description": "Number of items per page.",
               "type": "integer",
               "default": 20,
               "maximum": 100,
               "minimum": 1
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "description": "Full-text search in name (boost 3) and description.",
+            "required": false,
+            "schema": {
+              "description": "Full-text search in name (boost 3) and description.",
+              "type": "string",
+              "nullable": true,
+              "default": null
+            }
+          },
+          {
+            "name": "sectionIds[]",
+            "in": "query",
+            "description": "Direct section identifiers passed as sectionIds[]. A product may belong to any listed section (OR). Combined with legacy sectionId.",
+            "required": false,
+            "schema": {
+              "description": "Direct section identifiers passed as sectionIds[]. A product may belong to any listed section (OR). Combined with legacy sectionId.",
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "default": []
+            }
+          },
+          {
+            "name": "priceFrom",
+            "in": "query",
+            "description": "Minimum price amount, inclusive.",
+            "required": false,
+            "schema": {
+              "description": "Minimum price amount, inclusive.",
+              "type": "integer",
+              "nullable": true,
+              "default": null,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "priceTo",
+            "in": "query",
+            "description": "Maximum price amount, inclusive.",
+            "required": false,
+            "schema": {
+              "description": "Maximum price amount, inclusive.",
+              "type": "integer",
+              "nullable": true,
+              "default": null,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "priceTypeCodes[]",
+            "in": "query",
+            "description": "Price type codes passed as priceTypeCodes[] (OR). Combined with the price range within the same nested price object.",
+            "required": false,
+            "schema": {
+              "description": "Price type codes passed as priceTypeCodes[] (OR). Combined with the price range within the same nested price object.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": []
+            }
+          },
+          {
+            "name": "inStock",
+            "in": "query",
+            "description": "true requires total stock above zero; false requires total stock at or below zero.",
+            "required": false,
+            "schema": {
+              "description": "true requires total stock above zero; false requires total stock at or below zero.",
+              "type": "boolean",
+              "nullable": true,
+              "default": null,
+              "enum": [
+                "true",
+                "false",
+                "1",
+                "0"
+              ]
             }
           }
         ],
@@ -538,32 +639,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/CatalogElements"
-                      }
-                    },
-                    "pagination": {
-                      "properties": {
-                        "page": {
-                          "type": "integer"
-                        },
-                        "limit": {
-                          "type": "integer"
-                        },
-                        "total": {
-                          "type": "integer"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  },
-                  "type": "object"
+                  "$ref": "#/components/schemas/CatalogListResponse"
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid query parameters."
           }
         }
       }
@@ -593,7 +675,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CatalogElements2"
+                  "$ref": "#/components/schemas/CatalogElementResponse2"
                 }
               }
             }
@@ -1489,45 +1571,45 @@
         },
         "type": "object"
       },
-      "CatalogElements": {
+      "CatalogElementResponse": {
         "required": [
-          "id",
           "productPrices",
-          "name",
-          "active",
-          "slug",
           "totalStock"
         ],
         "properties": {
           "id": {
-            "type": "integer"
-          },
-          "sort": {
             "type": "integer",
-            "default": 100
-          },
-          "productPrices": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProductPrice"
-            }
+            "nullable": true
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "active": {
-            "type": "boolean"
+            "type": "boolean",
+            "nullable": true
           },
           "description": {
             "type": "string",
             "nullable": true
           },
           "slug": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "pictureId": {
             "type": "string",
             "nullable": true
+          },
+          "sort": {
+            "type": "integer",
+            "nullable": true
+          },
+          "productPrices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogPriceResponse"
+            }
           },
           "totalStock": {
             "type": "integer"
@@ -1535,55 +1617,340 @@
         },
         "type": "object"
       },
-      "CatalogElements2": {
+      "CatalogElementResponse2": {
         "required": [
-          "id",
           "productPrices",
-          "name",
-          "active",
-          "slug",
-          "sections",
-          "totalStock"
+          "totalStock",
+          "sections"
         ],
         "properties": {
           "id": {
-            "type": "integer"
-          },
-          "sort": {
             "type": "integer",
-            "default": 100
-          },
-          "productPrices": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProductPrice2"
-            }
+            "nullable": true
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "active": {
-            "type": "boolean"
+            "type": "boolean",
+            "nullable": true
           },
           "description": {
             "type": "string",
             "nullable": true
           },
           "slug": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "pictureId": {
             "type": "string",
             "nullable": true
           },
-          "sections": {
+          "sort": {
+            "type": "integer",
+            "nullable": true
+          },
+          "productPrices": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CatalogSections"
+              "$ref": "#/components/schemas/CatalogPriceResponse2"
             }
           },
           "totalStock": {
             "type": "integer"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogSectionResponse"
+            }
+          }
+        },
+        "type": "object"
+      },
+      "CatalogListQuery": {
+        "description": "Query parameters for the catalog element list.",
+        "properties": {
+          "sectionId": {
+            "description": "Legacy direct-section filter. Combined with sectionIds using OR.",
+            "type": "integer",
+            "nullable": true,
+            "deprecated": true,
+            "default": null,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "active": {
+            "description": "Filter by active state.",
+            "type": "boolean",
+            "nullable": true,
+            "default": null
+          },
+          "page": {
+            "description": "Page number starting from 1.",
+            "type": "integer",
+            "default": 1,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "limit": {
+            "description": "Number of items per page.",
+            "type": "integer",
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1
+          },
+          "query": {
+            "description": "Full-text search in name (boost 3) and description.",
+            "type": "string",
+            "nullable": true,
+            "default": null
+          },
+          "sectionIds": {
+            "description": "Direct section identifiers passed as sectionIds[]. A product may belong to any listed section (OR). Combined with legacy sectionId.",
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "default": []
+          },
+          "priceFrom": {
+            "description": "Minimum price amount, inclusive.",
+            "type": "integer",
+            "nullable": true,
+            "default": null,
+            "minimum": 0
+          },
+          "priceTo": {
+            "description": "Maximum price amount, inclusive.",
+            "type": "integer",
+            "nullable": true,
+            "default": null,
+            "minimum": 0
+          },
+          "priceTypeCodes": {
+            "description": "Price type codes passed as priceTypeCodes[] (OR). Combined with the price range within the same nested price object.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "inStock": {
+            "description": "true requires total stock above zero; false requires total stock at or below zero.",
+            "type": "boolean",
+            "nullable": true,
+            "default": null,
+            "enum": [
+              "true",
+              "false",
+              "1",
+              "0"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "CatalogListResponse": {
+        "required": [
+          "items",
+          "pagination"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogElementResponse"
+            }
+          },
+          "pagination": {
+            "oneOf": [
+              {
+                "required": [
+                  "page",
+                  "limit",
+                  "total"
+                ],
+                "properties": {
+                  "page": {
+                    "type": "integer"
+                  },
+                  "limit": {
+                    "type": "integer"
+                  },
+                  "total": {
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "required": [
+                  "page",
+                  "limit",
+                  "hasNextPage"
+                ],
+                "properties": {
+                  "page": {
+                    "type": "integer"
+                  },
+                  "limit": {
+                    "type": "integer"
+                  },
+                  "hasNextPage": {
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "nullable": true
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "nullable": true
+                }
+              }
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "CatalogPriceResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "priceType": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CatalogPriceTypeResponse"
+              }
+            ],
+            "nullable": true
+          },
+          "price": {
+            "type": "integer",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "type": "object"
+      },
+      "CatalogPriceResponse2": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "priceType": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CatalogPriceTypeResponse2"
+              }
+            ],
+            "nullable": true
+          },
+          "price": {
+            "type": "integer",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "type": "object"
+      },
+      "CatalogPriceTypeResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "sort": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "type": "object"
+      },
+      "CatalogPriceTypeResponse2": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "sort": {
+            "type": "integer",
+            "nullable": true
           }
         },
         "type": "object"
@@ -1603,6 +1970,47 @@
           },
           "product": {
             "$ref": "#/components/schemas/CatalogSnapshotProduct"
+          }
+        },
+        "type": "object"
+      },
+      "CatalogSectionResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "slug": {
+            "type": "string",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "pictureId": {
+            "type": "string",
+            "nullable": true
+          },
+          "level": {
+            "type": "integer",
+            "nullable": true
+          },
+          "sort": {
+            "type": "integer",
+            "nullable": true
+          },
+          "parentId": {
+            "type": "integer",
+            "nullable": true
           }
         },
         "type": "object"
@@ -2114,138 +2522,6 @@
           "completed",
           "canceled"
         ]
-      },
-      "PriceType": {
-        "required": [
-          "id",
-          "code",
-          "name",
-          "active"
-        ],
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "code": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "sort": {
-            "type": "integer",
-            "default": 100
-          }
-        },
-        "type": "object"
-      },
-      "PriceType2": {
-        "required": [
-          "id",
-          "code",
-          "name",
-          "active"
-        ],
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "code": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "sort": {
-            "type": "integer",
-            "default": 100
-          }
-        },
-        "type": "object"
-      },
-      "ProductPrice": {
-        "required": [
-          "id",
-          "priceType",
-          "price",
-          "currency",
-          "active"
-        ],
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "priceType": {
-            "$ref": "#/components/schemas/PriceType"
-          },
-          "price": {
-            "type": "integer"
-          },
-          "currency": {
-            "type": "string"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "validFrom": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "validTo": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          }
-        },
-        "type": "object"
-      },
-      "ProductPrice2": {
-        "required": [
-          "id",
-          "priceType",
-          "price",
-          "currency",
-          "active"
-        ],
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "priceType": {
-            "$ref": "#/components/schemas/PriceType2"
-          },
-          "price": {
-            "type": "integer"
-          },
-          "currency": {
-            "type": "string"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "validFrom": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "validTo": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          }
-        },
-        "type": "object"
       },
       "SearchListQueryDto": {
         "description": "Query parameters for paginated searchable lists with sorting.",

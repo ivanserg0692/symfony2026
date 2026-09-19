@@ -27,6 +27,7 @@ class OrderApiService
         private readonly CheckoutCartItemsFactory $checkoutCartItemsFactory,
         private readonly CheckoutOrderItemSourceFactory $checkoutOrderItemSourceFactory,
         private readonly OrderDetailResponseFactory $orderDetailResponseFactory,
+        private readonly CheckoutTiming $checkoutTiming,
     ) {
     }
 
@@ -89,19 +90,23 @@ class OrderApiService
 
     public function createOrderFromCurrentCart(int $ownerId): Order
     {
+        $this->checkoutTiming->mark('checkout.entered');
         $operationId = null;
         $stocksDeducted = false;
 
         $this->entityManager->getConnection()->beginTransaction();
+        $this->checkoutTiming->mark('checkout.transaction_opened');
 
         try {
             $cart = $this->cartRepository->findForOwnerForUpdate($ownerId);
+            $this->checkoutTiming->mark('checkout.cart_loaded_and_locked');
 
             if ($cart === null) {
                 throw new ActiveCartNotFoundException();
             }
 
             $items = $this->cartItemRepository->findForCart($cart);
+            $this->checkoutTiming->mark('checkout.cart_items_loaded');
 
             if ($items === []) {
                 throw new EmptyCartException();
@@ -110,21 +115,33 @@ class OrderApiService
             $checkoutItems = $this->checkoutCartItemsFactory->createFromCartItems($items);
             $productIds = $checkoutItems->getProductIds();
             $operationId = $this->createDeductStocksOperationId();
+            $this->checkoutTiming->mark('checkout.request_prepared');
             $prices = $this->catalogInventoryClient->getProductPrices($productIds);
-            $deductionResult = $this->catalogInventoryClient->deductStocks($operationId, $checkoutItems->toDeductStocksItems());
+            $this->checkoutTiming->mark('checkout.get_product_prices_completed');
+            $deductStocksItems = $checkoutItems->toDeductStocksItems();
+            $this->checkoutTiming->mark('checkout.deduct_stocks_request_prepared');
+            $deductionResult = $this->catalogInventoryClient->deductStocks($operationId, $deductStocksItems);
+            $this->checkoutTiming->mark('checkout.deduct_stocks_completed');
             $stocksDeducted = true;
             $orderItemSource = $this->checkoutOrderItemSourceFactory->create($checkoutItems, $prices, $deductionResult);
+            $this->checkoutTiming->mark('checkout.order_item_source_created');
             $now = new \DateTimeImmutable();
             $order = $this->buildOrder($ownerId, $orderItemSource, $operationId, $now);
+            $this->checkoutTiming->mark('checkout.order_built');
 
             $this->entityManager->persist($order);
             $this->entityManager->remove($cart);
+            $this->checkoutTiming->mark('checkout.persist_scheduled');
             $this->entityManager->flush();
+            $this->checkoutTiming->mark('checkout.flush_completed');
             $this->entityManager->getConnection()->commit();
+            $this->checkoutTiming->mark('checkout.transaction_committed');
 
             return $order;
         } catch (\Throwable $exception) {
+            $this->checkoutTiming->fail($exception);
             $this->entityManager->getConnection()->rollBack();
+            $this->checkoutTiming->mark('checkout.transaction_rolled_back');
 
             if ($stocksDeducted) {
                 // TODO: restore deducted stocks through Inventory gRPC when RestoreStocks exists.

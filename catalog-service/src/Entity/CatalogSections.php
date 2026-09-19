@@ -208,7 +208,18 @@ class CatalogSections
 
     public function setParent(?self $parent): static
     {
+        if ($this->parent === $parent) {
+            return $this;
+        }
+
+        $previousParent = $this->parent;
         $this->parent = $parent;
+
+        $previousParent?->removeCatalogSection($this);
+
+        if ($parent !== null && !$parent->getCatalogSections()->contains($this)) {
+            $parent->addCatalogSection($this);
+        }
 
         return $this;
     }
@@ -225,6 +236,7 @@ class CatalogSections
     {
         if (!$this->products->contains($product)) {
             $this->products->add($product);
+            $product->addSection($this);
         }
 
         return $this;
@@ -232,7 +244,9 @@ class CatalogSections
 
     public function removeProduct(Product $product): static
     {
-        $this->products->removeElement($product);
+        if ($this->products->removeElement($product)) {
+            $product->removeSection($this);
+        }
 
         return $this;
     }
