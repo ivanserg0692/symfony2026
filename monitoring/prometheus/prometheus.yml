@@ -55,6 +55,12 @@ scrape_configs:
           - php-fpm-exporter:9253
         labels:
           project: php-fpm
+    metric_relabel_configs:
+      - source_labels:
+          - scrape_uri
+        regex: 'tcp://([^:]+):.*'
+        target_label: service
+        replacement: '$1'
 
   - job_name: node
     static_configs:
