@@ -245,6 +245,16 @@ services:
     command:
       - --nginx.scrape-uri=http://api-gateway/nginx_status
 
+  # Prometheus exporter for PHP-FPM pool and queue metrics.
+  php-fpm-exporter:
+    image: hipages/php-fpm_exporter:2.2.0
+    depends_on:
+      - symfony-web
+      - catalog-web
+      - cart-web
+    environment:
+      PHP_FPM_SCRAPE_URI: "tcp://symfony-web:9001/status,tcp://catalog-web:9001/status,tcp://cart-web:9001/status"
+
   # Local Catalog service web server for REST/API access during development.
   catalog-web:
     <<: *symfony-base
@@ -540,6 +550,7 @@ services:
       - cart-web
       - api-gateway
       - api-gateway-exporter
+      - php-fpm-exporter
       - node-exporter
       - postgres-exporter
       - catalog-postgres-exporter
