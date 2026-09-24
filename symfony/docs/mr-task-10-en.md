@@ -12,6 +12,7 @@
 - [Out Of Scope](#out-of-scope)
 - [2026-09-24 — Performance Baseline and PHP-FPM Monitoring](#2026-09-24--performance-baseline-and-php-fpm-monitoring)
 - [2026-09-24 — Persistent Connections and Latency Estimates](#2026-09-24--persistent-connections-and-latency-estimates)
+- [2026-09-24 — Elasticsearch Delivery and Measured Results](#2026-09-24--elasticsearch-delivery-and-measured-results)
 
 <!-- END doctoc -->
 
@@ -119,3 +120,11 @@ The `when@prod` Doctrine configuration in Symfony, Catalog, and Cart enables `PD
 The shared PHP image now uses PHP 8.5. The integrated Catalog Elasticsearch client explicitly supplies a persistent cURL share handle through `CURLOPT_SHARE`, sharing `CURL_LOCK_DATA_CONNECT` and `CURL_LOCK_DATA_DNS` in `ElasticsearchClientFactory`. PHP 8.5's [`curl_share_init_persistent()`](https://www.php.net/manual/en/function.curl-share-init-persistent.php) retains this state across PHP requests within a worker process; this is not a single connection pool shared by all workers. Persistence for all internal REST clients has not been verified and is not implied by the PHP upgrade alone.
 
 The stable interval in the [full Grafana capture](<../../docs/images/test dashboard-1790239018436.png>) gives approximate application latency of **p50 ≈ 20 ms, p95 ≈ 45 ms, and p99 ≈ 60–65 ms**. These estimates read the thickness of the individual areas in the stacked `Latency P50 / P95 / P99` panel, not the cumulative upper boundaries. They describe application histogram percentiles over rolling 5-minute windows, not exact exported values or end-to-end k6 results. No isolated before/after measurement attributes a specific speedup to any one connection optimization.
+
+## 2026-09-24 — Elasticsearch Delivery and Measured Results
+
+The delivered Elasticsearch catalog reader supports search, available filters, sorting, pagination, and exact counts. `CATALOG_READ_MODEL` selects Doctrine or Elasticsearch; the tracked `.env` currently selects `elasticsearch`, while the configuration fallback is `doctrine`. PostgreSQL remains the source of truth. Incremental synchronization uses a transactional outbox, Symfony Messenger, and a durable RabbitMQ queue: the handler rebuilds the document from current PostgreSQL data by ID and updates the index idempotently. Full reindex creates a new versioned index and switches the alias after validation; see the [runbook](../../catalog-service/docs/elasticsearch-reindex.md).
+
+The [verified full-reindex result](../../catalog-service/docs/elasticsearch-reindex.md#verified-result) is **1,000,000 products processed and indexed**, **0 failures**, **00:09:18**, approximately **1,792 documents/s** on average, with the alias switched. This measures read-model construction, not HTTP API throughput.
+
+The application's measured progression can be reported separately: the final Task 9 mixed-load run averaged **525.54 requests/s**, and a later stable baseline averaged approximately **1,750 requests/s** with a reported 120 PHP-FPM workers. These are not a controlled PostgreSQL-versus-Elasticsearch comparison: the exact later run profile and selected read model were not preserved, and other optimizations occurred between measurements. The RPS change therefore is not a demonstrated Elasticsearch-specific speedup. Facets, system presets, and a controlled PostgreSQL-versus-Elasticsearch benchmark are not documented as completed.

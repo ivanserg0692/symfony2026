@@ -12,6 +12,7 @@
 - [Вне Scope](#%D0%B2%D0%BD%D0%B5-scope)
 - [2026-09-24 — Performance baseline и мониторинг PHP-FPM](#2026-09-24--performance-baseline-%D0%B8-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-php-fpm)
 - [2026-09-24 — Persistent connections и оценка latency](#2026-09-24--persistent-connections-%D0%B8-%D0%BE%D1%86%D0%B5%D0%BD%D0%BA%D0%B0-latency)
+- [2026-09-24 — Реализация Elasticsearch и измеренные результаты](#2026-09-24--%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-elasticsearch-%D0%B8-%D0%B8%D0%B7%D0%BC%D0%B5%D1%80%D0%B5%D0%BD%D0%BD%D1%8B%D0%B5-%D1%80%D0%B5%D0%B7%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%82%D1%8B)
 
 <!-- END doctoc -->
 
@@ -119,3 +120,11 @@ Gauge ошибок Grafana показывает **0,00287%** внешних HTTP
 Общий PHP image переведён на PHP 8.5. Интегрированный Elasticsearch-клиент Catalog явно получает persistent cURL share handle через `CURLOPT_SHARE`, совместно используя `CURL_LOCK_DATA_CONNECT` и `CURL_LOCK_DATA_DNS` в `ElasticsearchClientFactory`. Функция [`curl_share_init_persistent()`](https://www.php.net/manual/en/function.curl-share-init-persistent.php), появившаяся в PHP 8.5, сохраняет это состояние между PHP-запросами в пределах worker-процесса; это не единый пул соединений для всех workers. Persistent connections для всех внутренних REST-клиентов не проверены и не следуют автоматически из обновления PHP.
 
 На стабильном участке [полного снимка Grafana](<../../docs/images/test dashboard-1790239018436.png>) latency приложения составляет ориентировочно **p50 ≈ 20 мс, p95 ≈ 45 мс и p99 ≈ 60–65 мс**. Оценки получены по толщине отдельных областей stacked-панели `Latency P50 / P95 / P99`, а не по накопленным верхним границам. Это перцентили гистограмм приложения по скользящему окну 5 минут, а не точные экспортированные значения или end-to-end результаты k6. Отдельного before/after измерения, позволяющего приписать конкретный прирост одной из оптимизаций соединений, нет.
+
+## 2026-09-24 — Реализация Elasticsearch и измеренные результаты
+
+Фактически реализован Elasticsearch reader каталога для поиска, доступных фильтров, сортировки, пагинации и точного подсчёта. Выбор между Doctrine и Elasticsearch выполняется через `CATALOG_READ_MODEL`; отслеживаемый `.env` сейчас задаёт `elasticsearch`, а fallback конфигурации — `doctrine`. PostgreSQL остаётся источником истины. Инкрементальная синхронизация использует transactional outbox, Symfony Messenger и durable RabbitMQ-очередь: handler по ID заново строит документ из актуальных данных PostgreSQL и идемпотентно обновляет индекс. При полном reindex создаётся новая версия индекса, а alias переключается после проверки; подробности — в [runbook](../../catalog-service/docs/elasticsearch-reindex.md).
+
+Подтверждённый [результат полного reindex](../../catalog-service/docs/elasticsearch-reindex.md#подтверждённый-результат): **1 000 000 обработанных и проиндексированных товаров**, **0 ошибок**, **00:09:18**, в среднем около **1 792 документов/с**, alias переключён. Это показатель скорости построения read-модели, не throughput HTTP API.
+
+Для портфолио можно отдельно указать прогресс измерений приложения: итоговый mixed-load прогон Task 9 дал **525,54 запроса/с**, а более поздний стабильный baseline — около **1 750 запросов/с** при заявленных 120 PHP-FPM workers. Однако эти запуски не образуют контролируемого сравнения PostgreSQL и Elasticsearch: точный профиль и выбранная read-модель позднего прогона не сохранены, а между измерениями были и другие оптимизации. Поэтому измеренное изменение RPS не является доказанным ускорением от Elasticsearch. Фасеты, системные пресеты и контролируемый PostgreSQL-versus-Elasticsearch benchmark не зафиксированы как завершённые.

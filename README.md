@@ -11,6 +11,7 @@
   - [Online Store Domain](#online-store-domain)
   - [Monitoring and Load Testing](#monitoring-and-load-testing)
     - [Current Performance Baseline](#current-performance-baseline)
+    - [Elasticsearch Delivery and Measured Progress](#elasticsearch-delivery-and-measured-progress)
     - [Task 9 Performance Result](#task-9-performance-result)
   - [PHP Image Multi-stage Build](#php-image-multi-stage-build)
   - [API Endpoints](#api-endpoints)
@@ -60,6 +61,7 @@
   - [Домен интернет-магазина](#%D0%B4%D0%BE%D0%BC%D0%B5%D0%BD-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0)
   - [Мониторинг и нагрузочное тестирование](#%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5)
     - [Текущий performance baseline](#%D1%82%D0%B5%D0%BA%D1%83%D1%89%D0%B8%D0%B9-performance-baseline)
+    - [Elasticsearch: реализация и измеренные результаты](#elasticsearch-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%B8-%D0%B8%D0%B7%D0%BC%D0%B5%D1%80%D0%B5%D0%BD%D0%BD%D1%8B%D0%B5-%D1%80%D0%B5%D0%B7%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%82%D1%8B)
     - [Результат производительности Task 9](#%D1%80%D0%B5%D0%B7%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%82-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-task-9)
   - [Multi-stage сборка PHP image](#multi-stage-%D1%81%D0%B1%D0%BE%D1%80%D0%BA%D0%B0-php-image)
   - [API Endpoints](#api-endpoints-1)
@@ -242,6 +244,12 @@ On the stable interval, the capture suggests application latency of approximatel
 In the PHP-FPM panel, `listen_queue` is the number of requests waiting for a free worker. A growing queue combined with no idle processes indicates pool saturation. Zero values mean no queue was observed at collection times; short queues between samples are still possible.
 
 Connection optimizations include persistent PostgreSQL PDO connections in `prod` across Symfony, Catalog, and Cart, persistent Redis connections for application caches and metrics, and Nginx–PHP-FPM FastCGI keepalive. The integrated Elasticsearch client uses PHP 8.5's `curl_share_init_persistent()` to retain its cURL connection pool and DNS cache across requests within a worker process. These settings reduce repeated connection setup; they do not establish a separate measured speedup for each optimization. [Implementation notes](symfony/docs/mr-task-10-en.md#2026-09-24--persistent-connections-and-latency-estimates).
+
+#### Elasticsearch Delivery and Measured Progress
+
+Task 10 delivered a selectable Elasticsearch catalog reader (search, filtering, sorting, pagination, and exact counts) while PostgreSQL remains the source of truth. Changes reach the index through a transactional outbox and RabbitMQ. A [verified full reindex](catalog-service/docs/elasticsearch-reindex.md#verified-result) processed **1,000,000 products in 00:09:18** at approximately **1,792 documents/s**, with **0 indexing failures** and a successful alias switch. This is indexing throughput, not HTTP RPS.
+
+The measured application progression is **525.54 requests/s** in the Task 9 mixed-load k6 run and the later stable baseline of approximately **1,750 requests/s** shown above. These runs are not a controlled PostgreSQL-versus-Elasticsearch comparison: the later result reflects multiple application and infrastructure changes, and its saved evidence does not establish which catalog read model was active. An Elasticsearch-specific speedup therefore cannot be quantified from these results. [Task 10 implementation record](symfony/docs/mr-task-10-en.md#2026-09-24--elasticsearch-delivery-and-measured-results).
 
 #### Task 9 Performance Result
 
@@ -531,7 +539,7 @@ The notification recipients are administrators resolved by the application, not 
 - MR result (RU): [symfony/docs/mr-task-9-ru.md](symfony/docs/mr-task-9-ru.md)
 
 #### `Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - done
-- Brief info: Full and incremental indexing, a selectable Elasticsearch catalog reader, and load-test monitoring are implemented. Elasticsearch remains opt-in; facets, presets, and the planned controlled PostgreSQL comparison are not documented as completed.
+- Brief info: Full and incremental indexing, a selectable Elasticsearch catalog reader, and load-test monitoring are implemented. The tracked `.env` selects Elasticsearch; the configuration fallback is Doctrine. Facets, presets, and the planned controlled PostgreSQL comparison are not documented as completed.
 - Backend Merge Request 10: <https://github.com/ivanserg0692/symfony2026/pull/14>
 - Frontend Merge Request 10: TBD
 - Task file: [symfony/docs/task-10.md](symfony/docs/task-10.md)
@@ -1098,6 +1106,12 @@ docker compose down
 
 Оптимизации соединений включают persistent PDO-подключения к PostgreSQL в `prod` у Symfony, Catalog и Cart, persistent Redis-подключения для прикладных кешей и метрик, а также FastCGI keepalive между Nginx и PHP-FPM. Интегрированный Elasticsearch-клиент использует `curl_share_init_persistent()` из PHP 8.5 для сохранения пула cURL-соединений и DNS-кеша между запросами в пределах worker-процесса. Эти настройки сокращают повторное установление соединений; отдельный прирост от каждой оптимизации не измерен. [Подробности реализации](symfony/docs/mr-task-10-ru.md#2026-09-24--persistent-connections-и-оценка-latency).
 
+#### Elasticsearch: реализация и измеренные результаты
+
+В Task 10 реализован переключаемый Elasticsearch reader каталога (поиск, фильтрация, сортировка, пагинация и точный подсчёт), при этом источником истины остаётся PostgreSQL. Изменения попадают в индекс через transactional outbox и RabbitMQ. [Подтверждённый full reindex](catalog-service/docs/elasticsearch-reindex.md#подтверждённый-результат) обработал **1 000 000 товаров за 00:09:18** со скоростью около **1 792 документов/с**, **без ошибок индексации** и с успешным переключением alias. Это скорость индексации, а не HTTP RPS.
+
+Измеренный прогресс приложения: **525,54 запроса/с** в mixed-load прогоне k6 для Task 9 и более поздний стабильный baseline около **1 750 запросов/с**, показанный выше. Это не контролируемое сравнение PostgreSQL с Elasticsearch: поздний результат включает несколько изменений приложения и инфраструктуры, а сохранённые материалы не подтверждают, какая read-модель каталога использовалась в этом прогоне. Поэтому численный прирост RPS нельзя приписывать именно Elasticsearch. [Фактический результат Task 10](symfony/docs/mr-task-10-ru.md#2026-09-24--реализация-elasticsearch-и-измеренные-результаты).
+
 #### Результат производительности Task 9
 
 [Подробные заметки о производительности Task 9](symfony/docs/task-9.md) описывают предыдущий цикл оптимизации и его тестовое окружение.
@@ -1386,7 +1400,7 @@ docker compose down
 - Результат MR (RU): [symfony/docs/mr-task-9-ru.md](symfony/docs/mr-task-9-ru.md)
 
 #### `Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - done
-- Brief info: Реализованы full и incremental indexing, переключаемый Elasticsearch reader каталога и мониторинг нагрузочного теста. Elasticsearch включается явно; фасеты, пресеты и запланированное контролируемое сравнение с PostgreSQL не зафиксированы как завершённые.
+- Brief info: Реализованы full и incremental indexing, переключаемый Elasticsearch reader каталога и мониторинг нагрузочного теста. В отслеживаемом `.env` выбран Elasticsearch; fallback конфигурации — Doctrine. Фасеты, пресеты и запланированное контролируемое сравнение с PostgreSQL не зафиксированы как завершённые.
 - Backend Merge Request 10: <https://github.com/ivanserg0692/symfony2026/pull/14>
 - Frontend Merge Request 10: TBD
 - Файл задачи: [symfony/docs/task-10.md](symfony/docs/task-10.md)
