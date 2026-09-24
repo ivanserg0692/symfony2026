@@ -1,6 +1,6 @@
 FROM ghcr.io/roadrunner-server/roadrunner:2025.1.1 AS roadrunner
 
-FROM php:8.4-fpm-bookworm AS php-builder
+FROM php:8.5-fpm-bookworm AS php-builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
@@ -24,18 +24,13 @@ RUN pecl install amqp grpc redis \
     && docker-php-ext-enable amqp grpc redis
 
 
-FROM php-builder AS php-prod-builder
-
-RUN docker-php-ext-install opcache
-
-
 FROM php-builder AS php-dev-builder
 
 RUN pecl install xdebug \
     && docker-php-ext-enable xdebug
 
 
-FROM php:8.4-fpm-bookworm AS php-runtime-base
+FROM php:8.5-fpm-bookworm AS php-runtime-base
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN set -eux; \
@@ -82,8 +77,8 @@ WORKDIR /workspace
 
 FROM php-runtime-base AS prod
 
-COPY --from=php-prod-builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
-COPY --from=php-prod-builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
+COPY --from=php-builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=php-builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
 
 ENV APP_ENV=prod \
     APP_DEBUG=0
@@ -91,9 +86,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
     && rm -rf /var/lib/apt/lists/*
 
+RUN cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.template
+
 COPY docker/php-symfony-cli/opcache-prod.ini /usr/local/etc/php/conf.d/99-opcache-prod.ini
-COPY docker/php-symfony-cli/nginx-prod.conf /etc/nginx/sites-available/default
-COPY docker/php-symfony-cli/php-fpm-prod.conf /usr/local/etc/php-fpm.d/zz-prod.conf
+COPY docker/php-symfony-cli/nginx-prod.conf /etc/nginx/sites-available/default.template
+COPY docker/php-symfony-cli/php-fpm-prod.conf /usr/local/etc/php-fpm.d/zz-prod.conf.template
 COPY docker/php-symfony-cli/prod-web-server.sh /usr/local/bin/symfony-prod-server
 RUN chmod +x /usr/local/bin/symfony-prod-server
 

@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\CatalogSections;
+use App\Entity\Product;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -11,7 +12,7 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class CatalogSectionsRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $registry, private readonly int $catalogSectionsCacheTtlSeconds)
     {
         parent::__construct($registry, CatalogSections::class);
     }
@@ -29,6 +30,7 @@ class CatalogSectionsRepository extends ServiceEntityRepository
             ->orderBy("section.sort", "DESC")
             ->addOrderBy("section.id", "ASC")
             ->getQuery()
+            ->enableResultCache($this->catalogSectionsCacheTtlSeconds)
             ->getResult();
     }
 
@@ -40,6 +42,47 @@ class CatalogSectionsRepository extends ServiceEntityRepository
             ->andWhere("section.id = :id")
             ->setParameter("id", $id)
             ->getQuery()
+            ->enableResultCache($this->catalogSectionsCacheTtlSeconds)
             ->getOneOrNullResult();
+    }
+
+    /**
+     * Collects products from the current ORM object graph rather than querying
+     * the database, because callers may run during onFlush before pending
+     * hierarchy and association changes have been written.
+     *
+     * @return Product[]
+     */
+    public function collectProducts(CatalogSections $section, bool $includeDescendants): array
+    {
+        $products = [];
+        $visitedSections = [];
+        $sections = [$section];
+
+        while ($sections !== []) {
+            $currentSection = array_pop($sections);
+            $objectId = spl_object_id($currentSection);
+
+            if (isset($visitedSections[$objectId])) {
+                continue;
+            }
+
+            $visitedSections[$objectId] = true;
+
+            foreach ($currentSection->getProducts() as $product) {
+                $productId = $product->getId();
+                if ($productId !== null) {
+                    $products[$productId] = $product;
+                }
+            }
+
+            if ($includeDescendants) {
+                foreach ($currentSection->getCatalogSections() as $childSection) {
+                    $sections[] = $childSection;
+                }
+            }
+        }
+
+        return array_values($products);
     }
 }

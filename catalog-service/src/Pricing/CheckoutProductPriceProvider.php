@@ -5,6 +5,7 @@ namespace App\Pricing;
 use App\Entity\ProductPrice;
 use App\Repository\CatalogElementsRepository;
 use App\Repository\ProductPriceRepository;
+use App\RoadRunner\Grpc\GrpcHandlerTiming;
 
 final readonly class CheckoutProductPriceProvider
 {
@@ -14,6 +15,7 @@ final readonly class CheckoutProductPriceProvider
     public function __construct(
         private CatalogElementsRepository $catalogElementsRepository,
         private ProductPriceRepository $productPriceRepository,
+        private GrpcHandlerTiming $handlerTiming,
     ) {
     }
 
@@ -24,14 +26,18 @@ final readonly class CheckoutProductPriceProvider
      */
     public function getPricesForProducts(array $productIds): array
     {
+        $this->handlerTiming->mark('pricing.entered');
         $this->ensureProductsExist($productIds);
+        $this->handlerTiming->mark('pricing.products_verified');
 
         $pricesByProduct = [];
-        foreach ($this->productPriceRepository->findActivePricesForProducts(
+        $prices = $this->productPriceRepository->findActivePricesForProducts(
             $productIds,
             [self::BASE_PRICE_TYPE, self::SALE_PRICE_TYPE],
             new \DateTimeImmutable(),
-        ) as $price) {
+        );
+        $this->handlerTiming->mark('pricing.prices_loaded');
+        foreach ($prices as $price) {
             $product = $price->getProduct();
             $priceType = $price->getPriceType();
 
@@ -41,11 +47,13 @@ final readonly class CheckoutProductPriceProvider
 
             $pricesByProduct[$product->getId()][$priceType->getCode()] = $price;
         }
+        $this->handlerTiming->mark('pricing.prices_grouped');
 
         $checkoutPrices = [];
         foreach ($productIds as $productId) {
             $checkoutPrices[$productId] = $this->createCheckoutPrice($productId, $pricesByProduct[$productId] ?? []);
         }
+        $this->handlerTiming->mark('pricing.result_built');
 
         return $checkoutPrices;
     }

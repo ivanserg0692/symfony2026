@@ -10,6 +10,7 @@
   - [Application Areas](#application-areas)
   - [Online Store Domain](#online-store-domain)
   - [Monitoring and Load Testing](#monitoring-and-load-testing)
+    - [Current Performance Baseline](#current-performance-baseline)
     - [Task 9 Performance Result](#task-9-performance-result)
   - [PHP Image Multi-stage Build](#php-image-multi-stage-build)
   - [API Endpoints](#api-endpoints)
@@ -33,8 +34,10 @@
       - [`Task 7.3`: Implement the external API Gateway for the public REST/HTTP contract - completed](#task-73-implement-the-external-api-gateway-for-the-public-resthttp-contract---completed)
     - [`Task 8`: Monitoring and load testing for the online store - completed](#task-8-monitoring-and-load-testing-for-the-online-store---completed)
     - [`Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - completed](#task-9-application-performance-optimization-rps-improvement-and-php-environment-tuning---completed)
+    - [`Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - done](#task-10-elasticsearch-catalog-read-model-for-search-filtering-aggregations-and-presets---done)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
+  - [Elasticsearch Catalog Indexing](#elasticsearch-catalog-indexing)
   - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
   - [News Export and Batch Processing](#news-export-and-batch-processing)
   - [Run With Docker Compose](#run-with-docker-compose)
@@ -56,6 +59,7 @@
   - [Области приложения](#%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F)
   - [Домен интернет-магазина](#%D0%B4%D0%BE%D0%BC%D0%B5%D0%BD-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0)
   - [Мониторинг и нагрузочное тестирование](#%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5)
+    - [Текущий performance baseline](#%D1%82%D0%B5%D0%BA%D1%83%D1%89%D0%B8%D0%B9-performance-baseline)
     - [Результат производительности Task 9](#%D1%80%D0%B5%D0%B7%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%82-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-task-9)
   - [Multi-stage сборка PHP image](#multi-stage-%D1%81%D0%B1%D0%BE%D1%80%D0%BA%D0%B0-php-image)
   - [API Endpoints](#api-endpoints-1)
@@ -79,8 +83,10 @@
       - [`Task 7.3`: Реализация внешнего API Gateway для публичного REST/HTTP контракта - completed](#task-73-%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B5%D0%B3%D0%BE-api-gateway-%D0%B4%D0%BB%D1%8F-%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D0%BE%D0%B3%D0%BE-resthttp-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D0%B0---completed)
     - [`Task 8`: Мониторинг и нагрузочное тестирование интернет-магазина - completed](#task-8-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0---completed)
     - [`Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - completed](#task-9-%D0%BE%D0%BF%D1%82%D0%B8%D0%BC%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BF%D0%BE%D0%B2%D1%8B%D1%88%D0%B5%D0%BD%D0%B8%D0%B5-rps-%D0%B8-%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-php-%D0%BE%D0%BA%D1%80%D1%83%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F---completed)
+    - [`Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - done](#task-10-elasticsearch-read-%D0%BC%D0%BE%D0%B4%D0%B5%D0%BB%D1%8C-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B4%D0%BB%D1%8F-%D0%BF%D0%BE%D0%B8%D1%81%D0%BA%D0%B0-%D1%84%D0%B8%D0%BB%D1%8C%D1%82%D1%80%D0%B0%D1%86%D0%B8%D0%B8-%D0%B0%D0%B3%D1%80%D0%B5%D0%B3%D0%B0%D1%86%D0%B8%D0%B9-%D0%B8-%D0%BF%D1%80%D0%B5%D1%81%D0%B5%D1%82%D0%BE%D0%B2---done)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
+  - [Индексация каталога в Elasticsearch](#%D0%B8%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0%D1%86%D0%B8%D1%8F-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B2-elasticsearch)
   - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
   - [Экспорт новостей и batch-обработка](#%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D1%80%D1%82-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B5%D0%B9-%D0%B8-batch-%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0)
   - [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
@@ -182,9 +188,9 @@ The current checkout implementation creates the order and leaves it in the `pend
 
 ### Monitoring and Load Testing
 
-The production-oriented Docker environment includes Prometheus and Grafana for monitoring the API Gateway, application services, PostgreSQL databases, and host resources. Metrics are collected through Node Exporter, Nginx VTS Exporter, and PostgreSQL Exporter.
+The production-oriented Docker environment includes Prometheus and Grafana for monitoring the API Gateway, application services, PostgreSQL databases, PHP-FPM pools, and host resources. Metrics are collected through Node Exporter, Nginx VTS Exporter, PostgreSQL Exporter, and PHP-FPM Exporter. For `symfony-web`, `catalog-web`, and `cart-web`, the PHP-FPM exporter publishes accepted connections; active, idle, total, and maximum-active process counts; listen queue size, capacity, and maximum; max-children hits and slow requests; per-process state, request duration, CPU, memory, and request count; uptime, health, and scrape failures.
 
-The Grafana dashboard covers request rate, HTTP statuses and errors, p50/p95/p99 latency, CPU and memory usage, filesystem and disk activity, network traffic, and PostgreSQL operations. Load scenarios are executed with k6 against the public API Gateway and include catalog browsing, cart operations, checkout, and mixed traffic.
+The Grafana dashboard covers request rate, HTTP statuses and errors, p50/p95/p99 latency, CPU and memory usage, filesystem and disk activity, network traffic, and PostgreSQL operations. Its PHP-FPM panel currently visualizes active, idle, and total processes plus the listen queue per service. Load scenarios are executed with k6 against the public API Gateway and include catalog browsing, cart operations, checkout, and mixed traffic.
 
 The project provides three standard runtime profiles. Production is the default Compose environment and uses the `prod` image target with PHP-FPM, Nginx, OPcache, `APP_ENV=prod`, and `APP_DEBUG=0`. Load testing is a dedicated performance-test profile: it uses `.env.load_test` and `docker-compose.load-test.yml`, keeps production-like PHP behavior without development diagnostics, and runs as the isolated `symfony2026-load-test` Compose project. Development is enabled through `.env.dev` and `docker-compose.dev.yml`; it uses the `dev` image target with Symfony CLI, Composer, Xdebug, the Symfony profiler, detailed application logs, `APP_ENV=dev`, and `APP_DEBUG=1`.
 
@@ -207,7 +213,39 @@ docker compose down
 
 ![Grafana monitoring dashboard](docs/images/task-8-monitoring-overview.png)
 
+#### Current Performance Baseline
+
+After the latest application and infrastructure optimizations, the recorded stable load-test baseline averages approximately **1,750 requests/s** with `PHP_FPM_MAX_CHILDREN=120` for the measured run. This is the current recorded stable result on the test infrastructure used for that run, not an absolute maximum or a general capacity limit of the system.
+
+The Grafana capture shows a last displayed external HTTP 4xx/5xx rate of **0.00287%**, calculated over a rolling 5-minute window; this is not the overall k6 run error rate. API Gateway and Symfony throughput remained aligned near the approximately 1.7k RPS plateau, while application p50/p95/p99 latency trends remained stable after the load ramp. Grafana correlates these signals with CPU and system load and the PHP-FPM process and listen-queue metrics described above.
+
+![Current stable load-test throughput](<docs/images/task 10.png>)
+
+This cropped capture shows per-endpoint RPS (top left), total incoming RPS (top right), CPU utilization (bottom left), and Gateway vs Symfony RPS (bottom right). Around 16:30, total traffic rises from roughly 1.5k to a plateau near 1.7k RPS; the Gateway and Symfony lines remain close while CPU load stays broadly level on the plateau. The capture alone does not establish why the lines drop at its right edge.
+
+[Open the full Grafana load-test dashboard capture](<docs/images/test dashboard-1790239018436.png>)
+
+Dashboard guide:
+
+| Signal | Grafana panel | What to look for |
+| --- | --- | --- |
+| Total throughput | `Total Incoming RPS` | Overall request rate entering through Nginx, calculated with `rate(...[5m])`. |
+| Endpoint throughput | `Endpoints requests RPS` | Request rate split by API endpoint. |
+| Gateway vs application | `Gateway RPS vs Symfony RPS` | Whether traffic observed at the Gateway reaches Symfony at a comparable rate. |
+| Errors | `Errors API Gateway` | Percentage of external HTTP 4xx/5xx responses over a rolling 5-minute window; the gauge shows the last available value. |
+| Latency | `Latency P50 / P95 / P99`, `Latency By Endpoint` | Application histogram percentiles and per-endpoint p95 over 5 minutes, not client-side k6 latency. |
+| PHP-FPM capacity | `web php fpm workers` | Active, idle, and total processes and `listen_queue` for each web service. |
+| Infrastructure | CPU, system load, memory, swap, disk, filesystem, network, and PostgreSQL panels | Resource pressure correlated with throughput and latency. |
+
+On the stable interval, the capture suggests application latency of approximately **p50 ≈ 20 ms, p95 ≈ 45 ms, and p99 ≈ 60–65 ms**. These are visual estimates from the thickness of individual stacked areas, not exact exported measurements or client-side k6 latency. Both latency panels currently stack their series: the height of an upper boundary is cumulative, not an individual percentile. Use the live dashboard tooltip for individual values.
+
+In the PHP-FPM panel, `listen_queue` is the number of requests waiting for a free worker. A growing queue combined with no idle processes indicates pool saturation. Zero values mean no queue was observed at collection times; short queues between samples are still possible.
+
+Connection optimizations include persistent PostgreSQL PDO connections in `prod` across Symfony, Catalog, and Cart, persistent Redis connections for application caches and metrics, and Nginx–PHP-FPM FastCGI keepalive. The integrated Elasticsearch client uses PHP 8.5's `curl_share_init_persistent()` to retain its cURL connection pool and DNS cache across requests within a worker process. These settings reduce repeated connection setup; they do not establish a separate measured speedup for each optimization. [Implementation notes](symfony/docs/mr-task-10-en.md#2026-09-24--persistent-connections-and-latency-estimates).
+
 #### Task 9 Performance Result
+
+[Detailed Task 9 performance notes](symfony/docs/task-9.md) document the earlier optimization cycle and its test environment.
 
 The Task 8 measurement of approximately **80 RPS** is retained as the initial reference point. It was obtained on an Intel Core i5 laptop with 8 GB RAM, while the API, databases, monitoring stack, and k6 shared one WSL host. Detailed baseline percentiles were not recorded, so this value is not a controlled before/after benchmark.
 
@@ -492,6 +530,15 @@ The notification recipients are administrators resolved by the application, not 
 - MR result (EN): [symfony/docs/mr-task-9-en.md](symfony/docs/mr-task-9-en.md)
 - MR result (RU): [symfony/docs/mr-task-9-ru.md](symfony/docs/mr-task-9-ru.md)
 
+#### `Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - done
+- Brief info: Full and incremental indexing, a selectable Elasticsearch catalog reader, and load-test monitoring are implemented. Elasticsearch remains opt-in; facets, presets, and the planned controlled PostgreSQL comparison are not documented as completed.
+- Backend Merge Request 10: <https://github.com/ivanserg0692/symfony2026/pull/14>
+- Frontend Merge Request 10: TBD
+- Task file: [symfony/docs/task-10.md](symfony/docs/task-10.md)
+- MR result (EN): [symfony/docs/mr-task-10-en.md](symfony/docs/mr-task-10-en.md)
+- MR result (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
+- Product catalog full reindex runbook: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
+
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
 <https://github.com/ivanserg0692/symfony2026-frontend>
@@ -500,6 +547,29 @@ A separate frontend application was developed with React and Refine:
 ![Frontend news list](symfony/docs/images/frontend/news_list.png)
 
 ![Frontend notification list](symfony/docs/images/frontend/notification_list.png)
+
+### Elasticsearch Catalog Indexing
+
+Catalog Service keeps the derived Elasticsearch product index synchronized from PostgreSQL through a transactional outbox, Symfony Messenger, and a durable RabbitMQ queue. Incremental messages contain only a `CatalogElement` ID; the handler reads the latest complete aggregate and reuses the same document builder as full reindex. Duplicate delivery is safe, and failed messages remain available for retry.
+
+Full reindex remains a separate recovery mechanism. Its orchestration pauses only the incremental Elasticsearch worker while business writes, outbox capture, and RabbitMQ delivery continue. After validation and atomic `products` alias switching, the accumulated messages converge the new index to current PostgreSQL state. On failure, the old alias remains active and incremental processing resumes safely.
+
+The screenshot below records a successful full rebuild of a catalog containing one million products. Every document was indexed without a bulk-item failure, the document-count validation passed, and the alias was switched to the new index.
+
+| Result | Value |
+|---|---:|
+| Processed | `1,000,000` |
+| Indexed | `1,000,000` |
+| Failed | `0` |
+| Average rate | approximately `1,792 docs/s` |
+| Elapsed time | `00:09:18` |
+| Alias switched | `yes` |
+
+![Elasticsearch full reindex of one million products](catalog-service/docs/images/reindex-result.png)
+
+*Verified full reindex result for one million catalog products.*
+
+For incremental indexing, outbox/RabbitMQ recovery, coordinated full reindex, validation, and rollback instructions, see the [product catalog Elasticsearch indexing runbook](catalog-service/docs/elasticsearch-reindex.md).
 
 ### gRPC Contracts and Service Flows
 
@@ -540,11 +610,11 @@ The production stack is the default Compose environment. Development and load te
 
 | Environment | Compose project | PHP runtime | Configuration |
 |---|---|---|---|
-| Production (default) | `symfony2026` | Regular production traffic; PHP-FPM with Nginx and OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
-| Performance test | `symfony2026-load-test` | Isolated measurements with production-like PHP behavior and no development diagnostics; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
-| Development | `symfony2026-dev` | Symfony CLI, detailed application logs, Symfony profiler, and Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
+| Production (default) | `symfony2026` | Regular production traffic; PHP-FPM with Nginx and OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env.compose`, `.env`, `.env.local`, `docker-compose.yml` |
+| Performance test | `symfony2026-load-test` | Isolated measurements with production-like PHP behavior and no development diagnostics; `APP_ENV=prod`, `APP_DEBUG=0` | `.env.compose`, `.env`, `.env.local`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
+| Development | `symfony2026-dev` | Symfony CLI, detailed application logs, Symfony profiler, and Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env.compose`, `.env`, `.env.local`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
 
-`COMPOSE_PROJECT_NAME` gives each environment its own Compose project, generated networks, and named volumes. The stacks still use the same explicit container names and host ports, so stop the current environment before starting another one. Environment variables remain active until the current shell is closed or another context is sourced.
+`COMPOSE_PROJECT_NAME` gives each environment its own Compose project, generated networks, and named volumes. The stacks still use the same explicit container names and host ports, so stop the current environment before starting another one. Only Compose control and environment selector variables remain active until the current shell is closed or another context is sourced.
 
 The repository provides npm helpers that automatically load the required environment files and open a configured interactive shell:
 
@@ -554,15 +624,16 @@ npm run set:dev
 npm run set:load-test
 ```
 
-Each helper loads `.env` and `.env.local`, then applies the selected override for development or performance testing. Commands such as `docker compose`, `npm run db:migrate`, and `npm run db:fixtures` executed inside that shell use the selected Compose project and configuration. The helpers select the environment only; they do not build or start containers. Run `exit` to leave the configured shell and return to the previous terminal context.
+Each helper loads `.env.compose` and, for development or performance testing, the corresponding selector override. `COMPOSE_ENV_FILES` then tells Docker Compose to read `.env` and `.env.local` for interpolation, with `.env.local` taking precedence. Secrets from `.env.local` are not exported into the interactive shell; they enter only Compose and the services that explicitly receive them. Commands such as `docker compose`, `npm run db:migrate`, and `npm run db:fixtures` executed inside that shell use the selected Compose project and configuration. The helpers select the environment only; they do not build or start containers. Run `exit` to leave the configured shell and return to the previous terminal context.
 
 Prepare `.env` and start production from the repository root:
 
 ```bash
 cp .env.example .env
 set -a
-. ./.env
+. ./.env.compose
 set +a
+unset COMPOSE_PROJECT_NAME COMPOSE_FILE
 docker compose up --build -d
 ```
 
@@ -571,7 +642,7 @@ Stop production, build the development PHP image, and start development:
 ```bash
 docker compose down
 set -a
-. ./.env
+. ./.env.compose
 . ./.env.dev
 set +a
 docker compose build symfony-cli
@@ -588,7 +659,7 @@ Activate the load-test context before starting it or running shared database scr
 
 ```bash
 set -a
-. ./.env
+. ./.env.compose
 . ./.env.load_test
 set +a
 docker compose up -d
@@ -596,7 +667,7 @@ npm run db:migrate
 npm run db:fixtures
 ```
 
-The activation commands must be repeated in every new terminal. `set +a` only disables automatic export for later assignments; it does not remove the loaded variables.
+The activation commands must be repeated in every new terminal. `set +a` only disables automatic export for later assignments; it does not remove the loaded Compose control and selector variables. Do not source `.env.local` into the interactive shell.
 
 Open a shell inside the production CLI container:
 
@@ -675,7 +746,7 @@ npm run db:init
 npm run db:migrate
 ```
 
-`db:init` creates missing databases and then applies migrations. `db:fixtures` loads fixtures separately and is intentionally not included in `db:init` because it can rewrite development data.
+`db:init` creates missing databases and then applies migrations. `db:fixtures` loads fixtures separately and is intentionally not included in `db:init` because it can rewrite development data. After loading Catalog fixtures, `db:fixtures` runs the full Elasticsearch catalog reindex and starts Cart fixtures only if the reindex succeeds. This can take several minutes for large catalogs.
 
 Start PostgreSQL and create the database if it does not exist yet:
 
@@ -972,9 +1043,9 @@ Product snapshots не отдаются через отдельную публи
 
 ### Мониторинг и нагрузочное тестирование
 
-Production-окружение Docker включает Prometheus и Grafana для мониторинга API Gateway, сервисов приложения, баз данных PostgreSQL и ресурсов хоста. Метрики собираются через Node Exporter, Nginx VTS Exporter и PostgreSQL Exporter.
+Production-окружение Docker включает Prometheus и Grafana для мониторинга API Gateway, сервисов приложения, баз данных PostgreSQL, пулов PHP-FPM и ресурсов хоста. Метрики собираются через Node Exporter, Nginx VTS Exporter, PostgreSQL Exporter и PHP-FPM Exporter. Для `symfony-web`, `catalog-web` и `cart-web` PHP-FPM Exporter публикует число принятых соединений; active, idle, total и maximum-active processes; текущий и максимальный размер listen queue и его capacity; max-children hits и slow requests; состояние процесса, длительность запроса, CPU, память и число запросов по процессам; uptime, health и scrape failures.
 
-Дашборд Grafana показывает RPS, HTTP-статусы и ошибки, задержки p50/p95/p99, использование CPU и памяти, состояние файловой системы и дисков, сетевой трафик и операции PostgreSQL. Нагрузочные сценарии k6 выполняются через публичный API Gateway и охватывают просмотр каталога, работу с корзиной, оформление заказа и смешанный трафик.
+Дашборд Grafana показывает RPS, HTTP-статусы и ошибки, задержки p50/p95/p99, использование CPU и памяти, состояние файловой системы и дисков, сетевой трафик и операции PostgreSQL. PHP-FPM-панель сейчас визуализирует active, idle и total processes, а также listen queue по каждому сервису. Нагрузочные сценарии k6 выполняются через публичный API Gateway и охватывают просмотр каталога, работу с корзиной, оформление заказа и смешанный трафик.
 
 Проект предоставляет три стандартных runtime-профиля. Production является Compose-окружением по умолчанию и использует image target `prod` с PHP-FPM, Nginx, OPcache, `APP_ENV=prod` и `APP_DEBUG=0`. Для нагрузочного тестирования предусмотрен отдельный performance-test профиль: он использует `.env.load_test` и `docker-compose.load-test.yml`, сохраняет production-like поведение PHP без development-диагностики и запускается как изолированный Compose project `symfony2026-load-test`. Development подключается через `.env.dev` и `docker-compose.dev.yml`; он использует image target `dev` с Symfony CLI, Composer, Xdebug, Symfony profiler, подробными логами приложения, `APP_ENV=dev` и `APP_DEBUG=1`.
 
@@ -997,7 +1068,39 @@ docker compose down
 
 ![Дашборд мониторинга Grafana](docs/images/task-8-monitoring-overview.png)
 
+#### Текущий performance baseline
+
+После последних оптимизаций приложения и инфраструктуры зафиксированный стабильный baseline нагрузочного тестирования составляет в среднем примерно **1 750 запросов/с** при `PHP_FPM_MAX_CHILDREN=120` в конфигурации измеренного прогона. Это текущий зафиксированный стабильный результат на использованной тестовой инфраструктуре, а не абсолютный максимум или универсальный предел системы.
+
+На снимке Grafana последнее отображаемое значение доли внешних HTTP-ответов 4xx/5xx составляет **0,00287%** по скользящему окну 5 минут; это не итоговый error rate прогона k6. Throughput API Gateway и Symfony оставался согласованным на плато около 1,7k RPS, а динамика p50/p95/p99 latency приложения — стабильной после выхода на нагрузку. Grafana сопоставляет эти данные с CPU и system load, а также описанными выше метриками процессов и listen queue PHP-FPM.
+
+![Текущий стабильный throughput нагрузочного теста](<docs/images/task 10.png>)
+
+На этом фрагменте дашборда показаны RPS по endpoint (слева сверху), общий входящий RPS (справа сверху), загрузка CPU (слева снизу) и сравнение RPS Gateway и Symfony (справа снизу). Около 16:30 общий трафик растёт примерно с 1,5k до плато около 1,7k RPS; линии Gateway и Symfony остаются близкими, а загрузка CPU на плато — примерно ровной. Причину снижения линий у правого края по одному снимку установить нельзя.
+
+[Открыть полный снимок дашборда нагрузочного тестирования Grafana](<docs/images/test dashboard-1790239018436.png>)
+
+Как читать дашборд:
+
+| Сигнал | Панель Grafana | На что смотреть |
+| --- | --- | --- |
+| Общий throughput | `Total Incoming RPS` | Общая интенсивность запросов, входящих через Nginx, рассчитанная через `rate(...[5m])`. |
+| Throughput по endpoint | `Endpoints requests RPS` | Распределение RPS по API endpoint. |
+| Gateway и приложение | `Gateway RPS vs Symfony RPS` | Доходит ли наблюдаемый на Gateway трафик до Symfony с сопоставимой интенсивностью. |
+| Ошибки | `Errors API Gateway` | Доля внешних HTTP-ответов 4xx/5xx по скользящему окну 5 минут; gauge показывает последнее доступное значение. |
+| Latency | `Latency P50 / P95 / P99`, `Latency By Endpoint` | Перцентили из гистограмм приложения и p95 по endpoint за 5 минут, а не клиентская latency k6. |
+| Ёмкость PHP-FPM | `web php fpm workers` | Active, idle и total processes, а также `listen_queue` по каждому web-сервису. |
+| Инфраструктура | Панели CPU, system load, memory, swap, disk, filesystem, network и PostgreSQL | Нагрузка на ресурсы в сопоставлении с throughput и latency. |
+
+На стабильном участке снимка latency приложения составляет ориентировочно **p50 ≈ 20 мс, p95 ≈ 45 мс и p99 ≈ 60–65 мс**. Это визуальные оценки по толщине отдельных областей stacked-графика, а не точные экспортированные измерения или клиентская latency k6. В обеих latency-панелях включено накопление серий: высота верхней границы показывает сумму, а не отдельный перцентиль. Значения отдельных серий следует смотреть во всплывающей подсказке живого дашборда.
+
+В PHP-FPM-панели `listen_queue` показывает число запросов, ожидающих свободного worker. Рост очереди при отсутствии idle processes указывает на насыщение пула. Нулевые значения означают, что очередь не наблюдалась в моменты сбора метрик; краткие очереди между измерениями возможны.
+
+Оптимизации соединений включают persistent PDO-подключения к PostgreSQL в `prod` у Symfony, Catalog и Cart, persistent Redis-подключения для прикладных кешей и метрик, а также FastCGI keepalive между Nginx и PHP-FPM. Интегрированный Elasticsearch-клиент использует `curl_share_init_persistent()` из PHP 8.5 для сохранения пула cURL-соединений и DNS-кеша между запросами в пределах worker-процесса. Эти настройки сокращают повторное установление соединений; отдельный прирост от каждой оптимизации не измерен. [Подробности реализации](symfony/docs/mr-task-10-ru.md#2026-09-24--persistent-connections-и-оценка-latency).
+
 #### Результат производительности Task 9
+
+[Подробные заметки о производительности Task 9](symfony/docs/task-9.md) описывают предыдущий цикл оптимизации и его тестовое окружение.
 
 Замер Task 8 около **80 RPS** сохранён как исходный ориентир. Он был получен на ноутбуке Intel Core i5 с 8 ГБ RAM, где API, базы данных, мониторинг и k6 одновременно работали на одном WSL-хосте. Подробные baseline-перцентили не были зафиксированы, поэтому это значение нельзя считать контролируемым before/after benchmark.
 
@@ -1282,6 +1385,15 @@ docker compose down
 - Результат MR (EN): [symfony/docs/mr-task-9-en.md](symfony/docs/mr-task-9-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-9-ru.md](symfony/docs/mr-task-9-ru.md)
 
+#### `Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - done
+- Brief info: Реализованы full и incremental indexing, переключаемый Elasticsearch reader каталога и мониторинг нагрузочного теста. Elasticsearch включается явно; фасеты, пресеты и запланированное контролируемое сравнение с PostgreSQL не зафиксированы как завершённые.
+- Backend Merge Request 10: <https://github.com/ivanserg0692/symfony2026/pull/14>
+- Frontend Merge Request 10: TBD
+- Файл задачи: [symfony/docs/task-10.md](symfony/docs/task-10.md)
+- Результат MR (EN): [symfony/docs/mr-task-10-en.md](symfony/docs/mr-task-10-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
+- Runbook полной переиндексации каталога: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
+
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:
 <https://github.com/ivanserg0692/symfony2026-frontend>
@@ -1290,6 +1402,29 @@ docker compose down
 ![Список новостей frontend](symfony/docs/images/frontend/news_list.png)
 
 ![Список уведомлений frontend](symfony/docs/images/frontend/notification_list.png)
+
+### Индексация каталога в Elasticsearch
+
+Catalog Service поддерживает производный Elasticsearch-индекс товаров в актуальном состоянии через transactional outbox, Symfony Messenger и durable RabbitMQ-очередь. Incremental message содержит только ID `CatalogElement`; handler читает последний полный агрегат и использует тот же builder документа, что и full reindex. Повторная доставка безопасна, а failed messages остаются доступны для retry.
+
+Full reindex остаётся отдельным механизмом восстановления. Orchestration останавливает только incremental Elasticsearch worker, при этом бизнес-записи, outbox capture и доставка в RabbitMQ продолжаются. После проверки и атомарного переключения alias `products` накопленные сообщения приводят новый индекс к актуальному состоянию PostgreSQL. При ошибке старый alias остаётся рабочим, а incremental processing безопасно возобновляется.
+
+На скриншоте ниже показан успешный полный rebuild каталога из одного миллиона товаров. Все документы проиндексированы без ошибок отдельных bulk-операций, проверка количества документов пройдена, после чего alias переключён на новый индекс.
+
+| Результат | Значение |
+|---|---:|
+| Обработано | `1 000 000` |
+| Проиндексировано | `1 000 000` |
+| Ошибок | `0` |
+| Средняя скорость | около `1 792 docs/s` |
+| Время выполнения | `00:09:18` |
+| Alias переключён | `yes` |
+
+![Полная индексация одного миллиона товаров в Elasticsearch](catalog-service/docs/images/reindex-result.png)
+
+*Подтверждённый результат полной переиндексации одного миллиона товаров каталога.*
+
+Incremental indexing, восстановление outbox/RabbitMQ, координация full reindex, проверка и rollback описаны в [runbook индексации каталога](catalog-service/docs/elasticsearch-reindex.md).
 
 ### gRPC-контракты и сервисные сценарии
 
@@ -1330,11 +1465,11 @@ Production является Compose-окружением по умолчанию
 
 | Окружение | Compose project | PHP runtime | Конфигурация |
 |---|---|---|---|
-| Production (по умолчанию) | `symfony2026` | Обычная боевая нагрузка; PHP-FPM с Nginx и OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `docker-compose.yml` |
-| Тест производительности | `symfony2026-load-test` | Изолированные замеры с production-like поведением PHP и без development-диагностики; `APP_ENV=prod`, `APP_DEBUG=0` | `.env`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
-| Development | `symfony2026-dev` | Symfony CLI, подробные логи приложения, Symfony profiler и Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
+| Production (по умолчанию) | `symfony2026` | Обычная боевая нагрузка; PHP-FPM с Nginx и OPcache; `APP_ENV=prod`, `APP_DEBUG=0` | `.env.compose`, `.env`, `.env.local`, `docker-compose.yml` |
+| Тест производительности | `symfony2026-load-test` | Изолированные замеры с production-like поведением PHP и без development-диагностики; `APP_ENV=prod`, `APP_DEBUG=0` | `.env.compose`, `.env`, `.env.local`, `.env.load_test`, `docker-compose.yml`, `docker-compose.load-test.yml` |
+| Development | `symfony2026-dev` | Symfony CLI, подробные логи приложения, Symfony profiler и Xdebug; `APP_ENV=dev`, `APP_DEBUG=1` | `.env.compose`, `.env`, `.env.local`, `.env.dev`, `docker-compose.yml`, `docker-compose.dev.yml` |
 
-`COMPOSE_PROJECT_NAME` создает отдельный Compose project, сгенерированные сети и именованные volumes для каждого окружения. При этом используются одинаковые явные имена контейнеров и host ports, поэтому перед запуском другого окружения текущее нужно остановить. Переменные окружения остаются активными до закрытия текущей shell-сессии или загрузки другого контекста.
+`COMPOSE_PROJECT_NAME` создает отдельный Compose project, сгенерированные сети и именованные volumes для каждого окружения. При этом используются одинаковые явные имена контейнеров и host ports, поэтому перед запуском другого окружения текущее нужно остановить. До закрытия текущей shell-сессии или загрузки другого контекста активными остаются только управляющие переменные Compose и selector-переменные окружения.
 
 В репозитории предусмотрены npm-команды, которые автоматически загружают необходимые environment-файлы и открывают настроенный интерактивный shell:
 
@@ -1344,15 +1479,16 @@ npm run set:dev
 npm run set:load-test
 ```
 
-Каждая команда загружает `.env` и `.env.local`, а для development или тестирования производительности дополнительно применяет соответствующий override. Запущенные внутри этого shell команды `docker compose`, `npm run db:migrate`, `npm run db:fixtures` и другие универсальные скрипты используют выбранные Compose project и конфигурацию. Эти helper-команды только выбирают окружение и сами не собирают и не запускают контейнеры. Выполните `exit`, чтобы закрыть настроенный shell и вернуться в предыдущий контекст терминала.
+Каждая команда загружает `.env.compose`, а для development или тестирования производительности — соответствующий selector override. Затем `COMPOSE_ENV_FILES` указывает Docker Compose прочитать `.env` и `.env.local` для подстановки переменных; значения из `.env.local` имеют более высокий приоритет. Секреты из `.env.local` не экспортируются в интерактивный shell: они попадают только в Compose и в явно получающие их сервисы. Запущенные внутри этого shell команды `docker compose`, `npm run db:migrate`, `npm run db:fixtures` и другие универсальные скрипты используют выбранные Compose project и конфигурацию. Эти helper-команды только выбирают окружение и сами не собирают и не запускают контейнеры. Выполните `exit`, чтобы закрыть настроенный shell и вернуться в предыдущий контекст терминала.
 
 Подготовьте `.env` и запустите production из корня репозитория:
 
 ```bash
 cp .env.example .env
 set -a
-. ./.env
+. ./.env.compose
 set +a
+unset COMPOSE_PROJECT_NAME COMPOSE_FILE
 docker compose up --build -d
 ```
 
@@ -1361,7 +1497,7 @@ docker compose up --build -d
 ```bash
 docker compose down
 set -a
-. ./.env
+. ./.env.compose
 . ./.env.dev
 set +a
 docker compose build symfony-cli
@@ -1378,7 +1514,7 @@ docker compose down
 
 ```bash
 set -a
-. ./.env
+. ./.env.compose
 . ./.env.load_test
 set +a
 docker compose up -d
@@ -1386,7 +1522,7 @@ npm run db:migrate
 npm run db:fixtures
 ```
 
-Команды активации нужно повторять в каждом новом терминале. `set +a` только отключает автоматический экспорт следующих присваиваний и не удаляет уже загруженные переменные.
+Команды активации нужно повторять в каждом новом терминале. `set +a` только отключает автоматический экспорт следующих присваиваний и не удаляет уже загруженные управляющие и selector-переменные Compose. Не подключайте `.env.local` напрямую к интерактивному shell.
 
 Откройте shell внутри production CLI container:
 
@@ -1459,7 +1595,7 @@ npm run db:init
 npm run db:migrate
 ```
 
-`db:init` создает отсутствующие базы и затем применяет миграции. `db:fixtures` загружает fixtures отдельно и специально не включен в `db:init`, потому что может перезаписать development-данные.
+`db:init` создает отсутствующие базы и затем применяет миграции. `db:fixtures` загружает fixtures отдельно и специально не включен в `db:init`, потому что может перезаписать development-данные. После загрузки фикстур Catalog команда `db:fixtures` запускает полную переиндексацию каталога в Elasticsearch и переходит к фикстурам Cart только после ее успешного завершения. Для большого каталога это может занять несколько минут.
 
 Поднимите PostgreSQL и создайте базу, если она еще не существует:
 

@@ -60,10 +60,10 @@ final class InventoryDeductionServiceTest extends KernelTestCase
 
         self::assertSame(3, $this->stock($product, $store));
         self::assertSame('op-explicit', $result->operationId);
-        self::assertSame($product->getId(), $result->products[0]->productId);
-        self::assertSame(5, $result->products[0]->totalDeductedQuantity);
-        self::assertSame($store->getId(), $result->products[0]->stores[0]->storeId);
-        self::assertSame(5, $result->products[0]->stores[0]->deductedQuantity);
+        self::assertSame($product->getId(), $result->products[0]->getProductId());
+        self::assertSame(5, $result->products[0]->getTotalDeductedQuantity());
+        self::assertSame($store->getId(), $result->products[0]->getStores()[0]->storeId);
+        self::assertSame(5, $result->products[0]->getStores()[0]->deductedQuantity);
     }
 
     public function testSuccessfulDeductionCreatesProductSnapshotWithCopiedProductData(): void
@@ -76,7 +76,7 @@ final class InventoryDeductionServiceTest extends KernelTestCase
             new StockDeductionRequestItem($product->getId(), 5, $store->getId()),
         ]);
 
-        $snapshotId = $result->products[0]->productSnapshotId;
+        $snapshotId = $result->products[0]->getProductSnapshotId();
         $snapshot = $this->snapshotRow($snapshotId);
 
         self::assertGreaterThan(0, $snapshotId);
@@ -104,7 +104,7 @@ final class InventoryDeductionServiceTest extends KernelTestCase
             ->setPictureId('changed-picture');
         $this->entityManager->flush();
 
-        $snapshot = $this->snapshotRow($result->products[0]->productSnapshotId);
+        $snapshot = $this->snapshotRow($result->products[0]->getProductSnapshotId());
 
         self::assertSame('product-1', $snapshot['name']);
         self::assertSame('Description for product-1', $snapshot['description']);
@@ -124,7 +124,7 @@ final class InventoryDeductionServiceTest extends KernelTestCase
         ]);
 
         self::assertSame(1, $this->snapshotCount($product));
-        self::assertSame([$result->products[0]->productSnapshotId], $this->snapshotIds($product));
+        self::assertSame([$result->products[0]->getProductSnapshotId()], $this->snapshotIds($product));
         self::assertSame([
             [$store1->getId(), 5],
             [$store2->getId(), 2],
@@ -178,7 +178,7 @@ final class InventoryDeductionServiceTest extends KernelTestCase
         $second = $this->service->deduct('op-idempotent-snapshot', $items);
 
         self::assertSame(1, $this->snapshotCount($product));
-        self::assertSame($first->products[0]->productSnapshotId, $second->products[0]->productSnapshotId);
+        self::assertSame($first->products[0]->getProductSnapshotId(), $second->products[0]->getProductSnapshotId());
         self::assertSame($first->toPayload(), $second->toPayload());
     }
 
@@ -213,8 +213,8 @@ final class InventoryDeductionServiceTest extends KernelTestCase
         ]);
 
         self::assertSame(3, $this->stock($product, $store));
-        self::assertSame($store->getId(), $result->products[0]->stores[0]->storeId);
-        self::assertSame(6, $result->products[0]->stores[0]->deductedQuantity);
+        self::assertSame($store->getId(), $result->products[0]->getStores()[0]->storeId);
+        self::assertSame(6, $result->products[0]->getStores()[0]->deductedQuantity);
     }
 
     public function testAutomaticallySplitsDeductionBetweenStoresInStoreIdOrder(): void
@@ -237,6 +237,28 @@ final class InventoryDeductionServiceTest extends KernelTestCase
         ], $this->storePairs($result));
     }
 
+    public function testExplicitStoresForOneProductProduceOneMergedDeduction(): void
+    {
+        $store1 = $this->createStore('store-1');
+        $store2 = $this->createStore('store-2');
+        $product = $this->createProduct('product-1');
+        $this->addStock($product, $store1, 5);
+        $this->addStock($product, $store2, 7);
+
+        $result = $this->service->deduct('op-explicit-multiple-stores', [
+            new StockDeductionRequestItem($product->getId(), 3, $store2->getId()),
+            new StockDeductionRequestItem($product->getId(), 2, $store1->getId()),
+        ]);
+
+        self::assertCount(1, $result->products);
+        self::assertSame(5, $result->products[0]->getTotalDeductedQuantity());
+        self::assertSame([
+            [$store1->getId(), 2],
+            [$store2->getId(), 3],
+        ], $this->storePairs($result));
+        self::assertSame(1, $this->snapshotCount($product));
+    }
+
     public function testDeductsMultipleProductsInOneRequest(): void
     {
         $store = $this->createStore('store-1');
@@ -252,7 +274,7 @@ final class InventoryDeductionServiceTest extends KernelTestCase
 
         self::assertSame(2, $this->stock($product1, $store));
         self::assertSame(5, $this->stock($product2, $store));
-        self::assertSame([$product1->getId(), $product2->getId()], array_map(static fn ($product): int => $product->productId, $result->products));
+        self::assertSame([$product1->getId(), $product2->getId()], array_map(static fn ($product): int => $product->getProductId(), $result->products));
     }
 
     public function testRollsBackAllChangesWhenOneItemCannotBeDeducted(): void
@@ -357,7 +379,7 @@ final class InventoryDeductionServiceTest extends KernelTestCase
         ]);
 
         self::assertSame(5, $this->stock($product, $store));
-        self::assertSame(5, $result->products[0]->totalDeductedQuantity);
+        self::assertSame(5, $result->products[0]->getTotalDeductedQuantity());
     }
 
     public function testAmbiguousDuplicatePositionsAreRejected(): void
@@ -495,7 +517,7 @@ final class InventoryDeductionServiceTest extends KernelTestCase
     {
         return array_map(
             static fn ($store): array => [$store->storeId, $store->deductedQuantity],
-            $result->products[0]->stores,
+            $result->products[0]->getStores(),
         );
     }
 }

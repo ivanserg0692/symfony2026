@@ -29,6 +29,9 @@ when@test:
 
 when@prod:
     doctrine:
+        dbal:
+            options:
+                !php/const PDO::ATTR_PERSISTENT: true
         orm:
             query_cache_driver:
                 type: pool

@@ -4,19 +4,19 @@
   "metadata": {
     "name": "ad5jzsl",
     "namespace": "default",
-    "uid": "244a7db9-a756-421b-9c60-b8f7cd10a7d6",
-    "resourceVersion": "1786381521186000",
-    "generation": 39,
-    "creationTimestamp": "2026-08-07T11:46:16Z",
+    "uid": "00de9a51-fe34-4e03-af81-8bd379a4c775",
+    "resourceVersion": "1789889497809004",
+    "generation": 2,
+    "creationTimestamp": "2026-08-24T14:59:57Z",
     "labels": {
-      "grafana.app/deprecatedInternalID": "527381762326528"
+      "grafana.app/deprecatedInternalID": "2233116219613184"
     },
     "annotations": {
-      "grafana.app/createdBy": "user:ffudw13plombka",
-      "grafana.app/message": "insert System monitor",
-      "grafana.app/saved-from-ui": "Grafana v13.1.2 (7f247b37a4)",
-      "grafana.app/updatedBy": "user:ffudw13plombka",
-      "grafana.app/updatedTimestamp": "2026-08-10T17:05:21Z"
+      "grafana.app/createdBy": "user:dfw4vcw2nfzeoc",
+      "grafana.app/message": "add fpm workers",
+      "grafana.app/saved-from-ui": "Grafana v13.2.0 (f681b1359f)",
+      "grafana.app/updatedBy": "user:dfw4vcw2nfzeoc",
+      "grafana.app/updatedTimestamp": "2026-09-20T07:31:37Z"
     }
   },
   "spec": {
@@ -85,7 +85,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -207,7 +207,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -331,7 +331,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -457,7 +457,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "stat",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "colorMode": "none",
@@ -553,7 +553,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "stat",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "colorMode": "none",
@@ -774,7 +774,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "gauge",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "barShape": "flat",
@@ -891,7 +891,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "gauge",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "barShape": "flat",
@@ -1007,7 +1007,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -1132,7 +1132,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "gauge",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "barShape": "flat",
@@ -1239,7 +1239,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "stat",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "colorMode": "none",
@@ -1336,7 +1336,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -1459,7 +1459,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "gauge",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "barShape": "flat",
@@ -1575,7 +1575,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "gauge",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "barShape": "flat",
@@ -1712,7 +1712,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -1851,7 +1851,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "stat",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "colorMode": "none",
@@ -2138,7 +2138,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -2614,7 +2614,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -3004,7 +3004,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -3229,7 +3229,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "bargauge",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "displayMode": "basic",
@@ -3355,7 +3355,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -3449,6 +3449,186 @@
           }
         }
       },
+      "panel-339": {
+        "kind": "Panel",
+        "spec": {
+          "id": 339,
+          "title": "web php fpm workers",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PBFA97CFB590B2093"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "phpfpm_active_processes{service=~\"${services:regex}-web\"}",
+                        "legendFormat": "{{service}} active",
+                        "range": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PBFA97CFB590B2093"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "phpfpm_idle_processes{service=~\"${services:regex}-web\"}",
+                        "instant": false,
+                        "legendFormat": "{{service}} idle",
+                        "range": true
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PBFA97CFB590B2093"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "phpfpm_total_processes{service=~\"${services:regex}-web\"}",
+                        "instant": false,
+                        "legendFormat": "{{service}} total",
+                        "range": true
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PBFA97CFB590B2093"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "phpfpm_listen_queue{service=~\"${services:regex}-web\"}",
+                        "instant": false,
+                        "legendFormat": "{{service}} listen_queue",
+                        "range": true
+                      }
+                    },
+                    "refId": "D",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
       "panel-4": {
         "kind": "Panel",
         "spec": {
@@ -3489,7 +3669,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -3634,7 +3814,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -3817,7 +3997,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -3939,7 +4119,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "gauge",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "barShape": "flat",
@@ -4042,7 +4222,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -4166,7 +4346,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -4450,7 +4630,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "stat",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "colorMode": "none",
@@ -5146,7 +5326,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -5295,7 +5475,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -5429,7 +5609,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.1.2",
+            "version": "13.2.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -5561,6 +5741,15 @@
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-4"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-339"
                         }
                       }
                     }

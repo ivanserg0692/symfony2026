@@ -10,6 +10,7 @@ use App\Grpc\InventoryServiceUnavailableException;
 use App\Grpc\InvalidInventoryRequestException;
 use App\Grpc\ProductPriceUnavailableException;
 use App\Order\ActiveCartNotFoundException;
+use App\Order\CheckoutTiming;
 use App\Order\EmptyCartException;
 use App\Order\InvalidCheckoutItemException;
 use App\Order\InvalidDeductStocksResponseException;
@@ -53,27 +54,42 @@ class OrdersController extends AbstractController
             new OA\Response(response: 503, description: "Catalog Service is unavailable."),
         ]
     )]
-    public function create(Request $request, CurrentUserProvider $currentUserProvider, OrderApiService $orderApiService): JsonResponse
+    public function create(Request $request, CurrentUserProvider $currentUserProvider, OrderApiService $orderApiService, CheckoutTiming $checkoutTiming): JsonResponse
     {
-        $ownerId = $currentUserProvider->getRequiredUserId($request);
+        $checkoutTiming->start();
 
         try {
-            $order = $orderApiService->createOrderFromCurrentCart($ownerId);
-        } catch (ActiveCartNotFoundException $exception) {
-            return $this->json(["message" => $exception->getMessage()], Response::HTTP_NOT_FOUND);
-        } catch (EmptyCartException|InsufficientStockException|ProductPriceUnavailableException $exception) {
-            return $this->json(["message" => $exception->getMessage()], Response::HTTP_CONFLICT);
-        } catch (InvalidCheckoutItemException|InvalidInventoryRequestException $exception) {
-            return $this->json(["message" => $exception->getMessage()], Response::HTTP_BAD_REQUEST);
-        } catch (InventoryItemNotFoundException $exception) {
-            return $this->json(["message" => $exception->getMessage()], Response::HTTP_NOT_FOUND);
-        } catch (InvalidDeductStocksResponseException|InvalidProductPricesResponseException|InventoryCommunicationException $exception) {
-            return $this->json(["message" => $exception->getMessage()], Response::HTTP_BAD_GATEWAY);
-        } catch (InventoryServiceUnavailableException $exception) {
-            return $this->json(["message" => $exception->getMessage()], Response::HTTP_SERVICE_UNAVAILABLE);
-        }
+            $ownerId = $currentUserProvider->getRequiredUserId($request);
+            $checkoutTiming->mark('controller.owner_resolved');
 
-        return $this->json($order, Response::HTTP_CREATED, context: ["groups" => ["order:item"]]);
+            try {
+                $order = $orderApiService->createOrderFromCurrentCart($ownerId);
+            } catch (ActiveCartNotFoundException $exception) {
+                return $this->json(["message" => $exception->getMessage()], Response::HTTP_NOT_FOUND);
+            } catch (EmptyCartException|InsufficientStockException|ProductPriceUnavailableException $exception) {
+                return $this->json(["message" => $exception->getMessage()], Response::HTTP_CONFLICT);
+            } catch (InvalidCheckoutItemException|InvalidInventoryRequestException $exception) {
+                return $this->json(["message" => $exception->getMessage()], Response::HTTP_BAD_REQUEST);
+            } catch (InventoryItemNotFoundException $exception) {
+                return $this->json(["message" => $exception->getMessage()], Response::HTTP_NOT_FOUND);
+            } catch (InvalidDeductStocksResponseException|InvalidProductPricesResponseException|InventoryCommunicationException $exception) {
+                return $this->json(["message" => $exception->getMessage()], Response::HTTP_BAD_GATEWAY);
+            } catch (InventoryServiceUnavailableException $exception) {
+                return $this->json(["message" => $exception->getMessage()], Response::HTTP_SERVICE_UNAVAILABLE);
+            }
+
+            $checkoutTiming->mark('controller.application_service_completed');
+            $response = $this->json($order, Response::HTTP_CREATED, context: ["groups" => ["order:item"]]);
+            $checkoutTiming->mark('controller.response_created');
+
+            return $response;
+        } catch (\Throwable $exception) {
+            $checkoutTiming->fail($exception);
+
+            throw $exception;
+        } finally {
+            $checkoutTiming->finish();
+        }
     }
 
     #[Route("", name: "api_orders_list", methods: ["GET"])]

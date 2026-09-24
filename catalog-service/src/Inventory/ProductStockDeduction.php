@@ -2,17 +2,59 @@
 
 namespace App\Inventory;
 
-final readonly class ProductStockDeduction
+final class ProductStockDeduction
 {
+    /** @var array<int, StoreStockDeduction> */
+    private array $storesById = [];
+
     /**
      * @param list<StoreStockDeduction> $stores
      */
     public function __construct(
-        public int $productId,
-        public int $totalDeductedQuantity,
-        public array $stores,
-        public int $productSnapshotId = 0,
+        private int $productId,
+        private int $totalDeductedQuantity,
+        array $stores,
+        private int $productSnapshotId = 0,
     ) {
+        foreach ($stores as $store) {
+            $this->addStore($store);
+        }
+    }
+
+    public function getProductId(): int
+    {
+        return $this->productId;
+    }
+
+    public function getTotalDeductedQuantity(): int
+    {
+        return $this->totalDeductedQuantity;
+    }
+
+    /** @return list<StoreStockDeduction> */
+    public function getStores(): array
+    {
+        ksort($this->storesById);
+
+        return array_values($this->storesById);
+    }
+
+    public function getProductSnapshotId(): int
+    {
+        return $this->productSnapshotId;
+    }
+
+    public function addDeduction(self $deduction): void
+    {
+        if ($this->productId !== $deduction->productId) {
+            throw new \InvalidArgumentException('Cannot merge deductions for different products.');
+        }
+
+        $this->totalDeductedQuantity += $deduction->totalDeductedQuantity;
+
+        foreach ($deduction->storesById as $store) {
+            $this->addStore($store);
+        }
     }
 
     public function withProductSnapshotId(int $productSnapshotId): self
@@ -20,7 +62,7 @@ final readonly class ProductStockDeduction
         return new self(
             $this->productId,
             $this->totalDeductedQuantity,
-            $this->stores,
+            $this->getStores(),
             $productSnapshotId,
         );
     }
@@ -33,7 +75,7 @@ final readonly class ProductStockDeduction
         return [
             "productId" => $this->productId,
             "totalDeductedQuantity" => $this->totalDeductedQuantity,
-            "stores" => array_map(static fn (StoreStockDeduction $store): array => $store->toPayload(), $this->stores),
+            "stores" => array_map(static fn (StoreStockDeduction $store): array => $store->toPayload(), $this->getStores()),
             "productSnapshotId" => $this->productSnapshotId,
         ];
     }
@@ -55,5 +97,14 @@ final readonly class ProductStockDeduction
             $stores,
             (int) ($payload["productSnapshotId"] ?? 0),
         );
+    }
+
+    private function addStore(StoreStockDeduction $store): void
+    {
+        $storeId = $store->storeId;
+
+        $this->storesById[$storeId] = isset($this->storesById[$storeId])
+            ? new StoreStockDeduction($storeId, $this->storesById[$storeId]->deductedQuantity + $store->deductedQuantity)
+            : $store;
     }
 }

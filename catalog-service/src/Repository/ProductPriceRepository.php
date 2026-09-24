@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\ProductPrice;
+use App\RoadRunner\Grpc\GrpcHandlerTiming;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -12,7 +13,7 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class ProductPriceRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $registry, private GrpcHandlerTiming $handlerTiming)
     {
         parent::__construct($registry, ProductPrice::class);
     }
@@ -29,13 +30,18 @@ class ProductPriceRepository extends ServiceEntityRepository
             return [];
         }
 
-        return $this->createActivePricesQueryBuilder($now)
+        $this->handlerTiming->mark('active_prices.query_build_started');
+        $query = $this->createActivePricesQueryBuilder($now)
             ->andWhere("product.id IN (:productIds)")
             ->andWhere("priceType.code IN (:priceTypeCodes)")
             ->setParameter("productIds", $productIds)
             ->setParameter("priceTypeCodes", $priceTypeCodes)
-            ->getQuery()
-            ->getResult();
+            ->getQuery();
+        $this->handlerTiming->mark('active_prices.query_built');
+        $prices = $query->getResult();
+        $this->handlerTiming->mark('active_prices.query_executed_and_hydrated');
+
+        return $prices;
     }
 
     private function createActivePricesQueryBuilder(\DateTimeImmutable $now): QueryBuilder

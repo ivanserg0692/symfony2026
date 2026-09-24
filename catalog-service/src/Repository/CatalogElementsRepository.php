@@ -3,6 +3,8 @@
 namespace App\Repository;
 
 use App\Entity\CatalogElements;
+use App\Entity\Product;
+use App\RoadRunner\Grpc\GrpcHandlerTiming;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -12,7 +14,7 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class CatalogElementsRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $registry, private GrpcHandlerTiming $handlerTiming)
     {
         parent::__construct($registry, CatalogElements::class);
     }
@@ -83,6 +85,66 @@ class CatalogElementsRepository extends ServiceEntityRepository
         return $this->sortElementsByIds($elements, $ids);
     }
 
+    /**
+     * @return int[]
+     */
+    public function findSearchIndexIdsAfter(int $lastId, int $limit): array
+    {
+        $rows = $this->createQueryBuilder("element")
+            ->select("element.id AS id")
+            ->andWhere("element.id > :lastId")
+            ->setParameter("lastId", $lastId)
+            ->orderBy("element.id", "ASC")
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_map("intval", array_column($rows, "id"));
+    }
+
+    /**
+     * Loads a bounded batch in separate relation queries to avoid an N+1 query
+     * pattern and a sections x prices x stocks Cartesian product.
+     *
+     * @param int[] $ids
+     *
+     * @return CatalogElements[]
+     */
+    public function findForSearchIndexingByIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $elementsQueryBuilder = $this->createQueryBuilder("element");
+        $this->addProductRelation($elementsQueryBuilder);
+        $this->addSectionsRelation($elementsQueryBuilder);
+
+        $elements = $elementsQueryBuilder
+            ->andWhere("element.id IN (:ids)")
+            ->setParameter("ids", $ids)
+            ->getQuery()
+            ->getResult();
+
+        $pricesQueryBuilder = $this->createQueryBuilder("priceElement");
+        $this->addProductPriceRelations($pricesQueryBuilder, "priceElement");
+        $pricesQueryBuilder
+            ->andWhere("priceElement.id IN (:ids)")
+            ->setParameter("ids", $ids)
+            ->getQuery()
+            ->getResult();
+
+        $stocksQueryBuilder = $this->createQueryBuilder("stockElement");
+        $this->addStoreRelations($stocksQueryBuilder, "stockElement");
+        $stocksQueryBuilder
+            ->andWhere("stockElement.id IN (:ids)")
+            ->setParameter("ids", $ids)
+            ->getQuery()
+            ->getResult();
+
+        return $this->sortElementsByIds($elements, $ids);
+    }
+
     public function countMatchingListFilters(?int $sectionId, ?bool $active): int
     {
         $queryBuilder = $this->createQueryBuilder("element")
@@ -123,14 +185,46 @@ class CatalogElementsRepository extends ServiceEntityRepository
             return [];
         }
 
-        $rows = $this->createQueryBuilder("element")
+        $this->handlerTiming->mark('catalog_existing_ids.query_build_started');
+        $query = $this->createQueryBuilder("element")
             ->select("element.id AS id")
             ->andWhere("element.id IN (:ids)")
             ->setParameter("ids", $ids)
-            ->getQuery()
-            ->getScalarResult();
+            ->getQuery();
+        $this->handlerTiming->mark('catalog_existing_ids.query_built');
+        $rows = $query->getScalarResult();
+        $this->handlerTiming->mark('catalog_existing_ids.query_executed_and_hydrated');
 
         return array_map("intval", array_column($rows, "id"));
+    }
+
+    /**
+     * Bridges the intentionally unidirectional CatalogElements -> Product mapping
+     * in one query, without introducing per-product inverse-relation lookups.
+     *
+     * @param iterable<Product> $products
+     *
+     * @return CatalogElements[]
+     */
+    public function findByProducts(iterable $products): array
+    {
+        $persistedProducts = [];
+
+        foreach ($products as $product) {
+            if ($product->getId() !== null) {
+                $persistedProducts[$product->getId()] = $product;
+            }
+        }
+
+        if ($persistedProducts === []) {
+            return [];
+        }
+
+        return $this->createQueryBuilder("element")
+            ->andWhere("element.product IN (:products)")
+            ->setParameter("products", array_values($persistedProducts))
+            ->getQuery()
+            ->getResult();
     }
 
     public function existsById(int $id): bool
