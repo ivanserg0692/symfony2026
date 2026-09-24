@@ -221,6 +221,8 @@ The Grafana capture shows a last displayed external HTTP 4xx/5xx rate of **0.002
 
 ![Current stable load-test throughput](<docs/images/task 10.png>)
 
+This cropped capture shows per-endpoint RPS (top left), total incoming RPS (top right), CPU utilization (bottom left), and Gateway vs Symfony RPS (bottom right). Around 16:30, total traffic rises from roughly 1.5k to a plateau near 1.7k RPS; the Gateway and Symfony lines remain close while CPU load stays broadly level on the plateau. The capture alone does not establish why the lines drop at its right edge.
+
 [Open the full Grafana load-test dashboard capture](<docs/images/test dashboard-1790239018436.png>)
 
 Dashboard guide:
@@ -1073,6 +1075,8 @@ docker compose down
 На снимке Grafana последнее отображаемое значение доли внешних HTTP-ответов 4xx/5xx составляет **0,00287%** по скользящему окну 5 минут; это не итоговый error rate прогона k6. Throughput API Gateway и Symfony оставался согласованным на плато около 1,7k RPS, а динамика p50/p95/p99 latency приложения — стабильной после выхода на нагрузку. Grafana сопоставляет эти данные с CPU и system load, а также описанными выше метриками процессов и listen queue PHP-FPM.
 
 ![Текущий стабильный throughput нагрузочного теста](<docs/images/task 10.png>)
+
+На этом фрагменте дашборда показаны RPS по endpoint (слева сверху), общий входящий RPS (справа сверху), загрузка CPU (слева снизу) и сравнение RPS Gateway и Symfony (справа снизу). Около 16:30 общий трафик растёт примерно с 1,5k до плато около 1,7k RPS; линии Gateway и Symfony остаются близкими, а загрузка CPU на плато — примерно ровной. Причину снижения линий у правого края по одному снимку установить нельзя.
 
 [Открыть полный снимок дашборда нагрузочного тестирования Grafana](<docs/images/test dashboard-1790239018436.png>)
 
