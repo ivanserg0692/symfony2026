@@ -10,6 +10,8 @@
 - [Performance Validation](#performance-validation)
 - [Verification Plan](#verification-plan)
 - [Out Of Scope](#out-of-scope)
+- [2026-09-24 — Performance Baseline and PHP-FPM Monitoring](#2026-09-24--performance-baseline-and-php-fpm-monitoring)
+- [2026-09-24 — Persistent Connections and Latency Estimates](#2026-09-24--persistent-connections-and-latency-estimates)
 
 <!-- END doctoc -->
 
@@ -98,3 +100,22 @@ The implementation should be verified by checking that:
 - recommendations, personalization, autocomplete, typo tolerance, semantic or vector search, and advanced ranking unless separately approved;
 - unrelated business-logic, API, or architecture changes.
 
+## 2026-09-24 — Performance Baseline and PHP-FPM Monitoring
+
+This entry records the completed performance and monitoring work. The earlier sections retain the original Task 10 plan; this entry does not certify completion of every acceptance criterion or a controlled PostgreSQL-versus-Elasticsearch comparison.
+
+The recorded stable load-test baseline after optimizations averages approximately **1,750 requests/s** with `PHP_FPM_MAX_CHILDREN=120` for the measured run. This is a result on the infrastructure used for that test, not the system's absolute maximum. The [throughput capture](<../../docs/images/task 10.png>) and [full Grafana capture](<../../docs/images/test dashboard-1790239018436.png>) show a plateau around 1.7k RPS; the approximate average and worker setting are the reported run parameters, not exact values independently recoverable from the images.
+
+The Grafana error gauge displays **0.00287%** external HTTP 4xx/5xx responses: the last available ratio of request rates over a rolling 5-minute window, not the overall k6 error rate. Application histogram p50/p95/p99 trends remain stable after the ramp; the endpoint panel shows p95. Both latency panels stack series, so their upper boundaries must not be read as individual percentile values or client-side k6 latency.
+
+The infrastructure now includes persistent FastCGI connections with a keepalive cache sized from the PHP-FPM worker limit and Nginx worker count, configurable Nginx workers (`NGINX_WORKER_COUNT=auto`), and PHP-FPM monitoring. `hipages/php-fpm_exporter:2.2.0` reads the dedicated port 9001 status listeners of `symfony-web`, `catalog-web`, and `cart-web`. Prometheus adds a `service` label; the saved Grafana panel `web php fpm workers` plots `phpfpm_active_processes`, `phpfpm_idle_processes`, `phpfpm_total_processes`, and `phpfpm_listen_queue` by service. The [README dashboard guide](../../README.md#current-performance-baseline) explains where to inspect throughput, errors, latency, and pool pressure.
+
+Measurement limitations: the exact scenario, VU count, duration, warm-up procedure, hardware/container limits, and allocation of the reported 120-worker setting across pools have not been recorded for this run. Shared configuration currently defaults to `PHP_FPM_MAX_CHILDREN=10`. A run-specific k6 summary and configuration snapshot are needed to reproduce the measurement and establish exact client-side percentiles and whole-run error rate; Task 9 parameters must not be assumed to apply.
+
+## 2026-09-24 — Persistent Connections and Latency Estimates
+
+The `when@prod` Doctrine configuration in Symfony, Catalog, and Cart enables `PDO::ATTR_PERSISTENT` for PostgreSQL. All three services configure persistent Redis connections for application caches (`persistent=1`) and metrics storage (`persistent_connections=true`). These complement the previously recorded Nginx–PHP-FPM FastCGI keepalive configuration.
+
+The shared PHP image now uses PHP 8.5. The integrated Catalog Elasticsearch client explicitly supplies a persistent cURL share handle through `CURLOPT_SHARE`, sharing `CURL_LOCK_DATA_CONNECT` and `CURL_LOCK_DATA_DNS` in `ElasticsearchClientFactory`. PHP 8.5's [`curl_share_init_persistent()`](https://www.php.net/manual/en/function.curl-share-init-persistent.php) retains this state across PHP requests within a worker process; this is not a single connection pool shared by all workers. Persistence for all internal REST clients has not been verified and is not implied by the PHP upgrade alone.
+
+The stable interval in the [full Grafana capture](<../../docs/images/test dashboard-1790239018436.png>) gives approximate application latency of **p50 ≈ 20 ms, p95 ≈ 45 ms, and p99 ≈ 60–65 ms**. These estimates read the thickness of the individual areas in the stacked `Latency P50 / P95 / P99` panel, not the cumulative upper boundaries. They describe application histogram percentiles over rolling 5-minute windows, not exact exported values or end-to-end k6 results. No isolated before/after measurement attributes a specific speedup to any one connection optimization.

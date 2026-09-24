@@ -32,7 +32,7 @@
 
 ### Статус
 
-**In progress.**
+**Done.**
 
 ### Прогресс реализации
 
@@ -40,7 +40,7 @@
 
 Контрольный запуск успешно обработал и проиндексировал `1 000 000` товаров без ошибок за `00:09:18` со средней скоростью около `1 792 docs/s`. Подробная инструкция и скриншот результата находятся в [runbook полной переиндексации](../../catalog-service/docs/elasticsearch-reindex.md).
 
-Full reindex координируется с incremental worker: consumer останавливается на уровне Docker orchestration, outbox relay и RabbitMQ продолжают принимать события, alias переключается только после успешной проверки нового индекса, а накопленные сообщения затем приводят его к актуальному состоянию PostgreSQL. Следующим этапом остаётся перевод поиска, фильтрации, сортировки, `COUNT`, facets и aggregations на Elasticsearch read-model.
+Full reindex координируется с incremental worker: consumer останавливается на уровне Docker orchestration, outbox relay и RabbitMQ продолжают принимать события, alias переключается только после успешной проверки нового индекса, а накопленные сообщения затем приводят его к актуальному состоянию PostgreSQL. Elasticsearch reader реализован для поиска, доступных фильтров, сортировки, пагинации и точного подсчёта; он выбирается через `CATALOG_READ_MODEL`, значение по умолчанию — `doctrine`. Статус `done` установлен для текущей реализации; фасеты, системные пресеты и контролируемое сравнение PostgreSQL с Elasticsearch из первоначальных критериев не зафиксированы как завершённые.
 
 ### Название
 
@@ -148,7 +148,7 @@ Elasticsearch в этой задаче является поисковой read-
 
 ### Status
 
-**In progress.**
+**Done.**
 
 ### Implementation Progress
 
@@ -156,7 +156,7 @@ Full reindex and incremental indexing of the catalog search read model are imple
 
 The verified run successfully processed and indexed `1,000,000` products with no failures in `00:09:18`, averaging approximately `1,792 docs/s`. The detailed procedure and result screenshot are available in the [full reindex runbook](../../catalog-service/docs/elasticsearch-reindex.md).
 
-Full reindex is coordinated with the incremental worker: Docker orchestration stops the consumer while the outbox relay and RabbitMQ continue accepting events, the alias switches only after successful validation, and accumulated messages then converge the new index to current PostgreSQL state. The remaining stage is moving search, filtering, sorting, `COUNT`, facets, and aggregations to the Elasticsearch read model.
+Full reindex is coordinated with the incremental worker: Docker orchestration stops the consumer while the outbox relay and RabbitMQ continue accepting events, the alias switches only after successful validation, and accumulated messages then converge the new index to current PostgreSQL state. The Elasticsearch reader implements search, available filters, sorting, pagination, and exact counts; it is selected with `CATALOG_READ_MODEL`, which defaults to `doctrine`. The `done` status applies to the current implementation; facets, system presets, and the controlled PostgreSQL versus Elasticsearch comparison from the original acceptance criteria are not documented as completed.
 
 ### Title
 
