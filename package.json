@@ -4,6 +4,7 @@
     "set:dev": "bash -c 'set -a; . ./.env.compose; . ./.env.dev; set +a; exec bash -i'",
     "set:load-test": "bash -c 'set -a; . ./.env.compose; . ./.env.load_test; set +a; exec bash -i'",
     "docker:k8s:build": "bash docker/php-symfony-cli/build-k8s-images.sh",
+    "k8s:auth:jwt:bootstrap": "bash docker/php-symfony-cli/k8s/bootstrap-auth-jwt.sh",
     "docker:restart:php": "docker compose restart symfony-cli symfony-web catalog-cli catalog-web catalog-grpc catalog-search-outbox-worker catalog-search-index-worker cart-cli cart-web api-gateway",
     "docker:cache:clear:php": "docker compose exec symfony-cli php -d memory_limit=1G bin/console cache:clear && docker compose exec symfony-cli sh -lc \"rm -rf /workspace/var/cache/* && chown -R ${PHP_RUNTIME_USER:-www-data}:${PHP_RUNTIME_USER:-www-data} /workspace/var\" && docker compose exec catalog-cli php -d memory_limit=1G bin/console cache:clear && docker compose exec catalog-cli sh -lc \"rm -rf /workspace/var/cache/* && chown -R ${PHP_RUNTIME_USER:-www-data}:${PHP_RUNTIME_USER:-www-data} /workspace/var\" && docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear && docker compose exec cart-cli sh -lc \"rm -rf /workspace/var/cache/* && chown -R ${PHP_RUNTIME_USER:-www-data}:${PHP_RUNTIME_USER:-www-data} /workspace/var\" && npm run docker:restart:php",
     "docker:recreate": "docker compose up -d --force-recreate",
