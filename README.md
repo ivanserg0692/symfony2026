@@ -551,7 +551,10 @@ The notification recipients are administrators resolved by the application, not 
 
 #### `Task 11`: Run services in Kubernetes and verify horizontal scaling of Symfony/PHP-FPM - planned
 - Brief info: Add Kubernetes as an independent deployment option, scale Auth, Catalog, and Cart separately, and verify the results with k6 and per-Pod monitoring while preserving Docker Compose.
+- Backend Merge Request 11: <https://github.com/ivanserg0692/symfony2026/pull/15>
 - Task file: [symfony/docs/task-11.md](symfony/docs/task-11.md)
+- MR result (EN): [symfony/docs/mr-task-11-en.md](symfony/docs/mr-task-11-en.md)
+- MR result (RU): [symfony/docs/mr-task-11-ru.md](symfony/docs/mr-task-11-ru.md)
 
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
@@ -1416,7 +1419,10 @@ docker compose down
 
 #### `Task 11`: Запуск сервисов в Kubernetes и проверка горизонтального масштабирования Symfony/PHP-FPM - planned
 - Brief info: Добавить Kubernetes как независимый способ запуска, масштабировать Auth, Catalog и Cart отдельно и проверить результат через k6 и мониторинг каждого Pod, сохранив Docker Compose.
+- Backend Merge Request 11: <https://github.com/ivanserg0692/symfony2026/pull/15>
 - Файл задачи: [symfony/docs/task-11.md](symfony/docs/task-11.md)
+- Результат MR (EN): [symfony/docs/mr-task-11-en.md](symfony/docs/mr-task-11-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-11-ru.md](symfony/docs/mr-task-11-ru.md)
 
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:
