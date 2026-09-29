@@ -21,6 +21,11 @@ if ! command -v openssl >/dev/null 2>&1; then
     exit 1
 fi
 
+if ! command -v kubectl >/dev/null 2>&1; then
+    echo "kubectl is required to manage the Auth JWT Secret." >&2
+    exit 1
+fi
+
 existing_secret="$(kubectl -n "$namespace" get secret auth-jwt --ignore-not-found -o name)"
 if [[ -n "$existing_secret" ]]; then
     echo "Secret auth-jwt already exists in namespace ${namespace}; refusing to rotate JWT keys." >&2

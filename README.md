@@ -42,6 +42,7 @@
   - [Elasticsearch Catalog Indexing](#elasticsearch-catalog-indexing)
   - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
   - [News Export and Batch Processing](#news-export-and-batch-processing)
+  - [External Prerequisites](#external-prerequisites)
   - [Run With Docker Compose](#run-with-docker-compose)
   - [Doctrine Database Setup](#doctrine-database-setup)
   - [API Documentation](#api-documentation)
@@ -93,6 +94,7 @@
   - [Индексация каталога в Elasticsearch](#%D0%B8%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0%D1%86%D0%B8%D1%8F-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B2-elasticsearch)
   - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
   - [Экспорт новостей и batch-обработка](#%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D1%80%D1%82-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B5%D0%B9-%D0%B8-batch-%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0)
+  - [Внешние зависимости](#%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B8%D0%B5-%D0%B7%D0%B0%D0%B2%D0%B8%D1%81%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D0%B8)
   - [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
   - [Настройка Doctrine и базы данных](#%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-doctrine-%D0%B8-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85)
   - [API Documentation](#api-documentation-1)
@@ -620,6 +622,19 @@ The export handler uses Symfony Messenger batch handling so several news message
 <!-- plantuml src="symfony/docs/plantuml/news-export/components.puml" alt="News export components" out="symfony/docs/images/plantuml/news-export/components.png" -->
 ![News export components](symfony/docs/images/plantuml/news-export/components.png)
 <!-- /plantuml -->
+
+### External Prerequisites
+
+Install the following tools on the machine where you run the corresponding project commands:
+
+| Tool | Purpose |
+|---|---|
+| Docker | Builds images and runs containers. |
+| Docker Compose | Runs the existing Compose environments. |
+| `kubectl` | Lets the Auth JWT bootstrap work with a Kubernetes Secret. |
+| OpenSSL | Validates the Auth JWT key pair during bootstrap. |
+
+Run `npm run prerequisites:check` to check which tools are available. The command does not install anything.
 
 ### Run With Docker Compose
 
@@ -1488,6 +1503,19 @@ Handler экспорта использует batch-обработку Symfony M
 <!-- plantuml src="symfony/docs/plantuml/news-export-ru/components.puml" alt="Компоненты экспорта новостей" out="symfony/docs/images/plantuml/news-export-ru/components.png" -->
 ![Компоненты экспорта новостей](symfony/docs/images/plantuml/news-export-ru/components.png)
 <!-- /plantuml -->
+
+### Внешние зависимости
+
+Установите следующие инструменты на машине, где выполняются соответствующие команды проекта:
+
+| Инструмент | Назначение |
+|---|---|
+| Docker | Собирает образы и запускает контейнеры. |
+| Docker Compose | Запускает существующие Compose-окружения. |
+| `kubectl` | Позволяет JWT bootstrap Auth работать с Kubernetes Secret. |
+| OpenSSL | Проверяет пару JWT-ключей Auth во время bootstrap. |
+
+Команда `npm run prerequisites:check` показывает, какие инструменты доступны. Она ничего не устанавливает.
 
 ### Запуск через Docker Compose
 
