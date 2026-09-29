@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -ne 1 || -z "$1" ]]; then
-    echo "Usage: npm run k8s:auth:jwt:bootstrap -- <namespace>" >&2
+if [[ $# -gt 1 ]]; then
+    echo "Usage: npm run k8s:auth:jwt:bootstrap [-- <namespace>]" >&2
     exit 2
 fi
 
-namespace="$1"
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${script_dir}/../../.." && pwd)"
 auth_dir="${repo_root}/symfony"
+source "${repo_root}/scripts/k8s-common.sh"
+namespace="$(resolve_k8s_namespace "$@")"
 
 if [[ ! -f "${auth_dir}/.env" ]]; then
     echo "Auth .env is missing." >&2
