@@ -1,0 +1,92 @@
+apiVersion: batch/v1
+kind: Job
+metadata: {name: elasticsearch-setup}
+spec:
+  backoffLimit: 6
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: setup
+          image: curlimages/curl:8.14.1
+          command: [sh, -ec]
+          args:
+            - |
+              until curl --fail --silent --user "elastic:${ELASTIC_PASSWORD}" http://elasticsearch:9200/_cluster/health >/dev/null; do sleep 5; done
+              curl --fail --silent --show-error --user "elastic:${ELASTIC_PASSWORD}" \
+                --header 'Content-Type: application/json' --request POST \
+                http://elasticsearch:9200/_security/user/kibana_system/_password \
+                --data "{\"password\":${KIBANA_PASSWORD_JSON}}"
+          env:
+            - {name: ELASTIC_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: ELASTIC_PASSWORD}}}
+            - {name: KIBANA_PASSWORD_JSON, valueFrom: {secretKeyRef: {name: infra-config-secret, key: KIBANA_PASSWORD_JSON}}}
+---
+apiVersion: batch/v1
+kind: Job
+metadata: {name: minio-bucket-setup}
+spec:
+  backoffLimit: 6
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: setup
+          image: quay.io/minio/mc:latest
+          command: [sh, -ec]
+          args:
+            - |
+              until mc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null; do sleep 5; done
+              mc mb --ignore-existing "local/${MINIO_BUCKET}"
+          env:
+            - {name: MINIO_ROOT_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: MINIO_ROOT_USER}}}
+            - {name: MINIO_ROOT_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: MINIO_ROOT_PASSWORD}}}
+            - {name: MINIO_BUCKET, valueFrom: {secretKeyRef: {name: infra-config-secret, key: MINIO_BUCKET}}}
+---
+apiVersion: batch/v1
+kind: Job
+metadata: {name: auth-migrate}
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      securityContext: {fsGroup: 33}
+      containers:
+        - name: migrate
+          image: symfony-auth:k8s
+          imagePullPolicy: IfNotPresent
+          command: [php, bin/console, doctrine:migrations:migrate, --env=prod, --no-debug, --no-interaction]
+          envFrom: [{configMapRef: {name: auth-config}}, {secretRef: {name: auth-config-secret}}]
+          env: [{name: JWT_PASSPHRASE, valueFrom: {secretKeyRef: {name: auth-jwt, key: JWT_PASSPHRASE}}}]
+          volumeMounts: [{name: jwt, mountPath: /workspace/config/jwt, readOnly: true}]
+      volumes: [{name: jwt, secret: {secretName: auth-jwt, defaultMode: 288, items: [{key: private.pem, path: private.pem}, {key: public.pem, path: public.pem}]}}]
+---
+apiVersion: batch/v1
+kind: Job
+metadata: {name: catalog-migrate}
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrate
+          image: symfony-catalog:k8s
+          imagePullPolicy: IfNotPresent
+          command: [php, bin/console, doctrine:migrations:migrate, --env=prod, --no-debug, --no-interaction]
+          envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
+---
+apiVersion: batch/v1
+kind: Job
+metadata: {name: cart-migrate}
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrate
+          image: symfony-cart:k8s
+          imagePullPolicy: IfNotPresent
+          command: [php, bin/console, doctrine:migrations:migrate, --env=prod, --no-debug, --no-interaction]
+          envFrom: [{configMapRef: {name: cart-config}}, {secretRef: {name: cart-config-secret}}]

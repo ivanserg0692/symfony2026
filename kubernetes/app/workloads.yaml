@@ -1,0 +1,203 @@
+# Namespace is supplied by kubectl; no manifest depends on kind or node names.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: symfony-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: symfony-web}
+  template:
+    metadata:
+      labels: {app: symfony-web, service: auth, component: http}
+      annotations: {monitoring.symfony2026/php-fpm: "true"}
+    spec:
+      securityContext: {fsGroup: 33}
+      containers:
+        - name: php
+          image: symfony-auth:k8s
+          imagePullPolicy: IfNotPresent
+          ports: [{name: http, containerPort: 8000}, {name: fpm-status, containerPort: 9001}]
+          envFrom:
+            - configMapRef: {name: auth-config}
+            - secretRef: {name: auth-config-secret}
+          env:
+            - name: JWT_PASSPHRASE
+              valueFrom: {secretKeyRef: {name: auth-jwt, key: JWT_PASSPHRASE}}
+          volumeMounts:
+            - {name: jwt, mountPath: /workspace/config/jwt, readOnly: true}
+          startupProbe: {tcpSocket: {port: 8000}, periodSeconds: 5, failureThreshold: 24}
+          readinessProbe: {tcpSocket: {port: 8000}, periodSeconds: 5}
+          livenessProbe: {tcpSocket: {port: 8000}, periodSeconds: 10, failureThreshold: 6}
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: "1", memory: 1Gi}
+        - name: php-fpm-exporter
+          image: hipages/php-fpm_exporter:2.2.0
+          env: [{name: PHP_FPM_SCRAPE_URI, value: "tcp://127.0.0.1:9001/status"}]
+          ports: [{name: fpm-metrics, containerPort: 9253}]
+          resources: {requests: {cpu: 10m, memory: 32Mi}, limits: {cpu: 100m, memory: 128Mi}}
+      volumes:
+        - name: jwt
+          secret:
+            secretName: auth-jwt
+            defaultMode: 288
+            items: [{key: private.pem, path: private.pem}, {key: public.pem, path: public.pem}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: symfony-web}
+spec:
+  selector: {app: symfony-web}
+  ports: [{name: http, port: 8000, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: catalog-web}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: catalog-web}}
+  template:
+    metadata:
+      labels: {app: catalog-web, service: catalog, component: http}
+      annotations: {monitoring.symfony2026/php-fpm: "true"}
+    spec:
+      containers:
+        - name: php
+          image: symfony-catalog:k8s
+          imagePullPolicy: IfNotPresent
+          ports: [{name: http, containerPort: 8000}, {name: fpm-status, containerPort: 9001}]
+          envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
+          startupProbe: {tcpSocket: {port: 8000}, periodSeconds: 5, failureThreshold: 24}
+          readinessProbe: {tcpSocket: {port: 8000}, periodSeconds: 5}
+          livenessProbe: {tcpSocket: {port: 8000}, periodSeconds: 10, failureThreshold: 6}
+          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {cpu: "1", memory: 1Gi}}
+        - name: php-fpm-exporter
+          image: hipages/php-fpm_exporter:2.2.0
+          env: [{name: PHP_FPM_SCRAPE_URI, value: "tcp://127.0.0.1:9001/status"}]
+          ports: [{name: fpm-metrics, containerPort: 9253}]
+          resources: {requests: {cpu: 10m, memory: 32Mi}, limits: {cpu: 100m, memory: 128Mi}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: catalog-web}
+spec:
+  selector: {app: catalog-web}
+  ports: [{name: http, port: 8000, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: cart-web}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: cart-web}}
+  template:
+    metadata:
+      labels: {app: cart-web, service: cart, component: http}
+      annotations: {monitoring.symfony2026/php-fpm: "true"}
+    spec:
+      containers:
+        - name: php
+          image: symfony-cart:k8s
+          imagePullPolicy: IfNotPresent
+          ports: [{name: http, containerPort: 8000}, {name: fpm-status, containerPort: 9001}]
+          envFrom: [{configMapRef: {name: cart-config}}, {secretRef: {name: cart-config-secret}}]
+          startupProbe: {tcpSocket: {port: 8000}, periodSeconds: 5, failureThreshold: 24}
+          readinessProbe: {tcpSocket: {port: 8000}, periodSeconds: 5}
+          livenessProbe: {tcpSocket: {port: 8000}, periodSeconds: 10, failureThreshold: 6}
+          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {cpu: "1", memory: 1Gi}}
+        - name: php-fpm-exporter
+          image: hipages/php-fpm_exporter:2.2.0
+          env: [{name: PHP_FPM_SCRAPE_URI, value: "tcp://127.0.0.1:9001/status"}]
+          ports: [{name: fpm-metrics, containerPort: 9253}]
+          resources: {requests: {cpu: 10m, memory: 32Mi}, limits: {cpu: 100m, memory: 128Mi}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: cart-web}
+spec:
+  selector: {app: cart-web}
+  ports: [{name: http, port: 8000, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: catalog-grpc}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: catalog-grpc}}
+  template:
+    metadata: {labels: {app: catalog-grpc, service: catalog, component: grpc}}
+    spec:
+      containers:
+        - name: grpc
+          image: symfony-catalog:k8s
+          imagePullPolicy: IfNotPresent
+          command: [rr, serve, -c, .rr.yaml]
+          envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
+          env: [{name: APP_RUNTIME_MODE, value: roadrunner}]
+          ports: [{name: grpc, containerPort: 9001}]
+          startupProbe: {tcpSocket: {port: 9001}, periodSeconds: 5, failureThreshold: 24}
+          readinessProbe: {tcpSocket: {port: 9001}, periodSeconds: 5}
+          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {cpu: "1", memory: 1Gi}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: catalog-grpc}
+spec:
+  selector: {app: catalog-grpc}
+  ports: [{name: grpc, port: 9001, targetPort: grpc}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: catalog-search-outbox-worker}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: catalog-search-outbox-worker}}
+  template:
+    metadata: {labels: {app: catalog-search-outbox-worker, service: catalog, component: worker}}
+    spec:
+      containers:
+        - name: worker
+          image: symfony-catalog:k8s
+          imagePullPolicy: IfNotPresent
+          command: [php, -d, memory_limit=192M, bin/console, --env=prod, --no-debug, messenger:consume, catalog_search_outbox, --time-limit=3600, --memory-limit=160M, --sleep=1, --no-interaction]
+          envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
+          resources: {requests: {cpu: 50m, memory: 192Mi}, limits: {cpu: 500m, memory: 384Mi}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: catalog-search-index-worker}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: catalog-search-index-worker}}
+  template:
+    metadata: {labels: {app: catalog-search-index-worker, service: catalog, component: worker}}
+    spec:
+      containers:
+        - name: worker
+          image: symfony-catalog:k8s
+          imagePullPolicy: IfNotPresent
+          command: [php, -d, memory_limit=192M, bin/console, --env=prod, --no-debug, messenger:consume, catalog_search, --time-limit=3600, --memory-limit=160M, --sleep=1, --no-interaction]
+          envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
+          resources: {requests: {cpu: 50m, memory: 192Mi}, limits: {cpu: 500m, memory: 384Mi}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: auth-async-worker}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: auth-async-worker}}
+  template:
+    metadata: {labels: {app: auth-async-worker, service: auth, component: worker}}
+    spec:
+      securityContext: {fsGroup: 33}
+      containers:
+        - name: worker
+          image: symfony-auth:k8s
+          imagePullPolicy: IfNotPresent
+          command: [php, bin/console, --env=prod, --no-debug, messenger:consume, async, --time-limit=3600, --memory-limit=256M, --sleep=1, --no-interaction]
+          envFrom: [{configMapRef: {name: auth-config}}, {secretRef: {name: auth-config-secret}}]
+          env: [{name: JWT_PASSPHRASE, valueFrom: {secretKeyRef: {name: auth-jwt, key: JWT_PASSPHRASE}}}]
+          volumeMounts: [{name: jwt, mountPath: /workspace/config/jwt, readOnly: true}]
+          resources: {requests: {cpu: 50m, memory: 192Mi}, limits: {cpu: 500m, memory: 512Mi}}
+      volumes: [{name: jwt, secret: {secretName: auth-jwt, defaultMode: 288, items: [{key: private.pem, path: private.pem}, {key: public.pem, path: public.pem}]}}]
