@@ -9,8 +9,9 @@ fi
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${script_dir}/../../.." && pwd)"
 auth_dir="${repo_root}/symfony"
-source "${repo_root}/scripts/k8s-common.sh"
+source "${repo_root}/scripts/lib/k8s-common.sh"
 namespace="$(resolve_k8s_namespace "$@")"
+auth_image="${AUTH_JWT_BOOTSTRAP_IMAGE:-symfony-auth:k8s}"
 
 if [[ ! -f "${auth_dir}/.env" ]]; then
     echo "Auth .env is missing." >&2
@@ -61,7 +62,7 @@ get_symfony_env() {
     docker run --rm \
         "${dotenv_mounts[@]}" \
         --env "SYMFONY_ENV_NAME=${variable_name}" \
-        --entrypoint php symfony-auth:k8s \
+        --entrypoint php "$auth_image" \
         -r '
             require "/workspace/vendor/autoload.php";
             (new Symfony\Component\Dotenv\Dotenv())->bootEnv("/workspace/.env");
@@ -86,7 +87,7 @@ if [[ ! -f "$private_key" ]]; then
         --mount "type=bind,source=${auth_dir}/config/jwt,target=/workspace/config/jwt" \
         --mount "type=bind,source=${temp_dir}/passphrase,target=/bootstrap-secrets/passphrase,readonly" \
         "${dotenv_mounts[@]}" \
-        --entrypoint bash symfony-auth:k8s \
+        --entrypoint bash "$auth_image" \
         -c 'set -euo pipefail; JWT_PASSPHRASE="$(cat /bootstrap-secrets/passphrase)"; export JWT_PASSPHRASE; exec bin/init-jwt'
 fi
 
