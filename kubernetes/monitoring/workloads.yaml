@@ -45,16 +45,15 @@ spec:
       securityContext: {fsGroup: 65534}
       containers:
         - name: prometheus
-          image: prom/prometheus:latest
-          args: [--config.file=/etc/prometheus/prometheus.yml, --storage.tsdb.retention.time=7d, --storage.tsdb.path=/prometheus]
+          image: symfony-prometheus:k8s
+          args: [--config.file=/tmp/prometheus.yml, --storage.tsdb.retention.time=7d, --storage.tsdb.path=/prometheus]
+          env: [{name: APP_NAMESPACE, value: __APP_NAMESPACE__}]
           ports: [{name: http, containerPort: 9090}]
           volumeMounts:
-            - {name: config, mountPath: /etc/prometheus/prometheus.yml, subPath: prometheus.yml, readOnly: true}
             - {name: data, mountPath: /prometheus}
           readinessProbe: {httpGet: {path: /-/ready, port: 9090}, periodSeconds: 10}
           resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 1Gi}}
       volumes:
-        - {name: config, configMap: {name: prometheus-config}}
         - {name: data, persistentVolumeClaim: {claimName: prometheus-data}}
 ---
 apiVersion: v1
@@ -119,7 +118,7 @@ spec:
       securityContext: {fsGroup: 472}
       containers:
         - name: grafana
-          image: grafana/grafana:latest
+          image: symfony-grafana:k8s
           env:
             - {name: GF_RENDERING_SERVER_URL, value: 'http://grafana-image-renderer.monitoring.svc.cluster.local:8081/render'}
             - {name: GF_RENDERING_CALLBACK_URL, value: 'http://grafana.monitoring.svc.cluster.local:3000/'}
@@ -128,16 +127,10 @@ spec:
           ports: [{name: http, containerPort: 3000}]
           volumeMounts:
             - {name: data, mountPath: /var/lib/grafana}
-            - {name: datasource, mountPath: /etc/grafana/provisioning/datasources, readOnly: true}
-            - {name: provider, mountPath: /etc/grafana/provisioning/dashboards, readOnly: true}
-            - {name: dashboard, mountPath: /var/lib/grafana/dashboards, readOnly: true}
           readinessProbe: {httpGet: {path: /api/health, port: 3000}, periodSeconds: 10}
           resources: {requests: {cpu: 50m, memory: 128Mi}, limits: {memory: 512Mi}}
       volumes:
         - {name: data, persistentVolumeClaim: {claimName: grafana-data}}
-        - {name: datasource, configMap: {name: grafana-datasource}}
-        - {name: provider, configMap: {name: grafana-provider}}
-        - {name: dashboard, configMap: {name: grafana-dashboard}}
 ---
 apiVersion: v1
 kind: Service
