@@ -1,0 +1,247 @@
+{
+  "uid": "symfony2026-kubernetes",
+  "title": "Symfony services / Kubernetes",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "timezone": "browser",
+  "tags": [
+    "kubernetes",
+    "symfony",
+    "php-fpm"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "namespace",
+        "label": "Namespace",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(phpfpm_active_processes, namespace)",
+        "refresh": 1,
+        "sort": 1
+      },
+      {
+        "name": "service",
+        "label": "Service",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(phpfpm_active_processes{namespace=\"$namespace\"}, service)",
+        "refresh": 1,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "PHP-FPM active processes by Pod",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "phpfpm_active_processes{namespace=\"$namespace\",service=\"$service\"}",
+          "legendFormat": "{{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "PHP-FPM idle processes by Pod",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "phpfpm_idle_processes{namespace=\"$namespace\",service=\"$service\"}",
+          "legendFormat": "{{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "PHP-FPM listen queue by Pod",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "phpfpm_listen_queue{namespace=\"$namespace\",service=\"$service\"}",
+          "legendFormat": "{{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "PHP-FPM listen queue SUM / MAX",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(phpfpm_listen_queue{namespace=\"$namespace\",service=\"$service\"})",
+          "legendFormat": "SUM"
+        },
+        {
+          "refId": "B",
+          "expr": "max(phpfpm_listen_queue{namespace=\"$namespace\",service=\"$service\"})",
+          "legendFormat": "MAX"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "CPU cores by Pod",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=\"$service\",label_component=\"http\"})",
+          "legendFormat": "{{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "CPU cores for service",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=\"$service\",label_component=\"http\"})",
+          "legendFormat": "$service"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "RAM bytes by Pod",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=\"$service\",label_component=\"http\"})",
+          "legendFormat": "{{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "RAM bytes for service",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=\"$service\",label_component=\"http\"})",
+          "legendFormat": "$service"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "HTTP Pods: running / ready",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(kube_pod_status_phase{namespace=\"$namespace\",phase=\"Running\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=\"$service\",label_component=\"http\"})",
+          "legendFormat": "running"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(kube_pod_status_ready{namespace=\"$namespace\",condition=\"true\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=\"$service\",label_component=\"http\"})",
+          "legendFormat": "ready"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Pod lifecycle",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kube_pod_status_ready{namespace=\"$namespace\",condition=\"true\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=\"$service\",label_component=\"http\"}",
+          "legendFormat": "{{pod}}"
+        }
+      ]
+    }
+  ]
+}

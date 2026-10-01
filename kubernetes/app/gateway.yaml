@@ -9,13 +9,9 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: symfony-api-gateway-nginx:1.27-vts
+          image: symfony-api-gateway-nginx:k8s
           imagePullPolicy: IfNotPresent
           ports: [{name: http, containerPort: 80}, {name: vts, containerPort: 8080}]
-          volumeMounts:
-            - {name: gateway-main, mountPath: /etc/nginx/conf.d/default.conf, subPath: default.conf, readOnly: true}
-            - {name: gateway-main, mountPath: /etc/nginx/nginx.conf, subPath: nginx.conf, readOnly: true}
-            - {name: gateway-snippets, mountPath: /etc/nginx/snippets, readOnly: true}
           readinessProbe: {tcpSocket: {port: 80}, periodSeconds: 5}
           resources: {requests: {cpu: 25m, memory: 64Mi}, limits: {memory: 256Mi}}
         - name: nginx-exporter
@@ -23,9 +19,6 @@ spec:
           args: [--nginx.scrape-uri=http://127.0.0.1/nginx_status]
           ports: [{name: nginx-metrics, containerPort: 9113}]
           resources: {requests: {cpu: 10m, memory: 32Mi}, limits: {memory: 128Mi}}
-      volumes:
-        - {name: gateway-main, configMap: {name: gateway-main}}
-        - {name: gateway-snippets, configMap: {name: gateway-snippets}}
 ---
 apiVersion: v1
 kind: Service

@@ -1,0 +1,83 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: [localhost:9090]
+
+  # Each exporter shares a network namespace with exactly one PHP-FPM instance.
+  - job_name: php-fpm-pods
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names: [__APP_NAMESPACE__]
+    relabel_configs:
+      - {source_labels: [__meta_kubernetes_pod_annotation_monitoring_symfony2026_php_fpm], action: keep, regex: 'true'}
+      - {source_labels: [__meta_kubernetes_pod_container_port_name], action: keep, regex: fpm-metrics}
+      - {source_labels: [__meta_kubernetes_pod_phase], action: keep, regex: Running}
+      - {source_labels: [__meta_kubernetes_pod_name], target_label: pod}
+      - {source_labels: [__meta_kubernetes_pod_label_service], target_label: service}
+      - {source_labels: [__meta_kubernetes_namespace], target_label: namespace}
+
+  # The application metrics live in shared Redis. One Service scrape per app
+  # prevents multiplication when HTTP replicas increase.
+  - job_name: application-auth
+    metrics_path: /metrics/prometheus
+    static_configs:
+      - targets: [symfony-web.__APP_NAMESPACE__.svc.cluster.local:8000]
+        labels: {service: auth}
+  - job_name: application-catalog
+    metrics_path: /metrics/prometheus
+    static_configs:
+      - targets: [catalog-web.__APP_NAMESPACE__.svc.cluster.local:8000]
+        labels: {service: catalog}
+  - job_name: application-cart
+    metrics_path: /metrics/prometheus
+    static_configs:
+      - targets: [cart-web.__APP_NAMESPACE__.svc.cluster.local:8000]
+        labels: {service: cart}
+
+  - job_name: api-gateway
+    static_configs:
+      - targets: [api-gateway.__APP_NAMESPACE__.svc.cluster.local:9113]
+  - job_name: api-gateway-vts
+    metrics_path: /vts/metrics
+    static_configs:
+      - targets: [api-gateway.__APP_NAMESPACE__.svc.cluster.local:8080]
+
+  - job_name: postgres
+    static_configs:
+      - targets:
+          - database-exporter.__APP_NAMESPACE__.svc.cluster.local:9187
+          - catalog-db-exporter.__APP_NAMESPACE__.svc.cluster.local:9187
+          - cart-db-exporter.__APP_NAMESPACE__.svc.cluster.local:9187
+
+  - job_name: kube-state-metrics
+    static_configs:
+      - targets: [kube-state-metrics.monitoring.svc.cluster.local:8080]
+
+  - job_name: node-exporter
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names: [monitoring]
+    relabel_configs:
+      - {source_labels: [__meta_kubernetes_pod_label_app], action: keep, regex: node-exporter}
+      - {source_labels: [__meta_kubernetes_pod_container_port_name], action: keep, regex: metrics}
+      - {source_labels: [__meta_kubernetes_pod_node_name], target_label: node}
+
+  # cAdvisor supplies CPU and memory per container and Pod. This works on
+  # clusters whose Kubernetes API allows the node proxy endpoint.
+  - job_name: kubernetes-cadvisor
+    scheme: https
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+      - {source_labels: [__meta_kubernetes_node_name], target_label: node}
+      - {target_label: __address__, replacement: kubernetes.default.svc.cluster.local:443}
+      - {source_labels: [__meta_kubernetes_node_name], target_label: __metrics_path__, replacement: '/api/v1/nodes/$1/proxy/metrics/cadvisor'}
