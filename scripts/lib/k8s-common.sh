@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 parse_k8s_deploy_args() {
+    local command="$1"
+    shift
     runtime='local'
     namespace_override=''
 
@@ -9,7 +11,7 @@ parse_k8s_deploy_args() {
             --runtime|--namespace)
                 if [[ $# -lt 2 || -z "${2:-}" || "${2:-}" == --* ]]; then
                     echo "Missing value for $1." >&2
-                    echo 'Usage: npm run k8s:deploy [-- --runtime k3s|kubernetes] [--namespace name]' >&2
+                    echo "Usage: npm run $command [-- --runtime k3s|kubernetes] [--namespace name]" >&2
                     return 2
                 fi
                 if [[ "$1" == --runtime ]]; then
@@ -20,11 +22,31 @@ parse_k8s_deploy_args() {
                 shift 2
                 ;;
             *)
-                echo 'Usage: npm run k8s:deploy [-- --runtime k3s|kubernetes] [--namespace name]' >&2
+                echo "Usage: npm run $command [-- --runtime k3s|kubernetes] [--namespace name]" >&2
                 return 2
                 ;;
         esac
     done
+}
+
+ensure_k8s_cluster() {
+    local runtime="$1" namespace="$2"
+
+    case "$runtime" in
+        local)
+            if ! kind get clusters | grep -Fx -- "$namespace" >/dev/null; then
+                kind create cluster --name "$namespace"
+            fi
+            kubectl config use-context "kind-$namespace" >/dev/null
+            ;;
+        k3s|kubernetes)
+            kubectl cluster-info >/dev/null
+            ;;
+        *)
+            echo 'Unsupported Kubernetes runtime.' >&2
+            return 2
+            ;;
+    esac
 }
 
 resolve_k8s_namespace() {
