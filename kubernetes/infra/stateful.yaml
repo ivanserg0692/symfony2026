@@ -275,7 +275,8 @@ spec:
     spec:
       containers:
         - name: minio
-          image: quay.io/minio/minio:latest
+          image: symfony-minio:k8s
+          imagePullPolicy: IfNotPresent
           args: [server, /data, --console-address, ':9001']
           env:
             - {name: MINIO_ROOT_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: MINIO_ROOT_USER}}}

@@ -57,3 +57,5 @@ docker build -f docker/nginx-api-gateway/Dockerfile -t symfony-api-gateway-nginx
 build_k8s_image symfony-api-gateway-nginx -f docker/nginx-api-gateway/k8s/Dockerfile
 build_k8s_image symfony-prometheus -f docker/prometheus/k8s/Dockerfile
 build_k8s_image symfony-grafana -f docker/grafana/k8s/Dockerfile
+build_k8s_image symfony-minio -f docker/minio/Dockerfile --target server
+build_k8s_image symfony-mc -f docker/minio/Dockerfile --target client

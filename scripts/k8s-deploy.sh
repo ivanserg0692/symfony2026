@@ -18,13 +18,15 @@ cart_image='symfony-cart:k8s'
 gateway_image='symfony-api-gateway-nginx:k8s'
 prometheus_image='symfony-prometheus:k8s'
 grafana_image='symfony-grafana:k8s'
+minio_image='symfony-minio:k8s'
+mc_image='symfony-mc:k8s'
 
 # Make application images available to the selected cluster: load local images
 # into kind, or use registry references for an existing k3s/Kubernetes cluster.
 case "$runtime" in
     local)
         ensure_k8s_cluster "$runtime" "$namespace"
-        for image in "$auth_image" "$catalog_image" "$cart_image" "$gateway_image" "$prometheus_image" "$grafana_image"; do
+        for image in "$auth_image" "$catalog_image" "$cart_image" "$gateway_image" "$prometheus_image" "$grafana_image" "$minio_image" "$mc_image"; do
             docker image inspect "$image" >/dev/null
             kind load docker-image --name "$namespace" "$image"
         done
@@ -42,6 +44,8 @@ case "$runtime" in
         gateway_image="${registry}/symfony-api-gateway-nginx:${tag}"
         prometheus_image="${registry}/symfony-prometheus:${tag}"
         grafana_image="${registry}/symfony-grafana:${tag}"
+        minio_image="${registry}/symfony-minio:${tag}"
+        mc_image="${registry}/symfony-mc:${tag}"
         ensure_k8s_cluster "$runtime" "$namespace"
         ;;
     *)
@@ -57,6 +61,8 @@ apply_images() {
         -e "s|symfony-catalog:k8s|$catalog_image|g" \
         -e "s|symfony-cart:k8s|$cart_image|g" \
         -e "s|symfony-api-gateway-nginx:k8s|$gateway_image|g" \
+        -e "s|symfony-minio:k8s|$minio_image|g" \
+        -e "s|symfony-mc:k8s|$mc_image|g" \
         "$1" | kubectl -n "$namespace" apply -f -
 }
 
@@ -100,7 +106,7 @@ fi
 #   RabbitMQ              -> Ready
 #   Elasticsearch         -> Ready
 #   MinIO                 -> Ready
-kubectl -n "$namespace" apply -f kubernetes/infra/stateful.yaml
+apply_images kubernetes/infra/stateful.yaml
 for workload in database catalog-db cart-db redis-symfony redis-catalog redis-cart redis-metrics rabbitmq elasticsearch minio; do
     kubectl -n "$namespace" rollout status "statefulset/$workload" --timeout=10m
 done

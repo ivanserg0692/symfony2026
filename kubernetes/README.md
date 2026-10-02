@@ -22,18 +22,18 @@
 
 The manifests under `kubernetes/` are ordinary Kubernetes resources. They contain no kind node names, kind networking, or host source mounts. The application namespace comes from `K8S_NAMESPACE` in the selected environment; `monitoring` is a separate namespace. A default StorageClass is required for the stateful services. Docker Compose remains an independent workflow with its existing bind mounts.
 
-- Local development (`npm run set:dev` or `npm run set:load-test`): Docker, Docker Compose, kubectl, OpenSSL, and kind. `npm run prerequisites:check` checks them. `npm run docker:k8s:build` builds the PHP base and six deployable images: Auth, Catalog, Cart, gateway, Prometheus, and Grafana. `npm run k8s:cluster:init` creates/selects the kind cluster before Secret synchronization; `npm run k8s:deploy` also selects it, loads the images, and deploys the stack.
+- Local development (`npm run set:dev` or `npm run set:load-test`): Docker, Docker Compose, kubectl, OpenSSL, and kind. `npm run prerequisites:check` checks them. `npm run docker:k8s:build` builds the PHP base and eight deployable images: Auth, Catalog, Cart, gateway, Prometheus, Grafana, MinIO, and mc. `npm run k8s:cluster:init` creates/selects the kind cluster before Secret synchronization; `npm run k8s:deploy` also selects it, loads the images, and deploys the stack.
 - Existing k3s cluster (`K8S_RUNTIME=k3s` in the selected environment): Docker, Docker Compose, kubectl, OpenSSL, and k3s CLI on the deployment machine. Check with `npm run prerequisites:check`.
 - Other Kubernetes cluster (default `prod` configuration): Docker, Docker Compose, kubectl, and OpenSSL. Check with `npm run prerequisites:check`.
 
-The root `.env` selects `K8S_RUNTIME=kubernetes` and `K8S_NAMESPACE=symfony2026` by default. The existing `set:dev` and `set:load-test` commands select `local` with their own namespaces. Change `K8S_RUNTIME` in the selected environment file to `k3s` for a k3s target. For k3s or another Kubernetes cluster, set `K8S_IMAGE_REGISTRY` to the repository prefix and `K8S_IMAGE_TAG` to an immutable release tag, run `npm run docker:k8s:build`, then manually tag and push all six images (Auth, Catalog, Cart, gateway, Prometheus, and Grafana) to that registry with the chosen release tag. Run `npm run k8s:cluster:init` before synchronizing Secrets. This checks the existing kubectl context; it does not create a remote cluster. Deploy with `npm run k8s:deploy`. `AUTH_JWT_BOOTSTRAP_IMAGE` is set to the Auth image from that registry. The registry must be reachable by both the deployment machine's Docker daemon (for JWT bootstrap) and cluster nodes. Registry credentials, when needed, are provided through normal Docker login and Kubernetes imagePullSecrets for the target cluster.
+The root `.env` selects `K8S_RUNTIME=kubernetes` and `K8S_NAMESPACE=symfony2026` by default. The existing `set:dev` and `set:load-test` commands select `local` with their own namespaces. Change `K8S_RUNTIME` in the selected environment file to `k3s` for a k3s target. For k3s or another Kubernetes cluster, set `K8S_IMAGE_REGISTRY` to the repository prefix and `K8S_IMAGE_TAG` to an immutable release tag, run `npm run docker:k8s:build`, then manually tag and push all eight images (Auth, Catalog, Cart, gateway, Prometheus, Grafana, MinIO, and mc) to that registry with the chosen release tag. Run `npm run k8s:cluster:init` before synchronizing Secrets. This checks the existing kubectl context; it does not create a remote cluster. Deploy with `npm run k8s:deploy`. `AUTH_JWT_BOOTSTRAP_IMAGE` is set to the Auth image from that registry. The registry must be reachable by both the deployment machine's Docker daemon (for JWT bootstrap) and cluster nodes. Registry credentials, when needed, are provided through normal Docker login and Kubernetes imagePullSecrets for the target cluster. The MinIO and mc source release tags are pinned in `docker/minio/Dockerfile`; both Compose and Kubernetes use these project-built images.
 
 ### First deployment and subsequent deployments
 
 For the first local deployment, activate `npm run set:dev`, then run these commands from the repository root in order:
 
 ```bash
-# Build the PHP base and Auth, Catalog, Cart, gateway, Prometheus, and Grafana images.
+# Build the PHP base and all eight deployable images, including MinIO and mc.
 npm run docker:k8s:build
 
 # Generate reviewable ConfigMap YAML from the current project configuration.
@@ -80,18 +80,18 @@ Kubernetes Prometheus and Grafana configuration files live beside their Dockerfi
 
 Манифесты в `kubernetes/` не зависят от kind, числа node и файлов исходников на host. Namespace приложения берётся из `K8S_NAMESPACE` выбранного окружения; мониторинг живёт в отдельном namespace `monitoring`. Для StatefulSet нужен default StorageClass. Docker Compose остаётся отдельным способом запуска с прежними bind mounts.
 
-- Локально (`npm run set:dev` или `npm run set:load-test`): Docker, Docker Compose, kubectl, OpenSSL и kind. Проверка: `npm run prerequisites:check`. Команда `npm run docker:k8s:build` собирает PHP base и шесть deployable images: Auth, Catalog, Cart, gateway, Prometheus и Grafana. `npm run k8s:cluster:init` создаёт/выбирает kind cluster до синхронизации Secret; `npm run k8s:deploy` также выбирает его, загружает образы и разворачивает проект.
+- Локально (`npm run set:dev` или `npm run set:load-test`): Docker, Docker Compose, kubectl, OpenSSL и kind. Проверка: `npm run prerequisites:check`. Команда `npm run docker:k8s:build` собирает PHP base и восемь deployable images: Auth, Catalog, Cart, gateway, Prometheus, Grafana, MinIO и mc. `npm run k8s:cluster:init` создаёт/выбирает kind cluster до синхронизации Secret; `npm run k8s:deploy` также выбирает его, загружает образы и разворачивает проект.
 - В существующем k3s cluster (`K8S_RUNTIME=k3s` в выбранном окружении): те же общие CLI и k3s CLI на машине развёртывания. Проверка: `npm run prerequisites:check`.
 - В другом Kubernetes cluster (конфигурация `prod` по умолчанию): общие CLI без kind/k3s. Проверка: `npm run prerequisites:check`.
 
-Корневой `.env` по умолчанию задаёт `K8S_RUNTIME=kubernetes` и `K8S_NAMESPACE=symfony2026`. Существующие `set:dev` и `set:load-test` выбирают `local` и отдельные namespaces. Для k3s измените `K8S_RUNTIME` выбранного env-файла на `k3s`. Для k3s/обычного Kubernetes задайте `K8S_IMAGE_REGISTRY` (префикс репозитория) и `K8S_IMAGE_TAG` (неизменяемый release tag), запустите `npm run docker:k8s:build`, затем вручную назначьте выбранный release tag всем шести образам (Auth, Catalog, Cart, gateway, Prometheus и Grafana) и отправьте их в registry. До синхронизации Secret выполните `npm run k8s:cluster:init`. Команда проверяет текущий kubectl context, но не создаёт удалённый кластер. Для развёртывания используйте `npm run k8s:deploy`. Docker на машине запуска должен получить Auth image из registry для JWT bootstrap; nodes тоже должны иметь доступ к registry. При закрытом registry настройте Docker login и Kubernetes imagePullSecrets.
+Корневой `.env` по умолчанию задаёт `K8S_RUNTIME=kubernetes` и `K8S_NAMESPACE=symfony2026`. Существующие `set:dev` и `set:load-test` выбирают `local` и отдельные namespaces. Для k3s измените `K8S_RUNTIME` выбранного env-файла на `k3s`. Для k3s/обычного Kubernetes задайте `K8S_IMAGE_REGISTRY` (префикс репозитория) и `K8S_IMAGE_TAG` (неизменяемый release tag), запустите `npm run docker:k8s:build`, затем вручную назначьте выбранный release tag всем восьми образам (Auth, Catalog, Cart, gateway, Prometheus, Grafana, MinIO и mc) и отправьте их в registry. До синхронизации Secret выполните `npm run k8s:cluster:init`. Команда проверяет текущий kubectl context, но не создаёт удалённый кластер. Для развёртывания используйте `npm run k8s:deploy`. Docker на машине запуска должен получить Auth image из registry для JWT bootstrap; nodes тоже должны иметь доступ к registry. При закрытом registry настройте Docker login и Kubernetes imagePullSecrets. Версии исходников MinIO и mc закреплены в `docker/minio/Dockerfile`; Compose и Kubernetes используют эти образы проекта.
 
 ### Первое и последующие развёртывания
 
 Для первого локального развёртывания активируйте `npm run set:dev`, затем выполните из корня репозитория по порядку:
 
 ```bash
-# Собрать PHP base и образы Auth, Catalog, Cart, gateway, Prometheus и Grafana.
+# Собрать PHP base и восемь образов, включая MinIO и mc.
 npm run docker:k8s:build
 
 # Создать проверяемый YAML ConfigMap из текущей конфигурации проекта.

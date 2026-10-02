@@ -31,7 +31,8 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: setup
-          image: quay.io/minio/mc:latest
+          image: symfony-mc:k8s
+          imagePullPolicy: IfNotPresent
           command: [sh, -ec]
           args:
             - |
