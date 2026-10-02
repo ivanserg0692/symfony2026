@@ -245,7 +245,7 @@ spec:
       containers:
         - name: elasticsearch
           image: docker.elastic.co/elasticsearch/elasticsearch:9.5.2
-          args: ['-Ediscovery.type=single-node', '-Enode.store.allow_mmap=false', '-Expack.security.enabled=true', '-Expack.license.self_generated.type=basic']
+          args: [elasticsearch, '-Ediscovery.type=single-node', '-Enode.store.allow_mmap=false', '-Expack.security.enabled=true', '-Expack.license.self_generated.type=basic']
           env:
             - {name: ELASTIC_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: ELASTIC_PASSWORD}}}
             - {name: ES_JAVA_OPTS, value: '-Xms1g -Xmx1g'}
