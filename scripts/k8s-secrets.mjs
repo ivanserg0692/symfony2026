@@ -2,25 +2,8 @@
 
 // Explicit secret synchronization. Values travel through stdin to kubectl and
 // persist only as Kubernetes Secrets; no secret YAML is written to disk.
-import { buildResources, loadConfiguration, run, validateNamespace } from './lib/k8s-config-resources.mjs';
-
-function parseNamespaceOverride(args) {
-  if (args.length > 1 || args.some((arg) => arg.startsWith('--'))) {
-    throw new Error('Usage: npm run k8s:secrets:sync -- [namespace]');
-  }
-  if (args[0] && !validateNamespace(args[0])) {
-    throw new Error('Invalid Kubernetes namespace: use 1-63 lowercase letters, digits or hyphens.');
-  }
-  return args[0];
-}
-
-function resolveNamespace(namespaceOverride, config) {
-  const namespace = namespaceOverride ?? config.projectName;
-  if (!validateNamespace(namespace)) {
-    throw new Error('Invalid Kubernetes namespace: use 1-63 lowercase letters, digits or hyphens.');
-  }
-  return namespace;
-}
+import { buildResources, loadConfiguration, run } from './lib/k8s-config-resources.mjs';
+import { loadK8sSettings } from './lib/k8s-settings.mjs';
 
 function ensureNamespace(name) {
   if (!run('kubectl', ['get', 'namespace', name, '--ignore-not-found', '-o', 'name']).trim()) {
@@ -42,9 +25,11 @@ function syncSecrets(config, namespace) {
 }
 
 try {
-  const namespaceOverride = parseNamespaceOverride(process.argv.slice(2));
+  if (process.argv.length > 2) {
+    throw new Error('Usage: npm run k8s:secrets:sync');
+  }
+  const { namespace } = loadK8sSettings();
   const config = loadConfiguration();
-  const namespace = resolveNamespace(namespaceOverride, config);
 
   ensureNamespaces([namespace, 'monitoring']);
   syncSecrets(config, namespace);

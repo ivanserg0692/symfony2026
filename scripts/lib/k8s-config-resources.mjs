@@ -29,7 +29,6 @@ function loadComposeConfig() {
   const env = (service) => compose.services[service]?.environment ?? {};
 
   return {
-    projectName: compose.name,
     auth: env('symfony-web'),
     catalog: env('catalog-web'),
     cart: env('cart-web'),
@@ -251,12 +250,6 @@ function* buildMonitoringResources(includeSecrets) {
     'renderer-token': priorGrafana('renderer-token') || randomBytes(32).toString('hex'),
     'admin-password': priorGrafana('admin-password') || randomBytes(24).toString('hex'),
   });
-}
-
-export function validateNamespace(value) {
-  return typeof value === 'string'
-    && value.length <= 63
-    && /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/.test(value);
 }
 
 export function buildResources(config, targetNamespace, { includeSecrets = false } = {}) {

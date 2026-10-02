@@ -8,10 +8,11 @@ action="${1:-run}"
 if [[ "$action" == run || "$action" == recover ]]; then
     shift || true
 else
-    echo 'Usage: npm run k8s:catalog:reindex -- [run|recover] [namespace]' >&2
+    echo 'Usage: npm run k8s:catalog:reindex -- [run|recover]' >&2
     exit 2
 fi
-namespace="$(resolve_k8s_namespace "$@")"
+reject_k8s_args k8s:catalog:reindex "$@"
+ensure_k8s_settings
 lock=catalog-full-reindex-lock
 worker=catalog-search-index-worker
 job=catalog-full-reindex

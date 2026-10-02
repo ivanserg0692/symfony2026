@@ -1,7 +1,7 @@
 {
   "scripts": {
     "prerequisites:check": "node scripts/check-prerequisites.mjs",
-    "set:prod": "bash -c 'set -a; . ./.env.compose; set +a; unset COMPOSE_PROJECT_NAME COMPOSE_FILE; exec bash -i'",
+    "set:prod": "bash -c 'set -a; . ./.env.compose; set +a; unset COMPOSE_PROJECT_NAME COMPOSE_FILE K8S_RUNTIME K8S_NAMESPACE; exec bash -i'",
     "set:dev": "bash -c 'set -a; . ./.env.compose; . ./.env.dev; set +a; exec bash -i'",
     "set:load-test": "bash -c 'set -a; . ./.env.compose; . ./.env.load_test; set +a; exec bash -i'",
     "docker:k8s:build": "bash docker/php-symfony-cli/build-k8s-images.sh",

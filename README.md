@@ -638,7 +638,7 @@ Install the following tools on the machine where you run the corresponding proje
 | `kind` | Required only for the local Kubernetes runtime. |
 | `k3s` | Checked only when the k3s runtime is selected. |
 
-Run `npm run prerequisites:check` for local development; it checks kind automatically. For an existing cluster, explicitly select `--runtime k3s` or `--runtime kubernetes` after `--`. The command does not install anything.
+Run `npm run prerequisites:check` after selecting the environment: `set:dev` and `set:load-test` check kind, while the default `prod` configuration checks an existing Kubernetes cluster. Set `K8S_RUNTIME=k3s` in the selected environment configuration when deploying to k3s. The command does not install anything.
 
 ### Run With Kubernetes
 
@@ -1525,7 +1525,7 @@ Handler экспорта использует batch-обработку Symfony M
 | `kind` | Нужен только для локального Kubernetes runtime. |
 | `k3s` | Проверяется только при выборе k3s runtime. |
 
-Для локальной разработки запустите `npm run prerequisites:check`: kind проверяется автоматически. Для существующего кластера явно выберите `--runtime k3s` или `--runtime kubernetes` после `--`. Команда ничего не устанавливает.
+Запустите `npm run prerequisites:check` после выбора окружения: `set:dev` и `set:load-test` проверяют kind, а конфигурация `prod` по умолчанию — существующий Kubernetes cluster. Для k3s укажите `K8S_RUNTIME=k3s` в конфигурации выбранного окружения. Команда ничего не устанавливает.
 
 ### Запуск через Kubernetes
 

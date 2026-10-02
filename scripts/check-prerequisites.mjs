@@ -1,15 +1,18 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
+import { loadK8sSettings } from './lib/k8s-settings.mjs';
 
-const args = process.argv.slice(2);
-const runtime = args.length === 0 ? 'local'
-  : args.length === 2 && args[0] === '--runtime' ? args[1]
-    : args.length === 1 && args[0].startsWith('--runtime=') ? args[0].slice('--runtime='.length)
-      : null;
+if (process.argv.length > 2) {
+  console.error('Usage: npm run prerequisites:check');
+  process.exit(2);
+}
 
-if (!['local', 'k3s', 'kubernetes'].includes(runtime)) {
-  console.error('Usage: npm run prerequisites:check [-- --runtime k3s|kubernetes]');
+let runtime;
+try {
+  ({ runtime } = loadK8sSettings());
+} catch (error) {
+  console.error(error.message);
   process.exit(2);
 }
 

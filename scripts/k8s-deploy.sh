@@ -6,15 +6,11 @@ repo_root="$(cd -- "${script_dir}/.." && pwd)"
 source "${script_dir}/lib/k8s-common.sh"
 cd "$repo_root"
 
-# Resolve the deployment target; local development defaults to a kind cluster.
-parse_k8s_deploy_args k8s:deploy "$@"
-if [[ -n "$namespace_override" ]]; then
-    namespace="$(resolve_k8s_namespace "$namespace_override")"
-else
-    namespace="$(resolve_k8s_namespace)"
-fi
+# Resolve the deployment target from the selected environment.
+reject_k8s_args k8s:deploy "$@"
+ensure_k8s_settings
 
-node scripts/check-prerequisites.mjs --runtime "$runtime"
+node scripts/check-prerequisites.mjs
 
 auth_image='symfony-auth:k8s'
 catalog_image='symfony-catalog:k8s'
@@ -72,13 +68,13 @@ kubectl get namespace monitoring >/dev/null 2>&1 || kubectl create namespace mon
 # any required application, infrastructure or monitoring Secret is missing.
 config_file="kubernetes/generated/$namespace/configmaps.yaml"
 if [[ ! -f "$config_file" ]]; then
-    echo "Missing $config_file. Run npm run k8s:config:sync -- $namespace first." >&2
+    echo "Missing $config_file. Run npm run k8s:config:sync first." >&2
     exit 1
 fi
 kubectl apply -f "$config_file"
 for secret in auth-config-secret catalog-config-secret cart-config-secret infra-config-secret; do
     kubectl -n "$namespace" get secret "$secret" >/dev/null || {
-        echo "Missing Secret/$secret. Run npm run k8s:secrets:sync -- $namespace first." >&2
+        echo "Missing Secret/$secret. Run npm run k8s:secrets:sync first." >&2
         exit 1
     }
 done
@@ -90,7 +86,7 @@ kubectl -n monitoring get secret grafana-config-secret >/dev/null || {
 # All Auth replicas must mount the same JWT key pair. Bootstrap the Secret only
 # when it does not already exist; later Pod creation must reuse that pair.
 if ! kubectl -n "$namespace" get secret auth-jwt >/dev/null 2>&1; then
-    AUTH_JWT_BOOTSTRAP_IMAGE="$auth_image" bash docker/php-symfony-cli/k8s/bootstrap-auth-jwt.sh "$namespace"
+    AUTH_JWT_BOOTSTRAP_IMAGE="$auth_image" bash docker/php-symfony-cli/k8s/bootstrap-auth-jwt.sh
 fi
 
 # Deploy persistent infrastructure and wait for each StatefulSet rollout:
@@ -165,7 +161,7 @@ done
 # restores the worker so it can drain queued updates. The ConfigMap records
 # successful initialization and skips this step on later deploys.
 if ! kubectl -n "$namespace" get configmap catalog-initial-index >/dev/null 2>&1; then
-    bash scripts/k8s-catalog-reindex.sh run "$namespace"
+    bash scripts/k8s-catalog-reindex.sh run
     kubectl -n "$namespace" create configmap catalog-initial-index --from-literal=ready=true
 fi
 

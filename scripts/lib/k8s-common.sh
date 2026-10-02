@@ -1,32 +1,46 @@
 #!/usr/bin/env bash
 
-parse_k8s_deploy_args() {
+reject_k8s_args() {
     local command="$1"
     shift
-    runtime='local'
-    namespace_override=''
+    if [[ $# -gt 0 ]]; then
+        echo "Usage: npm run $command" >&2
+        return 2
+    fi
+}
 
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --runtime|--namespace)
-                if [[ $# -lt 2 || -z "${2:-}" || "${2:-}" == --* ]]; then
-                    echo "Missing value for $1." >&2
-                    echo "Usage: npm run $command [-- --runtime k3s|kubernetes] [--namespace name]" >&2
-                    return 2
-                fi
-                if [[ "$1" == --runtime ]]; then
-                    runtime="$2"
-                else
-                    namespace_override="$2"
-                fi
-                shift 2
-                ;;
-            *)
-                echo "Usage: npm run $command [-- --runtime k3s|kubernetes] [--namespace name]" >&2
-                return 2
-                ;;
-        esac
-    done
+ensure_k8s_settings() {
+    local repo_root settings
+
+    if [[ ! -v K8S_RUNTIME && ! -v K8S_NAMESPACE ]]; then
+        repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)" || return
+        settings="$(
+            set +u
+            source "$repo_root/.env" || exit 1
+            printf '%s\n%s' "${K8S_RUNTIME:-}" "${K8S_NAMESPACE:-}"
+        )" || return
+        K8S_RUNTIME="${settings%%$'\n'*}"
+        K8S_NAMESPACE="${settings#*$'\n'}"
+    elif [[ ! -v K8S_RUNTIME || ! -v K8S_NAMESPACE ]]; then
+        echo 'K8S_RUNTIME and K8S_NAMESPACE must both be set in the selected environment.' >&2
+        return 2
+    fi
+
+    case "$K8S_RUNTIME" in
+        local|k3s|kubernetes) ;;
+        *)
+            echo 'Invalid K8S_RUNTIME: use local, k3s or kubernetes.' >&2
+            return 2
+            ;;
+    esac
+
+    if [[ ${#K8S_NAMESPACE} -gt 63 || ! "$K8S_NAMESPACE" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]]; then
+        echo 'Invalid K8S_NAMESPACE: use 1-63 lowercase letters, digits or hyphens; start and end with a letter or digit.' >&2
+        return 2
+    fi
+
+    runtime="$K8S_RUNTIME"
+    namespace="$K8S_NAMESPACE"
 }
 
 ensure_k8s_cluster() {
@@ -47,41 +61,4 @@ ensure_k8s_cluster() {
             return 2
             ;;
     esac
-}
-
-resolve_k8s_namespace() {
-    local namespace repo_root
-
-    if [[ $# -gt 1 ]]; then
-        echo "resolve_k8s_namespace accepts at most one namespace override." >&2
-        return 2
-    fi
-
-    if [[ $# -eq 1 ]]; then
-        namespace="$1"
-    else
-        repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)" || return
-        if ! namespace="$(
-            cd -- "$repo_root"
-            docker compose config --no-interpolate --format json | node -e '
-                const fs = require("node:fs");
-                const name = JSON.parse(fs.readFileSync(0, "utf8")).name;
-                if (typeof name !== "string" || name.length === 0) {
-                    console.error("Docker Compose project name is missing.");
-                    process.exit(1);
-                }
-                process.stdout.write(name);
-            '
-        )"; then
-            echo "Cannot determine Kubernetes namespace from the Docker Compose project name." >&2
-            return 1
-        fi
-    fi
-
-    if [[ ${#namespace} -gt 63 || ! "$namespace" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]]; then
-        echo "Invalid Kubernetes namespace: use 1-63 lowercase letters, digits or hyphens; start and end with a letter or digit." >&2
-        return 2
-    fi
-
-    printf '%s\n' "$namespace"
 }

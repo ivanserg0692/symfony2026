@@ -1,16 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -gt 1 ]]; then
-    echo "Usage: npm run k8s:auth:jwt:bootstrap [-- <namespace>]" >&2
-    exit 2
-fi
-
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${script_dir}/../../.." && pwd)"
 auth_dir="${repo_root}/symfony"
 source "${repo_root}/scripts/lib/k8s-common.sh"
-namespace="$(resolve_k8s_namespace "$@")"
+reject_k8s_args k8s:auth:jwt:bootstrap "$@"
+ensure_k8s_settings
 auth_image="${AUTH_JWT_BOOTSTRAP_IMAGE:-symfony-auth:k8s}"
 
 if [[ ! -f "${auth_dir}/.env" ]]; then
