@@ -43,6 +43,7 @@
   - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
   - [News Export and Batch Processing](#news-export-and-batch-processing)
   - [External Prerequisites](#external-prerequisites)
+  - [Run With Kubernetes](#run-with-kubernetes)
   - [Run With Docker Compose](#run-with-docker-compose)
   - [Doctrine Database Setup](#doctrine-database-setup)
   - [API Documentation](#api-documentation)
@@ -95,6 +96,7 @@
   - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
   - [Экспорт новостей и batch-обработка](#%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D1%80%D1%82-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B5%D0%B9-%D0%B8-batch-%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0)
   - [Внешние зависимости](#%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B8%D0%B5-%D0%B7%D0%B0%D0%B2%D0%B8%D1%81%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D0%B8)
+  - [Запуск через Kubernetes](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-kubernetes)
   - [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
   - [Настройка Doctrine и базы данных](#%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-doctrine-%D0%B8-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85)
   - [API Documentation](#api-documentation-1)
@@ -631,10 +633,16 @@ Install the following tools on the machine where you run the corresponding proje
 |---|---|
 | Docker | Builds images and runs containers. |
 | Docker Compose | Runs the existing Compose environments. |
-| `kubectl` | Lets the Auth JWT bootstrap work with a Kubernetes Secret. |
+| `kubectl` | Applies Kubernetes resources and manages the Auth JWT Secret. |
 | OpenSSL | Validates the Auth JWT key pair during bootstrap. |
+| `kind` | Required only for the local Kubernetes runtime. |
+| `k3s` | Checked only when the k3s runtime is selected. |
 
-Run `npm run prerequisites:check` to check which tools are available. The command does not install anything.
+Run `npm run prerequisites:check` for local development; it checks kind automatically. For an existing cluster, explicitly select `--runtime k3s` or `--runtime kubernetes` after `--`. The command does not install anything.
+
+### Run With Kubernetes
+
+Kubernetes is an additional deployment option. Compose keeps its bind mounts and existing workflows. Before deploying, synchronize reviewable ConfigMap YAML with `npm run k8s:config:sync` and cluster-only Secrets with `npm run k8s:secrets:sync`. See [Kubernetes deployment](kubernetes/README.md) for image builds, local kind and registry deployments, JWT bootstrap, setup Jobs, reindex, scaling, and the separate Kubernetes monitoring dashboard.
 
 ### Run With Docker Compose
 
@@ -1512,10 +1520,16 @@ Handler экспорта использует batch-обработку Symfony M
 |---|---|
 | Docker | Собирает образы и запускает контейнеры. |
 | Docker Compose | Запускает существующие Compose-окружения. |
-| `kubectl` | Позволяет JWT bootstrap Auth работать с Kubernetes Secret. |
+| `kubectl` | Применяет Kubernetes-ресурсы и управляет JWT Secret Auth. |
 | OpenSSL | Проверяет пару JWT-ключей Auth во время bootstrap. |
+| `kind` | Нужен только для локального Kubernetes runtime. |
+| `k3s` | Проверяется только при выборе k3s runtime. |
 
-Команда `npm run prerequisites:check` показывает, какие инструменты доступны. Она ничего не устанавливает.
+Для локальной разработки запустите `npm run prerequisites:check`: kind проверяется автоматически. Для существующего кластера явно выберите `--runtime k3s` или `--runtime kubernetes` после `--`. Команда ничего не устанавливает.
+
+### Запуск через Kubernetes
+
+Kubernetes — дополнительный способ запуска. Compose сохраняет прежние bind mounts и workflows. Перед развёртыванием синхронизируйте проверяемый YAML ConfigMap командой `npm run k8s:config:sync`, а Secret только в кластере командой `npm run k8s:secrets:sync`. Сборка образов, локальный kind и registry-вариант, JWT bootstrap, Jobs, reindex, масштабирование и отдельный Kubernetes dashboard описаны в [инструкции по Kubernetes](kubernetes/README.md).
 
 ### Запуск через Docker Compose
 
