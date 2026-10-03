@@ -229,7 +229,7 @@ spec:
             - {name: RABBITMQ_DEFAULT_PASS, valueFrom: {secretKeyRef: {name: infra-config-secret, key: RABBITMQ_DEFAULT_PASS}}}
           ports: [{name: amqp, containerPort: 5672}, {name: management, containerPort: 15672}]
           volumeMounts: [{name: data, mountPath: /var/lib/rabbitmq}]
-          readinessProbe: {exec: {command: [rabbitmq-diagnostics, -q, ping]}, periodSeconds: 10}
+          readinessProbe: {tcpSocket: {port: amqp}, periodSeconds: 10}
           resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 1Gi}}
   volumeClaimTemplates:
     - metadata: {name: data}
