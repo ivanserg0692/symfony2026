@@ -77,7 +77,9 @@ if [[ ! -f "$config_file" ]]; then
     echo "Missing $config_file. Run npm run k8s:config:sync first." >&2
     exit 1
 fi
+postgres_capacity_previous_version="$(kubectl -n "$namespace" get configmap postgres-capacity -o jsonpath='{.metadata.resourceVersion}' 2>/dev/null || true)"
 kubectl apply -f "$config_file"
+postgres_capacity_current_version="$(kubectl -n "$namespace" get configmap postgres-capacity -o jsonpath='{.metadata.resourceVersion}')"
 for secret in auth-config-secret catalog-config-secret cart-config-secret infra-config-secret; do
     kubectl -n "$namespace" get secret "$secret" >/dev/null || {
         echo "Missing Secret/$secret. Run npm run k8s:secrets:sync first." >&2
@@ -107,6 +109,13 @@ fi
 #   Elasticsearch         -> Ready
 #   MinIO                 -> Ready
 apply_images kubernetes/infra/stateful.yaml
+# Existing PostgreSQL processes read max_connections only at startup. Restart
+# them when the generated capacity ConfigMap changes, before waiting for Ready.
+if [[ -n "$postgres_capacity_previous_version" && "$postgres_capacity_previous_version" != "$postgres_capacity_current_version" ]]; then
+    for workload in database catalog-db cart-db; do
+        kubectl -n "$namespace" rollout restart "statefulset/$workload"
+    done
+fi
 for workload in database catalog-db cart-db redis-symfony redis-catalog redis-cart redis-metrics rabbitmq elasticsearch minio; do
     kubectl -n "$namespace" rollout status "statefulset/$workload" --timeout=10m
 done

@@ -59,6 +59,7 @@ data:
   "PRODUCT_SEARCH_REINDEX_LOCK_ID": "1633906547"
   "PRODUCT_SEARCH_INCREMENTAL_WORKER_PAUSED": "0"
   "ROADRUNNER_NUM_WORKERS": "12"
+  "APP_TRACING_ENABLED": "1"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -88,3 +89,13 @@ data:
   "AUTH_DB_URI": "database:5432/app?sslmode=disable"
   "CATALOG_DB_URI": "catalog-db:5432/catalog?sslmode=disable"
   "CART_DB_URI": "cart-db:5432/cart?sslmode=disable"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "postgres-capacity"
+  namespace: "symfony2026"
+data:
+  "AUTH_POSTGRES_MAX_CONNECTIONS": "64"
+  "CATALOG_POSTGRES_MAX_CONNECTIONS": "92"
+  "CART_POSTGRES_MAX_CONNECTIONS": "60"
