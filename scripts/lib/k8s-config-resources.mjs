@@ -67,13 +67,13 @@ function loadSymfonyEnvironment(serviceDirectory, image, composeEnvironment) {
   return JSON.parse(stdout);
 }
 
-export function loadConfiguration() {
+export function loadConfiguration(imageProfile) {
   const compose = loadComposeConfig();
   return {
     ...compose,
-    auth: loadSymfonyEnvironment('symfony', 'symfony-auth:k8s', compose.auth),
-    catalog: loadSymfonyEnvironment('catalog-service', 'symfony-catalog:k8s', compose.catalog),
-    cart: loadSymfonyEnvironment('cart-service', 'symfony-cart:k8s', compose.cart),
+    auth: loadSymfonyEnvironment('symfony', `symfony-auth:k8s-${imageProfile}`, compose.auth),
+    catalog: loadSymfonyEnvironment('catalog-service', `symfony-catalog:k8s-${imageProfile}`, compose.catalog),
+    cart: loadSymfonyEnvironment('cart-service', `symfony-cart:k8s-${imageProfile}`, compose.cart),
   };
 }
 
@@ -120,8 +120,6 @@ function manifest(kind, name, data) {
 
 function commonConfig(auth) {
   return {
-    APP_ENV: 'prod',
-    APP_DEBUG: '0',
     PHP_FPM_MAX_CHILDREN: auth.PHP_FPM_MAX_CHILDREN || '10',
     NGINX_WORKER_COUNT: auth.NGINX_WORKER_COUNT || '1',
   };
@@ -143,7 +141,6 @@ function* buildAuthResources({ auth, minio }, common, includeSecrets) {
     MINIO_REGION: auth.MINIO_REGION || 'us-east-1',
     MINIO_BUCKET: auth.MINIO_BUCKET || 'app',
     TURNSTILE_KEY: auth.TURNSTILE_KEY || '3x00000000000000000000FF',
-    CLOUDFLARE_TURNSTILE_ENABLED: auth.CLOUDFLARE_TURNSTILE_ENABLED || '0',
     CSRF_STATELESS_TOKEN_IDS: auth.CSRF_STATELESS_TOKEN_IDS || 'authenticate,refresh,logout,api_mutation',
     CSRF_COOKIE_NAME: auth.CSRF_COOKIE_NAME || 'csrf-token',
     CSRF_HEADER_NAME: auth.CSRF_HEADER_NAME || 'X-CSRF-Token',

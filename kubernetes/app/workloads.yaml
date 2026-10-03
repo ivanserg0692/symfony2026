@@ -134,7 +134,7 @@ spec:
           imagePullPolicy: IfNotPresent
           command: [rr, serve, -c, .rr.yaml]
           envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
-          env: [{name: APP_RUNTIME_MODE, value: roadrunner}]
+          env: [{name: APP_RUNTIME_MODE, value: "web=1"}]
           ports: [{name: grpc, containerPort: 9001}]
           startupProbe: {tcpSocket: {port: 9001}, periodSeconds: 5, failureThreshold: 24}
           readinessProbe: {tcpSocket: {port: 9001}, periodSeconds: 5}
@@ -160,7 +160,7 @@ spec:
         - name: worker
           image: symfony-catalog:k8s
           imagePullPolicy: IfNotPresent
-          command: [php, -d, memory_limit=192M, bin/console, --env=prod, --no-debug, messenger:consume, catalog_search_outbox, --time-limit=3600, --memory-limit=160M, --sleep=1, --no-interaction]
+          command: [php, -d, memory_limit=192M, bin/console, messenger:consume, catalog_search_outbox, --time-limit=3600, --memory-limit=160M, --sleep=1, --no-interaction]
           envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
           resources: {requests: {cpu: 50m, memory: 192Mi}, limits: {cpu: 500m, memory: 384Mi}}
 ---
@@ -177,7 +177,7 @@ spec:
         - name: worker
           image: symfony-catalog:k8s
           imagePullPolicy: IfNotPresent
-          command: [php, -d, memory_limit=192M, bin/console, --env=prod, --no-debug, messenger:consume, catalog_search, --time-limit=3600, --memory-limit=160M, --sleep=1, --no-interaction]
+          command: [php, -d, memory_limit=192M, bin/console, messenger:consume, catalog_search, --time-limit=3600, --memory-limit=160M, --sleep=1, --no-interaction]
           envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
           resources: {requests: {cpu: 50m, memory: 192Mi}, limits: {cpu: 500m, memory: 384Mi}}
 ---
@@ -195,7 +195,7 @@ spec:
         - name: worker
           image: symfony-auth:k8s
           imagePullPolicy: IfNotPresent
-          command: [php, bin/console, --env=prod, --no-debug, messenger:consume, async, --time-limit=3600, --memory-limit=256M, --sleep=1, --no-interaction]
+          command: [php, bin/console, messenger:consume, async, --time-limit=3600, --memory-limit=256M, --sleep=1, --no-interaction]
           envFrom: [{configMapRef: {name: auth-config}}, {secretRef: {name: auth-config-secret}}]
           env: [{name: JWT_PASSPHRASE, valueFrom: {secretKeyRef: {name: auth-jwt, key: JWT_PASSPHRASE}}}]
           volumeMounts: [{name: jwt, mountPath: /workspace/config/jwt, readOnly: true}]

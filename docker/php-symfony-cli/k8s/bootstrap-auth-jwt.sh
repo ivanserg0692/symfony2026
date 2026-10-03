@@ -7,7 +7,7 @@ auth_dir="${repo_root}/symfony"
 source "${repo_root}/scripts/lib/k8s-common.sh"
 reject_k8s_args k8s:auth:jwt:bootstrap "$@"
 ensure_k8s_settings
-auth_image="${AUTH_JWT_BOOTSTRAP_IMAGE:-symfony-auth:k8s}"
+auth_image="${AUTH_JWT_BOOTSTRAP_IMAGE:-symfony-auth:k8s-$image_profile}"
 
 if [[ ! -f "${auth_dir}/.env" ]]; then
     echo "Auth .env is missing." >&2

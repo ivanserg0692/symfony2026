@@ -28,8 +28,8 @@ try {
   if (process.argv.length > 2) {
     throw new Error('Usage: npm run k8s:secrets:sync');
   }
-  const { namespace } = loadK8sSettings();
-  const config = loadConfiguration();
+  const { namespace, imageProfile } = loadK8sSettings();
+  const config = loadConfiguration(imageProfile);
 
   ensureNamespaces([namespace, 'monitoring']);
   syncSecrets(config, namespace);

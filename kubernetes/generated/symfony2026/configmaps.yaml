@@ -5,8 +5,6 @@ metadata:
   name: "auth-config"
   namespace: "symfony2026"
 data:
-  "APP_ENV": "prod"
-  "APP_DEBUG": "0"
   "PHP_FPM_MAX_CHILDREN": "10"
   "NGINX_WORKER_COUNT": "auto"
   "CACHE_DSN": "redis://redis-symfony:6379/0?persistent=1"
@@ -22,7 +20,6 @@ data:
   "MINIO_REGION": "us-east-1"
   "MINIO_BUCKET": "app"
   "TURNSTILE_KEY": "1x00000000000000000000AA"
-  "CLOUDFLARE_TURNSTILE_ENABLED": "1"
   "CSRF_STATELESS_TOKEN_IDS": "authenticate,refresh,logout,api_mutation"
   "CSRF_COOKIE_NAME": "csrf-token"
   "CSRF_HEADER_NAME": "X-CSRF-Token"
@@ -40,8 +37,6 @@ metadata:
   name: "catalog-config"
   namespace: "symfony2026"
 data:
-  "APP_ENV": "prod"
-  "APP_DEBUG": "0"
   "PHP_FPM_MAX_CHILDREN": "10"
   "NGINX_WORKER_COUNT": "auto"
   "CORS_ALLOW_ORIGIN": "^https?://(localhost|127\\.0\\.0\\.1|desktop-s6v2euu)(:[0-9]+)?$$"
@@ -67,8 +62,6 @@ metadata:
   name: "cart-config"
   namespace: "symfony2026"
 data:
-  "APP_ENV": "prod"
-  "APP_DEBUG": "0"
   "PHP_FPM_MAX_CHILDREN": "10"
   "NGINX_WORKER_COUNT": "auto"
   "CORS_ALLOW_ORIGIN": "^https?://(localhost|127\\.0\\.0\\.1|desktop-s6v2euu)(:[0-9]+)?$$"

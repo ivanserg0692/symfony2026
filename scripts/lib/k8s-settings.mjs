@@ -7,7 +7,7 @@ const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 export function loadK8sSettings() {
   const result = spawnSync('bash', [
     '-c',
-    'set -euo pipefail; source "$1"; ensure_k8s_settings; printf "%s\\n%s\\n" "$runtime" "$namespace"',
+    'set -euo pipefail; source "$1"; ensure_k8s_settings; printf "%s\\n%s\\n%s\\n" "$runtime" "$namespace" "$image_profile"',
     'bash',
     commonScript,
   ], {
@@ -20,6 +20,6 @@ export function loadK8sSettings() {
     throw new Error(result.stderr?.trim() || 'Cannot load Kubernetes environment settings.');
   }
 
-  const [runtime, namespace] = result.stdout.trimEnd().split('\n');
-  return { runtime, namespace };
+  const [runtime, namespace, imageProfile] = result.stdout.trimEnd().split('\n');
+  return { runtime, namespace, imageProfile };
 }

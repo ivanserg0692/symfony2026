@@ -12,9 +12,9 @@ ensure_k8s_settings
 
 node scripts/check-prerequisites.mjs
 
-auth_image='symfony-auth:k8s'
-catalog_image='symfony-catalog:k8s'
-cart_image='symfony-cart:k8s'
+auth_image="symfony-auth:k8s-$image_profile"
+catalog_image="symfony-catalog:k8s-$image_profile"
+cart_image="symfony-cart:k8s-$image_profile"
 gateway_image='symfony-api-gateway-nginx:k8s'
 prometheus_image='symfony-prometheus:k8s'
 grafana_image='symfony-grafana:k8s'
@@ -38,9 +38,9 @@ case "$runtime" in
             echo 'Set K8S_IMAGE_REGISTRY and K8S_IMAGE_TAG to pushed image references for this runtime.' >&2
             exit 2
         fi
-        auth_image="${registry}/symfony-auth:${tag}"
-        catalog_image="${registry}/symfony-catalog:${tag}"
-        cart_image="${registry}/symfony-cart:${tag}"
+        auth_image="${registry}/symfony-auth:${tag}-${image_profile}"
+        catalog_image="${registry}/symfony-catalog:${tag}-${image_profile}"
+        cart_image="${registry}/symfony-cart:${tag}-${image_profile}"
         gateway_image="${registry}/symfony-api-gateway-nginx:${tag}"
         prometheus_image="${registry}/symfony-prometheus:${tag}"
         grafana_image="${registry}/symfony-grafana:${tag}"

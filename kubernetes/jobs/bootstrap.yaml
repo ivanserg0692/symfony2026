@@ -56,7 +56,7 @@ spec:
         - name: migrate
           image: symfony-auth:k8s
           imagePullPolicy: IfNotPresent
-          command: [php, bin/console, doctrine:migrations:migrate, --env=prod, --no-debug, --no-interaction]
+          command: [php, bin/console, doctrine:migrations:migrate, --no-interaction]
           envFrom: [{configMapRef: {name: auth-config}}, {secretRef: {name: auth-config-secret}}]
           env: [{name: JWT_PASSPHRASE, valueFrom: {secretKeyRef: {name: auth-jwt, key: JWT_PASSPHRASE}}}]
           volumeMounts: [{name: jwt, mountPath: /workspace/config/jwt, readOnly: true}]
@@ -74,7 +74,7 @@ spec:
         - name: migrate
           image: symfony-catalog:k8s
           imagePullPolicy: IfNotPresent
-          command: [php, bin/console, doctrine:migrations:migrate, --env=prod, --no-debug, --no-interaction]
+          command: [php, bin/console, doctrine:migrations:migrate, --no-interaction]
           envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
 ---
 apiVersion: batch/v1
@@ -89,5 +89,5 @@ spec:
         - name: migrate
           image: symfony-cart:k8s
           imagePullPolicy: IfNotPresent
-          command: [php, bin/console, doctrine:migrations:migrate, --env=prod, --no-debug, --no-interaction]
+          command: [php, bin/console, doctrine:migrations:migrate, --no-interaction]
           envFrom: [{configMapRef: {name: cart-config}}, {secretRef: {name: cart-config-secret}}]
