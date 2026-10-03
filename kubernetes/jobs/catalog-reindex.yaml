@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: catalog-full-reindex
+  labels: {app: catalog-full-reindex}
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 7200
+  template:
+    metadata: {labels: {app: catalog-full-reindex}}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: reindex
+          image: symfony-catalog:k8s
+          imagePullPolicy: IfNotPresent
+          command: [php, -d, memory_limit=1G, bin/console, app:elasticsearch:reindex, --no-interaction]
+          envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
+          env: [{name: PRODUCT_SEARCH_INCREMENTAL_WORKER_PAUSED, value: "1"}]
+          resources: {requests: {cpu: 250m, memory: 1Gi}, limits: {memory: 2Gi}}

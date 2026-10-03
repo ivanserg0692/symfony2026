@@ -36,11 +36,14 @@
     - [`Task 8`: Monitoring and load testing for the online store - completed](#task-8-monitoring-and-load-testing-for-the-online-store---completed)
     - [`Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - completed](#task-9-application-performance-optimization-rps-improvement-and-php-environment-tuning---completed)
     - [`Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - done](#task-10-elasticsearch-catalog-read-model-for-search-filtering-aggregations-and-presets---done)
+    - [`Task 11`: Run services in Kubernetes and verify horizontal scaling of Symfony/PHP-FPM - planned](#task-11-run-services-in-kubernetes-and-verify-horizontal-scaling-of-symfonyphp-fpm---planned)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
   - [Elasticsearch Catalog Indexing](#elasticsearch-catalog-indexing)
   - [gRPC Contracts and Service Flows](#grpc-contracts-and-service-flows)
   - [News Export and Batch Processing](#news-export-and-batch-processing)
+  - [External Prerequisites](#external-prerequisites)
+  - [Run With Kubernetes](#run-with-kubernetes)
   - [Run With Docker Compose](#run-with-docker-compose)
   - [Doctrine Database Setup](#doctrine-database-setup)
   - [API Documentation](#api-documentation)
@@ -86,11 +89,14 @@
     - [`Task 8`: Мониторинг и нагрузочное тестирование интернет-магазина - completed](#task-8-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0---completed)
     - [`Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - completed](#task-9-%D0%BE%D0%BF%D1%82%D0%B8%D0%BC%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BF%D0%BE%D0%B2%D1%8B%D1%88%D0%B5%D0%BD%D0%B8%D0%B5-rps-%D0%B8-%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-php-%D0%BE%D0%BA%D1%80%D1%83%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F---completed)
     - [`Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - done](#task-10-elasticsearch-read-%D0%BC%D0%BE%D0%B4%D0%B5%D0%BB%D1%8C-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B4%D0%BB%D1%8F-%D0%BF%D0%BE%D0%B8%D1%81%D0%BA%D0%B0-%D1%84%D0%B8%D0%BB%D1%8C%D1%82%D1%80%D0%B0%D1%86%D0%B8%D0%B8-%D0%B0%D0%B3%D1%80%D0%B5%D0%B3%D0%B0%D1%86%D0%B8%D0%B9-%D0%B8-%D0%BF%D1%80%D0%B5%D1%81%D0%B5%D1%82%D0%BE%D0%B2---done)
+    - [`Task 11`: Запуск сервисов в Kubernetes и проверка горизонтального масштабирования Symfony/PHP-FPM - planned](#task-11-%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-%D0%B2-kubernetes-%D0%B8-%D0%BF%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%BA%D0%B0-%D0%B3%D0%BE%D1%80%D0%B8%D0%B7%D0%BE%D0%BD%D1%82%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D0%B3%D0%BE-%D0%BC%D0%B0%D1%81%D1%88%D1%82%D0%B0%D0%B1%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-symfonyphp-fpm---planned)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
   - [Индексация каталога в Elasticsearch](#%D0%B8%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0%D1%86%D0%B8%D1%8F-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B2-elasticsearch)
   - [gRPC-контракты и сервисные сценарии](#grpc-%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82%D1%8B-%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D1%8B%D0%B5-%D1%81%D1%86%D0%B5%D0%BD%D0%B0%D1%80%D0%B8%D0%B8)
   - [Экспорт новостей и batch-обработка](#%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D1%80%D1%82-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B5%D0%B9-%D0%B8-batch-%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0)
+  - [Внешние зависимости](#%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B8%D0%B5-%D0%B7%D0%B0%D0%B2%D0%B8%D1%81%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D0%B8)
+  - [Запуск через Kubernetes](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-kubernetes)
   - [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
   - [Настройка Doctrine и базы данных](#%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-doctrine-%D0%B8-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85)
   - [API Documentation](#api-documentation-1)
@@ -547,6 +553,13 @@ The notification recipients are administrators resolved by the application, not 
 - MR result (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
 - Product catalog full reindex runbook: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
 
+#### `Task 11`: Run services in Kubernetes and verify horizontal scaling of Symfony/PHP-FPM - planned
+- Brief info: Add Kubernetes as an independent deployment option, scale Auth, Catalog, and Cart separately, and verify the results with k6 and per-Pod monitoring while preserving Docker Compose.
+- Backend Merge Request 11: <https://github.com/ivanserg0692/symfony2026/pull/15>
+- Task file: [symfony/docs/task-11.md](symfony/docs/task-11.md)
+- MR result (EN): [symfony/docs/mr-task-11-en.md](symfony/docs/mr-task-11-en.md)
+- MR result (RU): [symfony/docs/mr-task-11-ru.md](symfony/docs/mr-task-11-ru.md)
+
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
 <https://github.com/ivanserg0692/symfony2026-frontend>
@@ -611,6 +624,25 @@ The export handler uses Symfony Messenger batch handling so several news message
 <!-- plantuml src="symfony/docs/plantuml/news-export/components.puml" alt="News export components" out="symfony/docs/images/plantuml/news-export/components.png" -->
 ![News export components](symfony/docs/images/plantuml/news-export/components.png)
 <!-- /plantuml -->
+
+### External Prerequisites
+
+Install the following tools on the machine where you run the corresponding project commands:
+
+| Tool | Purpose |
+|---|---|
+| Docker | Builds images and runs containers. |
+| Docker Compose | Runs the existing Compose environments. |
+| `kubectl` | Applies Kubernetes resources and manages the Auth JWT Secret. |
+| OpenSSL | Validates the Auth JWT key pair during bootstrap. |
+| `kind` | Required only for the local Kubernetes runtime. |
+| `k3s` | Checked only when the k3s runtime is selected. |
+
+Run `npm run prerequisites:check` after selecting the environment: `set:dev` and `set:load-test` check kind, while the default `prod` configuration checks an existing Kubernetes cluster. Set `K8S_RUNTIME=k3s` in the selected environment configuration when deploying to k3s. The command does not install anything.
+
+### Run With Kubernetes
+
+Kubernetes is an additional deployment option. Compose keeps its bind mounts and existing workflows. Before deploying, synchronize reviewable ConfigMap YAML with `npm run k8s:config:sync` and cluster-only Secrets with `npm run k8s:secrets:sync`. See [Kubernetes deployment](kubernetes/README.md) for image builds, local kind and registry deployments, JWT bootstrap, setup Jobs, reindex, scaling, and the separate Kubernetes monitoring dashboard.
 
 ### Run With Docker Compose
 
@@ -1408,6 +1440,13 @@ docker compose down
 - Результат MR (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
 - Runbook полной переиндексации каталога: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
 
+#### `Task 11`: Запуск сервисов в Kubernetes и проверка горизонтального масштабирования Symfony/PHP-FPM - planned
+- Brief info: Добавить Kubernetes как независимый способ запуска, масштабировать Auth, Catalog и Cart отдельно и проверить результат через k6 и мониторинг каждого Pod, сохранив Docker Compose.
+- Backend Merge Request 11: <https://github.com/ivanserg0692/symfony2026/pull/15>
+- Файл задачи: [symfony/docs/task-11.md](symfony/docs/task-11.md)
+- Результат MR (EN): [symfony/docs/mr-task-11-en.md](symfony/docs/mr-task-11-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-11-ru.md](symfony/docs/mr-task-11-ru.md)
+
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:
 <https://github.com/ivanserg0692/symfony2026-frontend>
@@ -1472,6 +1511,25 @@ Handler экспорта использует batch-обработку Symfony M
 <!-- plantuml src="symfony/docs/plantuml/news-export-ru/components.puml" alt="Компоненты экспорта новостей" out="symfony/docs/images/plantuml/news-export-ru/components.png" -->
 ![Компоненты экспорта новостей](symfony/docs/images/plantuml/news-export-ru/components.png)
 <!-- /plantuml -->
+
+### Внешние зависимости
+
+Установите следующие инструменты на машине, где выполняются соответствующие команды проекта:
+
+| Инструмент | Назначение |
+|---|---|
+| Docker | Собирает образы и запускает контейнеры. |
+| Docker Compose | Запускает существующие Compose-окружения. |
+| `kubectl` | Применяет Kubernetes-ресурсы и управляет JWT Secret Auth. |
+| OpenSSL | Проверяет пару JWT-ключей Auth во время bootstrap. |
+| `kind` | Нужен только для локального Kubernetes runtime. |
+| `k3s` | Проверяется только при выборе k3s runtime. |
+
+Запустите `npm run prerequisites:check` после выбора окружения: `set:dev` и `set:load-test` проверяют kind, а конфигурация `prod` по умолчанию — существующий Kubernetes cluster. Для k3s укажите `K8S_RUNTIME=k3s` в конфигурации выбранного окружения. Команда ничего не устанавливает.
+
+### Запуск через Kubernetes
+
+Kubernetes — дополнительный способ запуска. Compose сохраняет прежние bind mounts и workflows. Перед развёртыванием синхронизируйте проверяемый YAML ConfigMap командой `npm run k8s:config:sync`, а Secret только в кластере командой `npm run k8s:secrets:sync`. Сборка образов, локальный kind и registry-вариант, JWT bootstrap, Jobs, reindex, масштабирование и отдельный Kubernetes dashboard описаны в [инструкции по Kubernetes](kubernetes/README.md).
 
 ### Запуск через Docker Compose
 

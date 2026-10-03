@@ -1,8 +1,18 @@
 {
   "scripts": {
-    "set:prod": "bash -c 'set -a; . ./.env.compose; set +a; unset COMPOSE_PROJECT_NAME COMPOSE_FILE; exec bash -i'",
+    "prerequisites:check": "node scripts/check-prerequisites.mjs",
+    "set:prod": "bash -c 'set -a; . ./.env.compose; set +a; unset COMPOSE_PROJECT_NAME COMPOSE_FILE K8S_RUNTIME K8S_NAMESPACE K8S_IMAGE_PROFILE; exec bash -i'",
     "set:dev": "bash -c 'set -a; . ./.env.compose; . ./.env.dev; set +a; exec bash -i'",
     "set:load-test": "bash -c 'set -a; . ./.env.compose; . ./.env.load_test; set +a; exec bash -i'",
+    "docker:k8s:build": "bash docker/php-symfony-cli/build-k8s-images.sh",
+    "k8s:auth:jwt:bootstrap": "bash docker/php-symfony-cli/k8s/bootstrap-auth-jwt.sh",
+    "k8s:config:sync": "node scripts/k8s-config.mjs",
+    "k8s:cluster:init": "bash scripts/k8s-cluster-init.sh",
+    "k8s:secrets:sync": "node scripts/k8s-secrets.mjs",
+    "k8s:grafana:password": "bash scripts/k8s-grafana-password.sh",
+    "k8s:deploy": "bash scripts/k8s-deploy.sh",
+    "k8s:catalog:reindex": "bash scripts/k8s-catalog-reindex.sh",
+    "k8s:db:fixtures": "bash scripts/k8s-db-fixtures.sh",
     "docker:restart:php": "docker compose restart symfony-cli symfony-web catalog-cli catalog-web catalog-grpc catalog-search-outbox-worker catalog-search-index-worker cart-cli cart-web api-gateway",
     "docker:cache:clear:php": "docker compose exec symfony-cli php -d memory_limit=1G bin/console cache:clear && docker compose exec symfony-cli sh -lc \"rm -rf /workspace/var/cache/* && chown -R ${PHP_RUNTIME_USER:-www-data}:${PHP_RUNTIME_USER:-www-data} /workspace/var\" && docker compose exec catalog-cli php -d memory_limit=1G bin/console cache:clear && docker compose exec catalog-cli sh -lc \"rm -rf /workspace/var/cache/* && chown -R ${PHP_RUNTIME_USER:-www-data}:${PHP_RUNTIME_USER:-www-data} /workspace/var\" && docker compose exec cart-cli php -d memory_limit=1G bin/console cache:clear && docker compose exec cart-cli sh -lc \"rm -rf /workspace/var/cache/* && chown -R ${PHP_RUNTIME_USER:-www-data}:${PHP_RUNTIME_USER:-www-data} /workspace/var\" && npm run docker:restart:php",
     "docker:recreate": "docker compose up -d --force-recreate",
@@ -20,7 +30,7 @@
     "db:init": "bash scripts/db-init.sh",
     "gateway:generate": "node scripts/generate-api-gateway.mjs",
     "readme:api": "node scripts/readme-api-table.mjs README.md",
-    "readme:toc": "doctoc README.md grpc-contracts/README.md TESTING.md catalog-service/docs/elasticsearch-reindex.md catalog-service/docs/entities-summary-en.md catalog-service/docs/entities-summary-ru.md symfony/docs/catalog-service-tables-en.md symfony/docs/catalog-service-tables-ru.md symfony/docs/php-multi-stage-build.md symfony/docs/mr-task-2.md symfony/docs/mr-task-3-en.md symfony/docs/mr-task-3-ru.md symfony/docs/mr-task-4-en.md symfony/docs/mr-task-4-ru.md symfony/docs/mr-task-5-en.md symfony/docs/mr-task-5-ru.md symfony/docs/mr-task-6-en.md symfony/docs/mr-task-6-ru.md symfony/docs/mr-task-7.2-en.md symfony/docs/mr-task-7.2-ru.md symfony/docs/mr-task-8-en.md symfony/docs/mr-task-8-ru.md symfony/docs/mr-task-9-en.md symfony/docs/mr-task-9-ru.md symfony/docs/mr-task-10-en.md symfony/docs/mr-task-10-ru.md symfony/docs/task-1.md symfony/docs/task-2.md symfony/docs/task-3.md symfony/docs/task-4.md symfony/docs/task-5.md symfony/docs/task-6.md symfony/docs/task-7.md symfony/docs/task-7-1.md symfony/docs/task-7.2.md symfony/docs/task-7.3.md symfony/docs/task-8.md symfony/docs/task-9.md symfony/docs/task-10.md",
+    "readme:toc": "doctoc README.md kubernetes/README.md grpc-contracts/README.md TESTING.md catalog-service/docs/elasticsearch-reindex.md catalog-service/docs/entities-summary-en.md catalog-service/docs/entities-summary-ru.md symfony/docs/catalog-service-tables-en.md symfony/docs/catalog-service-tables-ru.md symfony/docs/php-multi-stage-build.md symfony/docs/mr-task-2.md symfony/docs/mr-task-3-en.md symfony/docs/mr-task-3-ru.md symfony/docs/mr-task-4-en.md symfony/docs/mr-task-4-ru.md symfony/docs/mr-task-5-en.md symfony/docs/mr-task-5-ru.md symfony/docs/mr-task-6-en.md symfony/docs/mr-task-6-ru.md symfony/docs/mr-task-7.2-en.md symfony/docs/mr-task-7.2-ru.md symfony/docs/mr-task-8-en.md symfony/docs/mr-task-8-ru.md symfony/docs/mr-task-9-en.md symfony/docs/mr-task-9-ru.md symfony/docs/mr-task-10-en.md symfony/docs/mr-task-10-ru.md symfony/docs/mr-task-11-en.md symfony/docs/mr-task-11-ru.md symfony/docs/task-1.md symfony/docs/task-2.md symfony/docs/task-3.md symfony/docs/task-4.md symfony/docs/task-5.md symfony/docs/task-6.md symfony/docs/task-7.md symfony/docs/task-7-1.md symfony/docs/task-7.2.md symfony/docs/task-7.3.md symfony/docs/task-8.md symfony/docs/task-9.md symfony/docs/task-10.md symfony/docs/task-11.md",
     "readme:update": "npm run gateway:generate && npm run readme:api && npm run docs:plantuml && npm run readme:toc",
     "docs:plantuml": "node scripts/render-plantuml.mjs README.md symfony/docs"
   },

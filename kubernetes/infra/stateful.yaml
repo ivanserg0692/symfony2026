@@ -1,0 +1,345 @@
+apiVersion: v1
+kind: Service
+metadata: {name: database}
+spec: {selector: {app: database}, ports: [{name: postgres, port: 5432}]}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: database}
+spec:
+  serviceName: database
+  replicas: 1
+  selector: {matchLabels: {app: database}}
+  template:
+    metadata: {labels: {app: database}}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          command: [sh, -ec]
+          args: ['exec docker-entrypoint.sh postgres -c "max_connections=$POSTGRES_MAX_CONNECTIONS"']
+          ports: [{name: postgres, containerPort: 5432}]
+          env:
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: postgres-capacity, key: AUTH_POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_DB, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_DB}}}
+            - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_USER}}}
+            - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_PASSWORD}}}
+          volumeMounts: [{name: data, mountPath: /var/lib/postgresql/data}]
+          readinessProbe: {exec: {command: [sh, -c, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']}, periodSeconds: 5}
+          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 1Gi}}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 5Gi}}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: catalog-db}
+spec: {selector: {app: catalog-db}, ports: [{name: postgres, port: 5432}]}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: catalog-db}
+spec:
+  serviceName: catalog-db
+  replicas: 1
+  selector: {matchLabels: {app: catalog-db}}
+  template:
+    metadata: {labels: {app: catalog-db}}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          command: [sh, -ec]
+          args: ['exec docker-entrypoint.sh postgres -c "max_connections=$POSTGRES_MAX_CONNECTIONS"']
+          ports: [{name: postgres, containerPort: 5432}]
+          env:
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: postgres-capacity, key: CATALOG_POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_DB, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_DB}}}
+            - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_USER}}}
+            - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_PASSWORD}}}
+          volumeMounts: [{name: data, mountPath: /var/lib/postgresql/data}]
+          readinessProbe: {exec: {command: [sh, -c, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']}, periodSeconds: 5}
+          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 1Gi}}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 5Gi}}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: cart-db}
+spec: {selector: {app: cart-db}, ports: [{name: postgres, port: 5432}]}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: cart-db}
+spec:
+  serviceName: cart-db
+  replicas: 1
+  selector: {matchLabels: {app: cart-db}}
+  template:
+    metadata: {labels: {app: cart-db}}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          command: [sh, -ec]
+          args: ['exec docker-entrypoint.sh postgres -c "max_connections=$POSTGRES_MAX_CONNECTIONS"']
+          ports: [{name: postgres, containerPort: 5432}]
+          env:
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: postgres-capacity, key: CART_POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_DB, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_DB}}}
+            - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_USER}}}
+            - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_PASSWORD}}}
+          volumeMounts: [{name: data, mountPath: /var/lib/postgresql/data}]
+          readinessProbe: {exec: {command: [sh, -c, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']}, periodSeconds: 5}
+          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 1Gi}}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 5Gi}}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: redis-symfony}
+spec: {selector: {app: redis-symfony}, ports: [{name: redis, port: 6379}]}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: redis-symfony}
+spec:
+  serviceName: redis-symfony
+  replicas: 1
+  selector: {matchLabels: {app: redis-symfony}}
+  template:
+    metadata: {labels: {app: redis-symfony}}
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          args: ["--appendonly", "yes"]
+          ports: [{name: redis, containerPort: 6379}]
+          volumeMounts: [{name: data, mountPath: /data}]
+          readinessProbe: {exec: {command: [redis-cli, ping]}, periodSeconds: 5}
+          resources: {requests: {cpu: 25m, memory: 64Mi}, limits: {memory: 256Mi}}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 1Gi}}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: redis-catalog}
+spec: {selector: {app: redis-catalog}, ports: [{name: redis, port: 6379}]}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: redis-catalog}
+spec:
+  serviceName: redis-catalog
+  replicas: 1
+  selector: {matchLabels: {app: redis-catalog}}
+  template:
+    metadata: {labels: {app: redis-catalog}}
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          args: ["--appendonly", "yes"]
+          ports: [{name: redis, containerPort: 6379}]
+          volumeMounts: [{name: data, mountPath: /data}]
+          readinessProbe: {exec: {command: [redis-cli, ping]}, periodSeconds: 5}
+          resources: {requests: {cpu: 25m, memory: 64Mi}, limits: {memory: 256Mi}}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 1Gi}}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: redis-cart}
+spec: {selector: {app: redis-cart}, ports: [{name: redis, port: 6379}]}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: redis-cart}
+spec:
+  serviceName: redis-cart
+  replicas: 1
+  selector: {matchLabels: {app: redis-cart}}
+  template:
+    metadata: {labels: {app: redis-cart}}
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          args: ["--appendonly", "yes"]
+          ports: [{name: redis, containerPort: 6379}]
+          volumeMounts: [{name: data, mountPath: /data}]
+          readinessProbe: {exec: {command: [redis-cli, ping]}, periodSeconds: 5}
+          resources: {requests: {cpu: 25m, memory: 64Mi}, limits: {memory: 256Mi}}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 1Gi}}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: redis-metrics}
+spec: {selector: {app: redis-metrics}, ports: [{name: redis, port: 6379}]}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: redis-metrics}
+spec:
+  serviceName: redis-metrics
+  replicas: 1
+  selector: {matchLabels: {app: redis-metrics}}
+  template:
+    metadata: {labels: {app: redis-metrics}}
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          args: ["--appendonly", "yes"]
+          ports: [{name: redis, containerPort: 6379}]
+          volumeMounts: [{name: data, mountPath: /data}]
+          readinessProbe: {exec: {command: [redis-cli, ping]}, periodSeconds: 5}
+          resources: {requests: {cpu: 25m, memory: 64Mi}, limits: {memory: 256Mi}}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 1Gi}}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: rabbitmq}
+spec: {selector: {app: rabbitmq}, ports: [{name: amqp, port: 5672}, {name: management, port: 15672}]}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: rabbitmq}
+spec:
+  serviceName: rabbitmq
+  replicas: 1
+  selector: {matchLabels: {app: rabbitmq}}
+  template:
+    metadata: {labels: {app: rabbitmq}}
+    spec:
+      securityContext: {fsGroup: 999}
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:4-management
+          env:
+            - {name: RABBITMQ_DEFAULT_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: RABBITMQ_DEFAULT_USER}}}
+            - {name: RABBITMQ_DEFAULT_PASS, valueFrom: {secretKeyRef: {name: infra-config-secret, key: RABBITMQ_DEFAULT_PASS}}}
+          ports: [{name: amqp, containerPort: 5672}, {name: management, containerPort: 15672}]
+          volumeMounts: [{name: data, mountPath: /var/lib/rabbitmq}]
+          readinessProbe: {tcpSocket: {port: amqp}, periodSeconds: 10}
+          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 1Gi}}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 2Gi}}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: elasticsearch}
+spec: {selector: {app: elasticsearch}, ports: [{name: http, port: 9200}]}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: elasticsearch}
+spec:
+  serviceName: elasticsearch
+  replicas: 1
+  selector: {matchLabels: {app: elasticsearch}}
+  template:
+    metadata: {labels: {app: elasticsearch}}
+    spec:
+      securityContext: {fsGroup: 1000}
+      containers:
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch:9.5.2
+          args: [elasticsearch, '-Ediscovery.type=single-node', '-Enode.store.allow_mmap=false', '-Expack.security.enabled=true', '-Expack.license.self_generated.type=basic']
+          env:
+            - {name: ELASTIC_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: ELASTIC_PASSWORD}}}
+            - {name: ES_JAVA_OPTS, value: '-Xms1g -Xmx1g'}
+          ports: [{name: http, containerPort: 9200}]
+          volumeMounts: [{name: data, mountPath: /usr/share/elasticsearch/data}]
+          startupProbe: {tcpSocket: {port: 9200}, periodSeconds: 10, failureThreshold: 30}
+          readinessProbe: {tcpSocket: {port: 9200}, periodSeconds: 10}
+          resources: {requests: {cpu: 250m, memory: 1536Mi}, limits: {memory: 2Gi}}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 5Gi}}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: minio}
+spec: {selector: {app: minio}, ports: [{name: s3, port: 9000}, {name: console, port: 9001}]}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: minio}
+spec:
+  serviceName: minio
+  replicas: 1
+  selector: {matchLabels: {app: minio}}
+  template:
+    metadata: {labels: {app: minio}}
+    spec:
+      containers:
+        - name: minio
+          image: symfony-minio:k8s
+          imagePullPolicy: IfNotPresent
+          args: [server, /data, --console-address, ':9001']
+          env:
+            - {name: MINIO_ROOT_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: MINIO_ROOT_USER}}}
+            - {name: MINIO_ROOT_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: MINIO_ROOT_PASSWORD}}}
+          ports: [{name: s3, containerPort: 9000}, {name: console, containerPort: 9001}]
+          volumeMounts: [{name: data, mountPath: /data}]
+          readinessProbe: {httpGet: {path: /minio/health/ready, port: 9000}, periodSeconds: 10}
+          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 1Gi}}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 5Gi}}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: mailpit}
+spec: {selector: {app: mailpit}, ports: [{name: smtp, port: 1025}, {name: http, port: 8025}]}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: mailpit}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: mailpit}}
+  template:
+    metadata: {labels: {app: mailpit}}
+    spec:
+      containers:
+        - name: mailpit
+          image: axllent/mailpit:latest
+          args: [--smtp-max-recipients, "1000"]
+          ports: [{name: smtp, containerPort: 1025}, {name: http, containerPort: 8025}]
+          resources: {requests: {cpu: 10m, memory: 32Mi}, limits: {memory: 256Mi}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: kibana}
+spec: {selector: {app: kibana}, ports: [{name: http, port: 5601}]}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: kibana}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: kibana}}
+  template:
+    metadata: {labels: {app: kibana}}
+    spec:
+      containers:
+        - name: kibana
+          image: docker.elastic.co/kibana/kibana:9.5.2
+          env:
+            - {name: ELASTICSEARCH_HOSTS, value: '["http://elasticsearch:9200"]'}
+            - {name: ELASTICSEARCH_USERNAME, value: kibana_system}
+            - {name: ELASTICSEARCH_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: KIBANA_PASSWORD}}}
+          ports: [{name: http, containerPort: 5601}]
+          startupProbe: {tcpSocket: {port: 5601}, periodSeconds: 10, failureThreshold: 30}
+          resources: {requests: {cpu: 100m, memory: 512Mi}, limits: {memory: 2Gi}}

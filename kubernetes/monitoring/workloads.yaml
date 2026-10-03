@@ -1,0 +1,159 @@
+apiVersion: v1
+kind: Namespace
+metadata: {name: monitoring}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: metrics-reader, namespace: monitoring}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata: {name: symfony2026-metrics-reader}
+rules:
+  - apiGroups: ['']
+    resources: [nodes, nodes/proxy, pods, services, endpoints, namespaces]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments, replicasets, statefulsets, daemonsets]
+    verbs: [get, list, watch]
+  - apiGroups: [discovery.k8s.io]
+    resources: [endpointslices]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: {name: symfony2026-metrics-reader}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: symfony2026-metrics-reader}
+subjects: [{kind: ServiceAccount, name: metrics-reader, namespace: monitoring}]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: {name: prometheus-data, namespace: monitoring}
+spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 5Gi}}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: prometheus, namespace: monitoring}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: prometheus}}
+  template:
+    metadata: {labels: {app: prometheus}}
+    spec:
+      serviceAccountName: metrics-reader
+      securityContext: {fsGroup: 65534}
+      containers:
+        - name: prometheus
+          image: symfony-prometheus:k8s
+          args: [--config.file=/tmp/prometheus.yml, --storage.tsdb.retention.time=7d, --storage.tsdb.path=/prometheus]
+          env: [{name: APP_NAMESPACE, value: __APP_NAMESPACE__}]
+          ports: [{name: http, containerPort: 9090}]
+          volumeMounts:
+            - {name: data, mountPath: /prometheus}
+          readinessProbe: {httpGet: {path: /-/ready, port: 9090}, periodSeconds: 10}
+          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 1Gi}}
+      volumes:
+        - {name: data, persistentVolumeClaim: {claimName: prometheus-data}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: prometheus, namespace: monitoring}
+spec: {selector: {app: prometheus}, ports: [{name: http, port: 9090}]}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: kube-state-metrics, namespace: monitoring}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: kube-state-metrics}}
+  template:
+    metadata: {labels: {app: kube-state-metrics}}
+    spec:
+      serviceAccountName: metrics-reader
+      containers:
+        - name: kube-state-metrics
+          image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.15.0
+          args: ['--metric-labels-allowlist=pods=[service,component]']
+          ports: [{name: metrics, containerPort: 8080}]
+          resources: {requests: {cpu: 25m, memory: 64Mi}, limits: {memory: 256Mi}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: kube-state-metrics, namespace: monitoring}
+spec: {selector: {app: kube-state-metrics}, ports: [{name: metrics, port: 8080}]}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata: {name: node-exporter, namespace: monitoring}
+spec:
+  selector: {matchLabels: {app: node-exporter}}
+  template:
+    metadata: {labels: {app: node-exporter}}
+    spec:
+      containers:
+        - name: node-exporter
+          image: prom/node-exporter:latest
+          args: [--path.rootfs=/host]
+          ports: [{name: metrics, containerPort: 9100}]
+          volumeMounts: [{name: root, mountPath: /host, readOnly: true}]
+          resources: {requests: {cpu: 10m, memory: 32Mi}, limits: {memory: 128Mi}}
+      volumes: [{name: root, hostPath: {path: /, type: Directory}}]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: {name: grafana-data, namespace: monitoring}
+spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 2Gi}}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: grafana, namespace: monitoring}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: grafana}}
+  template:
+    metadata: {labels: {app: grafana}}
+    spec:
+      securityContext: {fsGroup: 472}
+      containers:
+        - name: grafana
+          image: symfony-grafana:k8s
+          env:
+            - {name: GF_RENDERING_SERVER_URL, value: 'http://grafana-image-renderer.monitoring.svc.cluster.local:8081/render'}
+            - {name: GF_RENDERING_CALLBACK_URL, value: 'http://grafana.monitoring.svc.cluster.local:3000/'}
+            - {name: GF_RENDERING_RENDERER_TOKEN, valueFrom: {secretKeyRef: {name: grafana-config-secret, key: renderer-token}}}
+            - {name: GF_SECURITY_ADMIN_PASSWORD, valueFrom: {secretKeyRef: {name: grafana-config-secret, key: admin-password}}}
+          ports: [{name: http, containerPort: 3000}]
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/grafana}
+          readinessProbe: {httpGet: {path: /api/health, port: 3000}, periodSeconds: 10}
+          resources: {requests: {cpu: 50m, memory: 128Mi}, limits: {memory: 1Gi}}
+      volumes:
+        - {name: data, persistentVolumeClaim: {claimName: grafana-data}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: grafana, namespace: monitoring}
+spec: {selector: {app: grafana}, ports: [{name: http, port: 3000}]}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: grafana-image-renderer, namespace: monitoring}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: grafana-image-renderer}}
+  template:
+    metadata: {labels: {app: grafana-image-renderer}}
+    spec:
+      containers:
+        - name: renderer
+          image: grafana/grafana-image-renderer:latest
+          env: [{name: AUTH_TOKEN, valueFrom: {secretKeyRef: {name: grafana-config-secret, key: renderer-token}}}]
+          ports: [{name: http, containerPort: 8081}]
+          resources: {requests: {cpu: 50m, memory: 128Mi}, limits: {memory: 512Mi}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: grafana-image-renderer, namespace: monitoring}
+spec: {selector: {app: grafana-image-renderer}, ports: [{name: http, port: 8081}]}

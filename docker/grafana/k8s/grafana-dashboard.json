@@ -1,0 +1,367 @@
+{
+  "uid": "symfony2026-kubernetes",
+  "title": "Symfony services / Kubernetes",
+  "schemaVersion": 39,
+  "version": 2,
+  "refresh": "10s",
+  "timezone": "browser",
+  "tags": [
+    "kubernetes",
+    "symfony",
+    "php-fpm"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "namespace",
+        "label": "Namespace",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(phpfpm_active_processes, namespace)",
+        "refresh": 1,
+        "sort": 1
+      },
+      {
+        "name": "service",
+        "label": "Service",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(phpfpm_active_processes{namespace=\"$namespace\"}, service)",
+        "refresh": 1,
+        "sort": 1,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "PHP-FPM active processes by Pod",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "phpfpm_active_processes{namespace=\"$namespace\",service=~\"${service:regex}\"}",
+          "legendFormat": "{{service}} / {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "PHP-FPM idle processes by Pod",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "phpfpm_idle_processes{namespace=\"$namespace\",service=~\"${service:regex}\"}",
+          "legendFormat": "{{service}} / {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "PHP-FPM listen queue by Pod",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "phpfpm_listen_queue{namespace=\"$namespace\",service=~\"${service:regex}\"}",
+          "legendFormat": "{{service}} / {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "PHP-FPM listen queue SUM / MAX",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (service) (phpfpm_listen_queue{namespace=\"$namespace\",service=~\"${service:regex}\"})",
+          "legendFormat": "{{service}} SUM"
+        },
+        {
+          "refId": "B",
+          "expr": "max by (service) (phpfpm_listen_queue{namespace=\"$namespace\",service=~\"${service:regex}\"})",
+          "legendFormat": "{{service}} MAX"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "CPU cores by Pod",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (label_service, pod) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${service:regex}\",label_component=\"http\"})",
+          "legendFormat": "{{label_service}} / {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "CPU cores for service",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (label_service) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${service:regex}\",label_component=\"http\"})",
+          "legendFormat": "{{label_service}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "RAM bytes by Pod",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (label_service, pod) (container_memory_working_set_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${service:regex}\",label_component=\"http\"})",
+          "legendFormat": "{{label_service}} / {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "RAM bytes for service",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (label_service) (container_memory_working_set_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${service:regex}\",label_component=\"http\"})",
+          "legendFormat": "{{label_service}}"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "HTTP Pods: running / ready",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (label_service) (kube_pod_status_phase{namespace=\"$namespace\",phase=\"Running\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${service:regex}\",label_component=\"http\"})",
+          "legendFormat": "{{label_service}} running"
+        },
+        {
+          "refId": "B",
+          "expr": "sum by (label_service) (kube_pod_status_ready{namespace=\"$namespace\",condition=\"true\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${service:regex}\",label_component=\"http\"})",
+          "legendFormat": "{{label_service}} ready"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Pod lifecycle",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kube_pod_status_ready{namespace=\"$namespace\",condition=\"true\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${service:regex}\",label_component=\"http\"}",
+          "legendFormat": "{{label_service}} / {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Top 15 Pods by CPU (all namespaces)",
+      "description": "CPU usage in cores across all Kubernetes namespaces, including monitoring and system Pods. This panel is independent of the namespace and service filters.",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(15, sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\"}[5m])))",
+          "legendFormat": "{{namespace}} / {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Memory usage / limit by service",
+      "description": "Ratio of summed cAdvisor container memory usage to summed configured memory limits across all observed Pods of each selected service (HTTP, worker and gRPC). Only containers with a positive memory limit are counted. Independent of the Pod filter.",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 48,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (label_service) ((container_memory_usage_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"} and on(namespace,pod,container) (kube_pod_container_resource_limits{namespace=\"$namespace\",resource=\"memory\",unit=\"byte\"} > 0)) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${service:regex}\"}) / sum by (label_service) (((kube_pod_container_resource_limits{namespace=\"$namespace\",resource=\"memory\",unit=\"byte\"} > 0) and on(namespace,pod,container) container_memory_usage_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"}) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${service:regex}\"}) * 100",
+          "legendFormat": "{{label_service}}",
+          "datasource": "Prometheus"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Memory usage / limit by Pod (all namespaces)",
+      "description": "Ratio of cAdvisor container memory usage to configured memory limits for each Pod, including monitoring/Grafana. Only containers with a positive memory limit are counted. Independent of namespace, service and Pod filters.",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 48,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (namespace,pod) (container_memory_usage_bytes{container!=\"\",container!=\"POD\"} and on(namespace,pod,container) (kube_pod_container_resource_limits{resource=\"memory\",unit=\"byte\"} > 0)) / sum by (namespace,pod) ((kube_pod_container_resource_limits{resource=\"memory\",unit=\"byte\"} > 0) and on(namespace,pod,container) container_memory_usage_bytes{container!=\"\",container!=\"POD\"}) * 100",
+          "legendFormat": "{{namespace}} / {{pod}}",
+          "datasource": "Prometheus"
+        }
+      ]
+    }
+  ]
+}
