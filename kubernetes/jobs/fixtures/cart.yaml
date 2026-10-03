@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata: {name: cart-fixtures}
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 7200
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: fixtures
+          image: symfony-cart:k8s
+          imagePullPolicy: IfNotPresent
+          command: [php, -d, memory_limit=1G, bin/console, doctrine:fixtures:load, --no-interaction, --no-debug]
+          envFrom: [{configMapRef: {name: cart-config}}, {secretRef: {name: cart-config-secret}}]
+          resources: {requests: {cpu: 250m, memory: 1Gi}, limits: {memory: 2Gi}}
