@@ -9,6 +9,7 @@
     "k8s:config:sync": "node scripts/k8s-config.mjs",
     "k8s:cluster:init": "bash scripts/k8s-cluster-init.sh",
     "k8s:secrets:sync": "node scripts/k8s-secrets.mjs",
+    "k8s:grafana:password": "bash scripts/k8s-grafana-password.sh",
     "k8s:deploy": "bash scripts/k8s-deploy.sh",
     "k8s:catalog:reindex": "bash scripts/k8s-catalog-reindex.sh",
     "k8s:db:fixtures": "bash scripts/k8s-db-fixtures.sh",
