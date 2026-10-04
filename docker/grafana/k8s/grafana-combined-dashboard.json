@@ -135,8 +135,8 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "query": "label_values(pg_database_size_bytes{job=\"postgres\",instance=~\"${dbInstances:regex}\"}, datname)",
-        "definition": "label_values(pg_database_size_bytes{job=\"postgres\",instance=~\"${dbInstances:regex}\"}, datname)",
+        "query": "label_values(pg_database_size_bytes{job=\"postgres\",instance=~`${dbInstances:regex}`}, datname)",
+        "definition": "label_values(pg_database_size_bytes{job=\"postgres\",instance=~`${dbInstances:regex}`}, datname)",
         "refresh": 1,
         "sort": 1,
         "multi": true,
@@ -4623,7 +4623,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (instance, datname) (\n    rate(pg_stat_database_active_time_seconds_total{job=\"postgres\",instance=~\"${dbInstances:regex}\", datname=~\"${dbNames:regex}\"}[5m])\n  )\n  /\n  clamp_min(\n    sum by (instance, datname) (\n      rate(pg_stat_database_tup_inserted{job=\"postgres\",instance=~\"${dbInstances:regex}\", datname=~\"${dbNames:regex}\"}[5m])\n    +\n      rate(pg_stat_database_tup_updated{job=\"postgres\",instance=~\"${dbInstances:regex}\", datname=~\"${dbNames:regex}\"}[5m])\n    +\n      rate(pg_stat_database_tup_deleted{job=\"postgres\",instance=~\"${dbInstances:regex}\", datname=~\"${dbNames:regex}\"}[5m])\n    +\n      rate(pg_stat_database_tup_fetched{job=\"postgres\",instance=~\"${dbInstances:regex}\", datname=~\"${dbNames:regex}\"}[5m])\n    ),\n    0.000000001\n  )",
+          "expr": "sum by (instance, datname) (\n    rate(pg_stat_database_active_time_seconds_total{job=\"postgres\",instance=~`${dbInstances:regex}`, datname=~`${dbNames:regex}`}[5m])\n  )\n  /\n  clamp_min(\n    sum by (instance, datname) (\n      rate(pg_stat_database_tup_inserted{job=\"postgres\",instance=~`${dbInstances:regex}`, datname=~`${dbNames:regex}`}[5m])\n    +\n      rate(pg_stat_database_tup_updated{job=\"postgres\",instance=~`${dbInstances:regex}`, datname=~`${dbNames:regex}`}[5m])\n    +\n      rate(pg_stat_database_tup_deleted{job=\"postgres\",instance=~`${dbInstances:regex}`, datname=~`${dbNames:regex}`}[5m])\n    +\n      rate(pg_stat_database_tup_fetched{job=\"postgres\",instance=~`${dbInstances:regex}`, datname=~`${dbNames:regex}`}[5m])\n    ),\n    0.000000001\n  )",
           "legendFormat": "{{instance}}:{{datname}}",
           "range": true,
           "refId": "A",
@@ -4727,7 +4727,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (instance, datname, operation) (\n    label_replace(rate(pg_stat_database_tup_inserted{job=\"postgres\",instance=~\"${dbInstances:regex}\", datname=~\"${dbNames:regex}\"}[5m]), \"operation\", \"inserted\", \"__name__\", \".*\")\n  )\n  or\n  sum by (instance, datname, operation) (\n    label_replace(rate(pg_stat_database_tup_updated{job=\"postgres\",instance=~\"${dbInstances:regex}\", datname=~\"${dbNames:regex}\"}[5m]), \"operation\", \"updated\", \"__name__\", \".*\")\n  )\n  or\n  sum by (instance, datname, operation) (\n    label_replace(rate(pg_stat_database_tup_deleted{job=\"postgres\",instance=~\"${dbInstances:regex}\", datname=~\"${dbNames:regex}\"}[5m]), \"operation\", \"deleted\", \"__name__\", \".*\")\n  )\n  or\n  sum by (instance, datname, operation) (\n    label_replace(rate(pg_stat_database_tup_fetched{job=\"postgres\",instance=~\"${dbInstances:regex}\", datname=~\"${dbNames:regex}\"}[5m]), \"operation\", \"fetched\", \"__name__\", \".*\")\n  )\n  or\n  sum by (instance, datname, operation) (\n    label_replace(rate(pg_stat_database_tup_returned{job=\"postgres\",instance=~\"${dbInstances:regex}\", datname=~\"${dbNames:regex}\"}[5m]), \"operation\", \"returned\", \"__name__\", \".*\")\n  )",
+          "expr": "sum by (instance, datname, operation) (\n    label_replace(rate(pg_stat_database_tup_inserted{job=\"postgres\",instance=~`${dbInstances:regex}`, datname=~`${dbNames:regex}`}[5m]), \"operation\", \"inserted\", \"__name__\", \".*\")\n  )\n  or\n  sum by (instance, datname, operation) (\n    label_replace(rate(pg_stat_database_tup_updated{job=\"postgres\",instance=~`${dbInstances:regex}`, datname=~`${dbNames:regex}`}[5m]), \"operation\", \"updated\", \"__name__\", \".*\")\n  )\n  or\n  sum by (instance, datname, operation) (\n    label_replace(rate(pg_stat_database_tup_deleted{job=\"postgres\",instance=~`${dbInstances:regex}`, datname=~`${dbNames:regex}`}[5m]), \"operation\", \"deleted\", \"__name__\", \".*\")\n  )\n  or\n  sum by (instance, datname, operation) (\n    label_replace(rate(pg_stat_database_tup_fetched{job=\"postgres\",instance=~`${dbInstances:regex}`, datname=~`${dbNames:regex}`}[5m]), \"operation\", \"fetched\", \"__name__\", \".*\")\n  )\n  or\n  sum by (instance, datname, operation) (\n    label_replace(rate(pg_stat_database_tup_returned{job=\"postgres\",instance=~`${dbInstances:regex}`, datname=~`${dbNames:regex}`}[5m]), \"operation\", \"returned\", \"__name__\", \".*\")\n  )",
           "legendFormat": "{{operation}}:{{instance}}@{{datname}}",
           "range": true,
           "refId": "A",
@@ -5063,7 +5063,15 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "min": 0
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 35,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          }
         }
       },
       "targets": [
@@ -5171,6 +5179,56 @@
           "refId": "A",
           "expr": "sum by (namespace,pod) (container_memory_usage_bytes{container!=\"\",container!=\"POD\"} and on(namespace,pod,container) (kube_pod_container_resource_limits{resource=\"memory\",unit=\"byte\"} > 0)) / sum by (namespace,pod) ((kube_pod_container_resource_limits{resource=\"memory\",unit=\"byte\"} > 0) and on(namespace,pod,container) container_memory_usage_bytes{container!=\"\",container!=\"POD\"}) * 100",
           "legendFormat": "{{namespace}} / {{pod}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 1104,
+      "title": "Memory usage / limit by service and container",
+      "description": "Ratio of cAdvisor container memory usage to configured memory limits, aggregated across Pods by application service and container type. Only containers with a positive memory limit are counted.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 180,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (label_service, container) ((container_memory_usage_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"} and on(namespace,pod,container) (kube_pod_container_resource_limits{namespace=\"$namespace\",resource=\"memory\",unit=\"byte\"} > 0)) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${services:regex}\"}) / sum by (label_service, container) (((kube_pod_container_resource_limits{namespace=\"$namespace\",resource=\"memory\",unit=\"byte\"} > 0) and on(namespace,pod,container) container_memory_usage_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"}) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${services:regex}\"}) * 100",
+          "legendFormat": "{{label_service}} / {{container}}",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"

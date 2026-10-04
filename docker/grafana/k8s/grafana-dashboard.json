@@ -264,7 +264,15 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "min": 0
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 35,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          }
         }
       },
       "targets": [
@@ -359,6 +367,50 @@
           "refId": "A",
           "expr": "sum by (namespace,pod) (container_memory_usage_bytes{container!=\"\",container!=\"POD\"} and on(namespace,pod,container) (kube_pod_container_resource_limits{resource=\"memory\",unit=\"byte\"} > 0)) / sum by (namespace,pod) ((kube_pod_container_resource_limits{resource=\"memory\",unit=\"byte\"} > 0) and on(namespace,pod,container) container_memory_usage_bytes{container!=\"\",container!=\"POD\"}) * 100",
           "legendFormat": "{{namespace}} / {{pod}}",
+          "datasource": "Prometheus"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Memory usage / limit by service and container",
+      "description": "Ratio of cAdvisor container memory usage to configured memory limits, aggregated across Pods by application service and container type. Only containers with a positive memory limit are counted.",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 56,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (label_service, container) ((container_memory_usage_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"} and on(namespace,pod,container) (kube_pod_container_resource_limits{namespace=\"$namespace\",resource=\"memory\",unit=\"byte\"} > 0)) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${service:regex}\"}) / sum by (label_service, container) (((kube_pod_container_resource_limits{namespace=\"$namespace\",resource=\"memory\",unit=\"byte\"} > 0) and on(namespace,pod,container) container_memory_usage_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"}) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${service:regex}\"}) * 100",
+          "legendFormat": "{{label_service}} / {{container}}",
           "datasource": "Prometheus"
         }
       ]
