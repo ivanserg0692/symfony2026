@@ -30,7 +30,7 @@
 
 ### Статус
 
-**Запланирована.**
+**В работе.** Kubernetes-мониторинг и три дашборда добавлены; результаты проверки HPA и сравнения k6-прогонов ещё не зафиксированы.
 
 ### Название
 
@@ -64,7 +64,7 @@
 - Пользовательская сессия stateful части Auth работает при попадании последовательных запросов в разные Pod; JWT-сценарии также работают через разные Pod.
 - Catalog HTTP, gRPC и workers запускаются как отдельные роли. Поведение очередей и индексации сохраняется.
 - Prometheus собирает PHP-FPM metrics отдельно для каждого Pod без смешивания экземпляров. Общие Symfony metrics не учитываются многократно.
-- Для Kubernetes создан отдельный Grafana dashboard с выбором Auth/Catalog/Cart: active/idle PHP-FPM processes и listen queue по Pod, `SUM` и `MAX` очереди по сервису, CPU/RAM по Pod и сервису, число активных и ready Pod и история изменения числа Pod. Запросы используют Kubernetes/Prometheus labels.
+- Для Kubernetes созданы три независимых Grafana dashboard: основной Kubernetes, порт исходного Docker dashboard и объединённый без бессмысленных дублей. Выбор сервиса поддерживает Auth/Catalog/Cart и All. Основной dashboard показывает active/idle PHP-FPM processes и listen queue по Pod, `SUM` и `MAX` очереди по сервису, CPU/RAM по Pod и сервису, число активных и ready Pod и историю изменения числа Pod. Дополнительно доступны Top 15 Pod по CPU и использование памяти относительно лимита по сервису, Pod и паре service/container. Запросы используют Kubernetes/Prometheus labels.
 - Проверены ручное изменение числа Pod и работа HPA под нагрузкой существующих k6-сценариев; зафиксированы RPS, latency, error rate, ресурсы и изменение числа ready Pod.
 
 ### Технический подход
@@ -72,7 +72,7 @@
 1. **Подготовка проекта.** Добавить самодостаточные образы Auth, Catalog и Cart, сохранив существующие Compose targets и bind mounts. Проверить локальное состояние приложений; изменить Symfony-код только там, где без этого несколько реплик работать не могут. Для Auth предусмотреть общее хранилище сессий в Kubernetes (сейчас сессии файловые) при сохранении текущего Compose workflow.
 2. **Bootstrap JWT.** Добавить npm-команду и bootstrap script для первоначального развёртывания. Скрипт использует существующие `private.pem` и `public.pem`, если присутствует полная пара; при их отсутствии запускает существующий `bin/init-jwt` в окружении Symfony-контейнера. `JWT_PASSPHRASE` берётся из текущей конфигурации без интерактивного ввода. Пара ключей и passphrase сохраняются в Kubernetes Secret: ключи монтируются как файлы во все Auth Pod, passphrase передаётся через переменную окружения. Неполная пара считается ошибкой. Существующий Compose JWT workflow не меняется.
 3. **Конфигурация Kubernetes.** Добавить отдельные manifests и bootstrap/deploy scripts для приложений, их ролей, конфигурации, секретов и подключений к общим зависимостям. Не переносить Kubernetes-специфичные настройки в Compose без технической необходимости.
-4. **Мониторинг.** Размещать PHP-FPM exporter рядом с соответствующим PHP-FPM. Сохранить текущий Compose dashboard неизменным и добавить отдельный Kubernetes dashboard. Структуру панелей подготовить заранее; запросы, зависящие от фактических discovery labels, окончательно привязать и проверить после запуска Prometheus в Kubernetes.
+4. **Мониторинг.** Размещать PHP-FPM exporter рядом с соответствующим PHP-FPM. Сохранить Compose dashboard неизменным и поддерживать три отдельных Kubernetes dashboard: основной, порт исходного Compose dashboard и объединённый. Привязать запросы к фактическим discovery labels и проверить их в работающем кластере.
 5. **Масштабирование и измерение.** Проверить несколько Pod каждого HTTP-сервиса, затем настроить HPA и провести сопоставимые k6-прогоны до и после масштабирования.
 
 ### Как тестировать
@@ -88,7 +88,7 @@
 
 ### Примечания
 
-- Первый этап Task 11 ограничен подготовкой образов, bootstrap JWT, сессий, разделением ролей Catalog и мониторинга. Создание Kubernetes manifests, запуск кластера и проверка HPA относятся к следующим этапам.
+- Kubernetes manifests и три dashboard уже добавлены. Подтверждение HPA и сравнение k6-прогонов остаются открытыми пунктами Task 11.
 - VPA, Redis Cluster и PostgreSQL HA не входят в Task 11.
 - Реальные значения секретов не фиксируются в документации или Kubernetes manifests.
 
@@ -96,7 +96,7 @@
 
 ### Status
 
-**Planned.**
+**In progress.** Kubernetes monitoring and three dashboards are present; HPA verification and comparative k6 results have not yet been recorded.
 
 ### Title
 
@@ -125,7 +125,7 @@ Demonstrate that adding Auth, Catalog, or Cart Pods increases the capacity of th
 - All Auth replicas use the same JWT key pair and required secrets; newly created Pods do not regenerate keys. Stateful admin sessions and JWT requests work across replicas.
 - Catalog HTTP, gRPC, and workers run independently without changing queue or indexing behavior.
 - Prometheus exposes separate PHP-FPM metrics per Pod without multiplying shared Symfony metrics.
-- A separate Kubernetes Grafana dashboard provides service selection; PHP-FPM active/idle processes and listen queue per Pod; service-level queue `SUM` and `MAX`; CPU/RAM per Pod and service; active and ready Pod counts; and Pod-count history.
+- Three independent Kubernetes Grafana dashboards are available: the primary Kubernetes dashboard, a port of the original Docker dashboard, and a combined dashboard without redundant panels. Service selection supports Auth/Catalog/Cart and All. The primary dashboard provides PHP-FPM active/idle processes and listen queue per Pod; service-level queue `SUM` and `MAX`; CPU/RAM per Pod and service; active and ready Pod counts; and Pod-count history. Additional panels show the Top 15 Pods by CPU and memory usage relative to limits by service, Pod, and service/container.
 - Manual scaling and HPA are verified under existing k6 workloads, with performance and readiness results recorded.
 
 ### Technical Approach
@@ -133,7 +133,7 @@ Demonstrate that adding Auth, Catalog, or Cart Pods increases the capacity of th
 1. Prepare self-contained service images and resolve confirmed local-state constraints while retaining Compose compatibility.
 2. Add a one-time npm-driven JWT bootstrap: reuse an existing complete key pair or run `bin/init-jwt` using the current `JWT_PASSPHRASE`; create a Kubernetes Secret and mount it into all Auth Pods.
 3. Add separate Kubernetes manifests and deployment scripts for the application roles and their configuration.
-4. Pair each PHP-FPM instance with its exporter. Keep the Compose dashboard unchanged and create a Kubernetes dashboard based on discovery labels; finalize label-dependent queries against the running cluster.
+4. Pair each PHP-FPM instance with its exporter. Keep the Compose dashboard unchanged and maintain three separate Kubernetes dashboards: primary, original dashboard port, and combined. Match queries to actual discovery labels and verify them in the running cluster.
 5. Verify independent manual scaling, configure HPA, and compare k6 runs.
 
 ### How To Test
@@ -149,6 +149,6 @@ Demonstrate that adding Auth, Catalog, or Cart Pods increases the capacity of th
 
 ### Notes
 
-- Stage one prepares images, JWT bootstrap, sessions, Catalog roles, and monitoring. Kubernetes manifests, cluster execution, and HPA validation follow in later stages.
+- Kubernetes manifests and three dashboards are now present. HPA validation and comparative k6 results remain open Task 11 items.
 - VPA, Redis Cluster, and PostgreSQL HA are outside Task 11.
 - Real secret values must not be committed to documentation or manifests.

@@ -36,7 +36,7 @@
     - [`Task 8`: Monitoring and load testing for the online store - completed](#task-8-monitoring-and-load-testing-for-the-online-store---completed)
     - [`Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - completed](#task-9-application-performance-optimization-rps-improvement-and-php-environment-tuning---completed)
     - [`Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - done](#task-10-elasticsearch-catalog-read-model-for-search-filtering-aggregations-and-presets---done)
-    - [`Task 11`: Run services in Kubernetes and verify horizontal scaling of Symfony/PHP-FPM - planned](#task-11-run-services-in-kubernetes-and-verify-horizontal-scaling-of-symfonyphp-fpm---planned)
+    - [`Task 11`: Run services in Kubernetes and verify horizontal scaling of Symfony/PHP-FPM - in progress](#task-11-run-services-in-kubernetes-and-verify-horizontal-scaling-of-symfonyphp-fpm---in-progress)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
   - [Elasticsearch Catalog Indexing](#elasticsearch-catalog-indexing)
@@ -89,7 +89,7 @@
     - [`Task 8`: Мониторинг и нагрузочное тестирование интернет-магазина - completed](#task-8-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0---completed)
     - [`Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - completed](#task-9-%D0%BE%D0%BF%D1%82%D0%B8%D0%BC%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BF%D0%BE%D0%B2%D1%8B%D1%88%D0%B5%D0%BD%D0%B8%D0%B5-rps-%D0%B8-%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-php-%D0%BE%D0%BA%D1%80%D1%83%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F---completed)
     - [`Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - done](#task-10-elasticsearch-read-%D0%BC%D0%BE%D0%B4%D0%B5%D0%BB%D1%8C-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B4%D0%BB%D1%8F-%D0%BF%D0%BE%D0%B8%D1%81%D0%BA%D0%B0-%D1%84%D0%B8%D0%BB%D1%8C%D1%82%D1%80%D0%B0%D1%86%D0%B8%D0%B8-%D0%B0%D0%B3%D1%80%D0%B5%D0%B3%D0%B0%D1%86%D0%B8%D0%B9-%D0%B8-%D0%BF%D1%80%D0%B5%D1%81%D0%B5%D1%82%D0%BE%D0%B2---done)
-    - [`Task 11`: Запуск сервисов в Kubernetes и проверка горизонтального масштабирования Symfony/PHP-FPM - planned](#task-11-%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-%D0%B2-kubernetes-%D0%B8-%D0%BF%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%BA%D0%B0-%D0%B3%D0%BE%D1%80%D0%B8%D0%B7%D0%BE%D0%BD%D1%82%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D0%B3%D0%BE-%D0%BC%D0%B0%D1%81%D1%88%D1%82%D0%B0%D0%B1%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-symfonyphp-fpm---planned)
+    - [`Task 11`: Запуск сервисов в Kubernetes и проверка горизонтального масштабирования Symfony/PHP-FPM - in progress](#task-11-%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-%D0%B2-kubernetes-%D0%B8-%D0%BF%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%BA%D0%B0-%D0%B3%D0%BE%D1%80%D0%B8%D0%B7%D0%BE%D0%BD%D1%82%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D0%B3%D0%BE-%D0%BC%D0%B0%D1%81%D1%88%D1%82%D0%B0%D0%B1%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-symfonyphp-fpm---in-progress)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
   - [Индексация каталога в Elasticsearch](#%D0%B8%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0%D1%86%D0%B8%D1%8F-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B2-elasticsearch)
@@ -553,8 +553,8 @@ The notification recipients are administrators resolved by the application, not 
 - MR result (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
 - Product catalog full reindex runbook: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
 
-#### `Task 11`: Run services in Kubernetes and verify horizontal scaling of Symfony/PHP-FPM - planned
-- Brief info: Add Kubernetes as an independent deployment option, scale Auth, Catalog, and Cart separately, and verify the results with k6 and per-Pod monitoring while preserving Docker Compose.
+#### `Task 11`: Run services in Kubernetes and verify horizontal scaling of Symfony/PHP-FPM - in progress
+- Brief info: Kubernetes is an independent deployment option with three Grafana dashboards and per-Pod monitoring; HPA and comparative k6 results are not yet recorded. Docker Compose and its original dashboard remain separate.
 - Backend Merge Request 11: <https://github.com/ivanserg0692/symfony2026/pull/15>
 - Task file: [symfony/docs/task-11.md](symfony/docs/task-11.md)
 - MR result (EN): [symfony/docs/mr-task-11-en.md](symfony/docs/mr-task-11-en.md)
@@ -642,7 +642,17 @@ Run `npm run prerequisites:check` after selecting the environment: `set:dev` and
 
 ### Run With Kubernetes
 
-Kubernetes is an additional deployment option. Compose keeps its bind mounts and existing workflows. Before deploying, synchronize reviewable ConfigMap YAML with `npm run k8s:config:sync` and cluster-only Secrets with `npm run k8s:secrets:sync`. See [Kubernetes deployment](kubernetes/README.md) for image builds, local kind and registry deployments, JWT bootstrap, setup Jobs, reindex, scaling, and the separate Kubernetes monitoring dashboard.
+Kubernetes is an additional deployment option. Compose keeps its bind mounts and existing workflows. Before deploying, synchronize reviewable ConfigMap YAML with `npm run k8s:config:sync` and cluster-only Secrets with `npm run k8s:secrets:sync`. See [Kubernetes deployment](kubernetes/README.md) for image builds, local kind and registry deployments, JWT bootstrap, setup Jobs, reindex, scaling, and the three independent Kubernetes monitoring dashboards: the primary Kubernetes view, a port of the original Docker dashboard, and a combined view. The Docker dashboard remains separate.
+
+The Kubernetes dashboards let you select Auth, Catalog, Cart, or **All**. PHP-FPM metrics follow individual Pods as replica counts change; application metrics kept in shared Redis are scraped once per service. The screenshots below show the added resource views:
+
+![Kubernetes Grafana: Top 15 Pods by CPU and memory usage relative to limits by service and Pod](<docs/images/new grafana charts.png>)
+
+The stacked CPU graph sums the selected Top 15 Pods across namespaces; it does not represent total cluster CPU. The service memory graph compares each application's total usage with its total memory limit. The Pod graph exposes individual Pods across all namespaces, which helps locate a replica or system Pod approaching its limit.
+
+![Kubernetes Grafana: memory usage relative to limits by service and container](<docs/images/new grafana charts2.png>)
+
+The service/container graph separates, for example, `catalog / grpc` from `catalog / php` and aggregates replicas of each container type. Each percentage is the sum of memory used divided by the sum of positive memory limits for the matching containers. Containers without a positive limit do not appear in this ratio. Follow a sustained increase from the service graph to its container type and then to an individual Pod; use the live Grafana tooltip for exact values. [The Kubernetes monitoring guide](kubernetes/README.md#monitoring) explains the three dashboards and their metrics.
 
 ### Run With Docker Compose
 
@@ -1440,8 +1450,8 @@ docker compose down
 - Результат MR (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
 - Runbook полной переиндексации каталога: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
 
-#### `Task 11`: Запуск сервисов в Kubernetes и проверка горизонтального масштабирования Symfony/PHP-FPM - planned
-- Brief info: Добавить Kubernetes как независимый способ запуска, масштабировать Auth, Catalog и Cart отдельно и проверить результат через k6 и мониторинг каждого Pod, сохранив Docker Compose.
+#### `Task 11`: Запуск сервисов в Kubernetes и проверка горизонтального масштабирования Symfony/PHP-FPM - in progress
+- Brief info: Kubernetes доступен как независимый способ запуска с тремя Grafana dashboard и мониторингом каждого Pod; результаты HPA и сравнительных k6-прогонов ещё не зафиксированы. Docker Compose и его исходный dashboard остаются отдельными.
 - Backend Merge Request 11: <https://github.com/ivanserg0692/symfony2026/pull/15>
 - Файл задачи: [symfony/docs/task-11.md](symfony/docs/task-11.md)
 - Результат MR (EN): [symfony/docs/mr-task-11-en.md](symfony/docs/mr-task-11-en.md)
@@ -1529,7 +1539,17 @@ Handler экспорта использует batch-обработку Symfony M
 
 ### Запуск через Kubernetes
 
-Kubernetes — дополнительный способ запуска. Compose сохраняет прежние bind mounts и workflows. Перед развёртыванием синхронизируйте проверяемый YAML ConfigMap командой `npm run k8s:config:sync`, а Secret только в кластере командой `npm run k8s:secrets:sync`. Сборка образов, локальный kind и registry-вариант, JWT bootstrap, Jobs, reindex, масштабирование и отдельный Kubernetes dashboard описаны в [инструкции по Kubernetes](kubernetes/README.md).
+Kubernetes — дополнительный способ запуска. Compose сохраняет прежние bind mounts и workflows. Перед развёртыванием синхронизируйте проверяемый YAML ConfigMap командой `npm run k8s:config:sync`, а Secret только в кластере командой `npm run k8s:secrets:sync`. Сборка образов, локальный kind и registry-вариант, JWT bootstrap, Jobs, reindex, масштабирование и три независимых Kubernetes dashboard описаны в [инструкции по Kubernetes](kubernetes/README.md). Это основной Kubernetes dashboard, порт исходного Docker dashboard и объединённый dashboard. Исходный Docker dashboard остаётся отдельным.
+
+В Kubernetes dashboard можно выбрать Auth, Catalog, Cart или **All**. Метрики PHP-FPM привязаны к отдельным Pod при изменении числа реплик, а application metrics из общего Redis собираются один раз на сервис. Новые графики ресурсов показаны на скриншотах:
+
+![Grafana Kubernetes: Top 15 Pod по CPU и память относительно лимита по сервису и Pod](<docs/images/new grafana charts.png>)
+
+Stacked-график CPU суммирует нагрузку выбранных Top 15 Pod из всех namespace; это не общая нагрузка всего кластера. График памяти по сервису сравнивает суммарное использование памяти с суммой лимитов этого сервиса. График по Pod показывает отдельные Pod во всех namespace и помогает найти реплику или системный Pod, приближающийся к лимиту.
+
+![Grafana Kubernetes: память относительно лимита по сервису и контейнеру](<docs/images/new grafana charts2.png>)
+
+График по паре service/container показывает отдельно, например, `catalog / grpc` и `catalog / php`, объединяя реплики каждого типа контейнера. Процент равен сумме используемой памяти, делённой на сумму положительных лимитов памяти соответствующих контейнеров. Контейнеры без положительного лимита в расчёт не входят. При устойчивом росте переходите от графика сервиса к типу контейнера и затем к конкретному Pod; точные значения смотрите в tooltip живой Grafana. [Инструкция по мониторингу Kubernetes](kubernetes/README.md#%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3) описывает все три dashboard и источники метрик.
 
 ### Запуск через Docker Compose
 

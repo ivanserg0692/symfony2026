@@ -8,6 +8,7 @@
 - [Verification Plan](#verification-plan)
 - [Out Of Scope](#out-of-scope)
 - [Task](#task)
+- [2026-10-04 — Kubernetes Monitoring Result](#2026-10-04--kubernetes-monitoring-result)
 
 <!-- END doctoc -->
 
@@ -44,3 +45,11 @@ The goal is to run the same project through either Docker Compose or Kubernetes 
 ## Task
 
 Task file: [task-11.md](task-11.md).
+
+## 2026-10-04 — Kubernetes Monitoring Result
+
+The repository now contains three independent Kubernetes Grafana dashboards: [primary](../../docker/grafana/k8s/grafana-dashboard.json), [original dashboard port](../../docker/grafana/k8s/grafana-original-ported-dashboard.json), and [combined](../../docker/grafana/k8s/grafana-combined-dashboard.json). The combined view removes redundant panels while retaining the two source dashboards. The original Docker Compose dashboard remains unchanged.
+
+Each Kubernetes dashboard supports one application service or All. PHP-FPM series identify Pods, while shared application metrics are scraped once per logical service. Added resource views include stacked Top 15 Pods by CPU across namespaces and memory usage as a percentage of limit by service, by Pod across namespaces, and by service/container. The memory ratios use summed usage over summed positive limits for the matching containers; containers without a positive limit are excluded. The CPU stack covers only the selected 15 Pods.
+
+Two screenshots and a reading guide are in the [root README](../../README.md#run-with-kubernetes); dashboard details are in the [Kubernetes monitoring guide](../../kubernetes/README.md#monitoring). HPA verification and comparative k6 results are still not recorded, so Task 11 remains in progress.
