@@ -200,6 +200,8 @@ The production-oriented Docker environment includes Prometheus and Grafana for m
 
 The Grafana dashboard covers request rate, HTTP statuses and errors, p50/p95/p99 latency, CPU and memory usage, filesystem and disk activity, network traffic, and PostgreSQL operations. Its PHP-FPM panel currently visualizes active, idle, and total processes plus the listen queue per service. Load scenarios are executed with k6 against the public API Gateway and include catalog browsing, cart operations, checkout, and mixed traffic.
 
+The machine used as the project's `1.00x` performance reference, its reproducible Phoronix procedure, and the original Sysbench/FIO result files are documented in [Hardware Performance Reference](docs/performance/hardware-benchmark.md).
+
 The project provides three standard runtime profiles. Production is the default Compose environment and uses the `prod` image target with PHP-FPM, Nginx, OPcache, `APP_ENV=prod`, and `APP_DEBUG=0`. Load testing is a dedicated performance-test profile: it uses `.env.load_test` and `docker-compose.load-test.yml`, keeps production-like PHP behavior without development diagnostics, and runs as the isolated `symfony2026-load-test` Compose project. Development is enabled through `.env.dev` and `docker-compose.dev.yml`; it uses the `dev` image target with Symfony CLI, Composer, Xdebug, the Symfony profiler, detailed application logs, `APP_ENV=dev`, and `APP_DEBUG=1`.
 
 ```bash
@@ -1108,6 +1110,8 @@ Product snapshots не отдаются через отдельную публи
 Production-окружение Docker включает Prometheus и Grafana для мониторинга API Gateway, сервисов приложения, баз данных PostgreSQL, пулов PHP-FPM и ресурсов хоста. Метрики собираются через Node Exporter, Nginx VTS Exporter, PostgreSQL Exporter и PHP-FPM Exporter. Для `symfony-web`, `catalog-web` и `cart-web` PHP-FPM Exporter публикует число принятых соединений; active, idle, total и maximum-active processes; текущий и максимальный размер listen queue и его capacity; max-children hits и slow requests; состояние процесса, длительность запроса, CPU, память и число запросов по процессам; uptime, health и scrape failures.
 
 Дашборд Grafana показывает RPS, HTTP-статусы и ошибки, задержки p50/p95/p99, использование CPU и памяти, состояние файловой системы и дисков, сетевой трафик и операции PostgreSQL. PHP-FPM-панель сейчас визуализирует active, idle и total processes, а также listen queue по каждому сервису. Нагрузочные сценарии k6 выполняются через публичный API Gateway и охватывают просмотр каталога, работу с корзиной, оформление заказа и смешанный трафик.
+
+Машина, принятая за performance reference проекта `1.00x`, воспроизводимая процедура Phoronix и оригинальные результаты Sysbench/FIO описаны в документе [Hardware Performance Reference](docs/performance/hardware-benchmark.md).
 
 Проект предоставляет три стандартных runtime-профиля. Production является Compose-окружением по умолчанию и использует image target `prod` с PHP-FPM, Nginx, OPcache, `APP_ENV=prod` и `APP_DEBUG=0`. Для нагрузочного тестирования предусмотрен отдельный performance-test профиль: он использует `.env.load_test` и `docker-compose.load-test.yml`, сохраняет production-like поведение PHP без development-диагностики и запускается как изолированный Compose project `symfony2026-load-test`. Development подключается через `.env.dev` и `docker-compose.dev.yml`; он использует image target `dev` с Symfony CLI, Composer, Xdebug, Symfony profiler, подробными логами приложения, `APP_ENV=dev` и `APP_DEBUG=1`.
 
