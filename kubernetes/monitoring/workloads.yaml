@@ -74,7 +74,7 @@ spec:
       containers:
         - name: kube-state-metrics
           image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.15.0
-          args: ['--metric-labels-allowlist=pods=[service,component]']
+          args: ['--metric-labels-allowlist=pods=[service,component,app]']
           ports: [{name: metrics, containerPort: 8080}]
           resources: {requests: {cpu: 25m, memory: 64Mi}, limits: {memory: 256Mi}}
 ---
@@ -151,7 +151,7 @@ spec:
           image: grafana/grafana-image-renderer:latest
           env: [{name: AUTH_TOKEN, valueFrom: {secretKeyRef: {name: grafana-config-secret, key: renderer-token}}}]
           ports: [{name: http, containerPort: 8081}]
-          resources: {requests: {cpu: 50m, memory: 128Mi}, limits: {memory: 512Mi}}
+          resources: {requests: {cpu: 50m, memory: 128Mi}, limits: {memory: 1Gi}}
 ---
 apiVersion: v1
 kind: Service

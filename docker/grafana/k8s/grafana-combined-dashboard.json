@@ -56,13 +56,18 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "query": "label_values(phpfpm_active_processes{job=\"php-fpm-pods\"}, namespace)",
-        "definition": "label_values(phpfpm_active_processes{job=\"php-fpm-pods\"}, namespace)",
+        "query": "label_values(kube_pod_info, namespace)",
+        "definition": "label_values(kube_pod_info, namespace)",
         "refresh": 1,
         "sort": 1,
-        "multi": false,
-        "includeAll": false,
-        "options": []
+        "multi": true,
+        "includeAll": true,
+        "options": [],
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
       },
       {
         "name": "services",
@@ -72,18 +77,19 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "query": "label_values(phpfpm_active_processes{job=\"php-fpm-pods\",namespace=\"$namespace\"}, service)",
-        "definition": "label_values(phpfpm_active_processes{job=\"php-fpm-pods\",namespace=\"$namespace\"}, service)",
+        "query": "query_result(count by (service) (label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service!=\"\"}, \"service\", \"$1\", \"label_service\", \"(.+)\") or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app!=\"\"}, \"service\", \"$1\", \"label_app\", \"(.+)\")))",
+        "definition": "query_result(count by (service) (label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service!=\"\"}, \"service\", \"$1\", \"label_service\", \"(.+)\") or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app!=\"\"}, \"service\", \"$1\", \"label_app\", \"(.+)\")))",
         "refresh": 1,
         "sort": 1,
         "multi": true,
         "includeAll": true,
-        "allValue": null,
+        "allValue": ".*",
         "current": {
           "text": "All",
           "value": "$__all"
         },
-        "options": []
+        "options": [],
+        "regex": "/service=\"([^\"]+)\"/"
       },
       {
         "name": "pod",
@@ -93,8 +99,8 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "query": "label_values(phpfpm_active_processes{job=\"php-fpm-pods\",namespace=\"$namespace\",service=~\"${services:regex}\"}, pod)",
-        "definition": "label_values(phpfpm_active_processes{job=\"php-fpm-pods\",namespace=\"$namespace\",service=~\"${services:regex}\"}, pod)",
+        "query": "label_values(phpfpm_active_processes{job=\"php-fpm-pods\",namespace=~\"${namespace:regex}\",service=~\"${services:regex}\"}, pod)",
+        "definition": "label_values(phpfpm_active_processes{job=\"php-fpm-pods\",namespace=~\"${namespace:regex}\",service=~\"${services:regex}\"}, pod)",
         "refresh": 1,
         "sort": 1,
         "multi": true,
@@ -572,7 +578,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (service) (phpfpm_active_processes{job=\"php-fpm-pods\",namespace=\"$namespace\",service=~\"${services:regex}\",pod=~\"${pod:regex}\"})",
+          "expr": "sum by (service) (phpfpm_active_processes{job=\"php-fpm-pods\",namespace=~\"${namespace:regex}\",service=~\"${services:regex}\",pod=~\"${pod:regex}\"})",
           "legendFormat": "{{service}} active",
           "range": true,
           "refId": "A",
@@ -583,7 +589,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "sum by (service) (phpfpm_idle_processes{job=\"php-fpm-pods\",namespace=\"$namespace\",service=~\"${services:regex}\",pod=~\"${pod:regex}\"})",
+          "expr": "sum by (service) (phpfpm_idle_processes{job=\"php-fpm-pods\",namespace=~\"${namespace:regex}\",service=~\"${services:regex}\",pod=~\"${pod:regex}\"})",
           "instant": false,
           "legendFormat": "{{service}} idle",
           "range": true,
@@ -595,7 +601,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "sum by (service) (phpfpm_total_processes{job=\"php-fpm-pods\",namespace=\"$namespace\",service=~\"${services:regex}\",pod=~\"${pod:regex}\"})",
+          "expr": "sum by (service) (phpfpm_total_processes{job=\"php-fpm-pods\",namespace=~\"${namespace:regex}\",service=~\"${services:regex}\",pod=~\"${pod:regex}\"})",
           "instant": false,
           "legendFormat": "{{service}} total",
           "range": true,
@@ -607,7 +613,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "sum by (service) (phpfpm_listen_queue{job=\"php-fpm-pods\",namespace=\"$namespace\",service=~\"${services:regex}\",pod=~\"${pod:regex}\"})",
+          "expr": "sum by (service) (phpfpm_listen_queue{job=\"php-fpm-pods\",namespace=~\"${namespace:regex}\",service=~\"${services:regex}\",pod=~\"${pod:regex}\"})",
           "instant": false,
           "legendFormat": "{{service}} listen_queue",
           "range": true,
@@ -4774,7 +4780,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "phpfpm_active_processes{namespace=\"$namespace\",pod=~\"${pod:regex}\",service=~\"${services:regex}\"}",
+          "expr": "phpfpm_active_processes{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",service=~\"${services:regex}\"}",
           "legendFormat": "{{service}} / {{pod}}",
           "datasource": {
             "type": "prometheus",
@@ -4800,7 +4806,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "phpfpm_idle_processes{namespace=\"$namespace\",pod=~\"${pod:regex}\",service=~\"${services:regex}\"}",
+          "expr": "phpfpm_idle_processes{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",service=~\"${services:regex}\"}",
           "legendFormat": "{{service}} / {{pod}}",
           "datasource": {
             "type": "prometheus",
@@ -4826,7 +4832,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "phpfpm_listen_queue{namespace=\"$namespace\",pod=~\"${pod:regex}\",service=~\"${services:regex}\"}",
+          "expr": "phpfpm_listen_queue{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",service=~\"${services:regex}\"}",
           "legendFormat": "{{service}} / {{pod}}",
           "datasource": {
             "type": "prometheus",
@@ -4852,7 +4858,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (service) (phpfpm_listen_queue{namespace=\"$namespace\",pod=~\"${pod:regex}\",service=~\"${services:regex}\"})",
+          "expr": "sum by (service) (phpfpm_listen_queue{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",service=~\"${services:regex}\"})",
           "legendFormat": "{{service}} SUM",
           "datasource": {
             "type": "prometheus",
@@ -4861,7 +4867,7 @@
         },
         {
           "refId": "B",
-          "expr": "max by (service) (phpfpm_listen_queue{namespace=\"$namespace\",pod=~\"${pod:regex}\",service=~\"${services:regex}\"})",
+          "expr": "max by (service) (phpfpm_listen_queue{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",service=~\"${services:regex}\"})",
           "legendFormat": "{{service}} MAX",
           "datasource": {
             "type": "prometheus",
@@ -4887,7 +4893,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (label_service, pod) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
+          "expr": "sum by (label_service, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
           "legendFormat": "{{label_service}} / {{pod}}",
           "datasource": {
             "type": "prometheus",
@@ -4913,7 +4919,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (label_service) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
+          "expr": "sum by (label_service) (rate(container_cpu_usage_seconds_total{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
           "legendFormat": "{{label_service}}",
           "datasource": {
             "type": "prometheus",
@@ -4944,7 +4950,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (label_service, pod) (container_memory_working_set_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
+          "expr": "sum by (label_service, pod) (container_memory_working_set_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
           "legendFormat": "{{label_service}} / {{pod}}",
           "datasource": {
             "type": "prometheus",
@@ -4975,7 +4981,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (label_service) (container_memory_working_set_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
+          "expr": "sum by (label_service) (container_memory_working_set_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
           "legendFormat": "{{label_service}}",
           "datasource": {
             "type": "prometheus",
@@ -5001,7 +5007,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (label_service) (kube_pod_status_phase{namespace=\"$namespace\",phase=\"Running\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
+          "expr": "sum by (label_service) (kube_pod_status_phase{namespace=~\"${namespace:regex}\",phase=\"Running\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
           "legendFormat": "{{label_service}} running",
           "datasource": {
             "type": "prometheus",
@@ -5010,7 +5016,7 @@
         },
         {
           "refId": "B",
-          "expr": "sum by (label_service) (kube_pod_status_ready{namespace=\"$namespace\",condition=\"true\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
+          "expr": "sum by (label_service) (kube_pod_status_ready{namespace=~\"${namespace:regex}\",condition=\"true\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
           "legendFormat": "{{label_service}} ready",
           "datasource": {
             "type": "prometheus",
@@ -5036,7 +5042,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "kube_pod_status_ready{namespace=\"$namespace\",condition=\"true\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"}",
+          "expr": "kube_pod_status_ready{namespace=~\"${namespace:regex}\",condition=\"true\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"}",
           "legendFormat": "{{label_service}} / {{pod}}",
           "datasource": {
             "type": "prometheus",
@@ -5089,7 +5095,7 @@
     {
       "id": 1102,
       "title": "Memory usage / limit by service",
-      "description": "Ratio of summed cAdvisor container memory usage to summed configured memory limits across all observed Pods of each selected service (HTTP, worker and gRPC). Only containers with a positive memory limit are counted. Independent of the Pod filter.",
+      "description": "Ratio of summed cAdvisor container memory usage to summed positive memory limits by namespace and service. Pods with a service label use it; Pods without one are included when they have an app label, including monitoring. Containers without a positive memory limit are excluded. Independent of the Pod filter.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -5127,8 +5133,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (label_service) ((container_memory_usage_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"} and on(namespace,pod,container) (kube_pod_container_resource_limits{namespace=\"$namespace\",resource=\"memory\",unit=\"byte\"} > 0)) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${services:regex}\"}) / sum by (label_service) (((kube_pod_container_resource_limits{namespace=\"$namespace\",resource=\"memory\",unit=\"byte\"} > 0) and on(namespace,pod,container) container_memory_usage_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"}) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${services:regex}\"}) * 100",
-          "legendFormat": "{{label_service}}",
+          "expr": "sum by (namespace, label_service) (((container_memory_usage_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"} and on(namespace,pod,container) (kube_pod_container_resource_limits{namespace=~\"${namespace:regex}\",resource=\"memory\",unit=\"byte\"} > 0)) * on(namespace,pod) group_left(label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\")))) / sum by (namespace, label_service) ((((kube_pod_container_resource_limits{namespace=~\"${namespace:regex}\",resource=\"memory\",unit=\"byte\"} > 0) and on(namespace,pod,container) container_memory_usage_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}) * on(namespace,pod) group_left(label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\")))) * 100",
+          "legendFormat": "{{namespace}} / {{label_service}}",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
@@ -5189,7 +5195,7 @@
     {
       "id": 1104,
       "title": "Memory usage / limit by service and container",
-      "description": "Ratio of cAdvisor container memory usage to configured memory limits, aggregated across Pods by application service and container type. Only containers with a positive memory limit are counted.",
+      "description": "Ratio of summed cAdvisor container memory usage to summed positive memory limits by namespace, service and container type. Pods with a service label use it; Pods without one are included when they have an app label, including monitoring. Replicas of the same service and container type are aggregated; different services and container types remain separate.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -5227,8 +5233,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (label_service, container) ((container_memory_usage_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"} and on(namespace,pod,container) (kube_pod_container_resource_limits{namespace=\"$namespace\",resource=\"memory\",unit=\"byte\"} > 0)) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${services:regex}\"}) / sum by (label_service, container) (((kube_pod_container_resource_limits{namespace=\"$namespace\",resource=\"memory\",unit=\"byte\"} > 0) and on(namespace,pod,container) container_memory_usage_bytes{namespace=\"$namespace\",container!=\"\",container!=\"POD\"}) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=\"$namespace\",label_service=~\"${services:regex}\"}) * 100",
-          "legendFormat": "{{label_service}} / {{container}}",
+          "expr": "sum by (namespace, label_service, container) (((container_memory_usage_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"} and on(namespace,pod,container) (kube_pod_container_resource_limits{namespace=~\"${namespace:regex}\",resource=\"memory\",unit=\"byte\"} > 0)) * on(namespace,pod) group_left(label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\")))) / sum by (namespace, label_service, container) ((((kube_pod_container_resource_limits{namespace=~\"${namespace:regex}\",resource=\"memory\",unit=\"byte\"} > 0) and on(namespace,pod,container) container_memory_usage_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}) * on(namespace,pod) group_left(label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\")))) * 100",
+          "legendFormat": "{{namespace}} / {{label_service}} / {{container}}",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"

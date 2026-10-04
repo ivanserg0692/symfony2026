@@ -644,7 +644,11 @@ Run `npm run prerequisites:check` after selecting the environment: `set:dev` and
 
 Kubernetes is an additional deployment option. Compose keeps its bind mounts and existing workflows. Before deploying, synchronize reviewable ConfigMap YAML with `npm run k8s:config:sync` and cluster-only Secrets with `npm run k8s:secrets:sync`. See [Kubernetes deployment](kubernetes/README.md) for image builds, local kind and registry deployments, JWT bootstrap, setup Jobs, reindex, scaling, and the three independent Kubernetes monitoring dashboards: the primary Kubernetes view, a port of the original Docker dashboard, and a combined view. The Docker dashboard remains separate.
 
-The Kubernetes dashboards let you select Auth, Catalog, Cart, or **All**. PHP-FPM metrics follow individual Pods as replica counts change; application metrics kept in shared Redis are scraped once per service. The screenshots below show the added resource views:
+The Kubernetes dashboards let you select Auth, Catalog, Cart, or **All**. PHP-FPM metrics follow individual Pods as replica counts change; application metrics kept in shared Redis are scraped once per service. The combined dashboard brings application traffic, gateway errors and latency, infrastructure, PostgreSQL, Pod health, CPU, and memory into one view:
+
+![Combined Kubernetes Grafana dashboard with application, infrastructure, database, Pod, CPU, and memory panels](<docs/images/Symfony services _ Kubernetes _ Combined-1791129935393.png>)
+
+The following close-ups show the added resource views:
 
 ![Kubernetes Grafana: Top 15 Pods by CPU and memory usage relative to limits by service and Pod](<docs/images/new grafana charts.png>)
 
@@ -652,7 +656,15 @@ The stacked CPU graph sums the selected Top 15 Pods across namespaces; it does n
 
 ![Kubernetes Grafana: memory usage relative to limits by service and container](<docs/images/new grafana charts2.png>)
 
-The service/container graph separates, for example, `catalog / grpc` from `catalog / php` and aggregates replicas of each container type. Each percentage is the sum of memory used divided by the sum of positive memory limits for the matching containers. Containers without a positive limit do not appear in this ratio. Follow a sustained increase from the service graph to its container type and then to an individual Pod; use the live Grafana tooltip for exact values. [The Kubernetes monitoring guide](kubernetes/README.md#monitoring) explains the three dashboards and their metrics.
+The service/container graph separates, for example, `catalog / nginx` from `catalog / php` and aggregates replicas of each container type. Each percentage is the sum of memory used divided by the sum of positive memory limits for the matching containers. Containers without a positive limit do not appear in this ratio.
+
+| During a demo or k6 run, ask… | Open… | Decide… |
+|---|---|---|
+| Which Pod is using the most CPU? Is one replica different? | **Top 15 Pods by CPU** across namespaces, then **CPU cores by Pod** for the chosen service. | Whether load is shared between replicas or concentrated in one Pod. CPU values are actual cores; the stacked Top 15 is not whole-cluster CPU. |
+| Is the service or a particular container approaching its memory limit? | **Memory usage / limit by service**, then **by service and container**, then **by Pod**. | Whether pressure is shared across replicas or comes from one container type or Pod. The service/container view keeps `catalog / php` and `catalog / nginx` separate. |
+| Are resource settings and horizontal scaling working under load? | Compare CPU cores and memory-limit percentages with configured requests/limits; watch **HTTP Pods: running / ready**, **Pod lifecycle**, and PHP-FPM queue. | Size resources for measured load, then verify that HPA adds ready replicas and they share traffic. The current dashboards do not contain a CPU usage/request or usage/limit ratio panel. |
+
+Start with service-wide symptoms, inspect the container type, and use Pod lines to find an outlier; use the live Grafana tooltip for exact values. [The Kubernetes monitoring guide](kubernetes/README.md#monitoring) explains the queries, aggregation levels, and k6/HPA workflow.
 
 ### Run With Docker Compose
 
@@ -1541,7 +1553,11 @@ Handler экспорта использует batch-обработку Symfony M
 
 Kubernetes — дополнительный способ запуска. Compose сохраняет прежние bind mounts и workflows. Перед развёртыванием синхронизируйте проверяемый YAML ConfigMap командой `npm run k8s:config:sync`, а Secret только в кластере командой `npm run k8s:secrets:sync`. Сборка образов, локальный kind и registry-вариант, JWT bootstrap, Jobs, reindex, масштабирование и три независимых Kubernetes dashboard описаны в [инструкции по Kubernetes](kubernetes/README.md). Это основной Kubernetes dashboard, порт исходного Docker dashboard и объединённый dashboard. Исходный Docker dashboard остаётся отдельным.
 
-В Kubernetes dashboard можно выбрать Auth, Catalog, Cart или **All**. Метрики PHP-FPM привязаны к отдельным Pod при изменении числа реплик, а application metrics из общего Redis собираются один раз на сервис. Новые графики ресурсов показаны на скриншотах:
+В Kubernetes dashboard можно выбрать Auth, Catalog, Cart или **All**. Метрики PHP-FPM привязаны к отдельным Pod при изменении числа реплик, а application metrics из общего Redis собираются один раз на сервис. Объединённый dashboard показывает в одном месте трафик приложения, ошибки и задержку gateway, инфраструктуру, PostgreSQL, состояние Pod, CPU и память:
+
+![Объединённый dashboard Grafana Kubernetes: приложение, инфраструктура, база данных, Pod, CPU и память](<docs/images/Symfony services _ Kubernetes _ Combined-1791129935393.png>)
+
+Ниже крупнее показаны новые графики ресурсов:
 
 ![Grafana Kubernetes: Top 15 Pod по CPU и память относительно лимита по сервису и Pod](<docs/images/new grafana charts.png>)
 
@@ -1549,7 +1565,15 @@ Stacked-график CPU суммирует нагрузку выбранных 
 
 ![Grafana Kubernetes: память относительно лимита по сервису и контейнеру](<docs/images/new grafana charts2.png>)
 
-График по паре service/container показывает отдельно, например, `catalog / grpc` и `catalog / php`, объединяя реплики каждого типа контейнера. Процент равен сумме используемой памяти, делённой на сумму положительных лимитов памяти соответствующих контейнеров. Контейнеры без положительного лимита в расчёт не входят. При устойчивом росте переходите от графика сервиса к типу контейнера и затем к конкретному Pod; точные значения смотрите в tooltip живой Grafana. [Инструкция по мониторингу Kubernetes](kubernetes/README.md#%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3) описывает все три dashboard и источники метрик.
+График по паре service/container показывает отдельно, например, `catalog / nginx` и `catalog / php`, объединяя реплики каждого типа контейнера. Процент равен сумме используемой памяти, делённой на сумму положительных лимитов памяти соответствующих контейнеров. Контейнеры без положительного лимита в расчёт не входят.
+
+| Вопрос во время демонстрации или k6-теста | Что открыть | Какое решение принять |
+|---|---|---|
+| Какой Pod расходует больше всего CPU? Отличается ли одна реплика? | **Top 15 Pods by CPU** по всем namespace, затем **CPU cores by Pod** нужного сервиса. | Равномерно ли распределена нагрузка между репликами. CPU измеряется в ядрах; stacked Top 15 не равен CPU всего кластера. |
+| Близок ли сервис или отдельный контейнер к лимиту памяти? | **Memory usage / limit by service**, затем **by service and container**, затем **by Pod**. | Давление есть у всех реплик или только у одного типа контейнера либо Pod. Серии `catalog / php` и `catalog / nginx` остаются раздельными. |
+| Подходят ли настройки ресурсов и работает ли горизонтальное масштабирование под нагрузкой? | Сравнить ядра CPU и проценты памяти с requests/limits в манифестах; смотреть **HTTP Pods: running / ready**, **Pod lifecycle** и PHP-FPM queue. | Подобрать ресурсы по замерам, затем проверить, что HPA добавляет готовые реплики и они делят трафик. Панелей отношения CPU к request/limit сейчас нет. |
+
+Начните с симптома на уровне сервиса, уточните тип контейнера и найдите выбивающуюся реплику на графике по Pod; точные значения смотрите в tooltip Grafana. [Инструкция по мониторингу Kubernetes](kubernetes/README.md#%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3) описывает запросы, уровни агрегации и сценарий k6/HPA.
 
 ### Запуск через Docker Compose
 
