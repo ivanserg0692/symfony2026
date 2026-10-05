@@ -8,6 +8,7 @@
   - [Saved-result metadata](#saved-result-metadata)
 - [Installation](#installation)
 - [Sysbench configuration and results](#sysbench-configuration-and-results)
+  - [2-vCPU comparison benchmark](#2-vcpu-comparison-benchmark)
 - [FIO configuration and results](#fio-configuration-and-results)
   - [Throughput results](#throughput-results)
   - [Derived 4KB IOPS results](#derived-4kb-iops-results)
@@ -49,6 +50,7 @@ Phoronix also recorded the graphics adapter as an NVIDIA GeForce RTX 4090 24GB. 
 | Result | Phoronix identifier | Benchmark timestamp | Saved result last modified |
 |---|---|---|---|
 | Sysbench | `wsl i9 test` | 2026-10-04 17:13:12 | 2026-10-04 17:18:49 |
+| Sysbench, 2-thread comparison | `wsl test` | 2026-10-05 03:37:47 | 2026-10-05 04:08:54 |
 | FIO | `wsl` | 2026-10-04 17:31:18 | 2026-10-04 17:58:54 |
 
 ## Installation
@@ -106,12 +108,62 @@ At `System Test Configuration`, select `3: Test All Options`. This runs both `CP
 
 The saved result uses Phoronix profile `system/sysbench-1.0.0`. Its result metadata reports the underlying application as `sysbench 1.0.20 (using system LuaJIT 2.1.0-beta3)`. Both metrics are Higher Is Better (HIB).
 
+The physical/logical CPU topology and benchmark concurrency are distinct values. Phoronix reported the reference machine as `16 cores / 32 threads`: 16 physical cores and 32 logical hardware threads. This topology description alone does not determine Sysbench concurrency.
+
+In Phoronix Test Suite 10.8.6, `/usr/share/phoronix-test-suite/pts-core/objects/client/pts_client.php` assigns `NUM_CPU_CORES` from Phodevi's `cpu/core-count` property. On this Linux/WSL2 environment, `/usr/share/phoronix-test-suite/pts-core/objects/phodevi/components/phodevi_cpu.php` calculates that property from `/sys/devices/system/cpu/online` because no `NUM_CPU_CORES`, `PTS_NPROC`, or `NUMBER_OF_PROCESSORS` override is set. The system file contains `0-31`, so PTS resolves `NUM_CPU_CORES` to `32`. This was also verified directly through PTS at runtime:
+
+```bash
+phoronix-test-suite diagnostics 2>&1 \
+    | grep -E 'NUM_CPU_CORES|NUM_CPU_PHYSICAL_CORES|CPU_THREADS_PER_CORE'
+```
+
+```text
+NUM_CPU_CORES = 32
+NUM_CPU_PHYSICAL_CORES = 16
+CPU_THREADS_PER_CORE = 2
+```
+
+PTS passes its generated environment to the installed test wrapper. Both `~/.phoronix-test-suite/test-profiles/system/sysbench-1.0.0/install.sh` and the generated `~/.phoronix-test-suite/installed-tests/system/sysbench-1.0.0/sysbench` wrapper launch Sysbench as:
+
+```bash
+sysbench --threads=$NUM_CPU_CORES --time=90 $@
+```
+
+For this reference run, `$NUM_CPU_CORES` was `32`. Therefore, the CPU result was produced with **32 Sysbench threads** (`--threads=32`), and each CPU run had a configured duration of **90 seconds**. The benchmark concurrency matches the logical-thread count on this machine, but it was verified from PTS's resolved runtime variable rather than inferred from the hardware description.
+
 | Test | Exact arguments | Average | Unit | Raw individual runs | Deviation | Proportion |
 |---|---|---:|---|---|---|---|
 | RAM / Memory | `memory run` | 14038.41 | MiB/sec | 14241.06, 13848.43, 14025.73 | Not stored in XML | HIB |
 | CPU | `cpu run` | 78338.14 | Events Per Second | 78234.51, 78323.57, 78456.35 | Not stored in XML | HIB |
 
-For these records, HIB means a larger throughput value is better. Phoronix stored the individual run times as `10.45, 7.42, 7.33` seconds for memory and `90.03, 90.04, 90.03` seconds for CPU.
+The reference CPU result is **78,338.14 events/s** at 32 Sysbench threads, with a configured duration of 90 seconds per run. For these records, HIB means a larger throughput value is better. Phoronix stored the individual run times as `10.45, 7.42, 7.33` seconds for memory and `90.03, 90.04, 90.03` seconds for CPU.
+
+### 2-vCPU comparison benchmark
+
+The primary full-machine reference above remains **32 Sysbench threads -> 78,338.14 events/s**. A separate CPU comparison result was produced with two Sysbench threads to provide a more appropriate basis for comparing this machine with VPS/cloud servers offering 2 vCPU:
+
+```bash
+NUM_CPU_CORES=2 phoronix-test-suite benchmark system/sysbench
+```
+
+The override was verified through the current PTS runtime environment:
+
+```bash
+NUM_CPU_CORES=2 phoronix-test-suite diagnostics 2>&1 \
+    | grep -F 'NUM_CPU_CORES'
+```
+
+```text
+NUM_CPU_CORES = 2
+```
+
+The installed `system/sysbench-1.0.0` wrapper uses `sysbench --threads=$NUM_CPU_CORES --time=90 $@`, so the override resolves to `--threads=2`. The saved CPU test log independently confirms `Number of threads: 2` for every recorded run. The result metadata identifies the underlying application as `sysbench 1.0.20 (using system LuaJIT 2.1.0-beta3)`.
+
+| Purpose | Profile | Exact arguments | Sysbench threads | Duration per run | Average | Unit | Raw individual runs | Deviation | Proportion |
+|---|---|---|---:|---:|---:|---|---|---|---|
+| 2-vCPU comparison | `system/sysbench-1.0.0` | `cpu run` | 2 | 90 seconds | 3367.69 | Events Per Second | 3660.39, 3229.58, 3096.87, 3487.84, 3131.55, 3246.45, 3648.95, 3329.11, 3624.12, 3375.33, 3312.31, 3537.68, 3425.22, 3478.07, 2931.93 | Not stored in XML | HIB |
+
+The direct two-thread result is **3,367.69 events/s**. Use it for like-for-like 2-vCPU comparisons instead of estimating performance by linearly dividing the 32-thread full-machine result. It is a comparison measurement, not a replacement for the authoritative full-machine baseline. The copied raw XML is preserved unchanged and also contains the RAM result generated during the same saved PTS run.
 
 ## FIO configuration and results
 
@@ -229,4 +281,5 @@ A future quick comparison profile may explicitly adopt only Random Read / 4KB, R
 ## Raw benchmark evidence
 
 - [Original Sysbench composite.xml](benchmark-results/sysbench.xml), copied from saved result ID `test-resulttxt`
+- [Original two-thread Sysbench composite.xml](benchmark-results/sysbench-2-threads.xml), copied from saved result ID `cpu-test-with2-threads`
 - [Original FIO composite.xml](benchmark-results/fio.xml), copied from saved result ID `ssd-io-results`
