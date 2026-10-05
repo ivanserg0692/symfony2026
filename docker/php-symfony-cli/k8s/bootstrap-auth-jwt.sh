@@ -84,7 +84,7 @@ if [[ ! -f "$private_key" ]]; then
         --mount "type=bind,source=${temp_dir}/passphrase,target=/bootstrap-secrets/passphrase,readonly" \
         "${dotenv_mounts[@]}" \
         --entrypoint bash "$auth_image" \
-        -c 'set -euo pipefail; JWT_PASSPHRASE="$(cat /bootstrap-secrets/passphrase)"; export JWT_PASSPHRASE; exec bin/init-jwt'
+        -c 'set -euo pipefail; JWT_PASSPHRASE="$(cat /bootstrap-secrets/passphrase)"; export JWT_PASSPHRASE; exec bash bin/init-jwt'
 fi
 
 if [[ ! -s "$private_key" || ! -s "$public_key" || ! -s "${temp_dir}/passphrase" ]]; then
