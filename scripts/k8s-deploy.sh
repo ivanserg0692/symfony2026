@@ -217,7 +217,7 @@ for workload in prometheus grafana grafana-image-renderer kube-state-metrics nod
     kubectl -n monitoring rollout status "$kind/$workload" --timeout=10m
 done
 
-# All deployment stages completed; print local access commands.
+# All deployment stages completed; print Gateway and local access commands.
 echo "Kubernetes deployment is ready in namespace $namespace."
-echo "Gateway: kubectl -n $namespace port-forward service/api-gateway 8001:80"
-echo 'Grafana: kubectl -n monitoring port-forward service/grafana 3000:3000'
+echo "Gateway LoadBalancer: kubectl -n $namespace get service api-gateway"
+echo 'Local tools: npm run k8s:forward (add -- --gateway for a local gateway forward)'

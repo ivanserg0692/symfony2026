@@ -41,11 +41,11 @@ scrape_configs:
 
   - job_name: api-gateway
     static_configs:
-      - targets: [api-gateway.__APP_NAMESPACE__.svc.cluster.local:9113]
+      - targets: [api-gateway-metrics.__APP_NAMESPACE__.svc.cluster.local:9113]
   - job_name: api-gateway-vts
     metrics_path: /vts/metrics
     static_configs:
-      - targets: [api-gateway.__APP_NAMESPACE__.svc.cluster.local:8080]
+      - targets: [api-gateway-metrics.__APP_NAMESPACE__.svc.cluster.local:8080]
 
   - job_name: postgres
     static_configs:

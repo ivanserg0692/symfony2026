@@ -11,6 +11,7 @@
     "k8s:secrets:sync": "node scripts/k8s-secrets.mjs",
     "k8s:grafana:password": "bash scripts/k8s-grafana-password.sh",
     "k8s:deploy": "bash scripts/k8s-deploy.sh",
+    "k8s:forward": "bash scripts/k8s-forward.sh --gateway",
     "k8s:catalog:reindex": "bash scripts/k8s-catalog-reindex.sh",
     "k8s:db:fixtures": "bash scripts/k8s-db-fixtures.sh",
     "docker:restart:php": "docker compose restart symfony-cli symfony-web catalog-cli catalog-web catalog-grpc catalog-search-outbox-worker catalog-search-index-worker cart-cli cart-web api-gateway",
