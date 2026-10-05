@@ -22,7 +22,7 @@ minio_image='symfony-minio:k8s'
 mc_image='symfony-mc:k8s'
 
 # Make application images available to the selected cluster: load local images
-# into kind, or use registry references for an existing k3s/Kubernetes cluster.
+# into kind/k3s, or use registry references for k3s/another Kubernetes cluster.
 case "$runtime" in
     local)
         ensure_k8s_cluster "$runtime" "$namespace"
@@ -31,7 +31,32 @@ case "$runtime" in
             kind load docker-image --name "$namespace" "$image"
         done
         ;;
-    k3s|kubernetes)
+    k3s)
+        registry="${K8S_IMAGE_REGISTRY:-}"
+        tag="${K8S_IMAGE_TAG:-}"
+        ensure_k8s_cluster "$runtime" "$namespace"
+        if [[ -n "$registry" || -n "$tag" ]]; then
+            if [[ ! "$registry" =~ ^[a-zA-Z0-9._:/-]+$ || ! "$tag" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+                echo 'Set both K8S_IMAGE_REGISTRY and K8S_IMAGE_TAG, or leave both unset to import local images into k3s.' >&2
+                exit 2
+            fi
+            auth_image="${registry}/symfony-auth:${tag}-${image_profile}"
+            catalog_image="${registry}/symfony-catalog:${tag}-${image_profile}"
+            cart_image="${registry}/symfony-cart:${tag}-${image_profile}"
+            gateway_image="${registry}/symfony-api-gateway-nginx:${tag}"
+            prometheus_image="${registry}/symfony-prometheus:${tag}"
+            grafana_image="${registry}/symfony-grafana:${tag}"
+            minio_image="${registry}/symfony-minio:${tag}"
+            mc_image="${registry}/symfony-mc:${tag}"
+        else
+            for image in "$auth_image" "$catalog_image" "$cart_image" "$gateway_image" "$prometheus_image" "$grafana_image" "$minio_image" "$mc_image"; do
+                docker image inspect "$image" >/dev/null
+            done
+            docker save "$auth_image" "$catalog_image" "$cart_image" "$gateway_image" "$prometheus_image" "$grafana_image" "$minio_image" "$mc_image" \
+                | sudo k3s ctr images import -
+        fi
+        ;;
+    kubernetes)
         registry="${K8S_IMAGE_REGISTRY:-}"
         tag="${K8S_IMAGE_TAG:-}"
         if [[ ! "$registry" =~ ^[a-zA-Z0-9._:/-]+$ || ! "$tag" =~ ^[a-zA-Z0-9._-]+$ ]]; then
