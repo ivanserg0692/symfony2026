@@ -60,6 +60,11 @@ esac
 
 # Render all project image references; each invocation is a complete YAML stream.
 render_images() {
+    local auth_capacity_configmap catalog_capacity_configmap cart_capacity_configmap
+    auth_capacity_configmap="$(capacity_configmap_name auth)"
+    catalog_capacity_configmap="$(capacity_configmap_name catalog)"
+    cart_capacity_configmap="$(capacity_configmap_name cart)"
+
     sed \
         -e "s|__AUTH_IMAGE__|$auth_image|g" \
         -e "s|__CATALOG_IMAGE__|$catalog_image|g" \
@@ -110,9 +115,6 @@ capacity_configmap_name() {
     fi
     printf '%s' "$name"
 }
-auth_capacity_configmap="$(capacity_configmap_name auth)"
-catalog_capacity_configmap="$(capacity_configmap_name catalog)"
-cart_capacity_configmap="$(capacity_configmap_name cart)"
 for secret in auth-config-secret catalog-config-secret cart-config-secret infra-config-secret; do
     kubectl -n "$namespace" get secret "$secret" >/dev/null || {
         echo "Missing Secret/$secret. Run npm run k8s:secrets:sync first." >&2
