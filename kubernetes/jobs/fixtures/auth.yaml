@@ -10,7 +10,7 @@ spec:
       securityContext: {fsGroup: 33}
       containers:
         - name: fixtures
-          image: symfony-auth:k8s
+          image: __AUTH_IMAGE__
           imagePullPolicy: IfNotPresent
           command: [php, -d, memory_limit=1G, bin/console, doctrine:fixtures:load, --no-interaction, --no-debug]
           envFrom: [{configMapRef: {name: auth-config}}, {secretRef: {name: auth-config-secret}}]

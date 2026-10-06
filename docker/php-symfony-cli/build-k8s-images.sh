@@ -11,6 +11,22 @@ image_runtime_signature() {
         "$1"
 }
 
+latest_k8s_image() {
+    local name="$1" tag_prefix="$2" latest_version=0
+    local repository tag version
+    while read -r repository tag; do
+        if [[ "$repository" == "$name" && "$tag" =~ ^${tag_prefix}-([1-9][0-9]*)$ ]]; then
+            version="${BASH_REMATCH[1]}"
+            if (( version > latest_version )); then latest_version="$version"; fi
+        fi
+    done < <(docker image ls --format '{{.Repository}} {{.Tag}}' "$name")
+    if (( latest_version == 0 )); then
+        echo "No versioned image found for ${name}:${tag_prefix}" >&2
+        return 1
+    fi
+    printf '%s:%s-%s\n' "$name" "$tag_prefix" "$latest_version"
+}
+
 version_k8s_image() {
     local name="$1"
     local tag_prefix="$2"
@@ -83,3 +99,21 @@ build_k8s_image symfony-prometheus k8s -f docker/prometheus/k8s/Dockerfile
 build_k8s_image symfony-grafana k8s -f docker/grafana/k8s/Dockerfile
 build_k8s_image symfony-minio k8s -f docker/minio/Dockerfile --target server
 build_k8s_image symfony-mc k8s -f docker/minio/Dockerfile --target client
+
+# Record the exact successful build outputs. Deploy never guesses which of the
+# locally available versions is intended for a release.
+mkdir -p kubernetes/generated
+image_refs_tmp="$(mktemp kubernetes/generated/image-refs.tsv.XXXXXX)"
+trap 'rm -f "$image_refs_tmp"' EXIT
+for profile in dev prod load-test; do
+    for service in auth catalog cart; do
+        printf '%s\t%s\t%s\n' "$profile" "$service" \
+            "$(latest_k8s_image "symfony-$service" "k8s-$profile")" >> "$image_refs_tmp"
+    done
+done
+for service in api-gateway-nginx prometheus grafana minio mc; do
+    printf 'shared\t%s\t%s\n' "$service" \
+        "$(latest_k8s_image "symfony-$service" k8s)" >> "$image_refs_tmp"
+done
+mv "$image_refs_tmp" kubernetes/generated/image-refs.tsv
+echo 'Recorded exact image references in kubernetes/generated/image-refs.tsv'

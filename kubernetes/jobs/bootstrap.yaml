@@ -1,6 +1,42 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: release-job-reader, namespace: __APP_NAMESPACE__}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: release-job-reader, namespace: __APP_NAMESPACE__}
+rules:
+  - apiGroups: [batch]
+    resources: [jobs]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: release-job-reader, namespace: __APP_NAMESPACE__}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: release-job-reader}
+subjects: [{kind: ServiceAccount, name: release-job-reader, namespace: __APP_NAMESPACE__}]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: migration-db-reader, namespace: __APP_NAMESPACE__}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: migration-db-reader, namespace: __APP_NAMESPACE__}
+rules:
+  - apiGroups: [apps]
+    resources: [statefulsets]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: migration-db-reader, namespace: __APP_NAMESPACE__}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: migration-db-reader}
+subjects: [{kind: ServiceAccount, name: migration-db-reader, namespace: __APP_NAMESPACE__}]
+---
 apiVersion: batch/v1
 kind: Job
-metadata: {name: elasticsearch-setup}
+metadata: {name: elasticsearch-setup, namespace: __APP_NAMESPACE__}
 spec:
   backoffLimit: 6
   template:
@@ -23,15 +59,31 @@ spec:
 ---
 apiVersion: batch/v1
 kind: Job
-metadata: {name: minio-bucket-setup}
+metadata: {name: minio-bucket-setup, namespace: __APP_NAMESPACE__}
 spec:
   backoffLimit: 6
   template:
     spec:
       restartPolicy: OnFailure
+      serviceAccountName: migration-db-reader
+      initContainers:
+        - name: wait-minio-rollout
+          image: bitnamilegacy/kubectl:1.33.4
+          command: [sh, -ec]
+          args:
+            - |
+              until [ "$(kubectl get statefulset/minio -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null)" = "$EXPECTED_IMAGE" ]; do sleep 5; done
+              generation="$(kubectl get statefulset/minio -o jsonpath='{.metadata.generation}')"
+              kubectl wait --for="jsonpath={.status.observedGeneration}=$generation" statefulset/minio --timeout=3600s
+              kubectl rollout status statefulset/minio --timeout=3600s
+              status="$(kubectl get statefulset/minio -o jsonpath='{.metadata.generation} {.status.observedGeneration} {.spec.replicas} {.status.updatedReplicas} {.status.readyReplicas} {.status.currentRevision} {.status.updateRevision}')"
+              set -- $status
+              [ "$1" = "$2" ] && [ "$3" = "$4" ] && [ "$3" = "$5" ] && [ "$6" = "$7" ]
+              [ "$(kubectl get statefulset/minio -o jsonpath='{.spec.template.spec.containers[0].image}')" = "$EXPECTED_IMAGE" ]
+          env: [{name: EXPECTED_IMAGE, value: '__MINIO_IMAGE__'}]
       containers:
         - name: setup
-          image: symfony-mc:k8s
+          image: __MC_IMAGE__
           imagePullPolicy: IfNotPresent
           command: [sh, -ec]
           args:
@@ -45,16 +97,38 @@ spec:
 ---
 apiVersion: batch/v1
 kind: Job
-metadata: {name: auth-migrate}
+metadata: {name: auth-migrate, namespace: __APP_NAMESPACE__}
 spec:
   backoffLimit: 3
   template:
     spec:
       restartPolicy: OnFailure
+      serviceAccountName: migration-db-reader
       securityContext: {fsGroup: 33}
+      initContainers:
+        - name: wait-database-rollout
+          image: bitnamilegacy/kubectl:1.33.4
+          command: [sh, -ec]
+          args:
+            - |
+              until [ "$(kubectl get statefulset/database -o jsonpath='{.spec.template.spec.containers[0].env[0].valueFrom.configMapKeyRef.name}' 2>/dev/null)" = "$EXPECTED_CONFIGMAP" ]; do sleep 5; done
+              kubectl rollout status statefulset/database --timeout=3600s
+          env: [{name: EXPECTED_CONFIGMAP, value: __AUTH_POSTGRES_CAPACITY_CONFIGMAP__}]
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec]
+          args:
+            - |
+              until actual="$(psql -w -h database -p 5432 -U "$PGUSER" -d "$PGDATABASE" -Atqc 'SHOW max_connections' 2>/dev/null)" &&
+                    [ "$actual" = "$POSTGRES_MAX_CONNECTIONS" ]; do sleep 5; done
+          env:
+            - {name: PGUSER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_USER}}}
+            - {name: PGDATABASE, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_DB}}}
+            - {name: PGPASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_PASSWORD}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: __AUTH_POSTGRES_CAPACITY_CONFIGMAP__, key: POSTGRES_MAX_CONNECTIONS}}}
       containers:
         - name: migrate
-          image: symfony-auth:k8s
+          image: __AUTH_IMAGE__
           imagePullPolicy: IfNotPresent
           command: [php, bin/console, doctrine:migrations:migrate, --no-interaction]
           envFrom: [{configMapRef: {name: auth-config}}, {secretRef: {name: auth-config-secret}}]
@@ -64,30 +138,74 @@ spec:
 ---
 apiVersion: batch/v1
 kind: Job
-metadata: {name: catalog-migrate}
+metadata: {name: catalog-migrate, namespace: __APP_NAMESPACE__}
 spec:
   backoffLimit: 3
   template:
     spec:
       restartPolicy: OnFailure
+      serviceAccountName: migration-db-reader
+      initContainers:
+        - name: wait-database-rollout
+          image: bitnamilegacy/kubectl:1.33.4
+          command: [sh, -ec]
+          args:
+            - |
+              until [ "$(kubectl get statefulset/catalog-db -o jsonpath='{.spec.template.spec.containers[0].env[0].valueFrom.configMapKeyRef.name}' 2>/dev/null)" = "$EXPECTED_CONFIGMAP" ]; do sleep 5; done
+              kubectl rollout status statefulset/catalog-db --timeout=3600s
+          env: [{name: EXPECTED_CONFIGMAP, value: __CATALOG_POSTGRES_CAPACITY_CONFIGMAP__}]
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec]
+          args:
+            - |
+              until actual="$(psql -w -h catalog-db -p 5432 -U "$PGUSER" -d "$PGDATABASE" -Atqc 'SHOW max_connections' 2>/dev/null)" &&
+                    [ "$actual" = "$POSTGRES_MAX_CONNECTIONS" ]; do sleep 5; done
+          env:
+            - {name: PGUSER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_USER}}}
+            - {name: PGDATABASE, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_DB}}}
+            - {name: PGPASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_PASSWORD}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: __CATALOG_POSTGRES_CAPACITY_CONFIGMAP__, key: POSTGRES_MAX_CONNECTIONS}}}
       containers:
         - name: migrate
-          image: symfony-catalog:k8s
+          image: __CATALOG_IMAGE__
           imagePullPolicy: IfNotPresent
           command: [php, bin/console, doctrine:migrations:migrate, --no-interaction]
           envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
 ---
 apiVersion: batch/v1
 kind: Job
-metadata: {name: cart-migrate}
+metadata: {name: cart-migrate, namespace: __APP_NAMESPACE__}
 spec:
   backoffLimit: 3
   template:
     spec:
       restartPolicy: OnFailure
+      serviceAccountName: migration-db-reader
+      initContainers:
+        - name: wait-database-rollout
+          image: bitnamilegacy/kubectl:1.33.4
+          command: [sh, -ec]
+          args:
+            - |
+              until [ "$(kubectl get statefulset/cart-db -o jsonpath='{.spec.template.spec.containers[0].env[0].valueFrom.configMapKeyRef.name}' 2>/dev/null)" = "$EXPECTED_CONFIGMAP" ]; do sleep 5; done
+              kubectl rollout status statefulset/cart-db --timeout=3600s
+          env: [{name: EXPECTED_CONFIGMAP, value: __CART_POSTGRES_CAPACITY_CONFIGMAP__}]
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec]
+          args:
+            - |
+              until actual="$(psql -w -h cart-db -p 5432 -U "$PGUSER" -d "$PGDATABASE" -Atqc 'SHOW max_connections' 2>/dev/null)" &&
+                    [ "$actual" = "$POSTGRES_MAX_CONNECTIONS" ]; do sleep 5; done
+          env:
+            - {name: PGUSER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_USER}}}
+            - {name: PGDATABASE, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_DB}}}
+            - {name: PGPASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_PASSWORD}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: __CART_POSTGRES_CAPACITY_CONFIGMAP__, key: POSTGRES_MAX_CONNECTIONS}}}
       containers:
         - name: migrate
-          image: symfony-cart:k8s
+          image: __CART_IMAGE__
           imagePullPolicy: IfNotPresent
           command: [php, bin/console, doctrine:migrations:migrate, --no-interaction]
           envFrom: [{configMapRef: {name: cart-config}}, {secretRef: {name: cart-config-secret}}]

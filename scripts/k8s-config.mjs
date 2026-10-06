@@ -27,6 +27,7 @@ function renderResource(resource) {
     'metadata:',
     `  name: ${scalar(resource.metadata.name)}`,
     `  namespace: ${scalar(resource.metadata.namespace)}`,
+    ...(resource.immutable ? ['immutable: true'] : []),
     'data:',
   ];
   for (const [key, value] of Object.entries(resource.data)) {

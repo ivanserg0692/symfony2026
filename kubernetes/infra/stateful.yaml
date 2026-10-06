@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
-metadata: {name: database}
+metadata: {name: database, namespace: __APP_NAMESPACE__}
 spec: {selector: {app: database}, ports: [{name: postgres, port: 5432}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: database}
+metadata: {name: database, namespace: __APP_NAMESPACE__}
 spec:
   serviceName: database
   replicas: 1
@@ -20,7 +20,7 @@ spec:
           args: ['exec docker-entrypoint.sh postgres -c "max_connections=$POSTGRES_MAX_CONNECTIONS"']
           ports: [{name: postgres, containerPort: 5432}]
           env:
-            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: postgres-capacity, key: AUTH_POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: __AUTH_POSTGRES_CAPACITY_CONFIGMAP__, key: POSTGRES_MAX_CONNECTIONS}}}
             - {name: POSTGRES_DB, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_DB}}}
             - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_USER}}}
             - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_PASSWORD}}}
@@ -33,12 +33,12 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: catalog-db}
+metadata: {name: catalog-db, namespace: __APP_NAMESPACE__}
 spec: {selector: {app: catalog-db}, ports: [{name: postgres, port: 5432}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: catalog-db}
+metadata: {name: catalog-db, namespace: __APP_NAMESPACE__}
 spec:
   serviceName: catalog-db
   replicas: 1
@@ -53,7 +53,7 @@ spec:
           args: ['exec docker-entrypoint.sh postgres -c "max_connections=$POSTGRES_MAX_CONNECTIONS"']
           ports: [{name: postgres, containerPort: 5432}]
           env:
-            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: postgres-capacity, key: CATALOG_POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: __CATALOG_POSTGRES_CAPACITY_CONFIGMAP__, key: POSTGRES_MAX_CONNECTIONS}}}
             - {name: POSTGRES_DB, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_DB}}}
             - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_USER}}}
             - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_PASSWORD}}}
@@ -66,12 +66,12 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: cart-db}
+metadata: {name: cart-db, namespace: __APP_NAMESPACE__}
 spec: {selector: {app: cart-db}, ports: [{name: postgres, port: 5432}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: cart-db}
+metadata: {name: cart-db, namespace: __APP_NAMESPACE__}
 spec:
   serviceName: cart-db
   replicas: 1
@@ -86,7 +86,7 @@ spec:
           args: ['exec docker-entrypoint.sh postgres -c "max_connections=$POSTGRES_MAX_CONNECTIONS"']
           ports: [{name: postgres, containerPort: 5432}]
           env:
-            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: postgres-capacity, key: CART_POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: __CART_POSTGRES_CAPACITY_CONFIGMAP__, key: POSTGRES_MAX_CONNECTIONS}}}
             - {name: POSTGRES_DB, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_DB}}}
             - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_USER}}}
             - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_PASSWORD}}}
@@ -99,12 +99,12 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: redis-symfony}
+metadata: {name: redis-symfony, namespace: __APP_NAMESPACE__}
 spec: {selector: {app: redis-symfony}, ports: [{name: redis, port: 6379}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: redis-symfony}
+metadata: {name: redis-symfony, namespace: __APP_NAMESPACE__}
 spec:
   serviceName: redis-symfony
   replicas: 1
@@ -126,12 +126,12 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: redis-catalog}
+metadata: {name: redis-catalog, namespace: __APP_NAMESPACE__}
 spec: {selector: {app: redis-catalog}, ports: [{name: redis, port: 6379}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: redis-catalog}
+metadata: {name: redis-catalog, namespace: __APP_NAMESPACE__}
 spec:
   serviceName: redis-catalog
   replicas: 1
@@ -153,12 +153,12 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: redis-cart}
+metadata: {name: redis-cart, namespace: __APP_NAMESPACE__}
 spec: {selector: {app: redis-cart}, ports: [{name: redis, port: 6379}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: redis-cart}
+metadata: {name: redis-cart, namespace: __APP_NAMESPACE__}
 spec:
   serviceName: redis-cart
   replicas: 1
@@ -180,12 +180,12 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: redis-metrics}
+metadata: {name: redis-metrics, namespace: __APP_NAMESPACE__}
 spec: {selector: {app: redis-metrics}, ports: [{name: redis, port: 6379}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: redis-metrics}
+metadata: {name: redis-metrics, namespace: __APP_NAMESPACE__}
 spec:
   serviceName: redis-metrics
   replicas: 1
@@ -207,12 +207,12 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: rabbitmq}
+metadata: {name: rabbitmq, namespace: __APP_NAMESPACE__}
 spec: {selector: {app: rabbitmq}, ports: [{name: amqp, port: 5672}, {name: management, port: 15672}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: rabbitmq}
+metadata: {name: rabbitmq, namespace: __APP_NAMESPACE__}
 spec:
   serviceName: rabbitmq
   replicas: 1
@@ -237,12 +237,12 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: elasticsearch}
+metadata: {name: elasticsearch, namespace: __APP_NAMESPACE__}
 spec: {selector: {app: elasticsearch}, ports: [{name: http, port: 9200}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: elasticsearch}
+metadata: {name: elasticsearch, namespace: __APP_NAMESPACE__}
 spec:
   serviceName: elasticsearch
   replicas: 1
@@ -269,12 +269,12 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: minio}
+metadata: {name: minio, namespace: __APP_NAMESPACE__}
 spec: {selector: {app: minio}, ports: [{name: s3, port: 9000}, {name: console, port: 9001}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: minio}
+metadata: {name: minio, namespace: __APP_NAMESPACE__}
 spec:
   serviceName: minio
   replicas: 1
@@ -284,7 +284,7 @@ spec:
     spec:
       containers:
         - name: minio
-          image: symfony-minio:k8s
+          image: __MINIO_IMAGE__
           imagePullPolicy: IfNotPresent
           args: [server, /data, --console-address, ':9001']
           env:
@@ -300,12 +300,12 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: mailpit}
+metadata: {name: mailpit, namespace: __APP_NAMESPACE__}
 spec: {selector: {app: mailpit}, ports: [{name: smtp, port: 1025}, {name: http, port: 8025}]}
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: mailpit}
+metadata: {name: mailpit, namespace: __APP_NAMESPACE__}
 spec:
   replicas: 1
   selector: {matchLabels: {app: mailpit}}
@@ -317,22 +317,28 @@ spec:
           image: axllent/mailpit:latest
           args: [--smtp-max-recipients, "1000"]
           ports: [{name: smtp, containerPort: 1025}, {name: http, containerPort: 8025}]
+          readinessProbe: {httpGet: {path: /readyz, port: http}, periodSeconds: 5}
           resources: {requests: {cpu: 10m, memory: 32Mi}, limits: {memory: 256Mi}}
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: kibana}
+metadata: {name: kibana, namespace: __APP_NAMESPACE__}
 spec: {selector: {app: kibana}, ports: [{name: http, port: 5601}]}
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: kibana}
+metadata: {name: kibana, namespace: __APP_NAMESPACE__}
 spec:
   replicas: 1
   selector: {matchLabels: {app: kibana}}
   template:
     metadata: {labels: {app: kibana}}
     spec:
+      initContainers:
+        - name: wait-elasticsearch-credentials
+          image: curlimages/curl:8.14.1
+          command: [sh, -ec, 'until curl --fail --silent --output /dev/null --user "kibana_system:${KIBANA_PASSWORD}" http://elasticsearch:9200/_security/_authenticate; do sleep 5; done']
+          env: [{name: KIBANA_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: KIBANA_PASSWORD}}}]
       containers:
         - name: kibana
           image: docker.elastic.co/kibana/kibana:9.5.2

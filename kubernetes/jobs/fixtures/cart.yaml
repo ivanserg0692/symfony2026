@@ -9,7 +9,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: fixtures
-          image: symfony-cart:k8s
+          image: __CART_IMAGE__
           imagePullPolicy: IfNotPresent
           command: [php, -d, memory_limit=1G, bin/console, doctrine:fixtures:load, --no-interaction, --no-debug]
           envFrom: [{configMapRef: {name: cart-config}}, {secretRef: {name: cart-config-secret}}]

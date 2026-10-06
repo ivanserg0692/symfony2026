@@ -40,7 +40,7 @@ run_fixture_job() {
     # A completed Job cannot be rerun in place. A failed Job is kept for
     # inspection until the operator explicitly invokes this command again.
     kubectl -n "$namespace" delete job "$job" --ignore-not-found --wait=true
-    sed "s|symfony-${service}:k8s|$image|" "$manifest" | kubectl -n "$namespace" apply -f -
+    sed "s|__${service^^}_IMAGE__|$image|" "$manifest" | kubectl -n "$namespace" apply -f -
 
     echo "==> Loading $service fixtures (job/$job)"
     if ! kubectl -n "$namespace" logs -f "job/$job" --pod-running-timeout=5m; then

@@ -4,6 +4,7 @@ set -euo pipefail
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${script_dir}/.." && pwd)"
 source "${script_dir}/lib/k8s-common.sh"
+source "${script_dir}/lib/k8s-verification.sh"
 action="${1:-run}"
 if [[ "$action" == run || "$action" == recover ]]; then
     shift || true
@@ -65,7 +66,7 @@ cleanup() {
     kubectl -n "$namespace" scale deployment "$worker" --replicas="$replicas" || true
     # Keep the lock until Kubernetes confirms the restored worker Deployment
     # has rolled out; otherwise a new reindex could start during recovery.
-    if kubectl -n "$namespace" rollout status deployment "$worker" --timeout=5m; then
+    if verify_rollout "$namespace" deployment "$worker" "${image:-}" 5m; then
         # The worker is running again, so another full reindex may acquire the lock.
         kubectl -n "$namespace" delete configmap "$lock" || true
     else
@@ -93,12 +94,14 @@ fi
 # Remove an earlier completed Job: Kubernetes Jobs cannot be rerun in place.
 kubectl -n "$namespace" delete job "$job" --ignore-not-found --wait=true
 # Insert the deployed Catalog image into the Job manifest and create the Job.
-sed "s|symfony-catalog:k8s|$image|" "${repo_root}/kubernetes/jobs/catalog-reindex.yaml" | kubectl -n "$namespace" apply -f -
+sed "s|__CATALOG_IMAGE__|$image|" "${repo_root}/kubernetes/jobs/catalog-reindex.yaml" | kubectl -n "$namespace" apply -f -
+# A completed Job with the wrong image must not mark initial indexing complete.
+verify_job_image "$namespace" "$job" "$image"
 # Stream the Symfony reindex progress from the Job Pod to this terminal. A log
 # connection failure does not determine the Job result; check it separately.
 if ! kubectl -n "$namespace" logs -f "job/$job" --pod-running-timeout=5m; then
     echo "Could not stream logs for job/$job. Checking the Job result." >&2
 fi
 # Wait for the full-reindex Job to complete before restoring the workers.
-kubectl -n "$namespace" wait --for=condition=complete "job/$job" --timeout=2h
+verify_job_completion "$namespace" "$job" "$image" 2h
 echo 'Full reindex completed. Restoring the index worker to drain the RabbitMQ backlog.'

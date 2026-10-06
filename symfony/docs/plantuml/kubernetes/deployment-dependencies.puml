@@ -1,0 +1,88 @@
+@startuml
+title Kubernetes deployment dependencies
+left to right direction
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+legend top
+  --> Database readiness precedes migration; migration image + Complete precede consumers.
+  --> MinIO rollout + API precede bucket setup; setup image + Complete precede Auth web.
+  --> Gateway checks upstream HTTP availability; an old replica may answer.
+  ..> The deployment script coordinates the first Catalog index only.
+  Each workload box lists the runtime Services checked by its initContainers.
+endlegend
+
+package "Auth" {
+  component "Auth PostgreSQL\ncurrent rollout + capacity" as AuthDb
+  component "auth-migrate Job\nimage: symfony-auth:<current-tag>-<profile>" as AuthMigrate
+  component "symfony-web\nimage: symfony-auth:<current-tag>-<profile>\nwait: PostgreSQL, Redis, RabbitMQ" as AuthWeb
+  component "auth-async-worker\nimage: symfony-auth:<current-tag>-<profile>\nwait: PostgreSQL, RabbitMQ, Mailpit" as AuthWorker
+  component "MinIO\nimage: symfony-minio:<current-tag>\ncurrent rollout" as Minio
+  component "minio-bucket-setup Job\nimage: symfony-mc:<current-tag>" as MinioSetup
+
+  AuthDb --> AuthMigrate
+  AuthMigrate --> AuthWeb
+  AuthMigrate --> AuthWorker
+  Minio --> MinioSetup
+  MinioSetup --> AuthWeb
+}
+
+package "Catalog" {
+  component "Catalog PostgreSQL\ncurrent rollout + capacity" as CatalogDb
+  component "catalog-migrate Job\nimage: symfony-catalog:<current-tag>-<profile>" as CatalogMigrate
+  component "catalog-web\nimage: symfony-catalog:<current-tag>-<profile>\nwait: PostgreSQL, Redis, Elasticsearch" as CatalogWeb
+  component "catalog-grpc\nimage: symfony-catalog:<current-tag>-<profile>\nwait: PostgreSQL" as CatalogGrpc
+  component "catalog-search-outbox-worker\nimage: symfony-catalog:<current-tag>-<profile>\nwait: PostgreSQL, RabbitMQ" as CatalogOutbox
+  component "catalog-search-index-worker\nimage: symfony-catalog:<current-tag>-<profile>\nwait: PostgreSQL, RabbitMQ, Elasticsearch" as CatalogIndex
+
+  CatalogDb --> CatalogMigrate
+  CatalogMigrate --> CatalogWeb
+  CatalogMigrate --> CatalogGrpc
+  CatalogMigrate --> CatalogOutbox
+  CatalogMigrate --> CatalogIndex
+}
+
+package "Cart" {
+  component "Cart PostgreSQL\ncurrent rollout + capacity" as CartDb
+  component "cart-migrate Job\nimage: symfony-cart:<current-tag>-<profile>" as CartMigrate
+  component "cart-web\nimage: symfony-cart:<current-tag>-<profile>\nwait: PostgreSQL, Redis" as CartWeb
+
+  CartDb --> CartMigrate
+  CartMigrate --> CartWeb
+}
+
+component "api-gateway\nimage: symfony-api-gateway-nginx:<current-tag>\nwait: Auth, Catalog, Cart HTTP Services" as Gateway
+AuthWeb --> Gateway
+CatalogWeb --> Gateway
+CartWeb --> Gateway
+
+package "First Catalog index (deployment script)" {
+  component "Initial reindex gate\ncheck Catalog migration image + Complete\ncheck Catalog web rollout + image" as ReindexGate
+  component "catalog-full-reindex Job\nverify symfony-catalog:<current-tag>-<profile> + Complete\nwait: migration + Elasticsearch" as ReindexJob
+  component "Restore index worker\nverify current rollout + image" as RestoreWorker
+
+  ReindexGate ..> ReindexJob
+  ReindexJob ..> RestoreWorker
+}
+
+note bottom of ReindexGate
+  Runs only when catalog-initial-index is absent.
+  This release-wide operation never runs in a Pod initContainer.
+end note
+
+note bottom of Gateway
+  An old Ready upstream replica may answer this check.
+  Current rollout and image are verified separately.
+end note
+
+note as Independent
+  elasticsearch-setup waits for Elasticsearch and sets the Kibana password.
+  Catalog workloads wait for Elasticsearch health, not this Job.
+  Prometheus (symfony-prometheus:<current-tag>) and
+  Grafana (symfony-grafana:<current-tag>) start independently.
+  Exporters start independently.
+end note
+
+@enduml

@@ -1,12 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: database-exporter}
+metadata: {name: database-exporter, namespace: __APP_NAMESPACE__}
 spec:
   replicas: 1
   selector: {matchLabels: {app: database-exporter}}
   template:
     metadata: {labels: {app: database-exporter}}
     spec:
+      initContainers:
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec, 'until pg_isready -h database -p 5432; do sleep 5; done']
       containers:
         - name: exporter
           image: prometheuscommunity/postgres-exporter:latest
@@ -19,18 +23,22 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: database-exporter}
+metadata: {name: database-exporter, namespace: __APP_NAMESPACE__}
 spec: {selector: {app: database-exporter}, ports: [{name: metrics, port: 9187}]}
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: catalog-db-exporter}
+metadata: {name: catalog-db-exporter, namespace: __APP_NAMESPACE__}
 spec:
   replicas: 1
   selector: {matchLabels: {app: catalog-db-exporter}}
   template:
     metadata: {labels: {app: catalog-db-exporter}}
     spec:
+      initContainers:
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec, 'until pg_isready -h catalog-db -p 5432; do sleep 5; done']
       containers:
         - name: exporter
           image: prometheuscommunity/postgres-exporter:latest
@@ -43,18 +51,22 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: catalog-db-exporter}
+metadata: {name: catalog-db-exporter, namespace: __APP_NAMESPACE__}
 spec: {selector: {app: catalog-db-exporter}, ports: [{name: metrics, port: 9187}]}
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: cart-db-exporter}
+metadata: {name: cart-db-exporter, namespace: __APP_NAMESPACE__}
 spec:
   replicas: 1
   selector: {matchLabels: {app: cart-db-exporter}}
   template:
     metadata: {labels: {app: cart-db-exporter}}
     spec:
+      initContainers:
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec, 'until pg_isready -h cart-db -p 5432; do sleep 5; done']
       containers:
         - name: exporter
           image: prometheuscommunity/postgres-exporter:latest
@@ -67,5 +79,5 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: cart-db-exporter}
+metadata: {name: cart-db-exporter, namespace: __APP_NAMESPACE__}
 spec: {selector: {app: cart-db-exporter}, ports: [{name: metrics, port: 9187}]}

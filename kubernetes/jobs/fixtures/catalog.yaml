@@ -9,7 +9,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: fixtures
-          image: symfony-catalog:k8s
+          image: __CATALOG_IMAGE__
           imagePullPolicy: IfNotPresent
           command: [php, -d, memory_limit=1G, bin/console, doctrine:fixtures:load, --no-interaction, --no-debug]
           envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]

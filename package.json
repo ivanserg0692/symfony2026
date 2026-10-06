@@ -11,6 +11,7 @@
     "k8s:secrets:sync": "node scripts/k8s-secrets.mjs",
     "k8s:grafana:password": "bash scripts/k8s-grafana-password.sh",
     "k8s:deploy": "bash scripts/k8s-deploy.sh",
+    "k8s:verify": "bash scripts/k8s-verify.sh",
     "k8s:forward": "bash scripts/k8s-forward.sh --gateway",
     "k8s:catalog:reindex": "bash scripts/k8s-catalog-reindex.sh",
     "k8s:db:fixtures": "bash scripts/k8s-db-fixtures.sh",
@@ -33,7 +34,7 @@
     "readme:api": "node scripts/readme-api-table.mjs README.md",
     "readme:toc": "doctoc README.md kubernetes/README.md grpc-contracts/README.md TESTING.md docs/performance/hardware-benchmark.md catalog-service/docs/elasticsearch-reindex.md catalog-service/docs/entities-summary-en.md catalog-service/docs/entities-summary-ru.md symfony/docs/catalog-service-tables-en.md symfony/docs/catalog-service-tables-ru.md symfony/docs/php-multi-stage-build.md symfony/docs/mr-task-2.md symfony/docs/mr-task-3-en.md symfony/docs/mr-task-3-ru.md symfony/docs/mr-task-4-en.md symfony/docs/mr-task-4-ru.md symfony/docs/mr-task-5-en.md symfony/docs/mr-task-5-ru.md symfony/docs/mr-task-6-en.md symfony/docs/mr-task-6-ru.md symfony/docs/mr-task-7.2-en.md symfony/docs/mr-task-7.2-ru.md symfony/docs/mr-task-8-en.md symfony/docs/mr-task-8-ru.md symfony/docs/mr-task-9-en.md symfony/docs/mr-task-9-ru.md symfony/docs/mr-task-10-en.md symfony/docs/mr-task-10-ru.md symfony/docs/mr-task-11-en.md symfony/docs/mr-task-11-ru.md symfony/docs/task-1.md symfony/docs/task-2.md symfony/docs/task-3.md symfony/docs/task-4.md symfony/docs/task-5.md symfony/docs/task-6.md symfony/docs/task-7.md symfony/docs/task-7-1.md symfony/docs/task-7.2.md symfony/docs/task-7.3.md symfony/docs/task-8.md symfony/docs/task-9.md symfony/docs/task-10.md symfony/docs/task-11.md",
     "readme:update": "npm run gateway:generate && npm run readme:api && npm run docs:plantuml && npm run readme:toc",
-    "docs:plantuml": "node scripts/render-plantuml.mjs README.md symfony/docs"
+    "docs:plantuml": "node scripts/render-plantuml.mjs README.md kubernetes/README.md symfony/docs"
   },
   "devDependencies": {
     "doctoc": "^2.4.1"

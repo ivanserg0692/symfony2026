@@ -45,7 +45,7 @@ spec:
       securityContext: {fsGroup: 65534}
       containers:
         - name: prometheus
-          image: symfony-prometheus:k8s
+          image: __PROMETHEUS_IMAGE__
           args: [--config.file=/tmp/prometheus.yml, --storage.tsdb.retention.time=7d, --storage.tsdb.path=/prometheus]
           env: [{name: APP_NAMESPACE, value: __APP_NAMESPACE__}]
           ports: [{name: http, containerPort: 9090}]
@@ -118,7 +118,7 @@ spec:
       securityContext: {fsGroup: 472}
       containers:
         - name: grafana
-          image: symfony-grafana:k8s
+          image: __GRAFANA_IMAGE__
           env:
             - {name: GF_RENDERING_SERVER_URL, value: 'http://grafana-image-renderer.monitoring.svc.cluster.local:8081/render'}
             - {name: GF_RENDERING_CALLBACK_URL, value: 'http://grafana.monitoring.svc.cluster.local:3000/'}

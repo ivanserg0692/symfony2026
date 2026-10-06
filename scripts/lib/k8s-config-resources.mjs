@@ -267,7 +267,18 @@ function* buildInfrastructureResources({ auth, catalog, database, catalogDb, car
     CART_DB_URI: `cart-db:5432/${cartDb.POSTGRES_DB || 'cart'}?sslmode=disable`,
   });
 
-  yield manifest('ConfigMap', 'postgres-capacity', postgresConnectionBudget({ auth, catalog, database }));
+  const capacity = postgresConnectionBudget({ auth, catalog, database });
+  for (const [service, key] of [
+    ['auth', 'AUTH_POSTGRES_MAX_CONNECTIONS'],
+    ['catalog', 'CATALOG_POSTGRES_MAX_CONNECTIONS'],
+    ['cart', 'CART_POSTGRES_MAX_CONNECTIONS'],
+  ]) {
+    const value = capacity[key];
+    yield {
+      ...manifest('ConfigMap', `postgres-capacity-${service}-${value}`, { POSTGRES_MAX_CONNECTIONS: value }),
+      immutable: true,
+    };
+  }
 }
 
 function priorGrafana(key) {

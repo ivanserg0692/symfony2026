@@ -54,6 +54,68 @@ ensure_k8s_settings() {
     image_profile="$K8S_IMAGE_PROFILE"
 }
 
+resolve_registry_images() {
+    local registry="$1" tag="$2" error_message="$3"
+
+    if [[ ! "$registry" =~ ^[a-zA-Z0-9._:/-]+$ || ! "$tag" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+        echo "$error_message" >&2
+        return 2
+    fi
+
+    auth_image="${registry}/symfony-auth:${tag}-${image_profile}"
+    catalog_image="${registry}/symfony-catalog:${tag}-${image_profile}"
+    cart_image="${registry}/symfony-cart:${tag}-${image_profile}"
+    gateway_image="${registry}/symfony-api-gateway-nginx:${tag}"
+    prometheus_image="${registry}/symfony-prometheus:${tag}"
+    grafana_image="${registry}/symfony-grafana:${tag}"
+    minio_image="${registry}/symfony-minio:${tag}"
+    mc_image="${registry}/symfony-mc:${tag}"
+}
+
+load_local_image_refs() {
+    local validate_versioned="${1:-false}"
+    local refs_file="kubernetes/generated/image-refs.tsv"
+    local profile service reference expected_prefix
+
+    if [[ ! -f "$refs_file" ]]; then
+        echo "Missing $refs_file. Run npm run docker:k8s:build on this machine." >&2
+        return 1
+    fi
+    while IFS=$'\t' read -r profile service reference; do
+        if [[ "$profile" == "$image_profile" ]]; then
+            case "$service" in
+                auth) auth_image="$reference" ;;
+                catalog) catalog_image="$reference" ;;
+                cart) cart_image="$reference" ;;
+                *) continue ;;
+            esac
+            expected_prefix="symfony-${service}:k8s-${image_profile}-"
+        elif [[ "$profile" == shared ]]; then
+            case "$service" in
+                api-gateway-nginx) gateway_image="$reference" ;;
+                prometheus) prometheus_image="$reference" ;;
+                grafana) grafana_image="$reference" ;;
+                minio) minio_image="$reference" ;;
+                mc) mc_image="$reference" ;;
+                *) continue ;;
+            esac
+            expected_prefix="symfony-${service}:k8s-"
+        else
+            continue
+        fi
+        if [[ "$validate_versioned" == true && ! "$reference" =~ ^${expected_prefix}[1-9][0-9]*$ ]]; then
+            echo "Invalid image reference for $profile/$service in $refs_file." >&2
+            return 1
+        fi
+    done < "$refs_file"
+    for reference in "${auth_image:-}" "${catalog_image:-}" "${cart_image:-}" "${gateway_image:-}" "${prometheus_image:-}" "${grafana_image:-}" "${minio_image:-}" "${mc_image:-}"; do
+        if [[ -z "$reference" ]]; then
+            echo "Incomplete $refs_file for profile $image_profile." >&2
+            return 1
+        fi
+    done
+}
+
 ensure_k8s_cluster() {
     local runtime="$1" namespace="$2"
 

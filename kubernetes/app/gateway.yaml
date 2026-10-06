@@ -1,15 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: api-gateway}
+metadata: {name: api-gateway, namespace: __APP_NAMESPACE__}
 spec:
   replicas: 1
   selector: {matchLabels: {app: api-gateway}}
   template:
     metadata: {labels: {app: api-gateway, service: gateway, component: http}}
     spec:
+      initContainers:
+        - name: wait-http-upstreams
+          image: curlimages/curl:8.14.1
+          command:
+            - sh
+            - -ec
+            - |
+              for service in symfony-web catalog-web cart-web; do
+                until status="$(curl --silent --output /dev/null --max-time 3 --write-out '%{http_code}' "http://${service}:8000/")" &&
+                      [ "$status" -ge 200 ] && [ "$status" -lt 500 ]; do sleep 5; done
+              done
       containers:
         - name: nginx
-          image: symfony-api-gateway-nginx:k8s
+          image: __API_GATEWAY_IMAGE__
           imagePullPolicy: IfNotPresent
           ports: [{name: http, containerPort: 80}, {name: vts, containerPort: 8080}]
           readinessProbe: {tcpSocket: {port: 80}, periodSeconds: 5}
@@ -22,7 +33,7 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: api-gateway}
+metadata: {name: api-gateway, namespace: __APP_NAMESPACE__}
 spec:
   type: LoadBalancer
   allocateLoadBalancerNodePorts: false
@@ -32,7 +43,7 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: api-gateway-metrics}
+metadata: {name: api-gateway-metrics, namespace: __APP_NAMESPACE__}
 spec:
   type: ClusterIP
   selector: {app: api-gateway}
