@@ -155,8 +155,8 @@ npm run k8s:deploy
 
 На диаграмме сплошные стрелки показывают зависимости Jobs и workloads, а пунктирные — координацию первого Catalog reindex в скрипте развёртывания. Стрелка направлена от зависимости к следующему этапу; runtime-проверки Service перечислены внутри каждого workload. Gateway проверяет доступность HTTP Service; эта проверка сама по себе не подтверждает, что upstream Pod работает на нужном image.
 
-<!-- plantuml src="../symfony/docs/plantuml/kubernetes/deployment-dependencies.puml" alt="Зависимости развёртывания Kubernetes" out="../symfony/docs/images/plantuml/kubernetes/deployment-dependencies.png" -->
-![Зависимости развёртывания Kubernetes](../symfony/docs/images/plantuml/kubernetes/deployment-dependencies.png)
+<!-- plantuml src="../symfony/docs/plantuml/kubernetes-ru/deployment-dependencies.puml" alt="Зависимости развёртывания Kubernetes" out="../symfony/docs/images/plantuml/kubernetes-ru/deployment-dependencies.png" -->
+![Зависимости развёртывания Kubernetes](../symfony/docs/images/plantuml/kubernetes-ru/deployment-dependencies.png)
 <!-- /plantuml -->
 
 Повторный deploy переиспользует JWT, PVC и Kubernetes credentials, а setup/migration Jobs создаёт заново. При явной повторной синхронизации Secret сохраняются сгенерированные APP_SECRET Auth и credentials Grafana. Doctrine migrations остаются идемпотентными. Данные из Compose volumes автоматически не переносятся: для них нужна отдельная процедура backup/restore. Secret и PVC следует резервировать.

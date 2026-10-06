@@ -7,20 +7,23 @@ skinparam shadowing false
 skinparam linetype ortho
 
 legend top
-  --> Database readiness precedes migration; migration image + Complete precede consumers.
-  --> MinIO rollout + API precede bucket setup; setup image + Complete precede Auth web.
-  --> Gateway checks upstream HTTP availability; an old replica may answer.
-  ..> The deployment script coordinates the first Catalog index only.
-  Each workload box lists the runtime Services checked by its initContainers.
+  Rectangle: a workload, Job, or deployment script step.
+  Group frame: related components and steps; arrows show their dependencies.
+  <color:DarkGreen>Green: runtime Service or API check in a Pod/Job.</color>
+  <color:DarkOrange>Orange: initContainer checks a Job, controller rollout, or database capacity.</color>
+  <color:Purple>Purple: deployment/reindex script checks expected image + current rollout or Job completion.</color>
+  <color:RoyalBlue>Blue: final k8s:verify checks expected image + current rollout or Job completion.</color>
+  --> Dependency enforced by a Job or workload initContainer.
+  ..> First Catalog index coordinated by the deployment script.
 endlegend
 
 package "Auth" {
   component "Auth PostgreSQL\ncurrent rollout + capacity" as AuthDb
-  component "auth-migrate Job\nimage: symfony-auth:<current-tag>-<profile>" as AuthMigrate
-  component "symfony-web\nimage: symfony-auth:<current-tag>-<profile>\nwait: PostgreSQL, Redis, RabbitMQ" as AuthWeb
-  component "auth-async-worker\nimage: symfony-auth:<current-tag>-<profile>\nwait: PostgreSQL, RabbitMQ, Mailpit" as AuthWorker
-  component "MinIO\nimage: symfony-minio:<current-tag>\ncurrent rollout" as Minio
-  component "minio-bucket-setup Job\nimage: symfony-mc:<current-tag>" as MinioSetup
+  component "auth-migrate Job\nimage: symfony-auth:<current-tag>-<profile>\n<color:DarkOrange>init: wait-database-rollout (capacity + rollout)</color>\n<color:DarkGreen>init: wait-database (SQL capacity)</color>\n<color:RoyalBlue>image + Complete: final k8s:verify</color>" as AuthMigrate
+  component "symfony-web\nimage: symfony-auth:<current-tag>-<profile>\n<color:DarkOrange>init: wait-auth-bootstrap (auth-migrate + minio-bucket-setup images + Complete)</color>\n<color:DarkGreen>init: wait-database, wait-redis, wait-rabbitmq</color>\n<color:RoyalBlue>image + rollout: final k8s:verify</color>" as AuthWeb
+  component "auth-async-worker\nimage: symfony-auth:<current-tag>-<profile>\n<color:DarkOrange>init: wait-auth-migration (auth-migrate image + Complete)</color>\n<color:DarkGreen>init: wait-database, wait-rabbitmq, wait-mailpit</color>\n<color:RoyalBlue>image + rollout: final k8s:verify</color>" as AuthWorker
+  component "MinIO\nimage: symfony-minio:<current-tag>\n<color:RoyalBlue>image + rollout: final k8s:verify</color>" as Minio
+  component "minio-bucket-setup Job\nimage: symfony-mc:<current-tag>\n<color:DarkOrange>init: wait-minio-rollout (MinIO image + rollout)</color>\n<color:DarkGreen>setup: MinIO API</color>\n<color:RoyalBlue>image + Complete: final k8s:verify</color>" as MinioSetup
 
   AuthDb --> AuthMigrate
   AuthMigrate --> AuthWeb
@@ -31,11 +34,11 @@ package "Auth" {
 
 package "Catalog" {
   component "Catalog PostgreSQL\ncurrent rollout + capacity" as CatalogDb
-  component "catalog-migrate Job\nimage: symfony-catalog:<current-tag>-<profile>" as CatalogMigrate
-  component "catalog-web\nimage: symfony-catalog:<current-tag>-<profile>\nwait: PostgreSQL, Redis, Elasticsearch" as CatalogWeb
-  component "catalog-grpc\nimage: symfony-catalog:<current-tag>-<profile>\nwait: PostgreSQL" as CatalogGrpc
-  component "catalog-search-outbox-worker\nimage: symfony-catalog:<current-tag>-<profile>\nwait: PostgreSQL, RabbitMQ" as CatalogOutbox
-  component "catalog-search-index-worker\nimage: symfony-catalog:<current-tag>-<profile>\nwait: PostgreSQL, RabbitMQ, Elasticsearch" as CatalogIndex
+  component "catalog-migrate Job\nimage: symfony-catalog:<current-tag>-<profile>\n<color:DarkOrange>init: wait-database-rollout (capacity + rollout)</color>\n<color:DarkGreen>init: wait-database (SQL capacity)</color>\n<color:RoyalBlue>image + Complete: final k8s:verify</color>" as CatalogMigrate
+  component "catalog-web\nimage: symfony-catalog:<current-tag>-<profile>\n<color:DarkOrange>init: wait-catalog-migration (migration image + Complete)</color>\n<color:DarkGreen>init: wait-database, wait-redis, wait-elasticsearch</color>\n<color:Purple>image + rollout: initial reindex gate</color>\n<color:RoyalBlue>image + rollout: final k8s:verify</color>" as CatalogWeb
+  component "catalog-grpc\nimage: symfony-catalog:<current-tag>-<profile>\n<color:DarkOrange>init: wait-catalog-migration (migration image + Complete)</color>\n<color:DarkGreen>init: wait-database</color>\n<color:RoyalBlue>image + rollout: final k8s:verify</color>" as CatalogGrpc
+  component "catalog-search-outbox-worker\nimage: symfony-catalog:<current-tag>-<profile>\n<color:DarkOrange>init: wait-catalog-migration (migration image + Complete)</color>\n<color:DarkGreen>init: wait-database, wait-rabbitmq</color>\n<color:RoyalBlue>image + rollout: final k8s:verify</color>" as CatalogOutbox
+  component "catalog-search-index-worker\nimage: symfony-catalog:<current-tag>-<profile>\n<color:DarkOrange>init: wait-catalog-migration (migration image + Complete)</color>\n<color:DarkGreen>init: wait-database, wait-rabbitmq, wait-elasticsearch</color>\n<color:Purple>image + rollout: reindex worker restore</color>\n<color:RoyalBlue>image + rollout: final k8s:verify</color>" as CatalogIndex
 
   CatalogDb --> CatalogMigrate
   CatalogMigrate --> CatalogWeb
@@ -46,22 +49,22 @@ package "Catalog" {
 
 package "Cart" {
   component "Cart PostgreSQL\ncurrent rollout + capacity" as CartDb
-  component "cart-migrate Job\nimage: symfony-cart:<current-tag>-<profile>" as CartMigrate
-  component "cart-web\nimage: symfony-cart:<current-tag>-<profile>\nwait: PostgreSQL, Redis" as CartWeb
+  component "cart-migrate Job\nimage: symfony-cart:<current-tag>-<profile>\n<color:DarkOrange>init: wait-database-rollout (capacity + rollout)</color>\n<color:DarkGreen>init: wait-database (SQL capacity)</color>\n<color:RoyalBlue>image + Complete: final k8s:verify</color>" as CartMigrate
+  component "cart-web\nimage: symfony-cart:<current-tag>-<profile>\n<color:DarkOrange>init: wait-cart-migration (migration image + Complete)</color>\n<color:DarkGreen>init: wait-database, wait-redis</color>\n<color:RoyalBlue>image + rollout: final k8s:verify</color>" as CartWeb
 
   CartDb --> CartMigrate
   CartMigrate --> CartWeb
 }
 
-component "api-gateway\nimage: symfony-api-gateway-nginx:<current-tag>\nwait: Auth, Catalog, Cart HTTP Services" as Gateway
+component "api-gateway\nimage: symfony-api-gateway-nginx:<current-tag>\n<color:DarkGreen>init: wait-http-upstreams (Auth, Catalog, Cart HTTP Services)</color>\n<color:RoyalBlue>image + rollout: final k8s:verify</color>" as Gateway
 AuthWeb --> Gateway
 CatalogWeb --> Gateway
 CartWeb --> Gateway
 
 package "First Catalog index (deployment script)" {
-  component "Initial reindex gate\ncheck Catalog migration image + Complete\ncheck Catalog web rollout + image" as ReindexGate
-  component "catalog-full-reindex Job\nverify symfony-catalog:<current-tag>-<profile> + Complete\nwait: migration + Elasticsearch" as ReindexJob
-  component "Restore index worker\nverify current rollout + image" as RestoreWorker
+  component "Initial reindex gate\n<color:Purple>catalog-migrate: expected image + Complete</color>\n<color:Purple>catalog-web: expected image + current rollout</color>" as ReindexGate
+  component "catalog-full-reindex Job\nimage: symfony-catalog:<current-tag>-<profile>\n<color:DarkOrange>init: wait-catalog-migration (Complete only)</color>\n<color:DarkGreen>init: wait-elasticsearch</color>\n<color:Purple>script: expected image + Complete</color>" as ReindexJob
+  component "Restore catalog-search-index-worker\n<color:Purple>script: expected image + current rollout</color>" as RestoreWorker
 
   ReindexGate ..> ReindexJob
   ReindexJob ..> RestoreWorker
@@ -69,20 +72,22 @@ package "First Catalog index (deployment script)" {
 
 note bottom of ReindexGate
   Runs only when catalog-initial-index is absent.
-  This release-wide operation never runs in a Pod initContainer.
+  This release-wide operation does not run in a Pod initContainer.
 end note
 
 note bottom of Gateway
-  An old Ready upstream replica may answer this check.
-  Current rollout and image are verified separately.
+  An old Ready upstream replica may answer wait-http-upstreams.
+  Its response does not verify the upstream image version.
 end note
 
 note as Independent
   elasticsearch-setup waits for Elasticsearch and sets the Kibana password.
-  Catalog workloads wait for Elasticsearch health, not this Job.
+  Kibana init: wait-elasticsearch-credentials.
+  Catalog workloads check Elasticsearch health, not elasticsearch-setup.
   Prometheus (symfony-prometheus:<current-tag>) and
-  Grafana (symfony-grafana:<current-tag>) start independently.
-  Exporters start independently.
+  Grafana (symfony-grafana:<current-tag>) start independently;
+  <color:RoyalBlue>final k8s:verify checks their images + rollouts.</color>
+  Database exporters start independently; each init: wait-database.
 end note
 
 @enduml
