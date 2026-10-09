@@ -1,5 +1,4 @@
-// Resolve the current project configuration and build Kubernetes resources.
-// Callers decide whether ConfigMaps are written or Secrets are applied.
+// Resolve project configuration and compute Helm values or cluster-only Secrets.
 import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { resolve } from 'node:path';
@@ -108,13 +107,13 @@ function priorAuthSecret() {
   return data.APP_SECRET ? Buffer.from(data.APP_SECRET, 'base64').toString('utf8') : null;
 }
 
-function manifest(kind, name, data) {
+function secretManifest(name, data) {
   return {
     apiVersion: 'v1',
-    kind,
+    kind: 'Secret',
     metadata: { name, namespace },
-    [kind === 'Secret' ? 'stringData' : 'data']: data,
-    ...(kind === 'Secret' ? { type: 'Opaque' } : {}),
+    stringData: data,
+    type: 'Opaque',
   };
 }
 
@@ -125,8 +124,8 @@ function commonConfig(auth) {
   };
 }
 
-function* buildAuthResources({ auth, minio }, common, includeSecrets) {
-  yield manifest('ConfigMap', 'auth-config', {
+function authConfigData({ auth }, common) {
+  return {
     ...common,
     CACHE_DSN: 'redis://redis-symfony:6379/0?persistent=1',
     AUTH_SESSION_DSN: 'redis://redis-symfony:6379/1',
@@ -151,9 +150,11 @@ function* buildAuthResources({ auth, minio }, common, includeSecrets) {
     APP_ADMIN_LOGIN: auth.APP_ADMIN_LOGIN || 'admin@example.com',
     JWT_SECRET_KEY: '/workspace/config/jwt/private.pem',
     JWT_PUBLIC_KEY: '/workspace/config/jwt/public.pem',
-  });
+  };
+}
 
-  if (includeSecrets) yield manifest('Secret', 'auth-config-secret', {
+function authSecret({ auth, minio }) {
+  return secretManifest('auth-config-secret', {
     APP_SECRET: auth.APP_SECRET || priorAuthSecret() || randomBytes(32).toString('hex'),
     DATABASE_URL: required(auth, 'DATABASE_URL'),
     MAILER_DSN: auth.MAILER_DSN || 'smtp://mailpit:1025',
@@ -166,8 +167,8 @@ function* buildAuthResources({ auth, minio }, common, includeSecrets) {
   });
 }
 
-function* buildCatalogResources({ auth, catalog }, common, includeSecrets) {
-  yield manifest('ConfigMap', 'catalog-config', {
+function catalogConfigData({ auth, catalog }, common) {
+  return {
     ...common,
     CORS_ALLOW_ORIGIN: catalog.CORS_ALLOW_ORIGIN || auth.CORS_ALLOW_ORIGIN || '^https?://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?$',
     CACHE_DSN: 'redis://redis-catalog:6379/0?persistent=1',
@@ -185,9 +186,11 @@ function* buildCatalogResources({ auth, catalog }, common, includeSecrets) {
     PRODUCT_SEARCH_INCREMENTAL_WORKER_PAUSED: '0',
     ROADRUNNER_NUM_WORKERS: catalog.ROADRUNNER_NUM_WORKERS || '1',
     APP_TRACING_ENABLED: catalog.APP_TRACING_ENABLED || '0',
-  });
+  };
+}
 
-  if (includeSecrets) yield manifest('Secret', 'catalog-config-secret', {
+function catalogSecret({ catalog }) {
+  return secretManifest('catalog-config-secret', {
     APP_SECRET: required(catalog, 'APP_SECRET'),
     DATABASE_URL: required(catalog, 'DATABASE_URL'),
     ELASTICSEARCH_URL: catalog.ELASTICSEARCH_URL || 'http://elasticsearch:9200',
@@ -196,8 +199,8 @@ function* buildCatalogResources({ auth, catalog }, common, includeSecrets) {
   });
 }
 
-function* buildCartResources({ auth, cart }, common, includeSecrets) {
-  yield manifest('ConfigMap', 'cart-config', {
+function cartConfigData({ auth, cart }, common) {
+  return {
     ...common,
     CORS_ALLOW_ORIGIN: cart.CORS_ALLOW_ORIGIN || auth.CORS_ALLOW_ORIGIN || '^https?://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?$',
     CACHE_DSN: 'redis://redis-cart:6379/0?persistent=1',
@@ -207,9 +210,11 @@ function* buildCartResources({ auth, cart }, common, includeSecrets) {
     CATALOG_SERVICE_BASE_URL: cart.CATALOG_SERVICE_BASE_URL || 'http://catalog-web:8000',
     MAIN_SERVICE_BASE_URL: cart.MAIN_SERVICE_BASE_URL || 'http://symfony-web:8000',
     APP_TRACING_ENABLED: cart.APP_TRACING_ENABLED || '0',
-  });
+  };
+}
 
-  if (includeSecrets) yield manifest('Secret', 'cart-config-secret', {
+function cartSecret({ cart }) {
+  return secretManifest('cart-config-secret', {
     APP_SECRET: required(cart, 'APP_SECRET'),
     DATABASE_URL: required(cart, 'DATABASE_URL'),
     MESSENGER_TRANSPORT_DSN: cart.MESSENGER_TRANSPORT_DSN || 'doctrine://default?auto_setup=0',
@@ -240,8 +245,8 @@ function postgresConnectionBudget({ auth, catalog, database }) {
   return Object.fromEntries(Object.entries(budgets).map(([key, value]) => [key, String(value)]));
 }
 
-function* buildInfrastructureResources({ auth, catalog, database, catalogDb, cartDb, rabbitmq, minio, elasticsearch, kibana }, includeSecrets) {
-  if (includeSecrets) yield manifest('Secret', 'infra-config-secret', {
+function infrastructureSecret({ database, catalogDb, cartDb, rabbitmq, minio, elasticsearch, kibana }) {
+  return secretManifest('infra-config-secret', {
     POSTGRES_DB: database.POSTGRES_DB || 'app',
     POSTGRES_USER: database.POSTGRES_USER || 'app',
     POSTGRES_PASSWORD: required(database, 'POSTGRES_PASSWORD'),
@@ -260,25 +265,34 @@ function* buildInfrastructureResources({ auth, catalog, database, catalogDb, car
     MINIO_ROOT_PASSWORD: required(minio, 'MINIO_ROOT_PASSWORD'),
     MINIO_BUCKET: minio.MINIO_BUCKET || 'app',
   });
+}
 
-  yield manifest('ConfigMap', 'db-exporter-config', {
+function dbExporterConfigData({ database, catalogDb, cartDb }) {
+  return {
     AUTH_DB_URI: `database:5432/${database.POSTGRES_DB || 'app'}?sslmode=disable`,
     CATALOG_DB_URI: `catalog-db:5432/${catalogDb.POSTGRES_DB || 'catalog'}?sslmode=disable`,
     CART_DB_URI: `cart-db:5432/${cartDb.POSTGRES_DB || 'cart'}?sslmode=disable`,
-  });
+  };
+}
 
-  const capacity = postgresConnectionBudget({ auth, catalog, database });
-  for (const [service, key] of [
-    ['auth', 'AUTH_POSTGRES_MAX_CONNECTIONS'],
-    ['catalog', 'CATALOG_POSTGRES_MAX_CONNECTIONS'],
-    ['cart', 'CART_POSTGRES_MAX_CONNECTIONS'],
-  ]) {
-    const value = capacity[key];
-    yield {
-      ...manifest('ConfigMap', `postgres-capacity-${service}-${value}`, { POSTGRES_MAX_CONNECTIONS: value }),
-      immutable: true,
-    };
-  }
+export function buildGeneratedValues(config) {
+  const common = commonConfig(config.auth);
+  const capacity = postgresConnectionBudget(config);
+  return {
+    generated: {
+      config: {
+        auth: authConfigData(config, common),
+        catalog: catalogConfigData(config, common),
+        cart: cartConfigData(config, common),
+        dbExporter: dbExporterConfigData(config),
+      },
+      postgresCapacity: {
+        auth: capacity.AUTH_POSTGRES_MAX_CONNECTIONS,
+        catalog: capacity.CATALOG_POSTGRES_MAX_CONNECTIONS,
+        cart: capacity.CART_POSTGRES_MAX_CONNECTIONS,
+      },
+    },
+  };
 }
 
 function priorGrafana(key) {
@@ -288,32 +302,27 @@ function priorGrafana(key) {
   return value ? Buffer.from(value, 'base64').toString('utf8') : null;
 }
 
-function monitoringManifest(kind, name, data) {
+function monitoringSecretManifest(name, data) {
   return {
-    ...manifest(kind, name, data),
+    ...secretManifest(name, data),
     metadata: { name, namespace: 'monitoring' },
   };
 }
 
-function* buildMonitoringResources(includeSecrets) {
-  if (!includeSecrets) return;
-  yield monitoringManifest('Secret', 'grafana-config-secret', {
+function monitoringSecret() {
+  return monitoringSecretManifest('grafana-config-secret', {
     'renderer-token': priorGrafana('renderer-token') || randomBytes(32).toString('hex'),
     'admin-password': priorGrafana('admin-password') || randomBytes(24).toString('hex'),
   });
 }
 
-export function buildResources(config, targetNamespace, { includeSecrets = false } = {}) {
+export function buildSecrets(config, targetNamespace) {
   namespace = targetNamespace;
-  const common = commonConfig(config.auth);
-  const all = [
-    ...buildAuthResources(config, common, includeSecrets),
-    ...buildCatalogResources(config, common, includeSecrets),
-    ...buildCartResources(config, common, includeSecrets),
-    ...buildInfrastructureResources(config, includeSecrets),
-    ...buildMonitoringResources(includeSecrets),
+  return [
+    authSecret(config),
+    catalogSecret(config),
+    cartSecret(config),
+    infrastructureSecret(config),
+    monitoringSecret(),
   ];
-  return all.filter((resource) => includeSecrets
-    ? resource.kind === 'Secret'
-    : resource.kind === 'ConfigMap');
 }

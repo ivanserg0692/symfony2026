@@ -20,7 +20,7 @@ spec:
           args: ['exec docker-entrypoint.sh postgres -c "max_connections=$POSTGRES_MAX_CONNECTIONS"']
           ports: [{name: postgres, containerPort: 5432}]
           env:
-            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ .Values.capacityConfigMaps.auth }}, key: POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ include "symfony2026.capacityConfigMapName" (dict "root" . "service" "auth") }}, key: POSTGRES_MAX_CONNECTIONS}}}
             - {name: POSTGRES_DB, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_DB}}}
             - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_USER}}}
             - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_PASSWORD}}}
@@ -54,7 +54,7 @@ spec:
           args: ['exec docker-entrypoint.sh postgres -c "max_connections=$POSTGRES_MAX_CONNECTIONS"']
           ports: [{name: postgres, containerPort: 5432}]
           env:
-            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ .Values.capacityConfigMaps.catalog }}, key: POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ include "symfony2026.capacityConfigMapName" (dict "root" . "service" "catalog") }}, key: POSTGRES_MAX_CONNECTIONS}}}
             - {name: POSTGRES_DB, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_DB}}}
             - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_USER}}}
             - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_PASSWORD}}}
@@ -88,7 +88,7 @@ spec:
           args: ['exec docker-entrypoint.sh postgres -c "max_connections=$POSTGRES_MAX_CONNECTIONS"']
           ports: [{name: postgres, containerPort: 5432}]
           env:
-            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ .Values.capacityConfigMaps.cart }}, key: POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ include "symfony2026.capacityConfigMapName" (dict "root" . "service" "cart") }}, key: POSTGRES_MAX_CONNECTIONS}}}
             - {name: POSTGRES_DB, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_DB}}}
             - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_USER}}}
             - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_PASSWORD}}}

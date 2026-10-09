@@ -2,7 +2,7 @@
 
 // Explicit secret synchronization. Values travel through stdin to kubectl and
 // persist only as Kubernetes Secrets; no secret YAML is written to disk.
-import { buildResources, loadConfiguration, run } from './lib/k8s-config-resources.mjs';
+import { buildSecrets, loadConfiguration, run } from './lib/k8s-config-resources.mjs';
 import { loadK8sSettings } from './lib/k8s-settings.mjs';
 
 function ensureNamespace(name) {
@@ -18,7 +18,7 @@ function ensureNamespaces(names) {
 }
 
 function syncSecrets(config, namespace) {
-  for (const secret of buildResources(config, namespace, { includeSecrets: true })) {
+  for (const secret of buildSecrets(config, namespace)) {
     run('kubectl', ['-n', secret.metadata.namespace, 'apply', '-f', '-'], JSON.stringify(secret));
     console.log(`Synchronized Secret/${secret.metadata.name} in ${secret.metadata.namespace}`);
   }

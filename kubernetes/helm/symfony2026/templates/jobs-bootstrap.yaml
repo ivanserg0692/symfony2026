@@ -113,7 +113,7 @@ spec:
             - |
               until [ "$(kubectl get statefulset/database -o jsonpath='{.spec.template.spec.containers[0].env[0].valueFrom.configMapKeyRef.name}' 2>/dev/null)" = "$EXPECTED_CONFIGMAP" ]; do sleep 5; done
               kubectl rollout status statefulset/database --timeout=3600s
-          env: [{name: EXPECTED_CONFIGMAP, value: {{ .Values.capacityConfigMaps.auth }}}]
+          env: [{name: EXPECTED_CONFIGMAP, value: {{ include "symfony2026.capacityConfigMapName" (dict "root" . "service" "auth") }}}]
         - name: wait-database
           image: postgres:16-alpine
           command: [sh, -ec]
@@ -125,7 +125,7 @@ spec:
             - {name: PGUSER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_USER}}}
             - {name: PGDATABASE, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_DB}}}
             - {name: PGPASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_PASSWORD}}}
-            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ .Values.capacityConfigMaps.auth }}, key: POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ include "symfony2026.capacityConfigMapName" (dict "root" . "service" "auth") }}, key: POSTGRES_MAX_CONNECTIONS}}}
       containers:
         - name: migrate
           image: {{ .Values.images.auth }}
@@ -153,7 +153,7 @@ spec:
             - |
               until [ "$(kubectl get statefulset/catalog-db -o jsonpath='{.spec.template.spec.containers[0].env[0].valueFrom.configMapKeyRef.name}' 2>/dev/null)" = "$EXPECTED_CONFIGMAP" ]; do sleep 5; done
               kubectl rollout status statefulset/catalog-db --timeout=3600s
-          env: [{name: EXPECTED_CONFIGMAP, value: {{ .Values.capacityConfigMaps.catalog }}}]
+          env: [{name: EXPECTED_CONFIGMAP, value: {{ include "symfony2026.capacityConfigMapName" (dict "root" . "service" "catalog") }}}]
         - name: wait-database
           image: postgres:16-alpine
           command: [sh, -ec]
@@ -165,7 +165,7 @@ spec:
             - {name: PGUSER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_USER}}}
             - {name: PGDATABASE, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_DB}}}
             - {name: PGPASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_PASSWORD}}}
-            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ .Values.capacityConfigMaps.catalog }}, key: POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ include "symfony2026.capacityConfigMapName" (dict "root" . "service" "catalog") }}, key: POSTGRES_MAX_CONNECTIONS}}}
       containers:
         - name: migrate
           image: {{ .Values.images.catalog }}
@@ -190,7 +190,7 @@ spec:
             - |
               until [ "$(kubectl get statefulset/cart-db -o jsonpath='{.spec.template.spec.containers[0].env[0].valueFrom.configMapKeyRef.name}' 2>/dev/null)" = "$EXPECTED_CONFIGMAP" ]; do sleep 5; done
               kubectl rollout status statefulset/cart-db --timeout=3600s
-          env: [{name: EXPECTED_CONFIGMAP, value: {{ .Values.capacityConfigMaps.cart }}}]
+          env: [{name: EXPECTED_CONFIGMAP, value: {{ include "symfony2026.capacityConfigMapName" (dict "root" . "service" "cart") }}}]
         - name: wait-database
           image: postgres:16-alpine
           command: [sh, -ec]
@@ -202,7 +202,7 @@ spec:
             - {name: PGUSER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_USER}}}
             - {name: PGDATABASE, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_DB}}}
             - {name: PGPASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_PASSWORD}}}
-            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ .Values.capacityConfigMaps.cart }}, key: POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ include "symfony2026.capacityConfigMapName" (dict "root" . "service" "cart") }}, key: POSTGRES_MAX_CONNECTIONS}}}
       containers:
         - name: migrate
           image: {{ .Values.images.cart }}

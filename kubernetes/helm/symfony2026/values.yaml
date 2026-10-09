@@ -9,14 +9,14 @@ images:
   prometheus: symfony-prometheus:latest
   grafana: symfony-grafana:latest
 
-# Example names; scripts/k8s-deploy.sh extracts actual names from generated YAML.
-capacityConfigMaps:
-  auth: postgres-capacity-auth-64
-  catalog: postgres-capacity-catalog-92
-  cart: postgres-capacity-cart-60
-
-# Pass kubernetes/generated/<namespace>/configmaps.yaml using --set-file.
-generatedConfigMaps: ""
+# Supply computed application data and capacity with -f generated-values.yaml.
+# Capacity examples allow structural chart checks without generated values.
+generated:
+  config: {}
+  postgresCapacity:
+    auth: "64"
+    catalog: "92"
+    cart: "60"
 
 replicas:
   api-gateway: 1

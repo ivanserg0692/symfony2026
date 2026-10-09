@@ -61,23 +61,14 @@ esac
 kubectl get namespace "$namespace" >/dev/null 2>&1 || kubectl create namespace "$namespace"
 kubectl get namespace monitoring >/dev/null 2>&1 || kubectl create namespace monitoring
 
-# Use the previously synchronized, reviewable ConfigMaps. Secrets are synced
+# Use the previously synchronized, reviewable Helm values. Secrets are synced
 # separately and remain only in the cluster; fail before starting workloads if
 # any required application, infrastructure or monitoring Secret is missing.
-config_file="kubernetes/generated/$namespace/configmaps.yaml"
+config_file="kubernetes/generated/$namespace/generated-values.yaml"
 if [[ ! -f "$config_file" ]]; then
     echo "Missing $config_file. Run npm run k8s:config:sync first." >&2
     exit 1
 fi
-capacity_configmap_name() {
-    local service="$1" name
-    name="$(sed -n "s/^  name: \"\(postgres-capacity-${service}-[1-9][0-9]*\)\"$/\1/p" "$config_file")"
-    if [[ ! "$name" =~ ^postgres-capacity-${service}-[1-9][0-9]*$ ]]; then
-        echo "Missing or invalid PostgreSQL capacity ConfigMap for $service in $config_file. Run npm run k8s:config:sync." >&2
-        return 1
-    fi
-    printf '%s' "$name"
-}
 for secret in auth-config-secret catalog-config-secret cart-config-secret infra-config-secret; do
     kubectl -n "$namespace" get secret "$secret" >/dev/null || {
         echo "Missing Secret/$secret. Run npm run k8s:secrets:sync first." >&2
@@ -95,12 +86,12 @@ if ! kubectl -n "$namespace" get secret auth-jwt >/dev/null 2>&1; then
     AUTH_JWT_BOOTSTRAP_IMAGE="$auth_image" bash docker/php-symfony-cli/k8s/bootstrap-auth-jwt.sh
 fi
 
-# Helm installs the generated ConfigMaps with the static chart resources.
+# Helm creates ConfigMaps from the generated values with the other chart resources.
 # Bootstrap Jobs are post-install/upgrade hooks and replace their completed
 # predecessors before each release, including the first adoption from kubectl.
 helm upgrade --install symfony2026 kubernetes/helm/symfony2026 \
     --namespace "$namespace" --create-namespace --take-ownership --timeout 15m \
-    --set-file "generatedConfigMaps=$config_file" \
+    -f "$config_file" \
     --set-string "images.auth=$auth_image" \
     --set-string "images.catalog=$catalog_image" \
     --set-string "images.cart=$cart_image" \
@@ -108,10 +99,7 @@ helm upgrade --install symfony2026 kubernetes/helm/symfony2026 \
     --set-string "images.minio=$minio_image" \
     --set-string "images.mc=$mc_image" \
     --set-string "images.prometheus=$prometheus_image" \
-    --set-string "images.grafana=$grafana_image" \
-    --set-string "capacityConfigMaps.auth=$(capacity_configmap_name auth)" \
-    --set-string "capacityConfigMaps.catalog=$(capacity_configmap_name catalog)" \
-    --set-string "capacityConfigMaps.cart=$(capacity_configmap_name cart)"
+    --set-string "images.grafana=$grafana_image"
 
 # Build the initial Catalog search index once per namespace. The reindex script
 # pauses the incremental index worker, waits for its Job, then restores the

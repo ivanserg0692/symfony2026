@@ -1,3 +1,26 @@
-{{- if .Values.generatedConfigMaps }}
-{{ include "symfony2026.generatedConfigMaps" . }}
+{{- $configMaps := dict "auth-config" .Values.generated.config.auth "catalog-config" .Values.generated.config.catalog "cart-config" .Values.generated.config.cart "db-exporter-config" .Values.generated.config.dbExporter -}}
+{{- range $name, $data := $configMaps }}
+{{- if $data }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace }}
+data:
+{{ toYaml $data | indent 2 }}
+{{- end }}
+{{- end }}
+{{- range $service := list "auth" "catalog" "cart" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "symfony2026.capacityConfigMapName" (dict "root" $ "service" $service) }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+immutable: true
+data:
+  POSTGRES_MAX_CONNECTIONS: {{ index $.Values.generated.postgresCapacity $service | toString | quote }}
 {{- end }}
