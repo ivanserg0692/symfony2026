@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Service
-metadata: {name: database, namespace: __APP_NAMESPACE__}
+metadata: {name: database, namespace: {{ .Release.Namespace }}}
 spec: {selector: {app: database}, ports: [{name: postgres, port: 5432}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: database, namespace: __APP_NAMESPACE__}
+metadata: {name: database, namespace: {{ .Release.Namespace }}}
 spec:
   serviceName: database
-  replicas: 1
+  replicas: {{ index .Values.replicas "database" }}
   selector: {matchLabels: {app: database}}
   template:
     metadata: {labels: {app: database}}
@@ -20,28 +20,29 @@ spec:
           args: ['exec docker-entrypoint.sh postgres -c "max_connections=$POSTGRES_MAX_CONNECTIONS"']
           ports: [{name: postgres, containerPort: 5432}]
           env:
-            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: __AUTH_POSTGRES_CAPACITY_CONFIGMAP__, key: POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ .Values.capacityConfigMaps.auth }}, key: POSTGRES_MAX_CONNECTIONS}}}
             - {name: POSTGRES_DB, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_DB}}}
             - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_USER}}}
             - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_PASSWORD}}}
           volumeMounts: [{name: data, mountPath: /var/lib/postgresql/data}]
-          readinessProbe: {exec: {command: [sh, -c, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']}, periodSeconds: 5}
-          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 1Gi}}
+          readinessProbe: {exec: {command: [sh, -c, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']}, periodSeconds: {{ index .Values.probes "database" "readinessProbe" "periodSeconds" }}}
+          resources:
+{{ toYaml (index .Values.resources "database" "postgres") | indent 12 }}
   volumeClaimTemplates:
     - metadata: {name: data}
       spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 5Gi}}}
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: catalog-db, namespace: __APP_NAMESPACE__}
+metadata: {name: catalog-db, namespace: {{ .Release.Namespace }}}
 spec: {selector: {app: catalog-db}, ports: [{name: postgres, port: 5432}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: catalog-db, namespace: __APP_NAMESPACE__}
+metadata: {name: catalog-db, namespace: {{ .Release.Namespace }}}
 spec:
   serviceName: catalog-db
-  replicas: 1
+  replicas: {{ index .Values.replicas "catalog-db" }}
   selector: {matchLabels: {app: catalog-db}}
   template:
     metadata: {labels: {app: catalog-db}}
@@ -53,28 +54,29 @@ spec:
           args: ['exec docker-entrypoint.sh postgres -c "max_connections=$POSTGRES_MAX_CONNECTIONS"']
           ports: [{name: postgres, containerPort: 5432}]
           env:
-            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: __CATALOG_POSTGRES_CAPACITY_CONFIGMAP__, key: POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ .Values.capacityConfigMaps.catalog }}, key: POSTGRES_MAX_CONNECTIONS}}}
             - {name: POSTGRES_DB, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_DB}}}
             - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_USER}}}
             - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_PASSWORD}}}
           volumeMounts: [{name: data, mountPath: /var/lib/postgresql/data}]
-          readinessProbe: {exec: {command: [sh, -c, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']}, periodSeconds: 5}
-          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 1Gi}}
+          readinessProbe: {exec: {command: [sh, -c, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']}, periodSeconds: {{ index .Values.probes "catalog-db" "readinessProbe" "periodSeconds" }}}
+          resources:
+{{ toYaml (index .Values.resources "catalog-db" "postgres") | indent 12 }}
   volumeClaimTemplates:
     - metadata: {name: data}
       spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 5Gi}}}
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: cart-db, namespace: __APP_NAMESPACE__}
+metadata: {name: cart-db, namespace: {{ .Release.Namespace }}}
 spec: {selector: {app: cart-db}, ports: [{name: postgres, port: 5432}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: cart-db, namespace: __APP_NAMESPACE__}
+metadata: {name: cart-db, namespace: {{ .Release.Namespace }}}
 spec:
   serviceName: cart-db
-  replicas: 1
+  replicas: {{ index .Values.replicas "cart-db" }}
   selector: {matchLabels: {app: cart-db}}
   template:
     metadata: {labels: {app: cart-db}}
@@ -86,28 +88,29 @@ spec:
           args: ['exec docker-entrypoint.sh postgres -c "max_connections=$POSTGRES_MAX_CONNECTIONS"']
           ports: [{name: postgres, containerPort: 5432}]
           env:
-            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: __CART_POSTGRES_CAPACITY_CONFIGMAP__, key: POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ .Values.capacityConfigMaps.cart }}, key: POSTGRES_MAX_CONNECTIONS}}}
             - {name: POSTGRES_DB, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_DB}}}
             - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_USER}}}
             - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_PASSWORD}}}
           volumeMounts: [{name: data, mountPath: /var/lib/postgresql/data}]
-          readinessProbe: {exec: {command: [sh, -c, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']}, periodSeconds: 5}
-          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 1Gi}}
+          readinessProbe: {exec: {command: [sh, -c, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']}, periodSeconds: {{ index .Values.probes "cart-db" "readinessProbe" "periodSeconds" }}}
+          resources:
+{{ toYaml (index .Values.resources "cart-db" "postgres") | indent 12 }}
   volumeClaimTemplates:
     - metadata: {name: data}
       spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 5Gi}}}
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: redis-symfony, namespace: __APP_NAMESPACE__}
+metadata: {name: redis-symfony, namespace: {{ .Release.Namespace }}}
 spec: {selector: {app: redis-symfony}, ports: [{name: redis, port: 6379}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: redis-symfony, namespace: __APP_NAMESPACE__}
+metadata: {name: redis-symfony, namespace: {{ .Release.Namespace }}}
 spec:
   serviceName: redis-symfony
-  replicas: 1
+  replicas: {{ index .Values.replicas "redis-symfony" }}
   selector: {matchLabels: {app: redis-symfony}}
   template:
     metadata: {labels: {app: redis-symfony}}
@@ -118,23 +121,24 @@ spec:
           args: ["--appendonly", "yes"]
           ports: [{name: redis, containerPort: 6379}]
           volumeMounts: [{name: data, mountPath: /data}]
-          readinessProbe: {exec: {command: [redis-cli, ping]}, periodSeconds: 5}
-          resources: {requests: {cpu: 25m, memory: 64Mi}, limits: {memory: 256Mi}}
+          readinessProbe: {exec: {command: [redis-cli, ping]}, periodSeconds: {{ index .Values.probes "redis-symfony" "readinessProbe" "periodSeconds" }}}
+          resources:
+{{ toYaml (index .Values.resources "redis-symfony" "redis") | indent 12 }}
   volumeClaimTemplates:
     - metadata: {name: data}
       spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 1Gi}}}
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: redis-catalog, namespace: __APP_NAMESPACE__}
+metadata: {name: redis-catalog, namespace: {{ .Release.Namespace }}}
 spec: {selector: {app: redis-catalog}, ports: [{name: redis, port: 6379}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: redis-catalog, namespace: __APP_NAMESPACE__}
+metadata: {name: redis-catalog, namespace: {{ .Release.Namespace }}}
 spec:
   serviceName: redis-catalog
-  replicas: 1
+  replicas: {{ index .Values.replicas "redis-catalog" }}
   selector: {matchLabels: {app: redis-catalog}}
   template:
     metadata: {labels: {app: redis-catalog}}
@@ -145,23 +149,24 @@ spec:
           args: ["--appendonly", "yes"]
           ports: [{name: redis, containerPort: 6379}]
           volumeMounts: [{name: data, mountPath: /data}]
-          readinessProbe: {exec: {command: [redis-cli, ping]}, periodSeconds: 5}
-          resources: {requests: {cpu: 25m, memory: 64Mi}, limits: {memory: 256Mi}}
+          readinessProbe: {exec: {command: [redis-cli, ping]}, periodSeconds: {{ index .Values.probes "redis-catalog" "readinessProbe" "periodSeconds" }}}
+          resources:
+{{ toYaml (index .Values.resources "redis-catalog" "redis") | indent 12 }}
   volumeClaimTemplates:
     - metadata: {name: data}
       spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 1Gi}}}
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: redis-cart, namespace: __APP_NAMESPACE__}
+metadata: {name: redis-cart, namespace: {{ .Release.Namespace }}}
 spec: {selector: {app: redis-cart}, ports: [{name: redis, port: 6379}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: redis-cart, namespace: __APP_NAMESPACE__}
+metadata: {name: redis-cart, namespace: {{ .Release.Namespace }}}
 spec:
   serviceName: redis-cart
-  replicas: 1
+  replicas: {{ index .Values.replicas "redis-cart" }}
   selector: {matchLabels: {app: redis-cart}}
   template:
     metadata: {labels: {app: redis-cart}}
@@ -172,23 +177,24 @@ spec:
           args: ["--appendonly", "yes"]
           ports: [{name: redis, containerPort: 6379}]
           volumeMounts: [{name: data, mountPath: /data}]
-          readinessProbe: {exec: {command: [redis-cli, ping]}, periodSeconds: 5}
-          resources: {requests: {cpu: 25m, memory: 64Mi}, limits: {memory: 256Mi}}
+          readinessProbe: {exec: {command: [redis-cli, ping]}, periodSeconds: {{ index .Values.probes "redis-cart" "readinessProbe" "periodSeconds" }}}
+          resources:
+{{ toYaml (index .Values.resources "redis-cart" "redis") | indent 12 }}
   volumeClaimTemplates:
     - metadata: {name: data}
       spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 1Gi}}}
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: redis-metrics, namespace: __APP_NAMESPACE__}
+metadata: {name: redis-metrics, namespace: {{ .Release.Namespace }}}
 spec: {selector: {app: redis-metrics}, ports: [{name: redis, port: 6379}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: redis-metrics, namespace: __APP_NAMESPACE__}
+metadata: {name: redis-metrics, namespace: {{ .Release.Namespace }}}
 spec:
   serviceName: redis-metrics
-  replicas: 1
+  replicas: {{ index .Values.replicas "redis-metrics" }}
   selector: {matchLabels: {app: redis-metrics}}
   template:
     metadata: {labels: {app: redis-metrics}}
@@ -199,23 +205,24 @@ spec:
           args: ["--appendonly", "yes"]
           ports: [{name: redis, containerPort: 6379}]
           volumeMounts: [{name: data, mountPath: /data}]
-          readinessProbe: {exec: {command: [redis-cli, ping]}, periodSeconds: 5}
-          resources: {requests: {cpu: 25m, memory: 64Mi}, limits: {memory: 256Mi}}
+          readinessProbe: {exec: {command: [redis-cli, ping]}, periodSeconds: {{ index .Values.probes "redis-metrics" "readinessProbe" "periodSeconds" }}}
+          resources:
+{{ toYaml (index .Values.resources "redis-metrics" "redis") | indent 12 }}
   volumeClaimTemplates:
     - metadata: {name: data}
       spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 1Gi}}}
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: rabbitmq, namespace: __APP_NAMESPACE__}
+metadata: {name: rabbitmq, namespace: {{ .Release.Namespace }}}
 spec: {selector: {app: rabbitmq}, ports: [{name: amqp, port: 5672}, {name: management, port: 15672}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: rabbitmq, namespace: __APP_NAMESPACE__}
+metadata: {name: rabbitmq, namespace: {{ .Release.Namespace }}}
 spec:
   serviceName: rabbitmq
-  replicas: 1
+  replicas: {{ index .Values.replicas "rabbitmq" }}
   selector: {matchLabels: {app: rabbitmq}}
   template:
     metadata: {labels: {app: rabbitmq}}
@@ -229,23 +236,24 @@ spec:
             - {name: RABBITMQ_DEFAULT_PASS, valueFrom: {secretKeyRef: {name: infra-config-secret, key: RABBITMQ_DEFAULT_PASS}}}
           ports: [{name: amqp, containerPort: 5672}, {name: management, containerPort: 15672}]
           volumeMounts: [{name: data, mountPath: /var/lib/rabbitmq}]
-          readinessProbe: {tcpSocket: {port: amqp}, periodSeconds: 10}
-          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 1Gi}}
+          readinessProbe: {tcpSocket: {port: amqp}, periodSeconds: {{ index .Values.probes "rabbitmq" "readinessProbe" "periodSeconds" }}}
+          resources:
+{{ toYaml (index .Values.resources "rabbitmq" "rabbitmq") | indent 12 }}
   volumeClaimTemplates:
     - metadata: {name: data}
       spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 2Gi}}}
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: elasticsearch, namespace: __APP_NAMESPACE__}
+metadata: {name: elasticsearch, namespace: {{ .Release.Namespace }}}
 spec: {selector: {app: elasticsearch}, ports: [{name: http, port: 9200}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: elasticsearch, namespace: __APP_NAMESPACE__}
+metadata: {name: elasticsearch, namespace: {{ .Release.Namespace }}}
 spec:
   serviceName: elasticsearch
-  replicas: 1
+  replicas: {{ index .Values.replicas "elasticsearch" }}
   selector: {matchLabels: {app: elasticsearch}}
   template:
     metadata: {labels: {app: elasticsearch}}
@@ -260,31 +268,32 @@ spec:
             - {name: ES_JAVA_OPTS, value: '-Xms1g -Xmx1g'}
           ports: [{name: http, containerPort: 9200}]
           volumeMounts: [{name: data, mountPath: /usr/share/elasticsearch/data}]
-          startupProbe: {tcpSocket: {port: 9200}, periodSeconds: 10, failureThreshold: 30}
-          readinessProbe: {tcpSocket: {port: 9200}, periodSeconds: 10}
-          resources: {requests: {cpu: 250m, memory: 1536Mi}, limits: {memory: 2Gi}}
+          startupProbe: {tcpSocket: {port: 9200}, periodSeconds: {{ index .Values.probes "elasticsearch" "startupProbe" "periodSeconds" }}, failureThreshold: {{ index .Values.probes "elasticsearch" "startupProbe" "failureThreshold" }}}
+          readinessProbe: {tcpSocket: {port: 9200}, periodSeconds: {{ index .Values.probes "elasticsearch" "readinessProbe" "periodSeconds" }}}
+          resources:
+{{ toYaml (index .Values.resources "elasticsearch" "elasticsearch") | indent 12 }}
   volumeClaimTemplates:
     - metadata: {name: data}
       spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 5Gi}}}
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: minio, namespace: __APP_NAMESPACE__}
+metadata: {name: minio, namespace: {{ .Release.Namespace }}}
 spec: {selector: {app: minio}, ports: [{name: s3, port: 9000}, {name: console, port: 9001}]}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
-metadata: {name: minio, namespace: __APP_NAMESPACE__}
+metadata: {name: minio, namespace: {{ .Release.Namespace }}}
 spec:
   serviceName: minio
-  replicas: 1
+  replicas: {{ index .Values.replicas "minio" }}
   selector: {matchLabels: {app: minio}}
   template:
     metadata: {labels: {app: minio}}
     spec:
       containers:
         - name: minio
-          image: __MINIO_IMAGE__
+          image: {{ .Values.images.minio }}
           imagePullPolicy: IfNotPresent
           args: [server, /data, --console-address, ':9001']
           env:
@@ -292,22 +301,23 @@ spec:
             - {name: MINIO_ROOT_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: MINIO_ROOT_PASSWORD}}}
           ports: [{name: s3, containerPort: 9000}, {name: console, containerPort: 9001}]
           volumeMounts: [{name: data, mountPath: /data}]
-          readinessProbe: {httpGet: {path: /minio/health/ready, port: 9000}, periodSeconds: 10}
-          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 1Gi}}
+          readinessProbe: {httpGet: {path: /minio/health/ready, port: 9000}, periodSeconds: {{ index .Values.probes "minio" "readinessProbe" "periodSeconds" }}}
+          resources:
+{{ toYaml (index .Values.resources "minio" "minio") | indent 12 }}
   volumeClaimTemplates:
     - metadata: {name: data}
       spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: 5Gi}}}
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: mailpit, namespace: __APP_NAMESPACE__}
+metadata: {name: mailpit, namespace: {{ .Release.Namespace }}}
 spec: {selector: {app: mailpit}, ports: [{name: smtp, port: 1025}, {name: http, port: 8025}]}
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: mailpit, namespace: __APP_NAMESPACE__}
+metadata: {name: mailpit, namespace: {{ .Release.Namespace }}}
 spec:
-  replicas: 1
+  replicas: {{ index .Values.replicas "mailpit" }}
   selector: {matchLabels: {app: mailpit}}
   template:
     metadata: {labels: {app: mailpit}}
@@ -317,19 +327,20 @@ spec:
           image: axllent/mailpit:latest
           args: [--smtp-max-recipients, "1000"]
           ports: [{name: smtp, containerPort: 1025}, {name: http, containerPort: 8025}]
-          readinessProbe: {httpGet: {path: /readyz, port: http}, periodSeconds: 5}
-          resources: {requests: {cpu: 10m, memory: 32Mi}, limits: {memory: 256Mi}}
+          readinessProbe: {httpGet: {path: /readyz, port: http}, periodSeconds: {{ index .Values.probes "mailpit" "readinessProbe" "periodSeconds" }}}
+          resources:
+{{ toYaml (index .Values.resources "mailpit" "mailpit") | indent 12 }}
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: kibana, namespace: __APP_NAMESPACE__}
+metadata: {name: kibana, namespace: {{ .Release.Namespace }}}
 spec: {selector: {app: kibana}, ports: [{name: http, port: 5601}]}
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: kibana, namespace: __APP_NAMESPACE__}
+metadata: {name: kibana, namespace: {{ .Release.Namespace }}}
 spec:
-  replicas: 1
+  replicas: {{ index .Values.replicas "kibana" }}
   selector: {matchLabels: {app: kibana}}
   template:
     metadata: {labels: {app: kibana}}
@@ -347,5 +358,6 @@ spec:
             - {name: ELASTICSEARCH_USERNAME, value: kibana_system}
             - {name: ELASTICSEARCH_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: KIBANA_PASSWORD}}}
           ports: [{name: http, containerPort: 5601}]
-          startupProbe: {tcpSocket: {port: 5601}, periodSeconds: 10, failureThreshold: 30}
-          resources: {requests: {cpu: 100m, memory: 512Mi}, limits: {memory: 2Gi}}
+          startupProbe: {tcpSocket: {port: 5601}, periodSeconds: {{ index .Values.probes "kibana" "startupProbe" "periodSeconds" }}, failureThreshold: {{ index .Values.probes "kibana" "startupProbe" "failureThreshold" }}}
+          resources:
+{{ toYaml (index .Values.resources "kibana" "kibana") | indent 12 }}

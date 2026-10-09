@@ -58,43 +58,6 @@ case "$runtime" in
         ;;
 esac
 
-# Render all project image references; each invocation is a complete YAML stream.
-render_images() {
-    local auth_capacity_configmap catalog_capacity_configmap cart_capacity_configmap
-    auth_capacity_configmap="$(capacity_configmap_name auth)"
-    catalog_capacity_configmap="$(capacity_configmap_name catalog)"
-    cart_capacity_configmap="$(capacity_configmap_name cart)"
-
-    sed \
-        -e "s|__AUTH_IMAGE__|$auth_image|g" \
-        -e "s|__CATALOG_IMAGE__|$catalog_image|g" \
-        -e "s|__CART_IMAGE__|$cart_image|g" \
-        -e "s|__API_GATEWAY_IMAGE__|$gateway_image|g" \
-        -e "s|__MINIO_IMAGE__|$minio_image|g" \
-        -e "s|__MC_IMAGE__|$mc_image|g" \
-        -e "s|__PROMETHEUS_IMAGE__|$prometheus_image|g" \
-        -e "s|__GRAFANA_IMAGE__|$grafana_image|g" \
-        -e "s|__AUTH_POSTGRES_CAPACITY_CONFIGMAP__|$auth_capacity_configmap|g" \
-        -e "s|__CATALOG_POSTGRES_CAPACITY_CONFIGMAP__|$catalog_capacity_configmap|g" \
-        -e "s|__CART_POSTGRES_CAPACITY_CONFIGMAP__|$cart_capacity_configmap|g" \
-        -e "s|__APP_NAMESPACE__|$namespace|g" \
-        "$@"
-}
-
-apply_manifest_set() {
-    local manifest_file
-    manifest_file="$(mktemp)"
-    for file in "$@"; do
-        render_images "$file" >> "$manifest_file"
-        printf '\n---\n' >> "$manifest_file"
-    done
-    if ! kubectl apply -f "$manifest_file"; then
-        rm -f "$manifest_file"
-        return 1
-    fi
-    rm -f "$manifest_file"
-}
-
 kubectl get namespace "$namespace" >/dev/null 2>&1 || kubectl create namespace "$namespace"
 kubectl get namespace monitoring >/dev/null 2>&1 || kubectl create namespace monitoring
 
@@ -132,18 +95,23 @@ if ! kubectl -n "$namespace" get secret auth-jwt >/dev/null 2>&1; then
     AUTH_JWT_BOOTSTRAP_IMAGE="$auth_image" bash docker/php-symfony-cli/k8s/bootstrap-auth-jwt.sh
 fi
 
-# Recreate the bootstrap Jobs on every deploy. A completed Job cannot run again
-# when its manifest is reapplied, so remove the previous instances first.
-for job in elasticsearch-setup minio-bucket-setup auth-migrate catalog-migrate cart-migrate; do
-    kubectl -n "$namespace" delete job "$job" --ignore-not-found --wait=true
-done
-
-# Submit the complete manifest set once. Migration completion is checked by
-# the dependent Pods; unrelated Pods can start while those Jobs are running.
-apply_manifest_set "$config_file" kubernetes/infra/stateful.yaml \
-    kubernetes/jobs/bootstrap.yaml kubernetes/app/workloads.yaml \
-    kubernetes/app/exporters.yaml kubernetes/app/gateway.yaml \
-    kubernetes/monitoring/workloads.yaml
+# Helm installs the generated ConfigMaps with the static chart resources.
+# Bootstrap Jobs are post-install/upgrade hooks and replace their completed
+# predecessors before each release, including the first adoption from kubectl.
+helm upgrade --install symfony2026 kubernetes/helm/symfony2026 \
+    --namespace "$namespace" --create-namespace --take-ownership --timeout 15m \
+    --set-file "generatedConfigMaps=$config_file" \
+    --set-string "images.auth=$auth_image" \
+    --set-string "images.catalog=$catalog_image" \
+    --set-string "images.cart=$cart_image" \
+    --set-string "images.gateway=$gateway_image" \
+    --set-string "images.minio=$minio_image" \
+    --set-string "images.mc=$mc_image" \
+    --set-string "images.prometheus=$prometheus_image" \
+    --set-string "images.grafana=$grafana_image" \
+    --set-string "capacityConfigMaps.auth=$(capacity_configmap_name auth)" \
+    --set-string "capacityConfigMaps.catalog=$(capacity_configmap_name catalog)" \
+    --set-string "capacityConfigMaps.cart=$(capacity_configmap_name cart)"
 
 # Build the initial Catalog search index once per namespace. The reindex script
 # pauses the incremental index worker, waits for its Job, then restores the
@@ -157,9 +125,9 @@ if ! kubectl -n "$namespace" get configmap catalog-initial-index >/dev/null 2>&1
     kubectl -n "$namespace" create configmap catalog-initial-index --from-literal=ready=true
 fi
 
-# The apply command reports submission, not rollout success. Run the separate
-# validator to check the current Pod template and the one-time Jobs.
-echo "Kubernetes manifests submitted in namespace $namespace."
+# Helm waits for the bootstrap hooks; run the separate validator to check
+# current workload rollouts and image references.
+echo "Helm release symfony2026 deployed in namespace $namespace."
 echo 'Validate current images, Jobs, and rollouts with: npm run k8s:verify'
 echo "Gateway LoadBalancer: kubectl -n $namespace get service api-gateway"
 echo 'Local tools: npm run k8s:forward (add -- --gateway for a local gateway forward)'

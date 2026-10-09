@@ -20,6 +20,7 @@ const prerequisites = [
   { name: 'Docker', command: 'docker', args: ['--version'] },
   { name: 'Docker Compose', command: 'docker', args: ['compose', 'version'] },
   { name: 'kubectl', command: 'kubectl', args: ['version', '--client'] },
+  { name: 'Helm', command: 'helm', args: ['version', '--short'] },
   { name: 'OpenSSL', command: 'openssl', args: ['version'] },
 ];
 

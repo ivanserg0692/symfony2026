@@ -1,0 +1,366 @@
+# Example references for chart rendering; scripts/k8s-deploy.sh supplies release images.
+images:
+  auth: symfony-auth:latest
+  catalog: symfony-catalog:latest
+  cart: symfony-cart:latest
+  gateway: symfony-api-gateway-nginx:latest
+  minio: symfony-minio:latest
+  mc: symfony-mc:latest
+  prometheus: symfony-prometheus:latest
+  grafana: symfony-grafana:latest
+
+# Example names; scripts/k8s-deploy.sh extracts actual names from generated YAML.
+capacityConfigMaps:
+  auth: postgres-capacity-auth-64
+  catalog: postgres-capacity-catalog-92
+  cart: postgres-capacity-cart-60
+
+# Pass kubernetes/generated/<namespace>/configmaps.yaml using --set-file.
+generatedConfigMaps: ""
+
+replicas:
+  api-gateway: 1
+  auth-async-worker: 1
+  cart-db: 1
+  cart-db-exporter: 1
+  cart-web: 1
+  catalog-db: 1
+  catalog-db-exporter: 1
+  catalog-grpc: 1
+  catalog-search-index-worker: 1
+  catalog-search-outbox-worker: 1
+  catalog-web: 1
+  database: 1
+  database-exporter: 1
+  elasticsearch: 1
+  grafana: 1
+  grafana-image-renderer: 1
+  kibana: 1
+  kube-state-metrics: 1
+  mailpit: 1
+  minio: 1
+  prometheus: 1
+  rabbitmq: 1
+  redis-cart: 1
+  redis-catalog: 1
+  redis-metrics: 1
+  redis-symfony: 1
+  symfony-web: 1
+
+# Per-workload container CPU/memory requests and limits. Omitted CPU limits remain unset.
+resources:
+  database-exporter:
+    exporter:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
+  catalog-db-exporter:
+    exporter:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
+  cart-db-exporter:
+    exporter:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
+  api-gateway:
+    nginx:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+    nginx-exporter:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
+  symfony-web:
+    php:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: '1'
+        memory: 1Gi
+    php-fpm-exporter:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+  catalog-web:
+    php:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: '1'
+        memory: 1Gi
+    php-fpm-exporter:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+  cart-web:
+    php:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: '1'
+        memory: 1Gi
+    php-fpm-exporter:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+  catalog-grpc:
+    grpc:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: '1'
+        memory: 1Gi
+  catalog-search-outbox-worker:
+    worker:
+      requests:
+        cpu: 50m
+        memory: 192Mi
+      limits:
+        cpu: 500m
+        memory: 384Mi
+  catalog-search-index-worker:
+    worker:
+      requests:
+        cpu: 50m
+        memory: 192Mi
+      limits:
+        cpu: 500m
+        memory: 384Mi
+  auth-async-worker:
+    worker:
+      requests:
+        cpu: 50m
+        memory: 192Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  database:
+    postgres:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+  catalog-db:
+    postgres:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+  cart-db:
+    postgres:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+  redis-symfony:
+    redis:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+  redis-catalog:
+    redis:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+  redis-cart:
+    redis:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+  redis-metrics:
+    redis:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+  rabbitmq:
+    rabbitmq:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+  elasticsearch:
+    elasticsearch:
+      requests:
+        cpu: 250m
+        memory: 1536Mi
+      limits:
+        memory: 2Gi
+  minio:
+    minio:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+  mailpit:
+    mailpit:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 256Mi
+  kibana:
+    kibana:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        memory: 2Gi
+  prometheus:
+    prometheus:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+  kube-state-metrics:
+    kube-state-metrics:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+  node-exporter:
+    node-exporter:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
+  grafana:
+    grafana:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 1Gi
+  grafana-image-renderer:
+    renderer:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 1Gi
+
+# Timing for the existing container probes; check methods and targets stay in templates.
+probes:
+  api-gateway:
+    readinessProbe:
+      periodSeconds: 5
+  symfony-web:
+    startupProbe:
+      periodSeconds: 5
+      failureThreshold: 24
+    readinessProbe:
+      periodSeconds: 5
+    livenessProbe:
+      periodSeconds: 10
+      failureThreshold: 6
+  catalog-web:
+    startupProbe:
+      periodSeconds: 5
+      failureThreshold: 24
+    readinessProbe:
+      periodSeconds: 5
+    livenessProbe:
+      periodSeconds: 10
+      failureThreshold: 6
+  cart-web:
+    startupProbe:
+      periodSeconds: 5
+      failureThreshold: 24
+    readinessProbe:
+      periodSeconds: 5
+    livenessProbe:
+      periodSeconds: 10
+      failureThreshold: 6
+  catalog-grpc:
+    startupProbe:
+      periodSeconds: 5
+      failureThreshold: 24
+    readinessProbe:
+      periodSeconds: 5
+  database:
+    readinessProbe:
+      periodSeconds: 5
+  catalog-db:
+    readinessProbe:
+      periodSeconds: 5
+  cart-db:
+    readinessProbe:
+      periodSeconds: 5
+  redis-symfony:
+    readinessProbe:
+      periodSeconds: 5
+  redis-catalog:
+    readinessProbe:
+      periodSeconds: 5
+  redis-cart:
+    readinessProbe:
+      periodSeconds: 5
+  redis-metrics:
+    readinessProbe:
+      periodSeconds: 5
+  rabbitmq:
+    readinessProbe:
+      periodSeconds: 10
+  elasticsearch:
+    startupProbe:
+      periodSeconds: 10
+      failureThreshold: 30
+    readinessProbe:
+      periodSeconds: 10
+  minio:
+    readinessProbe:
+      periodSeconds: 10
+  mailpit:
+    readinessProbe:
+      periodSeconds: 5
+  kibana:
+    startupProbe:
+      periodSeconds: 10
+      failureThreshold: 30
+  prometheus:
+    readinessProbe:
+      periodSeconds: 10
+  grafana:
+    readinessProbe:
+      periodSeconds: 10

@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: ServiceAccount
-metadata: {name: release-job-reader, namespace: __APP_NAMESPACE__}
+metadata: {name: release-job-reader, namespace: {{ .Release.Namespace }}}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
-metadata: {name: release-job-reader, namespace: __APP_NAMESPACE__}
+metadata: {name: release-job-reader, namespace: {{ .Release.Namespace }}}
 rules:
   - apiGroups: [batch]
     resources: [jobs]
@@ -12,17 +12,17 @@ rules:
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
-metadata: {name: release-job-reader, namespace: __APP_NAMESPACE__}
+metadata: {name: release-job-reader, namespace: {{ .Release.Namespace }}}
 roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: release-job-reader}
-subjects: [{kind: ServiceAccount, name: release-job-reader, namespace: __APP_NAMESPACE__}]
+subjects: [{kind: ServiceAccount, name: release-job-reader, namespace: {{ .Release.Namespace }}}]
 ---
 apiVersion: v1
 kind: ServiceAccount
-metadata: {name: migration-db-reader, namespace: __APP_NAMESPACE__}
+metadata: {name: migration-db-reader, namespace: {{ .Release.Namespace }}}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
-metadata: {name: migration-db-reader, namespace: __APP_NAMESPACE__}
+metadata: {name: migration-db-reader, namespace: {{ .Release.Namespace }}}
 rules:
   - apiGroups: [apps]
     resources: [statefulsets]
@@ -30,13 +30,13 @@ rules:
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
-metadata: {name: migration-db-reader, namespace: __APP_NAMESPACE__}
+metadata: {name: migration-db-reader, namespace: {{ .Release.Namespace }}}
 roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: migration-db-reader}
-subjects: [{kind: ServiceAccount, name: migration-db-reader, namespace: __APP_NAMESPACE__}]
+subjects: [{kind: ServiceAccount, name: migration-db-reader, namespace: {{ .Release.Namespace }}}]
 ---
 apiVersion: batch/v1
 kind: Job
-metadata: {name: elasticsearch-setup, namespace: __APP_NAMESPACE__}
+metadata: {name: elasticsearch-setup, namespace: {{ .Release.Namespace }}, annotations: {"helm.sh/hook": "post-install,post-upgrade,post-rollback", "helm.sh/hook-delete-policy": "before-hook-creation"}}
 spec:
   backoffLimit: 6
   template:
@@ -59,7 +59,7 @@ spec:
 ---
 apiVersion: batch/v1
 kind: Job
-metadata: {name: minio-bucket-setup, namespace: __APP_NAMESPACE__}
+metadata: {name: minio-bucket-setup, namespace: {{ .Release.Namespace }}, annotations: {"helm.sh/hook": "post-install,post-upgrade,post-rollback", "helm.sh/hook-delete-policy": "before-hook-creation"}}
 spec:
   backoffLimit: 6
   template:
@@ -80,10 +80,10 @@ spec:
               set -- $status
               [ "$1" = "$2" ] && [ "$3" = "$4" ] && [ "$3" = "$5" ] && [ "$6" = "$7" ]
               [ "$(kubectl get statefulset/minio -o jsonpath='{.spec.template.spec.containers[0].image}')" = "$EXPECTED_IMAGE" ]
-          env: [{name: EXPECTED_IMAGE, value: '__MINIO_IMAGE__'}]
+          env: [{name: EXPECTED_IMAGE, value: '{{ .Values.images.minio }}'}]
       containers:
         - name: setup
-          image: __MC_IMAGE__
+          image: {{ .Values.images.mc }}
           imagePullPolicy: IfNotPresent
           command: [sh, -ec]
           args:
@@ -97,7 +97,7 @@ spec:
 ---
 apiVersion: batch/v1
 kind: Job
-metadata: {name: auth-migrate, namespace: __APP_NAMESPACE__}
+metadata: {name: auth-migrate, namespace: {{ .Release.Namespace }}, annotations: {"helm.sh/hook": "post-install,post-upgrade,post-rollback", "helm.sh/hook-delete-policy": "before-hook-creation"}}
 spec:
   backoffLimit: 3
   template:
@@ -113,7 +113,7 @@ spec:
             - |
               until [ "$(kubectl get statefulset/database -o jsonpath='{.spec.template.spec.containers[0].env[0].valueFrom.configMapKeyRef.name}' 2>/dev/null)" = "$EXPECTED_CONFIGMAP" ]; do sleep 5; done
               kubectl rollout status statefulset/database --timeout=3600s
-          env: [{name: EXPECTED_CONFIGMAP, value: __AUTH_POSTGRES_CAPACITY_CONFIGMAP__}]
+          env: [{name: EXPECTED_CONFIGMAP, value: {{ .Values.capacityConfigMaps.auth }}}]
         - name: wait-database
           image: postgres:16-alpine
           command: [sh, -ec]
@@ -125,10 +125,10 @@ spec:
             - {name: PGUSER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_USER}}}
             - {name: PGDATABASE, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_DB}}}
             - {name: PGPASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_PASSWORD}}}
-            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: __AUTH_POSTGRES_CAPACITY_CONFIGMAP__, key: POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ .Values.capacityConfigMaps.auth }}, key: POSTGRES_MAX_CONNECTIONS}}}
       containers:
         - name: migrate
-          image: __AUTH_IMAGE__
+          image: {{ .Values.images.auth }}
           imagePullPolicy: IfNotPresent
           command: [php, bin/console, doctrine:migrations:migrate, --no-interaction]
           envFrom: [{configMapRef: {name: auth-config}}, {secretRef: {name: auth-config-secret}}]
@@ -138,7 +138,7 @@ spec:
 ---
 apiVersion: batch/v1
 kind: Job
-metadata: {name: catalog-migrate, namespace: __APP_NAMESPACE__}
+metadata: {name: catalog-migrate, namespace: {{ .Release.Namespace }}, annotations: {"helm.sh/hook": "post-install,post-upgrade,post-rollback", "helm.sh/hook-delete-policy": "before-hook-creation"}}
 spec:
   backoffLimit: 3
   template:
@@ -153,7 +153,7 @@ spec:
             - |
               until [ "$(kubectl get statefulset/catalog-db -o jsonpath='{.spec.template.spec.containers[0].env[0].valueFrom.configMapKeyRef.name}' 2>/dev/null)" = "$EXPECTED_CONFIGMAP" ]; do sleep 5; done
               kubectl rollout status statefulset/catalog-db --timeout=3600s
-          env: [{name: EXPECTED_CONFIGMAP, value: __CATALOG_POSTGRES_CAPACITY_CONFIGMAP__}]
+          env: [{name: EXPECTED_CONFIGMAP, value: {{ .Values.capacityConfigMaps.catalog }}}]
         - name: wait-database
           image: postgres:16-alpine
           command: [sh, -ec]
@@ -165,17 +165,17 @@ spec:
             - {name: PGUSER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_USER}}}
             - {name: PGDATABASE, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_DB}}}
             - {name: PGPASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_PASSWORD}}}
-            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: __CATALOG_POSTGRES_CAPACITY_CONFIGMAP__, key: POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ .Values.capacityConfigMaps.catalog }}, key: POSTGRES_MAX_CONNECTIONS}}}
       containers:
         - name: migrate
-          image: __CATALOG_IMAGE__
+          image: {{ .Values.images.catalog }}
           imagePullPolicy: IfNotPresent
           command: [php, bin/console, doctrine:migrations:migrate, --no-interaction]
           envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
 ---
 apiVersion: batch/v1
 kind: Job
-metadata: {name: cart-migrate, namespace: __APP_NAMESPACE__}
+metadata: {name: cart-migrate, namespace: {{ .Release.Namespace }}, annotations: {"helm.sh/hook": "post-install,post-upgrade,post-rollback", "helm.sh/hook-delete-policy": "before-hook-creation"}}
 spec:
   backoffLimit: 3
   template:
@@ -190,7 +190,7 @@ spec:
             - |
               until [ "$(kubectl get statefulset/cart-db -o jsonpath='{.spec.template.spec.containers[0].env[0].valueFrom.configMapKeyRef.name}' 2>/dev/null)" = "$EXPECTED_CONFIGMAP" ]; do sleep 5; done
               kubectl rollout status statefulset/cart-db --timeout=3600s
-          env: [{name: EXPECTED_CONFIGMAP, value: __CART_POSTGRES_CAPACITY_CONFIGMAP__}]
+          env: [{name: EXPECTED_CONFIGMAP, value: {{ .Values.capacityConfigMaps.cart }}}]
         - name: wait-database
           image: postgres:16-alpine
           command: [sh, -ec]
@@ -202,10 +202,10 @@ spec:
             - {name: PGUSER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_USER}}}
             - {name: PGDATABASE, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_DB}}}
             - {name: PGPASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_PASSWORD}}}
-            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: __CART_POSTGRES_CAPACITY_CONFIGMAP__, key: POSTGRES_MAX_CONNECTIONS}}}
+            - {name: POSTGRES_MAX_CONNECTIONS, valueFrom: {configMapKeyRef: {name: {{ .Values.capacityConfigMaps.cart }}, key: POSTGRES_MAX_CONNECTIONS}}}
       containers:
         - name: migrate
-          image: __CART_IMAGE__
+          image: {{ .Values.images.cart }}
           imagePullPolicy: IfNotPresent
           command: [php, bin/console, doctrine:migrations:migrate, --no-interaction]
           envFrom: [{configMapRef: {name: cart-config}}, {secretRef: {name: cart-config-secret}}]

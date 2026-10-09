@@ -1,0 +1,3 @@
+{{- if .Values.generatedConfigMaps }}
+{{ include "symfony2026.generatedConfigMaps" . }}
+{{- end }}

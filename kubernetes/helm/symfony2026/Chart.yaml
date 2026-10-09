@@ -1,0 +1,5 @@
+apiVersion: v2
+name: symfony2026
+description: Existing Symfony Kubernetes deployment wrapped for Helm
+type: application
+version: 0.1.0

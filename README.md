@@ -635,7 +635,8 @@ Install the following tools on the machine where you run the corresponding proje
 |---|---|
 | Docker | Builds images and runs containers. |
 | Docker Compose | Runs the existing Compose environments. |
-| `kubectl` | Applies Kubernetes resources and manages the Auth JWT Secret. |
+| `kubectl` | Prepares cluster access and manages Kubernetes Secrets and maintenance Jobs. |
+| Helm | Installs, upgrades, and rolls back the Kubernetes release. |
 | OpenSSL | Validates the Auth JWT key pair during bootstrap. |
 | `kind` | Required only for the local Kubernetes runtime. |
 | `k3s` | Checked only when the k3s runtime is selected. |
@@ -644,7 +645,7 @@ Run `npm run prerequisites:check` after selecting the environment: `set:dev` and
 
 ### Run With Kubernetes
 
-Kubernetes is an additional deployment option. Compose keeps its bind mounts and existing workflows. Before deploying, synchronize reviewable ConfigMap YAML with `npm run k8s:config:sync` and cluster-only Secrets with `npm run k8s:secrets:sync`. See [Kubernetes deployment](kubernetes/README.md) for image builds, local kind and registry deployments, JWT bootstrap, setup Jobs, reindex, scaling, and the three independent Kubernetes monitoring dashboards: the primary Kubernetes view, a port of the original Docker dashboard, and a combined view. The Docker dashboard remains separate.
+Kubernetes is deployed with the chart in `kubernetes/helm/symfony2026`. Compose keeps its bind mounts and existing workflows. Before deploying, synchronize reviewable ConfigMap YAML with `npm run k8s:config:sync` and cluster-only Secrets with `npm run k8s:secrets:sync`; `npm run k8s:deploy` then runs Helm upgrade/install. See [Kubernetes deployment](kubernetes/README.md) for image builds, local kind and registry deployments, JWT bootstrap, setup Jobs, reindex, scaling, and the three independent Kubernetes monitoring dashboards: the primary Kubernetes view, a port of the original Docker dashboard, and a combined view. The Docker dashboard remains separate.
 
 <!-- plantuml src="symfony/docs/plantuml/kubernetes/deployment-dependencies.puml" alt="Kubernetes deployment dependencies" out="symfony/docs/images/plantuml/kubernetes/deployment-dependencies.png" -->
 ![Kubernetes deployment dependencies](symfony/docs/images/plantuml/kubernetes/deployment-dependencies.png)
@@ -1550,7 +1551,8 @@ Handler экспорта использует batch-обработку Symfony M
 |---|---|
 | Docker | Собирает образы и запускает контейнеры. |
 | Docker Compose | Запускает существующие Compose-окружения. |
-| `kubectl` | Применяет Kubernetes-ресурсы и управляет JWT Secret Auth. |
+| `kubectl` | Подготавливает доступ к cluster и управляет Secret и Jobs обслуживания. |
+| Helm | Устанавливает, обновляет и откатывает Kubernetes release. |
 | OpenSSL | Проверяет пару JWT-ключей Auth во время bootstrap. |
 | `kind` | Нужен только для локального Kubernetes runtime. |
 | `k3s` | Проверяется только при выборе k3s runtime. |
@@ -1559,7 +1561,7 @@ Handler экспорта использует batch-обработку Symfony M
 
 ### Запуск через Kubernetes
 
-Kubernetes — дополнительный способ запуска. Compose сохраняет прежние bind mounts и workflows. Перед развёртыванием синхронизируйте проверяемый YAML ConfigMap командой `npm run k8s:config:sync`, а Secret только в кластере командой `npm run k8s:secrets:sync`. Сборка образов, локальный kind и registry-вариант, JWT bootstrap, Jobs, reindex, масштабирование и три независимых Kubernetes dashboard описаны в [инструкции по Kubernetes](kubernetes/README.md). Это основной Kubernetes dashboard, порт исходного Docker dashboard и объединённый dashboard. Исходный Docker dashboard остаётся отдельным.
+Kubernetes развёртывается через chart `kubernetes/helm/symfony2026`. Compose сохраняет прежние bind mounts и workflows. Перед развёртыванием синхронизируйте проверяемый YAML ConfigMap командой `npm run k8s:config:sync`, а Secret только в кластере командой `npm run k8s:secrets:sync`; затем `npm run k8s:deploy` выполняет Helm upgrade/install. Сборка образов, локальный kind и registry-вариант, JWT bootstrap, Jobs, reindex, масштабирование и три независимых Kubernetes dashboard описаны в [инструкции по Kubernetes](kubernetes/README.md). Это основной Kubernetes dashboard, порт исходного Docker dashboard и объединённый dashboard. Исходный Docker dashboard остаётся отдельным.
 
 <!-- plantuml src="symfony/docs/plantuml/kubernetes-ru/deployment-dependencies.puml" alt="Зависимости развёртывания Kubernetes" out="symfony/docs/images/plantuml/kubernetes-ru/deployment-dependencies.png" -->
 ![Зависимости развёртывания Kubernetes](symfony/docs/images/plantuml/kubernetes-ru/deployment-dependencies.png)
