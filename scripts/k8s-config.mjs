@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Synchronize computed non-secret Helm values with project configuration.
+// Synchronize non-secret application Helm values with project configuration.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { buildGeneratedValues, loadConfiguration } from './lib/k8s-config-resources.mjs';

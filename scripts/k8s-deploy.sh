@@ -74,10 +74,9 @@ kubectl get namespace monitoring >/dev/null 2>&1 || kubectl create namespace mon
 # separately and remain only in the cluster; fail before starting workloads if
 # any required application, infrastructure or monitoring Secret is missing.
 config_file="kubernetes/generated/$namespace/generated-values.yaml"
-if [[ ! -f "$config_file" ]]; then
-    echo "Missing $config_file. Run npm run k8s:config:sync first." >&2
-    exit 1
-fi
+chart_values_file="kubernetes/helm/symfony2026/values.yaml"
+runtime_dir="kubernetes/generated/$namespace/runtime"
+capacity_file="$runtime_dir/postgres-capacity-values.yaml"
 for secret in auth-config-secret catalog-config-secret cart-config-secret infra-config-secret; do
     kubectl -n "$namespace" get secret "$secret" >/dev/null || {
         echo "Missing Secret/$secret. Run npm run k8s:secrets:sync first." >&2
@@ -95,12 +94,24 @@ if ! kubectl -n "$namespace" get secret auth-jwt >/dev/null 2>&1; then
     AUTH_JWT_BOOTSTRAP_IMAGE="$auth_image" bash docker/php-symfony-cli/k8s/bootstrap-auth-jwt.sh
 fi
 
+# Refresh application values and calculate capacity immediately before Helm.
+# Both files are then passed to Helm in the same order used by this calculation.
+mkdir -p "$runtime_dir"
+rm -f "$capacity_file"
+node scripts/k8s-config.mjs
+node scripts/k8s-postgres-capacity.mjs \
+    --chart-values "$chart_values_file" \
+    --generated-values "$config_file" \
+    --output "$capacity_file"
+
 # Helm creates ConfigMaps from the generated values with the other chart resources.
 # Bootstrap Jobs are post-install/upgrade hooks and replace their completed
 # predecessors before each release, including the first adoption from kubectl.
 helm upgrade --install symfony2026 kubernetes/helm/symfony2026 \
     --namespace "$namespace" --create-namespace --take-ownership --timeout 15m \
+    -f "$chart_values_file" \
     -f "$config_file" \
+    -f "$capacity_file" \
     --set-string "images.auth=$auth_image" \
     --set-string "images.catalog=$catalog_image" \
     --set-string "images.cart=$cart_image" \

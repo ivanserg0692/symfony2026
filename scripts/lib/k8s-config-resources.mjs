@@ -84,22 +84,6 @@ function required(source, key) {
   return value;
 }
 
-function positiveInteger(source, key) {
-  const value = required(source, key);
-  if (!/^[1-9][0-9]*$/.test(value) || !Number.isSafeInteger(Number(value))) {
-    throw new Error(`${key} must be a positive integer.`);
-  }
-  return Number(value);
-}
-
-function nonNegativeInteger(source, key) {
-  const value = required(source, key);
-  if (!/^(0|[1-9][0-9]*)$/.test(value) || !Number.isSafeInteger(Number(value))) {
-    throw new Error(`${key} must be a non-negative integer.`);
-  }
-  return Number(value);
-}
-
 function priorAuthSecret() {
   const raw = run('kubectl', ['-n', namespace, 'get', 'secret', 'auth-config-secret', '--ignore-not-found', '-o', 'json']);
   if (!raw.trim()) return null;
@@ -221,30 +205,6 @@ function cartSecret({ cart }) {
   });
 }
 
-function postgresConnectionBudget({ auth, catalog, database }) {
-  const fpmChildren = positiveInteger(auth, 'PHP_FPM_MAX_CHILDREN');
-  const grpcWorkers = positiveInteger(catalog, 'ROADRUNNER_NUM_WORKERS');
-  const reserve = nonNegativeInteger(database, 'POSTGRES_CONNECTION_RESERVE');
-  const replicas = (key) => positiveInteger(database, key) + 1;
-
-  // One extra Pod per Deployment covers the default rolling-update surge.
-  // Messenger consumers may hold separate application and transport connections.
-  const budgets = {
-    AUTH_POSTGRES_MAX_CONNECTIONS: replicas('K8S_AUTH_HTTP_MAX_REPLICAS') * fpmChildren
-      + replicas('K8S_AUTH_ASYNC_WORKER_MAX_REPLICAS') * 2 + reserve,
-    CATALOG_POSTGRES_MAX_CONNECTIONS: replicas('K8S_CATALOG_HTTP_MAX_REPLICAS') * fpmChildren
-      + replicas('K8S_CATALOG_GRPC_MAX_REPLICAS') * grpcWorkers
-      + replicas('K8S_CATALOG_OUTBOX_WORKER_MAX_REPLICAS') * 2
-      + replicas('K8S_CATALOG_INDEX_WORKER_MAX_REPLICAS') * 2 + reserve,
-    CART_POSTGRES_MAX_CONNECTIONS: replicas('K8S_CART_HTTP_MAX_REPLICAS') * fpmChildren + reserve,
-  };
-
-  if (Object.values(budgets).some((value) => !Number.isSafeInteger(value))) {
-    throw new Error('Kubernetes PostgreSQL connection budget exceeds the supported integer range.');
-  }
-  return Object.fromEntries(Object.entries(budgets).map(([key, value]) => [key, String(value)]));
-}
-
 function infrastructureSecret({ database, catalogDb, cartDb, rabbitmq, minio, elasticsearch, kibana }) {
   return secretManifest('infra-config-secret', {
     POSTGRES_DB: database.POSTGRES_DB || 'app',
@@ -277,19 +237,14 @@ function dbExporterConfigData({ database, catalogDb, cartDb }) {
 
 export function buildGeneratedValues(config) {
   const common = commonConfig(config.auth);
-  const capacity = postgresConnectionBudget(config);
   return {
     generated: {
+      postgresConnectionReserve: required(config.database, 'POSTGRES_CONNECTION_RESERVE'),
       config: {
         auth: authConfigData(config, common),
         catalog: catalogConfigData(config, common),
         cart: cartConfigData(config, common),
         dbExporter: dbExporterConfigData(config),
-      },
-      postgresCapacity: {
-        auth: capacity.AUTH_POSTGRES_MAX_CONNECTIONS,
-        catalog: capacity.CATALOG_POSTGRES_MAX_CONNECTIONS,
-        cart: capacity.CART_POSTGRES_MAX_CONNECTIONS,
       },
     },
   };

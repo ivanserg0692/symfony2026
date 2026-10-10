@@ -9,14 +9,20 @@ images:
   prometheus: symfony-prometheus:latest
   grafana: symfony-grafana:latest
 
-# Supply computed application data and capacity with -f generated-values.yaml.
-# Capacity examples allow structural chart checks without generated values.
+# Supply application data and source parameters with -f generated-values.yaml.
 generated:
   config: {}
-  postgresCapacity:
-    auth: "64"
-    catalog: "92"
-    cart: "60"
+  postgresConnectionReserve: "20"
+
+# Maximum workload replicas used by PostgreSQL capacity calculations and future HPA resources.
+maxReplicas:
+  symfony-web: 3
+  auth-async-worker: 1
+  catalog-web: 3
+  catalog-grpc: 1
+  catalog-search-outbox-worker: 1
+  catalog-search-index-worker: 1
+  cart-web: 3
 
 replicas:
   api-gateway: 1
@@ -222,7 +228,7 @@ resources:
         cpu: 250m
         memory: 1536Mi
       limits:
-        memory: 2Gi
+        memory: 3Gi
   minio:
     minio:
       requests:
