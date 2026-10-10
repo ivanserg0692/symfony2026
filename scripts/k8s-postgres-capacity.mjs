@@ -28,7 +28,7 @@ const CONNECTIONS_PER_WORKER_POD = 2;
 
 /**
  * @typedef {object} PostgresCapacityInputs
- * @property {Record<string, number>} replicas Maximum replicas indexed by workload name.
+ * @property {Record<string, number>} replicas Effective replica count per workload: the greater of replicas and maxReplicas.
  * @property {number} fpmChildren PHP-FPM child processes per Symfony web pod.
  * @property {number} grpcWorkers RoadRunner workers per catalog gRPC pod.
  * @property {number} reserve Connections reserved for non-workload use.
@@ -158,10 +158,11 @@ function readCalculationInputs(chartValues, generatedValues) {
     grpcValue === undefined ? DEFAULT_GRPC_WORKERS : grpcValue,
     'generated.config.catalog.ROADRUNNER_NUM_WORKERS',
   );
-  const replicas = Object.fromEntries(WORKLOAD_NAMES.map((name) => [
-    name,
-    integer(requiredPath(values, `maxReplicas.${name}`), `maxReplicas.${name}`),
-  ]));
+  const replicas = Object.fromEntries(WORKLOAD_NAMES.map((name) => {
+    const configuredReplicas = integer(requiredPath(values, `replicas.${name}`), `replicas.${name}`);
+    const maximumReplicas = integer(requiredPath(values, `maxReplicas.${name}`), `maxReplicas.${name}`);
+    return [name, Math.max(configuredReplicas, maximumReplicas)];
+  }));
 
   return { replicas, fpmChildren, grpcWorkers, reserve };
 }

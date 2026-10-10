@@ -29,6 +29,15 @@ test('uses generated overrides and maxReplicas overrides', () => {
   assert.deepEqual(result, { auth: 64, catalog: 58, cart: 48 });
 });
 
+test('uses replicas when they exceed maxReplicas', () => {
+  const result = calculatePostgresCapacity(chartValues, {
+    ...generatedValues,
+    replicas: { 'symfony-web': 4 },
+    maxReplicas: { 'symfony-web': 3 },
+  });
+  assert.deepEqual(result, { auth: 74, catalog: 92, cart: 60 });
+});
+
 test('rejects zero and invalid calculation inputs', () => {
   for (const generated of [
     { ...generatedValues, generated: { ...generatedValues.generated, postgresConnectionReserve: '-1' } },
@@ -40,6 +49,10 @@ test('rejects zero and invalid calculation inputs', () => {
     ...generatedValues,
     maxReplicas: { 'symfony-web': 0 },
   }), /maxReplicas\.symfony-web must be a positive integer/);
+  assert.throws(() => calculatePostgresCapacity(chartValues, {
+    ...generatedValues,
+    replicas: { 'symfony-web': 0 },
+  }), /replicas\.symfony-web must be a positive integer/);
 });
 
 test('rejects YAML syntax it cannot safely parse', () => {
