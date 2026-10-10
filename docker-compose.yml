@@ -497,7 +497,11 @@ services:
 
   # S3-compatible object storage for development file uploads and exports.
   minio:
-    image: quay.io/minio/minio:latest
+    image: symfony-minio:k8s
+    build:
+      context: .
+      dockerfile: docker/minio/Dockerfile
+      target: server
     env_file:
       - .env
       - .env.local
@@ -517,7 +521,11 @@ services:
   # docker compose run --rm minio-client ls local
   # docker compose run --rm minio-client mb local/app --ignore-existing
   minio-client:
-    image: quay.io/minio/mc:latest
+    image: symfony-mc:k8s
+    build:
+      context: .
+      dockerfile: docker/minio/Dockerfile
+      target: client
     env_file:
       - .env
       - .env.local

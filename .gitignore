@@ -2,3 +2,5 @@
 /node_modules/
 .phpunit.result.cache
 /api-gateway/logs/
+/kubernetes/generated/image-refs.tsv
+/kubernetes/generated/*/runtime/

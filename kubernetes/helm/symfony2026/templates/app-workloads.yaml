@@ -1,0 +1,367 @@
+# The namespace placeholder is rendered from K8S_NAMESPACE at deploy time.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: symfony-web
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ index .Values.replicas "symfony-web" }}
+  selector:
+    matchLabels: {app: symfony-web}
+  template:
+    metadata:
+      labels: {app: symfony-web, service: auth, component: http}
+      annotations: {monitoring.symfony2026/php-fpm: "true"}
+    spec:
+      securityContext: {fsGroup: 33}
+      serviceAccountName: release-job-reader
+      initContainers:
+        - name: wait-auth-bootstrap
+          image: bitnamilegacy/kubectl:1.33.4
+          command: [sh, -ec]
+          args:
+            - |
+              until kubectl get job/auth-migrate >/dev/null 2>&1; do sleep 5; done
+              actual="$(kubectl get job/auth-migrate -o jsonpath='{.spec.template.spec.containers[0].image}')"
+              [ "$actual" = "$EXPECTED_AUTH_IMAGE" ] || { echo "auth-migrate image $actual differs from $EXPECTED_AUTH_IMAGE" >&2; exit 1; }
+              kubectl wait --for=condition=complete job/auth-migrate --timeout=3600s
+              until kubectl get job/minio-bucket-setup >/dev/null 2>&1; do sleep 5; done
+              actual="$(kubectl get job/minio-bucket-setup -o jsonpath='{.spec.template.spec.containers[0].image}')"
+              [ "$actual" = "$EXPECTED_MC_IMAGE" ] || { echo "minio-bucket-setup image $actual differs from $EXPECTED_MC_IMAGE" >&2; exit 1; }
+              kubectl wait --for=condition=complete job/minio-bucket-setup --timeout=3600s
+          env:
+            - {name: EXPECTED_AUTH_IMAGE, value: '{{ .Values.images.auth }}'}
+            - {name: EXPECTED_MC_IMAGE, value: '{{ .Values.images.mc }}'}
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec, 'until pg_isready -h database -p 5432; do sleep 5; done']
+        - name: wait-redis
+          image: redis:7-alpine
+          command: [sh, -ec, 'until [ "$(redis-cli -h redis-symfony ping)" = PONG ]; do sleep 5; done']
+        - name: wait-rabbitmq
+          image: curlimages/curl:8.14.1
+          command: [sh, -ec, 'until curl --fail --silent --output /dev/null --user "${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}" http://rabbitmq:15672/api/health/checks/ready-to-serve-clients; do sleep 5; done']
+          env:
+            - {name: RABBITMQ_DEFAULT_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: RABBITMQ_DEFAULT_USER}}}
+            - {name: RABBITMQ_DEFAULT_PASS, valueFrom: {secretKeyRef: {name: infra-config-secret, key: RABBITMQ_DEFAULT_PASS}}}
+      containers:
+        - name: php
+          image: {{ .Values.images.auth }}
+          imagePullPolicy: IfNotPresent
+          ports: [{name: http, containerPort: 8000}, {name: fpm-status, containerPort: 9001}]
+          envFrom:
+            - configMapRef: {name: auth-config}
+            - secretRef: {name: auth-config-secret}
+          env:
+            - name: JWT_PASSPHRASE
+              valueFrom: {secretKeyRef: {name: auth-jwt, key: JWT_PASSPHRASE}}
+          volumeMounts:
+            - {name: jwt, mountPath: /workspace/config/jwt, readOnly: true}
+          startupProbe: {tcpSocket: {port: 8000}, periodSeconds: {{ index .Values.probes "symfony-web" "startupProbe" "periodSeconds" }}, failureThreshold: {{ index .Values.probes "symfony-web" "startupProbe" "failureThreshold" }}}
+          readinessProbe: {tcpSocket: {port: 8000}, periodSeconds: {{ index .Values.probes "symfony-web" "readinessProbe" "periodSeconds" }}}
+          livenessProbe: {tcpSocket: {port: 8000}, periodSeconds: {{ index .Values.probes "symfony-web" "livenessProbe" "periodSeconds" }}, failureThreshold: {{ index .Values.probes "symfony-web" "livenessProbe" "failureThreshold" }}}
+          resources:
+{{ toYaml (index .Values.resources "symfony-web" "php") | indent 12 }}
+        - name: php-fpm-exporter
+          image: hipages/php-fpm_exporter:2.2.0
+          env: [{name: PHP_FPM_SCRAPE_URI, value: "tcp://127.0.0.1:9001/status"}]
+          ports: [{name: fpm-metrics, containerPort: 9253}]
+          resources:
+{{ toYaml (index .Values.resources "symfony-web" "php-fpm-exporter") | indent 12 }}
+      volumes:
+        - name: jwt
+          secret:
+            secretName: auth-jwt
+            defaultMode: 288
+            items: [{key: private.pem, path: private.pem}, {key: public.pem, path: public.pem}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: symfony-web, namespace: {{ .Release.Namespace }}}
+spec:
+  selector: {app: symfony-web}
+  ports: [{name: http, port: 8000, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: catalog-web, namespace: {{ .Release.Namespace }}}
+spec:
+  replicas: {{ index .Values.replicas "catalog-web" }}
+  selector: {matchLabels: {app: catalog-web}}
+  template:
+    metadata:
+      labels: {app: catalog-web, service: catalog, component: http}
+      annotations: {monitoring.symfony2026/php-fpm: "true"}
+    spec:
+      serviceAccountName: release-job-reader
+      initContainers:
+        - name: wait-catalog-migration
+          image: bitnamilegacy/kubectl:1.33.4
+          command: [sh, -ec]
+          args:
+            - |
+              until kubectl get job/catalog-migrate >/dev/null 2>&1; do sleep 5; done
+              actual="$(kubectl get job/catalog-migrate -o jsonpath='{.spec.template.spec.containers[0].image}')"
+              [ "$actual" = "$EXPECTED_IMAGE" ] || { echo "catalog-migrate image $actual differs from $EXPECTED_IMAGE" >&2; exit 1; }
+              kubectl wait --for=condition=complete job/catalog-migrate --timeout=3600s
+          env: [{name: EXPECTED_IMAGE, value: '{{ .Values.images.catalog }}'}]
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec, 'until pg_isready -h catalog-db -p 5432; do sleep 5; done']
+        - name: wait-redis
+          image: redis:7-alpine
+          command: [sh, -ec, 'until [ "$(redis-cli -h redis-catalog ping)" = PONG ]; do sleep 5; done']
+        - name: wait-elasticsearch
+          image: curlimages/curl:8.14.1
+          command: [sh, -ec, 'until curl --fail --silent --output /dev/null --user "elastic:${ELASTICSEARCH_PASSWORD}" http://elasticsearch:9200/_cluster/health; do sleep 5; done']
+          env: [{name: ELASTICSEARCH_PASSWORD, valueFrom: {secretKeyRef: {name: catalog-config-secret, key: ELASTICSEARCH_PASSWORD}}}]
+      containers:
+        - name: php
+          image: {{ .Values.images.catalog }}
+          imagePullPolicy: IfNotPresent
+          ports: [{name: http, containerPort: 8000}, {name: fpm-status, containerPort: 9001}]
+          envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
+          startupProbe: {tcpSocket: {port: 8000}, periodSeconds: {{ index .Values.probes "catalog-web" "startupProbe" "periodSeconds" }}, failureThreshold: {{ index .Values.probes "catalog-web" "startupProbe" "failureThreshold" }}}
+          readinessProbe: {tcpSocket: {port: 8000}, periodSeconds: {{ index .Values.probes "catalog-web" "readinessProbe" "periodSeconds" }}}
+          livenessProbe: {tcpSocket: {port: 8000}, periodSeconds: {{ index .Values.probes "catalog-web" "livenessProbe" "periodSeconds" }}, failureThreshold: {{ index .Values.probes "catalog-web" "livenessProbe" "failureThreshold" }}}
+          resources:
+{{ toYaml (index .Values.resources "catalog-web" "php") | indent 12 }}
+        - name: php-fpm-exporter
+          image: hipages/php-fpm_exporter:2.2.0
+          env: [{name: PHP_FPM_SCRAPE_URI, value: "tcp://127.0.0.1:9001/status"}]
+          ports: [{name: fpm-metrics, containerPort: 9253}]
+          resources:
+{{ toYaml (index .Values.resources "catalog-web" "php-fpm-exporter") | indent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: catalog-web, namespace: {{ .Release.Namespace }}}
+spec:
+  selector: {app: catalog-web}
+  ports: [{name: http, port: 8000, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: cart-web, namespace: {{ .Release.Namespace }}}
+spec:
+  replicas: {{ index .Values.replicas "cart-web" }}
+  selector: {matchLabels: {app: cart-web}}
+  template:
+    metadata:
+      labels: {app: cart-web, service: cart, component: http}
+      annotations: {monitoring.symfony2026/php-fpm: "true"}
+    spec:
+      serviceAccountName: release-job-reader
+      initContainers:
+        - name: wait-cart-migration
+          image: bitnamilegacy/kubectl:1.33.4
+          command: [sh, -ec]
+          args:
+            - |
+              until kubectl get job/cart-migrate >/dev/null 2>&1; do sleep 5; done
+              actual="$(kubectl get job/cart-migrate -o jsonpath='{.spec.template.spec.containers[0].image}')"
+              [ "$actual" = "$EXPECTED_IMAGE" ] || { echo "cart-migrate image $actual differs from $EXPECTED_IMAGE" >&2; exit 1; }
+              kubectl wait --for=condition=complete job/cart-migrate --timeout=3600s
+          env: [{name: EXPECTED_IMAGE, value: '{{ .Values.images.cart }}'}]
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec, 'until pg_isready -h cart-db -p 5432; do sleep 5; done']
+        - name: wait-redis
+          image: redis:7-alpine
+          command: [sh, -ec, 'until [ "$(redis-cli -h redis-cart ping)" = PONG ]; do sleep 5; done']
+      containers:
+        - name: php
+          image: {{ .Values.images.cart }}
+          imagePullPolicy: IfNotPresent
+          ports: [{name: http, containerPort: 8000}, {name: fpm-status, containerPort: 9001}]
+          envFrom: [{configMapRef: {name: cart-config}}, {secretRef: {name: cart-config-secret}}]
+          startupProbe: {tcpSocket: {port: 8000}, periodSeconds: {{ index .Values.probes "cart-web" "startupProbe" "periodSeconds" }}, failureThreshold: {{ index .Values.probes "cart-web" "startupProbe" "failureThreshold" }}}
+          readinessProbe: {tcpSocket: {port: 8000}, periodSeconds: {{ index .Values.probes "cart-web" "readinessProbe" "periodSeconds" }}}
+          livenessProbe: {tcpSocket: {port: 8000}, periodSeconds: {{ index .Values.probes "cart-web" "livenessProbe" "periodSeconds" }}, failureThreshold: {{ index .Values.probes "cart-web" "livenessProbe" "failureThreshold" }}}
+          resources:
+{{ toYaml (index .Values.resources "cart-web" "php") | indent 12 }}
+        - name: php-fpm-exporter
+          image: hipages/php-fpm_exporter:2.2.0
+          env: [{name: PHP_FPM_SCRAPE_URI, value: "tcp://127.0.0.1:9001/status"}]
+          ports: [{name: fpm-metrics, containerPort: 9253}]
+          resources:
+{{ toYaml (index .Values.resources "cart-web" "php-fpm-exporter") | indent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: cart-web, namespace: {{ .Release.Namespace }}}
+spec:
+  selector: {app: cart-web}
+  ports: [{name: http, port: 8000, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: catalog-grpc, namespace: {{ .Release.Namespace }}}
+spec:
+  replicas: {{ index .Values.replicas "catalog-grpc" }}
+  selector: {matchLabels: {app: catalog-grpc}}
+  template:
+    metadata: {labels: {app: catalog-grpc, service: catalog, component: grpc}}
+    spec:
+      serviceAccountName: release-job-reader
+      initContainers:
+        - name: wait-catalog-migration
+          image: bitnamilegacy/kubectl:1.33.4
+          command: [sh, -ec]
+          args:
+            - |
+              until kubectl get job/catalog-migrate >/dev/null 2>&1; do sleep 5; done
+              actual="$(kubectl get job/catalog-migrate -o jsonpath='{.spec.template.spec.containers[0].image}')"
+              [ "$actual" = "$EXPECTED_IMAGE" ] || { echo "catalog-migrate image $actual differs from $EXPECTED_IMAGE" >&2; exit 1; }
+              kubectl wait --for=condition=complete job/catalog-migrate --timeout=3600s
+          env: [{name: EXPECTED_IMAGE, value: '{{ .Values.images.catalog }}'}]
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec, 'until pg_isready -h catalog-db -p 5432; do sleep 5; done']
+      containers:
+        - name: grpc
+          image: {{ .Values.images.catalog }}
+          imagePullPolicy: IfNotPresent
+          command: [rr, serve, -c, .rr.yaml]
+          envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
+          env: [{name: APP_RUNTIME_MODE, value: "web=1"}]
+          ports: [{name: grpc, containerPort: 9001}]
+          startupProbe: {tcpSocket: {port: 9001}, periodSeconds: {{ index .Values.probes "catalog-grpc" "startupProbe" "periodSeconds" }}, failureThreshold: {{ index .Values.probes "catalog-grpc" "startupProbe" "failureThreshold" }}}
+          readinessProbe: {tcpSocket: {port: 9001}, periodSeconds: {{ index .Values.probes "catalog-grpc" "readinessProbe" "periodSeconds" }}}
+          resources:
+{{ toYaml (index .Values.resources "catalog-grpc" "grpc") | indent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: catalog-grpc, namespace: {{ .Release.Namespace }}}
+spec:
+  selector: {app: catalog-grpc}
+  ports: [{name: grpc, port: 9001, targetPort: grpc}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: catalog-search-outbox-worker, namespace: {{ .Release.Namespace }}}
+spec:
+  replicas: {{ index .Values.replicas "catalog-search-outbox-worker" }}
+  selector: {matchLabels: {app: catalog-search-outbox-worker}}
+  template:
+    metadata: {labels: {app: catalog-search-outbox-worker, service: catalog, component: worker}}
+    spec:
+      serviceAccountName: release-job-reader
+      initContainers:
+        - name: wait-catalog-migration
+          image: bitnamilegacy/kubectl:1.33.4
+          command: [sh, -ec]
+          args:
+            - |
+              until kubectl get job/catalog-migrate >/dev/null 2>&1; do sleep 5; done
+              actual="$(kubectl get job/catalog-migrate -o jsonpath='{.spec.template.spec.containers[0].image}')"
+              [ "$actual" = "$EXPECTED_IMAGE" ] || { echo "catalog-migrate image $actual differs from $EXPECTED_IMAGE" >&2; exit 1; }
+              kubectl wait --for=condition=complete job/catalog-migrate --timeout=3600s
+          env: [{name: EXPECTED_IMAGE, value: '{{ .Values.images.catalog }}'}]
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec, 'until pg_isready -h catalog-db -p 5432; do sleep 5; done']
+        - name: wait-rabbitmq
+          image: curlimages/curl:8.14.1
+          command: [sh, -ec, 'until curl --fail --silent --output /dev/null --user "${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}" http://rabbitmq:15672/api/health/checks/ready-to-serve-clients; do sleep 5; done']
+          env:
+            - {name: RABBITMQ_DEFAULT_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: RABBITMQ_DEFAULT_USER}}}
+            - {name: RABBITMQ_DEFAULT_PASS, valueFrom: {secretKeyRef: {name: infra-config-secret, key: RABBITMQ_DEFAULT_PASS}}}
+      containers:
+        - name: worker
+          image: {{ .Values.images.catalog }}
+          imagePullPolicy: IfNotPresent
+          command: [php, -d, memory_limit=192M, bin/console, messenger:consume, catalog_search_outbox, --time-limit=3600, --memory-limit=160M, --sleep=1, --no-interaction]
+          envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
+          resources:
+{{ toYaml (index .Values.resources "catalog-search-outbox-worker" "worker") | indent 12 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: catalog-search-index-worker, namespace: {{ .Release.Namespace }}}
+spec:
+  replicas: {{ index .Values.replicas "catalog-search-index-worker" }}
+  selector: {matchLabels: {app: catalog-search-index-worker}}
+  template:
+    metadata: {labels: {app: catalog-search-index-worker, service: catalog, component: worker}}
+    spec:
+      serviceAccountName: release-job-reader
+      initContainers:
+        - name: wait-catalog-migration
+          image: bitnamilegacy/kubectl:1.33.4
+          command: [sh, -ec]
+          args:
+            - |
+              until kubectl get job/catalog-migrate >/dev/null 2>&1; do sleep 5; done
+              actual="$(kubectl get job/catalog-migrate -o jsonpath='{.spec.template.spec.containers[0].image}')"
+              [ "$actual" = "$EXPECTED_IMAGE" ] || { echo "catalog-migrate image $actual differs from $EXPECTED_IMAGE" >&2; exit 1; }
+              kubectl wait --for=condition=complete job/catalog-migrate --timeout=3600s
+          env: [{name: EXPECTED_IMAGE, value: '{{ .Values.images.catalog }}'}]
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec, 'until pg_isready -h catalog-db -p 5432; do sleep 5; done']
+        - name: wait-rabbitmq
+          image: curlimages/curl:8.14.1
+          command: [sh, -ec, 'until curl --fail --silent --output /dev/null --user "${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}" http://rabbitmq:15672/api/health/checks/ready-to-serve-clients; do sleep 5; done']
+          env:
+            - {name: RABBITMQ_DEFAULT_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: RABBITMQ_DEFAULT_USER}}}
+            - {name: RABBITMQ_DEFAULT_PASS, valueFrom: {secretKeyRef: {name: infra-config-secret, key: RABBITMQ_DEFAULT_PASS}}}
+        - name: wait-elasticsearch
+          image: curlimages/curl:8.14.1
+          command: [sh, -ec, 'until curl --fail --silent --output /dev/null --user "elastic:${ELASTICSEARCH_PASSWORD}" http://elasticsearch:9200/_cluster/health; do sleep 5; done']
+          env: [{name: ELASTICSEARCH_PASSWORD, valueFrom: {secretKeyRef: {name: catalog-config-secret, key: ELASTICSEARCH_PASSWORD}}}]
+      containers:
+        - name: worker
+          image: {{ .Values.images.catalog }}
+          imagePullPolicy: IfNotPresent
+          command: [php, -d, memory_limit=192M, bin/console, messenger:consume, catalog_search, --time-limit=3600, --memory-limit=160M, --sleep=1, --no-interaction]
+          envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
+          resources:
+{{ toYaml (index .Values.resources "catalog-search-index-worker" "worker") | indent 12 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: auth-async-worker, namespace: {{ .Release.Namespace }}}
+spec:
+  replicas: {{ index .Values.replicas "auth-async-worker" }}
+  selector: {matchLabels: {app: auth-async-worker}}
+  template:
+    metadata: {labels: {app: auth-async-worker, service: auth, component: worker}}
+    spec:
+      securityContext: {fsGroup: 33}
+      serviceAccountName: release-job-reader
+      initContainers:
+        - name: wait-auth-migration
+          image: bitnamilegacy/kubectl:1.33.4
+          command: [sh, -ec]
+          args:
+            - |
+              until kubectl get job/auth-migrate >/dev/null 2>&1; do sleep 5; done
+              actual="$(kubectl get job/auth-migrate -o jsonpath='{.spec.template.spec.containers[0].image}')"
+              [ "$actual" = "$EXPECTED_IMAGE" ] || { echo "auth-migrate image $actual differs from $EXPECTED_IMAGE" >&2; exit 1; }
+              kubectl wait --for=condition=complete job/auth-migrate --timeout=3600s
+          env: [{name: EXPECTED_IMAGE, value: '{{ .Values.images.auth }}'}]
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec, 'until pg_isready -h database -p 5432; do sleep 5; done']
+        - name: wait-rabbitmq
+          image: curlimages/curl:8.14.1
+          command: [sh, -ec, 'until curl --fail --silent --output /dev/null --user "${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}" http://rabbitmq:15672/api/health/checks/ready-to-serve-clients; do sleep 5; done']
+          env:
+            - {name: RABBITMQ_DEFAULT_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: RABBITMQ_DEFAULT_USER}}}
+            - {name: RABBITMQ_DEFAULT_PASS, valueFrom: {secretKeyRef: {name: infra-config-secret, key: RABBITMQ_DEFAULT_PASS}}}
+        - name: wait-mailpit
+          image: curlimages/curl:8.14.1
+          command: [sh, -ec, 'until curl --fail --silent --output /dev/null http://mailpit:8025/readyz; do sleep 5; done']
+      containers:
+        - name: worker
+          image: {{ .Values.images.auth }}
+          imagePullPolicy: IfNotPresent
+          command: [php, bin/console, messenger:consume, async, --time-limit=3600, --memory-limit=256M, --sleep=1, --no-interaction]
+          envFrom: [{configMapRef: {name: auth-config}}, {secretRef: {name: auth-config-secret}}]
+          env: [{name: JWT_PASSPHRASE, valueFrom: {secretKeyRef: {name: auth-jwt, key: JWT_PASSPHRASE}}}]
+          volumeMounts: [{name: jwt, mountPath: /workspace/config/jwt, readOnly: true}]
+          resources:
+{{ toYaml (index .Values.resources "auth-async-worker" "worker") | indent 12 }}
+      volumes: [{name: jwt, secret: {secretName: auth-jwt, defaultMode: 288, items: [{key: private.pem, path: private.pem}, {key: public.pem, path: public.pem}]}}]

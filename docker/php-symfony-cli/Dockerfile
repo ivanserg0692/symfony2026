@@ -118,3 +118,7 @@ RUN chmod +x /usr/local/bin/symfony-dev-server
 FROM prod AS load-test
 
 ENV CLOUDFLARE_TURNSTILE_ENABLED=0
+
+
+# Keep builds without --target equivalent to the existing prod target.
+FROM prod AS default
