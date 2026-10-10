@@ -11,6 +11,7 @@
     "k8s:secrets:sync": "node scripts/k8s-secrets.mjs",
     "k8s:grafana:password": "bash scripts/k8s-grafana-password.sh",
     "k8s:deploy": "bash scripts/k8s-deploy.sh",
+    "k8s:deploy:manifests": "K8S_SKIP_IMAGE_LOAD=1 bash scripts/k8s-deploy.sh",
     "k8s:verify": "bash scripts/k8s-verify.sh",
     "k8s:forward": "bash scripts/k8s-forward.sh --gateway",
     "k8s:catalog:reindex": "bash scripts/k8s-catalog-reindex.sh",

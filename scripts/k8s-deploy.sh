@@ -10,6 +10,11 @@ cd "$repo_root"
 # Resolve the deployment target from the selected environment.
 reject_k8s_args k8s:deploy "$@"
 ensure_k8s_settings
+skip_image_load="${K8S_SKIP_IMAGE_LOAD:-0}"
+if [[ "$skip_image_load" != 0 && "$skip_image_load" != 1 ]]; then
+    echo 'K8S_SKIP_IMAGE_LOAD must be 0 or 1.' >&2
+    exit 2
+fi
 
 node scripts/check-prerequisites.mjs
 
@@ -25,11 +30,13 @@ check_local_images_available() {
 case "$runtime" in
     local)
         load_local_image_refs true
-        check_local_images_available
         ensure_k8s_cluster "$runtime" "$namespace"
-        for image in "$auth_image" "$catalog_image" "$cart_image" "$gateway_image" "$prometheus_image" "$grafana_image" "$minio_image" "$mc_image"; do
-            kind load docker-image --name "$namespace" "$image"
-        done
+        if [[ "$skip_image_load" == 0 ]]; then
+            check_local_images_available
+            for image in "$auth_image" "$catalog_image" "$cart_image" "$gateway_image" "$prometheus_image" "$grafana_image" "$minio_image" "$mc_image"; do
+                kind load docker-image --name "$namespace" "$image"
+            done
+        fi
         ;;
     k3s)
         registry="${K8S_IMAGE_REGISTRY:-}"
@@ -40,9 +47,11 @@ case "$runtime" in
                 'Set both K8S_IMAGE_REGISTRY and K8S_IMAGE_TAG, or leave both unset to import local images into k3s.'
         else
             load_local_image_refs true
-            check_local_images_available
-            docker save "$auth_image" "$catalog_image" "$cart_image" "$gateway_image" "$prometheus_image" "$grafana_image" "$minio_image" "$mc_image" \
-                | sudo k3s ctr images import -
+            if [[ "$skip_image_load" == 0 ]]; then
+                check_local_images_available
+                docker save "$auth_image" "$catalog_image" "$cart_image" "$gateway_image" "$prometheus_image" "$grafana_image" "$minio_image" "$mc_image" \
+                    | sudo k3s ctr images import -
+            fi
         fi
         ;;
     kubernetes)
@@ -115,7 +124,12 @@ fi
 
 # Helm waits for the bootstrap hooks; run the separate validator to check
 # current workload rollouts and image references.
-echo "Helm release symfony2026 deployed in namespace $namespace."
+if [[ "$skip_image_load" == 1 ]]; then
+    echo "Helm release symfony2026 deployed in namespace $namespace without loading images."
+    echo 'Ensure every selected image reference is already available to the cluster nodes.'
+else
+    echo "Helm release symfony2026 deployed in namespace $namespace."
+fi
 echo 'Validate current images, Jobs, and rollouts with: npm run k8s:verify'
 echo "Gateway LoadBalancer: kubectl -n $namespace get service api-gateway"
 echo 'Local tools: npm run k8s:forward (add -- --gateway for a local gateway forward)'
