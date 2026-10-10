@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync 
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const workloadNames = [
+const WORKLOAD_NAMES = [
   'symfony-web',
   'auth-async-worker',
   'catalog-web',
@@ -13,8 +13,10 @@ const workloadNames = [
   'catalog-search-index-worker',
   'cart-web',
 ];
-const defaultFpmChildren = 10;
-const defaultGrpcWorkers = 1;
+const DEFAULT_FPM_CHILDREN = 10;
+const DEFAULT_GRPC_WORKERS = 1;
+const EXTRA_POD_ALLOWANCE = 1;
+const CONNECTIONS_PER_WORKER_POD = 2;
 
 /**
  * Parsed YAML scalar or container. The parser intentionally supports only the
@@ -149,14 +151,14 @@ function readCalculationInputs(chartValues, generatedValues) {
   const fpmValue = values.generated?.config?.auth?.PHP_FPM_MAX_CHILDREN;
   const grpcValue = values.generated?.config?.catalog?.ROADRUNNER_NUM_WORKERS;
   const fpmChildren = integer(
-    fpmValue === undefined ? defaultFpmChildren : fpmValue,
+    fpmValue === undefined ? DEFAULT_FPM_CHILDREN : fpmValue,
     'generated.config.auth.PHP_FPM_MAX_CHILDREN',
   );
   const grpcWorkers = integer(
-    grpcValue === undefined ? defaultGrpcWorkers : grpcValue,
+    grpcValue === undefined ? DEFAULT_GRPC_WORKERS : grpcValue,
     'generated.config.catalog.ROADRUNNER_NUM_WORKERS',
   );
-  const replicas = Object.fromEntries(workloadNames.map((name) => [
+  const replicas = Object.fromEntries(WORKLOAD_NAMES.map((name) => [
     name,
     integer(requiredPath(values, `maxReplicas.${name}`), `maxReplicas.${name}`),
   ]));
@@ -173,13 +175,15 @@ function readCalculationInputs(chartValues, generatedValues) {
 export function calculatePostgresCapacity(chartValues, generatedValues) {
   const { replicas, fpmChildren, grpcWorkers, reserve } = readCalculationInputs(chartValues, generatedValues);
   const capacity = {
-    auth: (replicas['symfony-web'] + 1) * fpmChildren + (replicas['auth-async-worker'] + 1) * 2 + reserve,
-    catalog: (replicas['catalog-web'] + 1) * fpmChildren
-      + (replicas['catalog-grpc'] + 1) * grpcWorkers
-      + (replicas['catalog-search-outbox-worker'] + 1) * 2
-      + (replicas['catalog-search-index-worker'] + 1) * 2
+    auth: (replicas['symfony-web'] + EXTRA_POD_ALLOWANCE) * fpmChildren
+      + (replicas['auth-async-worker'] + EXTRA_POD_ALLOWANCE) * CONNECTIONS_PER_WORKER_POD
       + reserve,
-    cart: (replicas['cart-web'] + 1) * fpmChildren + reserve,
+    catalog: (replicas['catalog-web'] + EXTRA_POD_ALLOWANCE) * fpmChildren
+      + (replicas['catalog-grpc'] + EXTRA_POD_ALLOWANCE) * grpcWorkers
+      + (replicas['catalog-search-outbox-worker'] + EXTRA_POD_ALLOWANCE) * CONNECTIONS_PER_WORKER_POD
+      + (replicas['catalog-search-index-worker'] + EXTRA_POD_ALLOWANCE) * CONNECTIONS_PER_WORKER_POD
+      + reserve,
+    cart: (replicas['cart-web'] + EXTRA_POD_ALLOWANCE) * fpmChildren + reserve,
   };
   for (const [service, value] of Object.entries(capacity)) {
     if (!Number.isSafeInteger(value) || value < 1) {
