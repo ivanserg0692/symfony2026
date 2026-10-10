@@ -58,6 +58,15 @@ if [[ ${1:-} == --gateway ]]; then
     local_ports+=(8001)
     service_ports+=(8001)
     forward_addresses+=("$gateway_forward_address")
+
+    # Keep a stable WSL loopback port for the Windows portproxy. WSL's
+    # localhost forwarding exposes this port to Windows without a WSL IP.
+    labels+=(Gateway-Windows-proxy)
+    namespaces+=("$namespace")
+    services+=(api-gateway)
+    local_ports+=(18001)
+    service_ports+=(8001)
+    forward_addresses+=(127.0.0.1)
 fi
 
 # Check every required Service and Service port before opening any local port.
