@@ -4893,7 +4893,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (label_service, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
+          "expr": "sum by (label_service, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"}))",
           "legendFormat": "{{label_service}} / {{pod}}",
           "datasource": {
             "type": "prometheus",
@@ -4919,7 +4919,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (label_service) (rate(container_cpu_usage_seconds_total{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
+          "expr": "sum by (label_service) (rate(container_cpu_usage_seconds_total{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"}))",
           "legendFormat": "{{label_service}}",
           "datasource": {
             "type": "prometheus",
@@ -4950,7 +4950,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (label_service, pod) (container_memory_working_set_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
+          "expr": "sum by (label_service, pod) (container_memory_working_set_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"} * on(namespace,pod) group_left(label_service) max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"}))",
           "legendFormat": "{{label_service}} / {{pod}}",
           "datasource": {
             "type": "prometheus",
@@ -4981,7 +4981,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (label_service) (container_memory_working_set_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
+          "expr": "sum by (label_service) (container_memory_working_set_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"} * on(namespace,pod) group_left(label_service) max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"}))",
           "legendFormat": "{{label_service}}",
           "datasource": {
             "type": "prometheus",
@@ -5007,7 +5007,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (label_service) (kube_pod_status_phase{namespace=~\"${namespace:regex}\",phase=\"Running\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
+          "expr": "sum by (label_service) (kube_pod_status_phase{namespace=~\"${namespace:regex}\",phase=\"Running\"} * on(namespace,pod) group_left(label_service) max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"}))",
           "legendFormat": "{{label_service}} running",
           "datasource": {
             "type": "prometheus",
@@ -5016,7 +5016,7 @@
         },
         {
           "refId": "B",
-          "expr": "sum by (label_service) (kube_pod_status_ready{namespace=~\"${namespace:regex}\",condition=\"true\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
+          "expr": "sum by (label_service) (kube_pod_status_ready{namespace=~\"${namespace:regex}\",condition=\"true\"} * on(namespace,pod) group_left(label_service) max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"}))",
           "legendFormat": "{{label_service}} ready",
           "datasource": {
             "type": "prometheus",
@@ -5042,7 +5042,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "kube_pod_status_ready{namespace=~\"${namespace:regex}\",condition=\"true\"} * on(namespace,pod) group_left(label_service) kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"}",
+          "expr": "kube_pod_status_ready{namespace=~\"${namespace:regex}\",condition=\"true\"} * on(namespace,pod) group_left(label_service) max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
           "legendFormat": "{{label_service}} / {{pod}}",
           "datasource": {
             "type": "prometheus",
@@ -5133,7 +5133,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (namespace, label_service) (((container_memory_usage_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"} and on(namespace,pod,container) (kube_pod_container_resource_limits{namespace=~\"${namespace:regex}\",resource=\"memory\",unit=\"byte\"} > 0)) * on(namespace,pod) group_left(label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\")))) / sum by (namespace, label_service) ((((kube_pod_container_resource_limits{namespace=~\"${namespace:regex}\",resource=\"memory\",unit=\"byte\"} > 0) and on(namespace,pod,container) container_memory_usage_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}) * on(namespace,pod) group_left(label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\")))) * 100",
+          "expr": "sum by (namespace, label_service) (((container_memory_usage_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"} and on(namespace,pod,container) (kube_pod_container_resource_limits{namespace=~\"${namespace:regex}\",resource=\"memory\",unit=\"byte\"} > 0)) * on(namespace,pod) group_left(label_service) (max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\"))))) / sum by (namespace, label_service) ((((kube_pod_container_resource_limits{namespace=~\"${namespace:regex}\",resource=\"memory\",unit=\"byte\"} > 0) and on(namespace,pod,container) container_memory_usage_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}) * on(namespace,pod) group_left(label_service) (max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\"))))) * 100",
           "legendFormat": "{{namespace}} / {{label_service}}",
           "datasource": {
             "type": "prometheus",
@@ -5233,7 +5233,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (namespace, label_service, container) (((container_memory_usage_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"} and on(namespace,pod,container) (kube_pod_container_resource_limits{namespace=~\"${namespace:regex}\",resource=\"memory\",unit=\"byte\"} > 0)) * on(namespace,pod) group_left(label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\")))) / sum by (namespace, label_service, container) ((((kube_pod_container_resource_limits{namespace=~\"${namespace:regex}\",resource=\"memory\",unit=\"byte\"} > 0) and on(namespace,pod,container) container_memory_usage_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}) * on(namespace,pod) group_left(label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\")))) * 100",
+          "expr": "sum by (namespace, label_service, container) (((container_memory_usage_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"} and on(namespace,pod,container) (kube_pod_container_resource_limits{namespace=~\"${namespace:regex}\",resource=\"memory\",unit=\"byte\"} > 0)) * on(namespace,pod) group_left(label_service) (max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\"))))) / sum by (namespace, label_service, container) ((((kube_pod_container_resource_limits{namespace=~\"${namespace:regex}\",resource=\"memory\",unit=\"byte\"} > 0) and on(namespace,pod,container) container_memory_usage_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}) * on(namespace,pod) group_left(label_service) (max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\"))))) * 100",
           "legendFormat": "{{namespace}} / {{label_service}} / {{container}}",
           "datasource": {
             "type": "prometheus",
