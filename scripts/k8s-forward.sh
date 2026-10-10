@@ -41,13 +41,23 @@ namespaces=(monitoring monitoring "$namespace" "$namespace" "$namespace" "$names
 services=(grafana prometheus kibana mailpit rabbitmq minio)
 local_ports=(3000 9090 5601 8025 15672 9001)
 service_ports=(3000 9090 5601 8025 15672 9001)
+forward_addresses=(127.0.0.1 127.0.0.1 127.0.0.1 127.0.0.1 127.0.0.1 127.0.0.1)
 
 if [[ ${1:-} == --gateway ]]; then
+    gateway_forward_address="${K8S_GATEWAY_FORWARD_ADDRESS:-127.0.0.1}"
+    case "$gateway_forward_address" in
+        127.0.0.1|0.0.0.0) ;;
+        *)
+            echo 'K8S_GATEWAY_FORWARD_ADDRESS must be 127.0.0.1 or 0.0.0.0.' >&2
+            exit 2
+            ;;
+    esac
     labels+=(Gateway)
     namespaces+=("$namespace")
     services+=(api-gateway)
     local_ports+=(8001)
     service_ports+=(8001)
+    forward_addresses+=("$gateway_forward_address")
 fi
 
 # Check every required Service and Service port before opening any local port.
@@ -82,13 +92,13 @@ trap 'exit 143' TERM
 echo "Kubernetes context: $context; application namespace: $namespace"
 for i in "${!services[@]}"; do
     log_file="$log_dir/$i.log"
-    kubectl -n "${namespaces[i]}" port-forward --address 127.0.0.1 \
+    kubectl -n "${namespaces[i]}" port-forward --address "${forward_addresses[i]}" \
         "service/${services[i]}" "${local_ports[i]}:${service_ports[i]}" >"$log_file" 2>&1 &
     pids+=("$!")
 
     ready=false
     for ((attempt = 0; attempt < 50; attempt++)); do
-        if grep -Fq 'Forwarding from 127.0.0.1:' "$log_file" && kill -0 "${pids[i]}" 2>/dev/null; then
+        if grep -Fq "Forwarding from ${forward_addresses[i]}:" "$log_file" && kill -0 "${pids[i]}" 2>/dev/null; then
             ready=true
             break
         fi
@@ -103,6 +113,9 @@ for i in "${!services[@]}"; do
         exit 1
     fi
     printf '%-12s -> http://localhost:%s\n' "${labels[i]}" "${local_ports[i]}"
+    if [[ "${forward_addresses[i]}" == 0.0.0.0 ]]; then
+        echo 'Gateway also listens on all WSL interfaces.'
+    fi
 done
 
 echo 'Press Ctrl+C to stop these forwards.'
