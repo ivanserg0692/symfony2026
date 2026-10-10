@@ -14,6 +14,7 @@
     "k8s:deploy:manifests": "K8S_SKIP_IMAGE_LOAD=1 bash scripts/k8s-deploy.sh",
     "k8s:verify": "bash scripts/k8s-verify.sh",
     "k8s:forward": "bash scripts/k8s-forward.sh --gateway",
+    "k8s:forward:gateway:public": "K8S_GATEWAY_FORWARD_ADDRESS=0.0.0.0 bash scripts/k8s-forward.sh --gateway",
     "k8s:catalog:reindex": "bash scripts/k8s-catalog-reindex.sh",
     "k8s:db:fixtures": "bash scripts/k8s-db-fixtures.sh",
     "docker:restart:php": "docker compose restart symfony-cli symfony-web catalog-cli catalog-web catalog-grpc catalog-search-outbox-worker catalog-search-index-worker cart-cli cart-web api-gateway",
