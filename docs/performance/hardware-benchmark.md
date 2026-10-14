@@ -270,7 +270,7 @@ hardware benchmark
     -> validate scaling
 ```
 
-The hardware benchmark records the class of machine behind application results. It does not directly determine Kubernetes requests or limits, and requests/limits must not be mechanically scaled from Sysbench or FIO ratios. Fixed-replica application-level k6 testing remains the authoritative calibration step before HPA experiments.
+The hardware benchmark records the class of machine behind application results. It does not directly determine Kubernetes requests or limits, and requests/limits must not be mechanically scaled from Sysbench or FIO ratios. Fixed-replica application-level k6 testing remains the authoritative calibration step before HPA experiments. The recorded Kubernetes CPU measurements and current Helm values are summarized separately in [Kubernetes Resource Calibration](kubernetes-resource-calibration.md).
 
 ## Full and future quick storage profiles
 

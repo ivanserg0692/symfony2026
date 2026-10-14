@@ -44,6 +44,7 @@
   - [News Export and Batch Processing](#news-export-and-batch-processing)
   - [External Prerequisites](#external-prerequisites)
   - [Run With Kubernetes](#run-with-kubernetes)
+    - [Performance and resource references](#performance-and-resource-references)
   - [Run With Docker Compose](#run-with-docker-compose)
   - [Doctrine Database Setup](#doctrine-database-setup)
   - [API Documentation](#api-documentation)
@@ -97,6 +98,7 @@
   - [Экспорт новостей и batch-обработка](#%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D1%80%D1%82-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B5%D0%B9-%D0%B8-batch-%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0)
   - [Внешние зависимости](#%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B8%D0%B5-%D0%B7%D0%B0%D0%B2%D0%B8%D1%81%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D0%B8)
   - [Запуск через Kubernetes](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-kubernetes)
+    - [Производительность и ресурсы Kubernetes](#%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D1%8C-%D0%B8-%D1%80%D0%B5%D1%81%D1%83%D1%80%D1%81%D1%8B-kubernetes)
   - [Запуск через Docker Compose](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%87%D0%B5%D1%80%D0%B5%D0%B7-docker-compose)
   - [Настройка Doctrine и базы данных](#%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-doctrine-%D0%B8-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85)
   - [API Documentation](#api-documentation-1)
@@ -199,8 +201,6 @@ The current checkout implementation creates the order and leaves it in the `pend
 The production-oriented Docker environment includes Prometheus and Grafana for monitoring the API Gateway, application services, PostgreSQL databases, PHP-FPM pools, and host resources. Metrics are collected through Node Exporter, Nginx VTS Exporter, PostgreSQL Exporter, and PHP-FPM Exporter. For `symfony-web`, `catalog-web`, and `cart-web`, the PHP-FPM exporter publishes accepted connections; active, idle, total, and maximum-active process counts; listen queue size, capacity, and maximum; max-children hits and slow requests; per-process state, request duration, CPU, memory, and request count; uptime, health, and scrape failures.
 
 The Grafana dashboard covers request rate, HTTP statuses and errors, p50/p95/p99 latency, CPU and memory usage, filesystem and disk activity, network traffic, and PostgreSQL operations. Its PHP-FPM panel currently visualizes active, idle, and total processes plus the listen queue per service. Load scenarios are executed with k6 against the public API Gateway and include catalog browsing, cart operations, checkout, and mixed traffic.
-
-The machine used as the project's `1.00x` performance reference, its reproducible Phoronix procedure, and the original Sysbench/FIO result files are documented in [Hardware Performance Reference](docs/performance/hardware-benchmark.md).
 
 The project provides three standard runtime profiles. Production is the default Compose environment and uses the `prod` image target with PHP-FPM, Nginx, OPcache, `APP_ENV=prod`, and `APP_DEBUG=0`. Load testing is a dedicated performance-test profile: it uses `.env.load_test` and `docker-compose.load-test.yml`, keeps production-like PHP behavior without development diagnostics, and runs as the isolated `symfony2026-load-test` Compose project. Development is enabled through `.env.dev` and `docker-compose.dev.yml`; it uses the `dev` image target with Symfony CLI, Composer, Xdebug, the Symfony profiler, detailed application logs, `APP_ENV=dev`, and `APP_DEBUG=1`.
 
@@ -673,6 +673,11 @@ The service/container graph separates, for example, `catalog / nginx` from `cata
 
 Start with service-wide symptoms, inspect the container type, and use Pod lines to find an outlier; use the live Grafana tooltip for exact values. [The Kubernetes monitoring guide](kubernetes/README.md#monitoring) explains the queries, aggregation levels, and k6/HPA workflow.
 
+#### Performance and resource references
+
+- [Hardware Performance Reference](docs/performance/hardware-benchmark.md) — server characteristics, benchmark procedure, and Sysbench/FIO results.
+- [Kubernetes Resource Calibration](docs/performance/kubernetes-resource-calibration.md) — observed CPU usage under load and the corresponding Helm requests/limits.
+
 ### Run With Docker Compose
 
 The production stack is the default Compose environment. Development and load testing are enabled explicitly through their environment override files. Activate one context in the current terminal, then use ordinary `docker compose` and environment-neutral npm commands.
@@ -1115,8 +1120,6 @@ Product snapshots не отдаются через отдельную публи
 Production-окружение Docker включает Prometheus и Grafana для мониторинга API Gateway, сервисов приложения, баз данных PostgreSQL, пулов PHP-FPM и ресурсов хоста. Метрики собираются через Node Exporter, Nginx VTS Exporter, PostgreSQL Exporter и PHP-FPM Exporter. Для `symfony-web`, `catalog-web` и `cart-web` PHP-FPM Exporter публикует число принятых соединений; active, idle, total и maximum-active processes; текущий и максимальный размер listen queue и его capacity; max-children hits и slow requests; состояние процесса, длительность запроса, CPU, память и число запросов по процессам; uptime, health и scrape failures.
 
 Дашборд Grafana показывает RPS, HTTP-статусы и ошибки, задержки p50/p95/p99, использование CPU и памяти, состояние файловой системы и дисков, сетевой трафик и операции PostgreSQL. PHP-FPM-панель сейчас визуализирует active, idle и total processes, а также listen queue по каждому сервису. Нагрузочные сценарии k6 выполняются через публичный API Gateway и охватывают просмотр каталога, работу с корзиной, оформление заказа и смешанный трафик.
-
-Машина, принятая за performance reference проекта `1.00x`, воспроизводимая процедура Phoronix и оригинальные результаты Sysbench/FIO описаны в документе [Hardware Performance Reference](docs/performance/hardware-benchmark.md).
 
 Проект предоставляет три стандартных runtime-профиля. Production является Compose-окружением по умолчанию и использует image target `prod` с PHP-FPM, Nginx, OPcache, `APP_ENV=prod` и `APP_DEBUG=0`. Для нагрузочного тестирования предусмотрен отдельный performance-test профиль: он использует `.env.load_test` и `docker-compose.load-test.yml`, сохраняет production-like поведение PHP без development-диагностики и запускается как изолированный Compose project `symfony2026-load-test`. Development подключается через `.env.dev` и `docker-compose.dev.yml`; он использует image target `dev` с Symfony CLI, Composer, Xdebug, Symfony profiler, подробными логами приложения, `APP_ENV=dev` и `APP_DEBUG=1`.
 
@@ -1588,6 +1591,11 @@ Stacked-график CPU суммирует нагрузку выбранных 
 | Подходят ли настройки ресурсов и работает ли горизонтальное масштабирование под нагрузкой? | Сравнить ядра CPU и проценты памяти с requests/limits в манифестах; смотреть **HTTP Pods: running / ready**, **Pod lifecycle** и PHP-FPM queue. | Подобрать ресурсы по замерам, затем проверить, что HPA добавляет готовые реплики и они делят трафик. Панелей отношения CPU к request/limit сейчас нет. |
 
 Начните с симптома на уровне сервиса, уточните тип контейнера и найдите выбивающуюся реплику на графике по Pod; точные значения смотрите в tooltip Grafana. [Инструкция по мониторингу Kubernetes](kubernetes/README.md#%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3) описывает запросы, уровни агрегации и сценарий k6/HPA.
+
+#### Производительность и ресурсы Kubernetes
+
+- [Бенчмарк производительности сервера](docs/performance/hardware-benchmark.md) — характеристики машины, процедура тестирования и результаты Sysbench/FIO.
+- [Калибровка ресурсов Kubernetes](docs/performance/kubernetes-resource-calibration.md) — наблюдаемое потребление CPU под нагрузкой и соответствующие `requests`/`limits` Helm.
 
 ### Запуск через Docker Compose
 
