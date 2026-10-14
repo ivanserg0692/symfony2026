@@ -92,10 +92,10 @@ resources:
   symfony-web:
     php:
       requests:
-        cpu: 100m
+        cpu: 300m
         memory: 256Mi
       limits:
-        cpu: '1'
+        cpu: 500m
         memory: 1Gi
     php-fpm-exporter:
       requests:
@@ -107,7 +107,7 @@ resources:
   catalog-web:
     php:
       requests:
-        cpu: 100m
+        cpu: 900m
         memory: 256Mi
       limits:
         cpu: '1'
@@ -122,10 +122,10 @@ resources:
   cart-web:
     php:
       requests:
-        cpu: 100m
+        cpu: 300m
         memory: 256Mi
       limits:
-        cpu: '1'
+        cpu: 500m
         memory: 1Gi
     php-fpm-exporter:
       requests:

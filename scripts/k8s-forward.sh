@@ -44,24 +44,34 @@ service_ports=(3000 9090 5601 8025 15672 9001)
 forward_addresses=(127.0.0.1 127.0.0.1 127.0.0.1 127.0.0.1 127.0.0.1 127.0.0.1)
 
 if [[ ${1:-} == --gateway ]]; then
-    gateway_forward_address="${K8S_GATEWAY_FORWARD_ADDRESS:-127.0.0.1}"
-    case "$gateway_forward_address" in
-        127.0.0.1|0.0.0.0) ;;
+    gateway_forward_mode="${K8S_GATEWAY_FORWARD_MODE:-direct}"
+    case "$gateway_forward_mode" in
+        direct|proxy) ;;
         *)
-            echo 'K8S_GATEWAY_FORWARD_ADDRESS must be 127.0.0.1 or 0.0.0.0.' >&2
+            echo 'K8S_GATEWAY_FORWARD_MODE must be direct or proxy.' >&2
             exit 2
             ;;
     esac
-    labels+=(Gateway)
-    namespaces+=("$namespace")
-    services+=(api-gateway)
-    local_ports+=(8001)
-    service_ports+=(8001)
-    forward_addresses+=("$gateway_forward_address")
 
-    # Keep a stable WSL loopback port for the Windows portproxy. WSL's
-    # localhost forwarding exposes this port to Windows without a WSL IP.
-    labels+=(Gateway-Windows-proxy)
+    gateway_forward_address="${K8S_GATEWAY_FORWARD_ADDRESS:-127.0.0.1}"
+    if [[ "$gateway_forward_mode" == direct ]]; then
+        case "$gateway_forward_address" in
+            127.0.0.1|0.0.0.0) ;;
+            *)
+                echo 'K8S_GATEWAY_FORWARD_ADDRESS must be 127.0.0.1 or 0.0.0.0.' >&2
+                exit 2
+                ;;
+        esac
+        labels+=(Gateway)
+        namespaces+=("$namespace")
+        services+=(api-gateway)
+        local_ports+=(8001)
+        service_ports+=(8001)
+        forward_addresses+=("$gateway_forward_address")
+    fi
+
+    # Keep the stable WSL loopback port used by the Docker Nginx proxy.
+    labels+=(Gateway-Nginx-proxy)
     namespaces+=("$namespace")
     services+=(api-gateway)
     local_ports+=(18001)
