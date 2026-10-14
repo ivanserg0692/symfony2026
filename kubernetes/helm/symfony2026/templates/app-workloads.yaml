@@ -64,7 +64,9 @@ spec:
 {{ toYaml (index .Values.resources "symfony-web" "php") | indent 12 }}
         - name: php-fpm-exporter
           image: hipages/php-fpm_exporter:2.2.0
-          env: [{name: PHP_FPM_SCRAPE_URI, value: "tcp://127.0.0.1:9001/status"}]
+          env:
+            - {name: PHP_FPM_SCRAPE_URI, value: "tcp://127.0.0.1:9001/status"}
+            - {name: PHP_FPM_FIX_PROCESS_COUNT, value: {{ .Values.phpFpmExporter.fixProcessCount | quote }}}
           ports: [{name: fpm-metrics, containerPort: 9253}]
           resources:
 {{ toYaml (index .Values.resources "symfony-web" "php-fpm-exporter") | indent 12 }}
@@ -128,7 +130,9 @@ spec:
 {{ toYaml (index .Values.resources "catalog-web" "php") | indent 12 }}
         - name: php-fpm-exporter
           image: hipages/php-fpm_exporter:2.2.0
-          env: [{name: PHP_FPM_SCRAPE_URI, value: "tcp://127.0.0.1:9001/status"}]
+          env:
+            - {name: PHP_FPM_SCRAPE_URI, value: "tcp://127.0.0.1:9001/status"}
+            - {name: PHP_FPM_FIX_PROCESS_COUNT, value: {{ .Values.phpFpmExporter.fixProcessCount | quote }}}
           ports: [{name: fpm-metrics, containerPort: 9253}]
           resources:
 {{ toYaml (index .Values.resources "catalog-web" "php-fpm-exporter") | indent 12 }}
@@ -182,7 +186,9 @@ spec:
 {{ toYaml (index .Values.resources "cart-web" "php") | indent 12 }}
         - name: php-fpm-exporter
           image: hipages/php-fpm_exporter:2.2.0
-          env: [{name: PHP_FPM_SCRAPE_URI, value: "tcp://127.0.0.1:9001/status"}]
+          env:
+            - {name: PHP_FPM_SCRAPE_URI, value: "tcp://127.0.0.1:9001/status"}
+            - {name: PHP_FPM_FIX_PROCESS_COUNT, value: {{ .Values.phpFpmExporter.fixProcessCount | quote }}}
           ports: [{name: fpm-metrics, containerPort: 9253}]
           resources:
 {{ toYaml (index .Values.resources "cart-web" "php-fpm-exporter") | indent 12 }}

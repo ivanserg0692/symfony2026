@@ -14,6 +14,9 @@ generated:
   config: {}
   postgresConnectionReserve: "20"
 
+phpFpmExporter:
+  fixProcessCount: true
+
 # Maximum workload replicas used by PostgreSQL capacity calculations and future HPA resources.
 maxReplicas:
   symfony-web: 3
