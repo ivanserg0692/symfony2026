@@ -8,6 +8,7 @@
   - [First deployment and subsequent deployments](#first-deployment-and-subsequent-deployments)
   - [Helm chart and release operations](#helm-chart-and-release-operations)
   - [Access, maintenance, and scaling](#access-maintenance-and-scaling)
+    - [HTTP horizontal autoscaling](#http-horizontal-autoscaling)
   - [Monitoring](#monitoring)
     - [Resource diagnosis and load testing](#resource-diagnosis-and-load-testing)
 - [Русский](#%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9)
@@ -15,6 +16,7 @@
   - [Первое и последующие развёртывания](#%D0%BF%D0%B5%D1%80%D0%B2%D0%BE%D0%B5-%D0%B8-%D0%BF%D0%BE%D1%81%D0%BB%D0%B5%D0%B4%D1%83%D1%8E%D1%89%D0%B8%D0%B5-%D1%80%D0%B0%D0%B7%D0%B2%D1%91%D1%80%D1%82%D1%8B%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F)
   - [Helm chart и операции с release](#helm-chart-%D0%B8-%D0%BE%D0%BF%D0%B5%D1%80%D0%B0%D1%86%D0%B8%D0%B8-%D1%81-release)
   - [Доступ, обслуживание и масштабирование](#%D0%B4%D0%BE%D1%81%D1%82%D1%83%D0%BF-%D0%BE%D0%B1%D1%81%D0%BB%D1%83%D0%B6%D0%B8%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B8-%D0%BC%D0%B0%D1%81%D1%88%D1%82%D0%B0%D0%B1%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5)
+    - [Горизонтальное масштабирование HTTP-сервисов](#%D0%B3%D0%BE%D1%80%D0%B8%D0%B7%D0%BE%D0%BD%D1%82%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D0%B5-%D0%BC%D0%B0%D1%81%D1%88%D1%82%D0%B0%D0%B1%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-http-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2)
   - [Мониторинг](#%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3)
     - [Диагностика ресурсов и нагрузочное тестирование](#%D0%B4%D0%B8%D0%B0%D0%B3%D0%BD%D0%BE%D1%81%D1%82%D0%B8%D0%BA%D0%B0-%D1%80%D0%B5%D1%81%D1%83%D1%80%D1%81%D0%BE%D0%B2-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5)
 
@@ -74,7 +76,7 @@ Synchronization reads the root `.env` and `.env.local` through Compose and the s
 
 ### Helm chart and release operations
 
-`kubernetes/helm/symfony2026` contains `Chart.yaml`, `values.yaml`, and templates for the former infrastructure, bootstrap, application, exporter, gateway, and monitoring manifests. Image references, replica counts, and `maxReplicas` are chart values. `npm run k8s:config:sync` writes non-secret application configuration and the PostgreSQL connection reserve to `generated-values.yaml` without calculating capacity. The deploy script calculates capacity immediately before Helm, using the `maxReplicas` values from the chart and the generated application parameters. Helm templates consume the resulting `generated.postgresCapacity` values and fail with an actionable error if they are missing. Cluster-only Secret synchronization remains unchanged. No HPA resource exists in the current deployment.
+`kubernetes/helm/symfony2026` contains `Chart.yaml`, `values.yaml`, and templates for infrastructure, bootstrap, application, exporter, gateway, monitoring, and HTTP autoscaling resources. Image references, fixed replica counts, and `maxReplicas` are chart values. `npm run k8s:config:sync` writes non-secret application configuration and the PostgreSQL connection reserve to `generated-values.yaml` without calculating capacity. The deploy script calculates capacity immediately before Helm, using the same `maxReplicas` values that limit HTTP HPA and the generated application parameters. Helm templates consume the resulting `generated.postgresCapacity` values and fail with an actionable error if they are missing. Cluster-only Secret synchronization remains unchanged.
 
 For an offline structural check of the chart (the example image references in `values.yaml` are not release images):
 
@@ -101,7 +103,35 @@ The Catalog outbox and index consumers are independent Deployments. Full reindex
 
 After deployment and migrations, run `npm run k8s:db:fixtures` explicitly when sample data is needed. It waits for the migration Jobs and application Deployments, loads Auth and Catalog fixtures in separate Jobs, performs the full Catalog reindex, then loads Cart fixtures. Each Job uses the PHP image currently deployed for its service. Like the Compose fixtures command, Doctrine purges existing fixture tables before loading; do not run it against data you need to keep. This command is not part of `k8s:deploy`.
 
-For a manual scale check, run `kubectl -n symfony2026 scale deployment/symfony-web deployment/catalog-web deployment/cart-web --replicas=3`, wait for each rollout, inspect `kubectl -n symfony2026 get pods -l component=http -o wide` and `kubectl -n symfony2026 get endpointslices -l kubernetes.io/service-name=symfony-web` (repeat for Catalog and Cart). Send repeated requests through the gateway and verify that each Pod's `phpfpm_accepted_connections` series increases. Test one Auth login with requests alternating between Auth Pods to validate Redis sessions, and check JWT verification on every Pod. Restore replica counts as needed. k6/HPA checks are a later stage.
+The HTTP Deployments are managed by HPA. Check their replica counts and ready endpoints with `kubectl -n "$K8S_NAMESPACE" get hpa,deploy,pods` and `kubectl -n "$K8S_NAMESPACE" get endpointslices -l kubernetes.io/service-name=catalog-web` (repeat for Cart and Auth). Do not use `kubectl scale` as a lasting setting while HPA is enabled: HPA will update the scale subresource. To disable one HPA, set its `autoscaling.<workload>.enabled` to `false` and use `replicas.<workload>` in Helm values.
+
+#### HTTP horizontal autoscaling
+
+Auth (`symfony-web`), Catalog (`catalog-web`), and Cart (`cart-web`) run Nginx and PHP-FPM in each HTTP Pod; the existing `hipages/php-fpm_exporter` sidecar reads that Pod's PHP-FPM status on port 9001. Catalog gRPC and asynchronous workers use different runtimes and have no PHP-FPM queue HPA. Prometheus already scrapes annotated HTTP Pods every 15 seconds in job `php-fpm-pods`, retaining `namespace`, `pod`, and `service` labels. Grafana's per-Pod panel starts from `phpfpm_listen_queue{namespace=~"${namespace:regex}",service=~"${services:regex}",pod=~"${pod:regex}"}`; its `sum by(service)` panel is for display and is not the HPA input.
+
+The chart installs one Prometheus Adapter in `monitoring` and registers `v1beta1.custom.metrics.k8s.io`. It exposes the existing gauge as `pods/phpfpm_listen_queue`, grouped by `(namespace,pod)` with the query below. The 1-minute window smooths brief samples; HPA's `Pods` metric with `AverageValue` then computes the mean across the target Deployment's Pods. The queue alone controls scale-up; active workers are diagnostic only. The APIService uses the adapter's generated serving certificate with `insecureSkipTLSVerify`; restrict access to the cluster API and replace this with a trusted serving certificate if cluster policy requires TLS verification.
+
+```promql
+avg by (namespace, pod) (
+  avg_over_time(phpfpm_listen_queue{job="php-fpm-pods",namespace="<namespace>",pod=~"<target-pods>",service=~"auth|catalog|cart"}[1m])
+)
+```
+
+The Adapter supplies the namespace and Pod matchers in place of the placeholders. Defaults are a target of 20 queued requests **per Pod**, 1–20 replicas independently for each HTTP Deployment, no scale-up stabilization, and 300 seconds of scale-down stabilization. Configure these under `autoscaling.symfony-web`, `autoscaling.catalog-web`, and `autoscaling.cart-web`; change the three corresponding `maxReplicas` values for their upper bounds. When an HPA is enabled, Helm omits the Deployment's `spec.replicas` so HPA owns it. The 20-request threshold is experimental and should be tuned with controlled load tests. For diagnosis, compare `phpfpm_active_processes` with configured `PHP_FPM_MAX_CHILDREN` (currently 10) and calculate occupancy as `100 * phpfpm_active_processes / PHP_FPM_MAX_CHILDREN`. The dashboard's `phpfpm_total_processes` is the current process count, not the configured maximum; there is no separate `max_children` gauge in the existing scrape.
+
+Before deployment, inspect the target node with `kubectl describe node <node>` and the namespace with `kubectl -n "$K8S_NAMESPACE" get resourcequota,limitrange`. The dev kind node observed during implementation had 12 allocatable CPUs and about 7.8 GiB allocatable RAM, with about 6.25 GiB of memory requests already allocated; these are a snapshot, not an HPA limit. The chart's existing HTTP Pod requests, including the exporter, are 288 MiB each and CPU requests are 310m for Auth/Cart and 910m for Catalog. The Adapter requests 100m CPU and 180 MiB RAM. The Scheduler leaves extra replicas `Pending` when capacity is insufficient. `maxReplicas: 20` is a logical bound, not a promise that all replicas fit on one node. The capacity script reserves PostgreSQL connections for those bounds (defaults: Auth 234, Catalog 262, Cart 230), so inspect PostgreSQL memory/connections as well as Elasticsearch, Redis, and gateway latency during scaling. Current application requests and limits are unchanged.
+
+After the operator runs `npm run k8s:deploy:manifests` with the selected environment and available images, verify the metrics path before load testing:
+
+```bash
+kubectl get apiservice v1beta1.custom.metrics.k8s.io
+kubectl -n monitoring rollout status deployment/prometheus-adapter
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/$K8S_NAMESPACE/pods/%2A/phpfpm_listen_queue" # all current HTTP Pods
+kubectl -n "$K8S_NAMESPACE" describe hpa symfony-web catalog-web cart-web
+kubectl -n "$K8S_NAMESPACE" get hpa,deploy,pods
+```
+
+Check that the custom metrics response has separate Pod items for Auth, Catalog, and Cart, compare values with their existing Grafana queue panels, and confirm each HPA reports its own queue target. During an agreed short load test, watch each HPA's desired replicas, `Pending`/readiness events, EndpointSlices, per-Pod queue, active and total PHP-FPM processes, CPU/RAM, and P95/P99 latency when available. Confirm scale-up under a sustained queue and scale-down after the 300-second window. If the adapter or Prometheus metric is unavailable, HPA reports a metrics error; diagnose it before relying on autoscaling. Existing Grafana dashboards use the same Prometheus series and require no new exporter or dashboard changes.
 
 ### Monitoring
 
@@ -188,7 +218,7 @@ npm run k8s:deploy
 
 ### Helm chart и операции с release
 
-`kubernetes/helm/symfony2026` содержит `Chart.yaml`, `values.yaml` и шаблоны прежних манифестов инфраструктуры, bootstrap, приложений, exporters, gateway и мониторинга. Ссылки на images, фактическое число реплик и `maxReplicas` находятся в values. `npm run k8s:config:sync` записывает несекретную конфигурацию приложения и резерв подключений PostgreSQL в `generated-values.yaml`, не вычисляя capacity. Перед Helm deploy скрипт рассчитывает capacity по `maxReplicas` из chart и актуальным generated values. Helm использует `generated.postgresCapacity` из runtime-файла и сообщает понятную ошибку, если значения отсутствуют. Отдельная синхронизация Secret не менялась. В текущем развёртывании нет HPA-ресурса.
+`kubernetes/helm/symfony2026` содержит `Chart.yaml`, `values.yaml` и шаблоны инфраструктуры, bootstrap, приложений, exporters, gateway, мониторинга и HPA для HTTP-сервисов. Ссылки на images, фиксированное число реплик и `maxReplicas` находятся в values. `npm run k8s:config:sync` записывает несекретную конфигурацию приложения и резерв подключений PostgreSQL в `generated-values.yaml`, не вычисляя capacity. Перед Helm deploy скрипт рассчитывает capacity по тем же `maxReplicas`, которые ограничивают HPA, и актуальным generated values. Helm использует `generated.postgresCapacity` из runtime-файла и сообщает понятную ошибку, если значения отсутствуют. Отдельная синхронизация Secret не менялась.
 
 Проверка структуры chart без кластера (примеры images в `values.yaml` не являются release images):
 
@@ -215,7 +245,35 @@ Catalog outbox и index consumers — отдельные Deployments. Полны
 
 После deployment и миграций при необходимости загрузите тестовые данные отдельной командой `npm run k8s:db:fixtures`. Она дожидается migration Jobs и application Deployments, последовательно загружает fixtures Auth и Catalog через отдельные Jobs, выполняет полный Catalog reindex и затем загружает fixtures Cart. Каждый Job использует PHP image своего уже развёрнутого сервиса. Как и Compose-команда, Doctrine очищает таблицы перед загрузкой; не запускайте команду для данных, которые нужно сохранить. В `k8s:deploy` загрузка fixtures не входит.
 
-Для ручной проверки задайте три реплики через `kubectl -n symfony2026 scale deployment/symfony-web deployment/catalog-web deployment/cart-web --replicas=3`, дождитесь rollout и проверьте Pod и EndpointSlice каждого Service. Отправьте серию запросов через gateway и убедитесь, что `phpfpm_accepted_connections` растёт отдельно у каждого Pod. Проверьте Auth login/session при чередовании Pod и JWT verification на всех Pod. HPA и k6 относятся к следующему этапу.
+Числом реплик HTTP Deployments управляет HPA. Проверяйте их через `kubectl -n "$K8S_NAMESPACE" get hpa,deploy,pods` и EndpointSlice каждого Service. Ручной `kubectl scale` при включённом HPA не задаёт постоянное число реплик: HPA снова обновит scale subresource. Для отключения HPA одного сервиса установите `autoscaling.<workload>.enabled: false` и задайте `replicas.<workload>` в Helm values.
+
+#### Горизонтальное масштабирование HTTP-сервисов
+
+Auth (`symfony-web`), Catalog (`catalog-web`) и Cart (`cart-web`) запускают Nginx и PHP-FPM в каждом HTTP Pod. Уже существующий sidecar `hipages/php-fpm_exporter` получает статус PHP-FPM этого Pod через порт 9001. Catalog gRPC и асинхронные workers используют другие runtime, поэтому очередь PHP-FPM к ним не относится. Prometheus каждые 15 секунд собирает метрики аннотированных HTTP Pod в job `php-fpm-pods` с labels `namespace`, `pod`, `service`. Панель Grafana по Pod использует `phpfpm_listen_queue{namespace=~"${namespace:regex}",service=~"${services:regex}",pod=~"${pod:regex}"}`. Выражение `sum by(service)` из другой панели предназначено для отображения общей очереди, а не для HPA.
+
+Chart устанавливает один Prometheus Adapter в `monitoring` и регистрирует `v1beta1.custom.metrics.k8s.io`. Adapter предоставляет имеющийся gauge как `pods/phpfpm_listen_queue`, группируя серии по `(namespace,pod)`. Окно в 1 минуту сглаживает краткие всплески; метрика HPA типа `Pods` с `AverageValue` берёт среднее по Pod целевого Deployment. Очередь сама управляет увеличением реплик; число активных workers служит только диагностике. APIService использует автоматически созданный сертификат Adapter и `insecureSkipTLSVerify`; при требовании проверки TLS в политике кластера потребуется доверенный serving certificate.
+
+```promql
+avg by (namespace, pod) (
+  avg_over_time(phpfpm_listen_queue{job="php-fpm-pods",namespace="<namespace>",pod=~"<target-pods>",service=~"auth|catalog|cart"}[1m])
+)
+```
+
+Adapter подставляет namespace и Pod matchers вместо заполнителей. Начальные параметры: целевая очередь 20 ожидающих запросов **на один Pod**, независимо 1–20 реплик для каждого HTTP Deployment, окно стабилизации scale-up 0 и scale-down 300 секунд. Параметры находятся в `autoscaling.symfony-web`, `autoscaling.catalog-web`, `autoscaling.cart-web`; верхние границы — в трёх соответствующих ключах `maxReplicas`. При включённом HPA Helm опускает `spec.replicas` Deployment, оставляя управление HPA. Порог 20 экспериментальный и уточняется короткими согласованными нагрузочными тестами. Для диагностики сравнивайте `phpfpm_active_processes` с заданным `PHP_FPM_MAX_CHILDREN` (сейчас 10), занятость пула равна `100 * phpfpm_active_processes / PHP_FPM_MAX_CHILDREN`. Метрика `phpfpm_total_processes` в dashboard показывает текущее число процессов, а не настроенный максимум; отдельного gauge `max_children` в существующем scrape нет.
+
+Перед развёртыванием проверьте ноду через `kubectl describe node <node>`, namespace через `kubectl -n "$K8S_NAMESPACE" get resourcequota,limitrange`. У dev kind-ноды при реализации было 12 доступных CPU и около 7,8 GiB RAM; уже размещённые Pod резервировали около 6,25 GiB RAM. Это временный срез, а не предел HPA. Существующие requests одного HTTP Pod вместе с exporter: 288 MiB и 310m CPU у Auth/Cart либо 910m CPU у Catalog. Adapter запрашивает 100m CPU и 180 MiB RAM. При нехватке ресурсов дополнительные Pod останутся `Pending`. `maxReplicas: 20` — логический предел, а не гарантия размещения на одной ноде. Скрипт резервирует подключения PostgreSQL для этих пределов (по умолчанию Auth 234, Catalog 262, Cart 230); во время масштабирования контролируйте память и подключения PostgreSQL, Elasticsearch, Redis и задержку gateway. Текущие requests/limits приложений не менялись.
+
+После запуска оператором `npm run k8s:deploy:manifests` в выбранном окружении при доступных образах проверьте путь метрик до нагрузки:
+
+```bash
+kubectl get apiservice v1beta1.custom.metrics.k8s.io
+kubectl -n monitoring rollout status deployment/prometheus-adapter
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/$K8S_NAMESPACE/pods/%2A/phpfpm_listen_queue" # все текущие HTTP Pod
+kubectl -n "$K8S_NAMESPACE" describe hpa symfony-web catalog-web cart-web
+kubectl -n "$K8S_NAMESPACE" get hpa,deploy,pods
+```
+
+Убедитесь, что Custom Metrics API возвращает отдельные Pod Auth, Catalog и Cart, сравните значения с панелями Grafana и проверьте отдельную цель каждого HPA. Во время согласованного короткого нагрузочного теста наблюдайте желаемое число реплик HPA, события `Pending`/readiness, EndpointSlices, очередь по Pod, активные и все процессы PHP-FPM, CPU/RAM и P95/P99 latency при наличии. Проверьте увеличение реплик при устойчивой очереди и уменьшение после 300-секундного окна. Если Adapter или метрика Prometheus недоступны, HPA сообщит об ошибке метрики; разберите её прежде, чем полагаться на масштабирование. Существующие dashboard Grafana используют те же серии Prometheus; новые exporters и dashboard не требуются.
 
 ### Мониторинг
 

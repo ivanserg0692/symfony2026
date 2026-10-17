@@ -556,7 +556,7 @@ The notification recipients are administrators resolved by the application, not 
 - Product catalog full reindex runbook: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
 
 #### `Task 11`: Run services in Kubernetes and verify horizontal scaling of Symfony/PHP-FPM - in progress
-- Brief info: Kubernetes is an independent deployment option with three Grafana dashboards and per-Pod monitoring; HPA and comparative k6 results are not yet recorded. Docker Compose and its original dashboard remain separate.
+- Brief info: Kubernetes is an independent deployment option with three Grafana dashboards and per-Pod monitoring; queue-based HPA is configured for Auth, Catalog, and Cart. Live scale-up/down and comparative k6 results are not yet recorded. Docker Compose and its original dashboard remain separate.
 - Backend Merge Request 11: <https://github.com/ivanserg0692/symfony2026/pull/15>
 - Task file: [symfony/docs/task-11.md](symfony/docs/task-11.md)
 - MR result (EN): [symfony/docs/mr-task-11-en.md](symfony/docs/mr-task-11-en.md)
@@ -1475,7 +1475,7 @@ docker compose down
 - Runbook полной переиндексации каталога: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
 
 #### `Task 11`: Запуск сервисов в Kubernetes и проверка горизонтального масштабирования Symfony/PHP-FPM - in progress
-- Brief info: Kubernetes доступен как независимый способ запуска с тремя Grafana dashboard и мониторингом каждого Pod; результаты HPA и сравнительных k6-прогонов ещё не зафиксированы. Docker Compose и его исходный dashboard остаются отдельными.
+- Brief info: Kubernetes доступен как независимый способ запуска с тремя Grafana dashboard и мониторингом каждого Pod; HPA по очереди настроен для Auth, Catalog и Cart. Проверка увеличения/уменьшения реплик и сравнительные результаты k6 ещё не зафиксированы. Docker Compose и его исходный dashboard остаются отдельными.
 - Backend Merge Request 11: <https://github.com/ivanserg0692/symfony2026/pull/15>
 - Файл задачи: [symfony/docs/task-11.md](symfony/docs/task-11.md)
 - Результат MR (EN): [symfony/docs/mr-task-11-en.md](symfony/docs/mr-task-11-en.md)

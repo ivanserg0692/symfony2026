@@ -5,7 +5,9 @@ metadata:
   name: symfony-web
   namespace: {{ .Release.Namespace }}
 spec:
+{{- if not (index .Values.autoscaling "symfony-web" "enabled") }}
   replicas: {{ index .Values.replicas "symfony-web" }}
+{{- end }}
   selector:
     matchLabels: {app: symfony-web}
   template:
@@ -88,7 +90,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata: {name: catalog-web, namespace: {{ .Release.Namespace }}}
 spec:
+{{- if not (index .Values.autoscaling "catalog-web" "enabled") }}
   replicas: {{ index .Values.replicas "catalog-web" }}
+{{- end }}
   selector: {matchLabels: {app: catalog-web}}
   template:
     metadata:
@@ -148,7 +152,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata: {name: cart-web, namespace: {{ .Release.Namespace }}}
 spec:
+{{- if not (index .Values.autoscaling "cart-web" "enabled") }}
   replicas: {{ index .Values.replicas "cart-web" }}
+{{- end }}
   selector: {matchLabels: {app: cart-web}}
   template:
     metadata:

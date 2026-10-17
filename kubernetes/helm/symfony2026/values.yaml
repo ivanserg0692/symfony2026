@@ -17,15 +17,59 @@ generated:
 phpFpmExporter:
   fixProcessCount: true
 
-# Maximum workload replicas used by PostgreSQL capacity calculations and future HPA resources.
+# Maximum workload replicas used by PostgreSQL capacity calculations and HTTP HPA resources.
 maxReplicas:
-  symfony-web: 3
+  symfony-web: 20
   auth-async-worker: 1
-  catalog-web: 3
+  catalog-web: 20
   catalog-grpc: 1
   catalog-search-outbox-worker: 1
   catalog-search-index-worker: 1
-  cart-web: 3
+  cart-web: 20
+
+# HTTP workloads use one PHP-FPM queue sample per pod. maxReplicas above is
+# shared with the PostgreSQL connection budget and is the HPA upper bound.
+autoscaling:
+  symfony-web:
+    enabled: true
+    minReplicas: 1
+    metrics:
+      phpFpmQueue:
+        enabled: true
+        targetAverageValue: 20
+    behavior:
+      scaleUp:
+        stabilizationWindowSeconds: 0
+      scaleDown:
+        stabilizationWindowSeconds: 300
+  catalog-web:
+    enabled: true
+    minReplicas: 1
+    metrics:
+      phpFpmQueue:
+        enabled: true
+        targetAverageValue: 20
+    behavior:
+      scaleUp:
+        stabilizationWindowSeconds: 0
+      scaleDown:
+        stabilizationWindowSeconds: 300
+  cart-web:
+    enabled: true
+    minReplicas: 1
+    metrics:
+      phpFpmQueue:
+        enabled: true
+        targetAverageValue: 20
+    behavior:
+      scaleUp:
+        stabilizationWindowSeconds: 0
+      scaleDown:
+        stabilizationWindowSeconds: 300
+
+prometheusAdapter:
+  enabled: true
+  image: registry.k8s.io/prometheus-adapter/prometheus-adapter:v0.12.0
 
 replicas:
   api-gateway: 1
@@ -260,6 +304,13 @@ resources:
         memory: 256Mi
       limits:
         memory: 1Gi
+  prometheus-adapter:
+    adapter:
+      requests:
+        cpu: 100m
+        memory: 180Mi
+      limits:
+        memory: 512Mi
   kube-state-metrics:
     kube-state-metrics:
       requests:

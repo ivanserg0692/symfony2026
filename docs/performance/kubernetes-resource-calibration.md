@@ -48,7 +48,7 @@ Primary sources:
 | Namespace | `symfony2026-load-test` |
 | Runtime | Kubernetes/k3s; workloads observed in Grafana/Prometheus |
 | Desired HTTP service replicas | `symfony-web`: 1; `catalog-web`: 1; `cart-web`: 1; `api-gateway`: 1 |
-| HPA | Not configured in the current chart |
+| HPA | Not configured during this historical measurement; the chart now contains queue-based HPA for HTTP workloads |
 | CPU benchmark host | Intel Core i9-13900KF, 16 physical cores / 32 logical threads as reported by Phoronix |
 | Benchmark environment memory | 32 GB visible to the Phoronix WSL2 environment; Windows reported about 63.8 GiB of physical RAM |
 | Benchmark environment OS | Ubuntu 22.04 in WSL2, ext4, kernel `6.18.40.1-microsoft-standard-WSL2` |
@@ -153,7 +153,7 @@ Assess CPU alongside latency, errors, and queues. Change requests/limits and rep
 | Namespace | `symfony2026-load-test` |
 | Runtime | Kubernetes/k3s, workloads наблюдались в Grafana/Prometheus |
 | Желаемые реплики HTTP-сервисов | `symfony-web`: 1; `catalog-web`: 1; `cart-web`: 1; `api-gateway`: 1 |
-| HPA | В текущем chart не настроен |
+| HPA | На момент этих замеров не был настроен; сейчас chart содержит HPA HTTP-сервисов по очереди |
 | CPU benchmark host | Intel Core i9-13900KF, 16 физических ядер / 32 логических потока по Phoronix |
 | Память benchmark-среды | 32 GB видимой Phoronix WSL2-среде; Windows сообщала около 63.8 GiB физической RAM |
 | ОС benchmark-среды | Ubuntu 22.04 в WSL2, ext4, kernel `6.18.40.1-microsoft-standard-WSL2` |

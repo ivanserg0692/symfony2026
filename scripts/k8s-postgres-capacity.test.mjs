@@ -14,8 +14,8 @@ const generatedValues = {
   },
 };
 
-test('preserves current PostgreSQL capacities', () => {
-  assert.deepEqual(calculatePostgresCapacity(chartValues, generatedValues), { auth: 64, catalog: 92, cart: 60 });
+test('budgets PostgreSQL for each HTTP HPA upper bound', () => {
+  assert.deepEqual(calculatePostgresCapacity(chartValues, generatedValues), { auth: 234, catalog: 262, cart: 230 });
 });
 
 test('uses generated overrides and maxReplicas overrides', () => {
@@ -26,16 +26,16 @@ test('uses generated overrides and maxReplicas overrides', () => {
     },
     maxReplicas: { 'symfony-web': 4 },
   });
-  assert.deepEqual(result, { auth: 64, catalog: 58, cart: 48 });
+  assert.deepEqual(result, { auth: 64, catalog: 262, cart: 252 });
 });
 
 test('uses replicas when they exceed maxReplicas', () => {
   const result = calculatePostgresCapacity(chartValues, {
     ...generatedValues,
-    replicas: { 'symfony-web': 4 },
-    maxReplicas: { 'symfony-web': 3 },
+    replicas: { 'symfony-web': 21 },
+    maxReplicas: { 'symfony-web': 20 },
   });
-  assert.deepEqual(result, { auth: 74, catalog: 92, cart: 60 });
+  assert.deepEqual(result, { auth: 244, catalog: 262, cart: 230 });
 });
 
 test('rejects zero and invalid calculation inputs', () => {
