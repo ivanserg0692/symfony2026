@@ -53,7 +53,7 @@ if [[ "${K8S_ENVIRONMENT:-}" == prod || "${K8S_ENVIRONMENT:-}" == load-test ]]; 
     nginx_site="$(mktemp)"
     {
         cat <<'NGINX_LOG_FORMAT'
-log_format k8s_request escape=json '{"nginx_time":"$time_iso8601","request_id":"$http_x_request_id","http":{"request":{"method":"$request_method"},"response":{"status_code":$status}},"request_time":$request_time,"upstream_addr":"$upstream_addr","upstream_connect_time":"$upstream_connect_time","upstream_header_time":"$upstream_header_time","upstream_response_time":"$upstream_response_time"}';
+log_format k8s_request escape=json '{"nginx_time":"$time_iso8601","request_id":"$http_x_request_id","request_uri":"$request_uri","http":{"request":{"method":"$request_method"},"response":{"status_code":$status}},"request_time":$request_time,"upstream_addr":"$upstream_addr","upstream_connect_time":"$upstream_connect_time","upstream_header_time":"$upstream_header_time","upstream_response_time":"$upstream_response_time"}';
 NGINX_LOG_FORMAT
         sed '/^[[:space:]]*server[[:space:]]*{/a\    access_log /dev/stdout k8s_request;' /etc/nginx/sites-available/default
     } > "$nginx_site"

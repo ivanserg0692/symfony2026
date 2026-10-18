@@ -136,7 +136,7 @@ data:
           field: message
           target_prefix: ''
           ignore_failure: true
-          tokenizer: 'time="%{nginx_time}" client="%{client}" host="%{host}" request="%{request}" request_uri="%{request_uri}" request_id="%{request_id}" status="%{http.response.status_code|integer}" body_bytes_sent="%{body_bytes_sent}" request_time="%{request_time|float}" upstream_addr="%{upstream_addr}" upstream_status="%{upstream_status}" upstream_response_time="%{upstream_response_time}" upstream_connect_time="%{upstream_connect_time}" upstream_header_time="%{upstream_header_time}" referer="%{referer}" user_agent="%{user_agent}" x_forwarded_for="%{x_forwarded_for}" x_debug_token="%{x_debug_token}" sent_x_debug_token="%{sent_x_debug_token}" x_debug_token_link="%{x_debug_token_link}"'
+          tokenizer: 'time="%{nginx_time}" client="%{client}" host="%{nginx_host}" request="%{request}" request_uri="%{request_uri}" request_id="%{request_id}" status="%{http.response.status_code|integer}" body_bytes_sent="%{body_bytes_sent}" request_time="%{request_time|float}" upstream_addr="%{upstream_addr}" upstream_status="%{upstream_status}" upstream_response_time="%{upstream_response_time}" upstream_connect_time="%{upstream_connect_time}" upstream_header_time="%{upstream_header_time}" referer="%{referer}" user_agent="%{user_agent}" x_forwarded_for="%{x_forwarded_for}" x_debug_token="%{x_debug_token}" sent_x_debug_token="%{sent_x_debug_token}" x_debug_token_link="%{x_debug_token_link}"'
       - dissect:
           when:
             contains:
@@ -144,7 +144,7 @@ data:
           field: message
           target_prefix: ''
           ignore_failure: true
-          tokenizer: 'time="%{nginx_time}" client="%{client}" host="%{host}" request="%{request}" uri="%{uri}" request_uri="%{request_uri}" request_id="%{request_id}" status="%{http.response.status_code|integer}" request_time="%{request_time|float}" upstream_addr="%{upstream_addr}" upstream_status="%{upstream_status}" upstream_response_time="%{upstream_response_time}" upstream_connect_time="%{upstream_connect_time}" upstream_header_time="%{upstream_header_time}" auth_cookie_present="%{auth_cookie_present}" authorization_present="%{authorization_present}" x_debug_token="%{x_debug_token}" x_debug_token_link="%{x_debug_token_link}"'
+          tokenizer: 'time="%{nginx_time}" client="%{client}" host="%{nginx_host}" request="%{request}" uri="%{uri}" request_uri="%{request_uri}" request_id="%{request_id}" status="%{http.response.status_code|integer}" request_time="%{request_time|float}" upstream_addr="%{upstream_addr}" upstream_status="%{upstream_status}" upstream_response_time="%{upstream_response_time}" upstream_connect_time="%{upstream_connect_time}" upstream_header_time="%{upstream_header_time}" auth_cookie_present="%{auth_cookie_present}" authorization_present="%{authorization_present}" x_debug_token="%{x_debug_token}" x_debug_token_link="%{x_debug_token_link}"'
       - dissect:
           when:
             regexp:
@@ -164,6 +164,81 @@ data:
           target_prefix: ''
           ignore_failure: true
           tokenizer: '%{http.request.method} %{?target} %{?protocol}'
+      - script:
+          lang: javascript
+          id: redact_http_access_uri
+          tag_on_exception: _url_parse_exception
+          source: |
+            function process(event) {
+              // Nginx stderr has nginx.error but no nginx_time; leave it untouched.
+              if (event.Get("nginx_time") === null || event.Get("nginx_time") === undefined) return;
+
+              var raw = event.Get("request_uri");
+              if (typeof raw !== "string" || raw.length === 0 || raw.charAt(0) !== "/") {
+                event.Cancel();
+                return;
+              }
+              // Reject malformed/control-character request targets before retaining any URI data.
+              if (/[\u0000-\u0020\u007f#]/.test(raw) || /%(?![0-9a-fA-F]{2})/.test(raw)) {
+                event.Cancel();
+                return;
+              }
+
+              var queryStart = raw.indexOf("?");
+              var path = queryStart < 0 ? raw : raw.substring(0, queryStart);
+              var query = queryStart < 0 ? "" : raw.substring(queryStart + 1);
+              if (path.length === 0 || path.charAt(0) !== "/") {
+                event.Cancel();
+                return;
+              }
+
+              var sensitive = {
+                token: true,
+                access_token: true,
+                refresh_token: true,
+                password: true,
+                api_key: true,
+                client_secret: true,
+                secret: true,
+                code: true
+              };
+              var safeParts = [];
+              var parts = query.split(/([&;])/);
+              for (var i = 0; i < parts.length; i++) {
+                var part = parts[i];
+                if (part === "&" || part === ";") {
+                  safeParts.push(part);
+                  continue;
+                }
+                var equals = part.indexOf("=");
+                var key = equals < 0 ? part : part.substring(0, equals);
+                var decodedKey;
+                try {
+                  decodedKey = decodeURIComponent(key.replace(/\+/g, " "));
+                } catch (error) {
+                  event.Cancel();
+                  return;
+                }
+                if (/[\u0000-\u001f\u007f]/.test(decodedKey)) {
+                  event.Cancel();
+                  return;
+                }
+                if (sensitive[decodedKey.toLowerCase()] === true) {
+                  safeParts.push(key + "=[REDACTED]");
+                } else {
+                  safeParts.push(part);
+                }
+              }
+
+              var safeQuery = safeParts.join("");
+              event.Put("url.original", path + (queryStart < 0 ? "" : "?" + safeQuery));
+              event.Put("url.path", path);
+              event.Put("url.query", safeQuery);
+            }
+      - drop_event:
+          when:
+            contains:
+              tags: _url_parse_exception
       - timestamp:
           field: nginx_time
           layouts: ['2006-01-02T15:04:05-07:00']
