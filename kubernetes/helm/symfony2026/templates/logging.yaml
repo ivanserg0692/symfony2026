@@ -20,7 +20,7 @@ spec:
           image: docker.elastic.co/elasticsearch/elasticsearch:9.5.2
           args: [elasticsearch, '-Ediscovery.type=single-node', '-Enode.store.allow_mmap=false', '-Expack.security.enabled=true', '-Expack.license.self_generated.type=basic']
           env:
-            - {name: ELASTIC_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: LOGS_ELASTIC_PASSWORD}}}
+            - {name: ELASTIC_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: ELASTIC_PASSWORD}}}
             - {name: ES_JAVA_OPTS, value: '-Xms{{ .Values.logging.elasticsearch.heap }} -Xmx{{ .Values.logging.elasticsearch.heap }}'}
           ports: [{name: http, containerPort: 9200}]
           volumeMounts: [{name: data, mountPath: /usr/share/elasticsearch/data}]
@@ -183,7 +183,7 @@ data:
     output.elasticsearch:
       hosts: ['http://elasticsearch-logs:9200']
       username: filebeat_logs
-      password: ${LOGS_FILEBEAT_PASSWORD}
+      password: ${FILEBEAT_PASSWORD}
       index: nginx-logs
       backoff.init: 1s
       backoff.max: 60s
@@ -210,7 +210,7 @@ spec:
           args: ['-e', '-c', '/etc/filebeat.yml']
           env:
             - {name: NODE_NAME, valueFrom: {fieldRef: {fieldPath: spec.nodeName}}}
-            - {name: LOGS_FILEBEAT_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: LOGS_FILEBEAT_PASSWORD}}}
+            - {name: FILEBEAT_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: FILEBEAT_PASSWORD}}}
           ports: [{name: metrics, containerPort: 5066}]
           volumeMounts:
             - {name: config, mountPath: /etc/filebeat.yml, subPath: filebeat.yml, readOnly: true}
@@ -242,14 +242,14 @@ spec:
         - name: wait-elasticsearch-credentials
           image: curlimages/curl:8.14.1
           command: [sh, -ec, 'until curl --fail --silent --output /dev/null --user "kibana_system:${KIBANA_PASSWORD}" http://elasticsearch-logs:9200/_security/_authenticate; do sleep 5; done']
-          env: [{name: KIBANA_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: LOGS_KIBANA_PASSWORD}}}]
+          env: [{name: KIBANA_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: KIBANA_PASSWORD}}}]
       containers:
         - name: kibana
           image: docker.elastic.co/kibana/kibana:9.5.2
           env:
             - {name: ELASTICSEARCH_HOSTS, value: '["http://elasticsearch-logs:9200"]'}
             - {name: ELASTICSEARCH_USERNAME, value: kibana_system}
-            - {name: ELASTICSEARCH_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: LOGS_KIBANA_PASSWORD}}}
+            - {name: ELASTICSEARCH_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: KIBANA_PASSWORD}}}
           ports: [{name: http, containerPort: 5601}]
           startupProbe: {tcpSocket: {port: 5601}, periodSeconds: 10, failureThreshold: 30}
           resources:

@@ -1,6 +1,6 @@
 // Resolve project configuration and compute Helm values or cluster-only Secrets.
 import { spawnSync } from 'node:child_process';
-import { createHmac, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { resolve } from 'node:path';
 
 let namespace;
@@ -206,16 +206,18 @@ function cartSecret({ cart }) {
   });
 }
 
-function logsPassword(source, purpose) {
-  return createHmac('sha256', source).update(`symfony2026:${namespace}:${purpose}`).digest('hex');
+function priorFilebeatPassword() {
+  const raw = run('kubectl', ['-n', namespace, 'get', 'secret', 'infra-config-secret', '--ignore-not-found', '-o', 'json']);
+  if (!raw.trim()) return null;
+  const value = JSON.parse(raw).data?.FILEBEAT_PASSWORD;
+  return value ? Buffer.from(value, 'base64').toString('utf8') : null;
 }
 
 function infrastructureSecret({ database, catalogDb, cartDb, rabbitmq, minio, elasticsearch, kibana, imageProfile }) {
-  const logsCredentials = imageProfile === 'dev' ? {} : {
-    LOGS_ELASTIC_PASSWORD: logsPassword(required(elasticsearch, 'ELASTIC_PASSWORD'), 'logs-elastic'),
-    LOGS_KIBANA_PASSWORD: logsPassword(required(kibana, 'KIBANA_PASSWORD'), 'logs-kibana'),
-    LOGS_FILEBEAT_PASSWORD: logsPassword(required(elasticsearch, 'ELASTIC_PASSWORD'), 'logs-filebeat'),
-  };
+  // Keep the Filebeat password in this cluster's Secret across synchronizations.
+  const filebeatPassword = imageProfile === 'dev'
+    ? undefined
+    : priorFilebeatPassword() || randomBytes(32).toString('hex');
   return secretManifest('infra-config-secret', {
     POSTGRES_DB: database.POSTGRES_DB || 'app',
     POSTGRES_USER: database.POSTGRES_USER || 'app',
@@ -231,10 +233,9 @@ function infrastructureSecret({ database, catalogDb, cartDb, rabbitmq, minio, el
     ELASTIC_PASSWORD: required(elasticsearch, 'ELASTIC_PASSWORD'),
     KIBANA_PASSWORD: required(kibana, 'KIBANA_PASSWORD'),
     KIBANA_PASSWORD_JSON: JSON.stringify(required(kibana, 'KIBANA_PASSWORD')),
-    ...logsCredentials,
     ...(imageProfile === 'dev' ? {} : {
-      LOGS_KIBANA_PASSWORD_JSON: JSON.stringify(logsCredentials.LOGS_KIBANA_PASSWORD),
-      LOGS_FILEBEAT_PASSWORD_JSON: JSON.stringify(logsCredentials.LOGS_FILEBEAT_PASSWORD),
+      FILEBEAT_PASSWORD: filebeatPassword,
+      FILEBEAT_PASSWORD_JSON: JSON.stringify(filebeatPassword),
     }),
     MINIO_ROOT_USER: required(minio, 'MINIO_ROOT_USER'),
     MINIO_ROOT_PASSWORD: required(minio, 'MINIO_ROOT_PASSWORD'),
