@@ -1,6 +1,6 @@
 // Resolve project configuration and compute Helm values or cluster-only Secrets.
 import { spawnSync } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
+import { createHmac, randomBytes } from 'node:crypto';
 import { resolve } from 'node:path';
 
 let namespace;
@@ -70,6 +70,7 @@ export function loadConfiguration(imageProfile) {
   const compose = loadComposeConfig();
   return {
     ...compose,
+    imageProfile,
     auth: loadSymfonyEnvironment('symfony', `symfony-auth:k8s-${imageProfile}`, compose.auth),
     catalog: loadSymfonyEnvironment('catalog-service', `symfony-catalog:k8s-${imageProfile}`, compose.catalog),
     cart: loadSymfonyEnvironment('cart-service', `symfony-cart:k8s-${imageProfile}`, compose.cart),
@@ -205,7 +206,16 @@ function cartSecret({ cart }) {
   });
 }
 
-function infrastructureSecret({ database, catalogDb, cartDb, rabbitmq, minio, elasticsearch, kibana }) {
+function logsPassword(source, purpose) {
+  return createHmac('sha256', source).update(`symfony2026:${namespace}:${purpose}`).digest('hex');
+}
+
+function infrastructureSecret({ database, catalogDb, cartDb, rabbitmq, minio, elasticsearch, kibana, imageProfile }) {
+  const logsCredentials = imageProfile === 'dev' ? {} : {
+    LOGS_ELASTIC_PASSWORD: logsPassword(required(elasticsearch, 'ELASTIC_PASSWORD'), 'logs-elastic'),
+    LOGS_KIBANA_PASSWORD: logsPassword(required(kibana, 'KIBANA_PASSWORD'), 'logs-kibana'),
+    LOGS_FILEBEAT_PASSWORD: logsPassword(required(elasticsearch, 'ELASTIC_PASSWORD'), 'logs-filebeat'),
+  };
   return secretManifest('infra-config-secret', {
     POSTGRES_DB: database.POSTGRES_DB || 'app',
     POSTGRES_USER: database.POSTGRES_USER || 'app',
@@ -221,6 +231,11 @@ function infrastructureSecret({ database, catalogDb, cartDb, rabbitmq, minio, el
     ELASTIC_PASSWORD: required(elasticsearch, 'ELASTIC_PASSWORD'),
     KIBANA_PASSWORD: required(kibana, 'KIBANA_PASSWORD'),
     KIBANA_PASSWORD_JSON: JSON.stringify(required(kibana, 'KIBANA_PASSWORD')),
+    ...logsCredentials,
+    ...(imageProfile === 'dev' ? {} : {
+      LOGS_KIBANA_PASSWORD_JSON: JSON.stringify(logsCredentials.LOGS_KIBANA_PASSWORD),
+      LOGS_FILEBEAT_PASSWORD_JSON: JSON.stringify(logsCredentials.LOGS_FILEBEAT_PASSWORD),
+    }),
     MINIO_ROOT_USER: required(minio, 'MINIO_ROOT_USER'),
     MINIO_ROOT_PASSWORD: required(minio, 'MINIO_ROOT_PASSWORD'),
     MINIO_BUCKET: minio.MINIO_BUCKET || 'app',
@@ -236,7 +251,10 @@ function dbExporterConfigData({ database, catalogDb, cartDb }) {
 }
 
 export function buildGeneratedValues(config) {
-  const common = commonConfig(config.auth);
+  const common = {
+    ...commonConfig(config.auth),
+    ...(config.imageProfile === 'dev' ? {} : { K8S_ENVIRONMENT: config.imageProfile }),
+  };
   return {
     generated: {
       postgresConnectionReserve: required(config.database, 'POSTGRES_CONNECTION_RESERVE'),

@@ -30,6 +30,9 @@ else
 fi
 
 verify_job_completion "$namespace" elasticsearch-setup
+if [[ "$image_profile" != dev ]]; then
+    verify_job_completion "$namespace" elasticsearch-logs-setup
+fi
 verify_job_completion "$namespace" minio-bucket-setup "$mc_image"
 verify_job_completion "$namespace" auth-migrate "$auth_image"
 verify_job_completion "$namespace" catalog-migrate "$catalog_image"
@@ -71,10 +74,18 @@ for workload in database catalog-db cart-db redis-symfony redis-catalog redis-ca
     if [[ "$workload" == minio ]]; then expected_image="$minio_image"; fi
     verify_rollout "$namespace" statefulset "$workload" "$expected_image"
 done
+if [[ "$image_profile" != dev ]]; then
+    verify_rollout "$namespace" statefulset elasticsearch-logs
+    verify_rollout "$namespace" daemonset filebeat-logs
+fi
 # Verify that Kibana and Mailpit complete their current Deployment rollouts.
 # This script does not compare their images with project release images.
-for workload in kibana mailpit; do
-    verify_rollout "$namespace" deployment "$workload"
-done
+verify_rollout "$namespace" deployment mailpit
+if verification_kubectl -n "$namespace" get service kibana >/dev/null 2>&1; then
+    verify_rollout "$namespace" deployment kibana
+fi
+if [[ "$image_profile" != dev ]] && verification_kubectl -n "$namespace" get service kibana-logs >/dev/null 2>&1; then
+    verify_rollout "$namespace" deployment kibana-logs
+fi
 
 echo "Current Jobs and workload Pod templates are ready in namespace $namespace."

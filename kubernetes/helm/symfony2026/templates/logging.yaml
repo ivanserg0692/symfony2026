@@ -1,0 +1,258 @@
+{{- if ne .Values.logging.environment "dev" }}
+apiVersion: v1
+kind: Service
+metadata: {name: elasticsearch-logs, namespace: {{ .Release.Namespace }}}
+spec: {selector: {app: elasticsearch-logs}, ports: [{name: http, port: 9200}]}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: elasticsearch-logs, namespace: {{ .Release.Namespace }}}
+spec:
+  serviceName: elasticsearch-logs
+  replicas: 1
+  selector: {matchLabels: {app: elasticsearch-logs}}
+  template:
+    metadata: {labels: {app: elasticsearch-logs}}
+    spec:
+      securityContext: {fsGroup: 1000}
+      containers:
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch:9.5.2
+          args: [elasticsearch, '-Ediscovery.type=single-node', '-Enode.store.allow_mmap=false', '-Expack.security.enabled=true', '-Expack.license.self_generated.type=basic']
+          env:
+            - {name: ELASTIC_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: LOGS_ELASTIC_PASSWORD}}}
+            - {name: ES_JAVA_OPTS, value: '-Xms{{ .Values.logging.elasticsearch.heap }} -Xmx{{ .Values.logging.elasticsearch.heap }}'}
+          ports: [{name: http, containerPort: 9200}]
+          volumeMounts: [{name: data, mountPath: /usr/share/elasticsearch/data}]
+          startupProbe: {tcpSocket: {port: 9200}, periodSeconds: 10, failureThreshold: 30}
+          readinessProbe: {tcpSocket: {port: 9200}, periodSeconds: 10}
+          resources:
+{{ toYaml (index .Values.resources "elasticsearch-logs" "elasticsearch") | indent 12 }}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec: {accessModes: [ReadWriteOnce], resources: {requests: {storage: {{ .Values.logging.elasticsearch.storage }} }} }
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: filebeat-logs, namespace: {{ .Release.Namespace }}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata: {name: {{ .Release.Namespace }}-filebeat-logs}
+rules:
+  - apiGroups: ['']
+    resources: [nodes, namespaces, pods]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: {name: {{ .Release.Namespace }}-filebeat-logs}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: {{ .Release.Namespace }}-filebeat-logs}
+subjects: [{kind: ServiceAccount, name: filebeat-logs, namespace: {{ .Release.Namespace }}}]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: filebeat-logs-config, namespace: {{ .Release.Namespace }}}
+data:
+  filebeat.yml: |
+    filebeat.inputs:
+      - type: filestream
+        id: gateway-nginx-access
+        enabled: true
+        paths:
+          - /var/log/containers/*_{{ .Release.Namespace }}_nginx-*.log
+        prospector.scanner.symlinks: true
+        prospector.scanner.fingerprint.length: 64
+        parsers:
+          - container:
+              stream: stdout
+        include_lines: ['^time=']
+      - type: filestream
+        id: gateway-nginx-error
+        enabled: true
+        paths:
+          - /var/log/containers/*_{{ .Release.Namespace }}_nginx-*.log
+        prospector.scanner.symlinks: true
+        prospector.scanner.fingerprint.length: 64
+        parsers:
+          - container:
+              stream: stderr
+        include_lines: ['^[0-9]{4}/[0-9]{2}/[0-9]{2}']
+      - type: filestream
+        id: application-nginx-access
+        enabled: true
+        paths:
+          - /var/log/containers/symfony-web-*_{{ .Release.Namespace }}_php-*.log
+          - /var/log/containers/catalog-web-*_{{ .Release.Namespace }}_php-*.log
+          - /var/log/containers/cart-web-*_{{ .Release.Namespace }}_php-*.log
+        prospector.scanner.symlinks: true
+        prospector.scanner.fingerprint.length: 64
+        parsers:
+          - container:
+              stream: stdout
+        include_lines: ['^\{"nginx_time":']
+    processors:
+      - add_kubernetes_metadata:
+          host: ${NODE_NAME}
+          matchers:
+            - logs_path:
+                logs_path: /var/log/containers/
+      - add_fields:
+          target: ''
+          fields:
+            environment: {{ .Values.logging.environment | quote }}
+      - add_fields:
+          when:
+            equals:
+              kubernetes.container.name: nginx
+          target: service
+          fields:
+            name: api-gateway
+      - copy_fields:
+          fields:
+            - {from: kubernetes.container.name, to: container.name}
+          ignore_missing: true
+          fail_on_error: false
+      - copy_fields:
+          when:
+            not:
+              has_fields: ['service.name']
+          fields:
+            - {from: kubernetes.labels.service, to: service.name}
+          ignore_missing: true
+          fail_on_error: false
+      - decode_json_fields:
+          when:
+            regexp:
+              message: '^\{"nginx_time":'
+          fields: [message]
+          target: ''
+          overwrite_keys: true
+          add_error_key: true
+      - dissect:
+          when:
+            contains:
+              message: 'body_bytes_sent='
+          field: message
+          target_prefix: ''
+          ignore_failure: true
+          tokenizer: 'time="%{nginx_time}" client="%{client}" host="%{host}" request="%{request}" request_uri="%{request_uri}" request_id="%{request_id}" status="%{http.response.status_code|integer}" body_bytes_sent="%{body_bytes_sent}" request_time="%{request_time|float}" upstream_addr="%{upstream_addr}" upstream_status="%{upstream_status}" upstream_response_time="%{upstream_response_time}" upstream_connect_time="%{upstream_connect_time}" upstream_header_time="%{upstream_header_time}" referer="%{referer}" user_agent="%{user_agent}" x_forwarded_for="%{x_forwarded_for}" x_debug_token="%{x_debug_token}" sent_x_debug_token="%{sent_x_debug_token}" x_debug_token_link="%{x_debug_token_link}"'
+      - dissect:
+          when:
+            contains:
+              message: 'auth_cookie_present='
+          field: message
+          target_prefix: ''
+          ignore_failure: true
+          tokenizer: 'time="%{nginx_time}" client="%{client}" host="%{host}" request="%{request}" uri="%{uri}" request_uri="%{request_uri}" request_id="%{request_id}" status="%{http.response.status_code|integer}" request_time="%{request_time|float}" upstream_addr="%{upstream_addr}" upstream_status="%{upstream_status}" upstream_response_time="%{upstream_response_time}" upstream_connect_time="%{upstream_connect_time}" upstream_header_time="%{upstream_header_time}" auth_cookie_present="%{auth_cookie_present}" authorization_present="%{authorization_present}" x_debug_token="%{x_debug_token}" x_debug_token_link="%{x_debug_token_link}"'
+      - dissect:
+          when:
+            regexp:
+              message: '^[0-9]{4}/[0-9]{2}/[0-9]{2}'
+          field: message
+          target_prefix: ''
+          ignore_failure: true
+          tokenizer: '%{nginx.error}, client: %{?error_details}'
+      - drop_event:
+          when:
+            not:
+              or:
+                - has_fields: ['nginx_time']
+                - has_fields: ['nginx.error']
+      - dissect:
+          field: request
+          target_prefix: ''
+          ignore_failure: true
+          tokenizer: '%{http.request.method} %{?target} %{?protocol}'
+      - timestamp:
+          field: nginx_time
+          layouts: ['2006-01-02T15:04:05-07:00']
+          ignore_failure: true
+      - convert:
+          fields:
+            - {from: upstream_connect_time, to: upstream.connect_time, type: float}
+            - {from: upstream_header_time, to: upstream.header_time, type: float}
+            - {from: upstream_response_time, to: upstream.response_time, type: float}
+          ignore_missing: true
+          fail_on_error: false
+      - drop_fields:
+          fields: [message, request, request_uri, uri, referer, user_agent, x_forwarded_for, x_debug_token, sent_x_debug_token, x_debug_token_link, nginx_time, host, client]
+          ignore_missing: true
+    queue.disk:
+      max_size: {{ .Values.logging.filebeat.queueDiskSize }}
+    output.elasticsearch:
+      hosts: ['http://elasticsearch-logs:9200']
+      username: filebeat_logs
+      password: ${LOGS_FILEBEAT_PASSWORD}
+      index: nginx-logs
+      backoff.init: 1s
+      backoff.max: 60s
+    setup.ilm.enabled: false
+    setup.template.enabled: false
+    logging.level: info
+    http.enabled: true
+    http.host: 0.0.0.0
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata: {name: filebeat-logs, namespace: {{ .Release.Namespace }}}
+spec:
+  selector: {matchLabels: {app: filebeat-logs}}
+  template:
+    metadata: {labels: {app: filebeat-logs}}
+    spec:
+      serviceAccountName: filebeat-logs
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: filebeat
+          image: {{ .Values.logging.filebeat.image }}
+          securityContext: {runAsUser: 0}
+          args: ['-e', '-c', '/etc/filebeat.yml']
+          env:
+            - {name: NODE_NAME, valueFrom: {fieldRef: {fieldPath: spec.nodeName}}}
+            - {name: LOGS_FILEBEAT_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: LOGS_FILEBEAT_PASSWORD}}}
+          ports: [{name: metrics, containerPort: 5066}]
+          volumeMounts:
+            - {name: config, mountPath: /etc/filebeat.yml, subPath: filebeat.yml, readOnly: true}
+            - {name: logs, mountPath: /var/log, readOnly: true}
+            - {name: data, mountPath: /usr/share/filebeat/data}
+          resources:
+{{ toYaml (index .Values.resources "filebeat" "filebeat") | indent 12 }}
+      volumes:
+        - {name: config, configMap: {name: filebeat-logs-config, defaultMode: 416}}
+        - {name: logs, hostPath: {path: /var/log, type: Directory}}
+        - {name: data, hostPath: {path: /var/lib/filebeat-logs-{{ .Release.Namespace }}, type: DirectoryOrCreate}}
+{{- if .Values.kibana.logs.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: kibana-logs, namespace: {{ .Release.Namespace }}}
+spec: {type: {{ .Values.kibana.logs.serviceType }}, selector: {app: kibana-logs}, ports: [{name: http, port: 5601}]}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: kibana-logs, namespace: {{ .Release.Namespace }}}
+spec:
+  replicas: {{ index .Values.replicas "kibana-logs" }}
+  selector: {matchLabels: {app: kibana-logs}}
+  template:
+    metadata: {labels: {app: kibana-logs}}
+    spec:
+      initContainers:
+        - name: wait-elasticsearch-credentials
+          image: curlimages/curl:8.14.1
+          command: [sh, -ec, 'until curl --fail --silent --output /dev/null --user "kibana_system:${KIBANA_PASSWORD}" http://elasticsearch-logs:9200/_security/_authenticate; do sleep 5; done']
+          env: [{name: KIBANA_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: LOGS_KIBANA_PASSWORD}}}]
+      containers:
+        - name: kibana
+          image: docker.elastic.co/kibana/kibana:9.5.2
+          env:
+            - {name: ELASTICSEARCH_HOSTS, value: '["http://elasticsearch-logs:9200"]'}
+            - {name: ELASTICSEARCH_USERNAME, value: kibana_system}
+            - {name: ELASTICSEARCH_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: LOGS_KIBANA_PASSWORD}}}
+          ports: [{name: http, containerPort: 5601}]
+          startupProbe: {tcpSocket: {port: 5601}, periodSeconds: 10, failureThreshold: 30}
+          resources:
+{{ toYaml (index .Values.resources "kibana-logs" "kibana") | indent 12 }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,4 @@
+logging:
+  environment: test-load
+  ilm:
+    retention: 2d

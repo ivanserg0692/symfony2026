@@ -14,6 +14,28 @@ generated:
   config: {}
   postgresConnectionReserve: "20"
 
+kibana:
+  catalog:
+    enabled: true
+    serviceType: ClusterIP
+  logs:
+    enabled: true
+    serviceType: ClusterIP
+
+# prod/test-load overlays set environment; dev renders no logging workloads.
+logging:
+  environment: dev
+  elasticsearch:
+    storage: 10Gi
+    heap: 1g
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:9.5.2
+    queueDiskSize: 512MB
+  ilm:
+    rolloverSize: 100mb
+    rolloverAge: 1d
+    retention: 7d
+
 phpFpmExporter:
   fixProcessCount: true
 
@@ -89,6 +111,7 @@ replicas:
   grafana: 1
   grafana-image-renderer: 1
   kibana: 1
+  kibana-logs: 1
   kube-state-metrics: 1
   mailpit: 1
   minio: 1
@@ -276,6 +299,20 @@ resources:
         memory: 1536Mi
       limits:
         memory: 3Gi
+  elasticsearch-logs:
+    elasticsearch:
+      requests:
+        cpu: 250m
+        memory: 1536Mi
+      limits:
+        memory: 3Gi
+  filebeat:
+    filebeat:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 384Mi
   minio:
     minio:
       requests:
@@ -291,6 +328,13 @@ resources:
       limits:
         memory: 256Mi
   kibana:
+    kibana:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        memory: 2Gi
+  kibana-logs:
     kibana:
       requests:
         cpu: 100m

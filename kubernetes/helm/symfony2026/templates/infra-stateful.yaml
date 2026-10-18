@@ -330,10 +330,11 @@ spec:
           resources:
 {{ toYaml (index .Values.resources "mailpit" "mailpit") | indent 12 }}
 ---
+{{- if .Values.kibana.catalog.enabled }}
 apiVersion: v1
 kind: Service
 metadata: {name: kibana, namespace: {{ .Release.Namespace }}}
-spec: {selector: {app: kibana}, ports: [{name: http, port: 5601}]}
+spec: {type: {{ .Values.kibana.catalog.serviceType }}, selector: {app: kibana}, ports: [{name: http, port: 5601}]}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -360,3 +361,4 @@ spec:
           startupProbe: {tcpSocket: {port: 5601}, periodSeconds: {{ index .Values.probes "kibana" "startupProbe" "periodSeconds" }}, failureThreshold: {{ index .Values.probes "kibana" "startupProbe" "failureThreshold" }}}
           resources:
 {{ toYaml (index .Values.resources "kibana" "kibana") | indent 12 }}
+{{- end }}

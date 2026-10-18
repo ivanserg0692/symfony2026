@@ -36,12 +36,29 @@ for required_namespace in "$namespace" monitoring; do
     fi
 done
 
-labels=(Grafana Prometheus Kibana Mailpit RabbitMQ MinIO)
-namespaces=(monitoring monitoring "$namespace" "$namespace" "$namespace" "$namespace")
-services=(grafana prometheus kibana mailpit rabbitmq minio)
-local_ports=(3000 9090 5601 8025 15672 9001)
-service_ports=(3000 9090 5601 8025 15672 9001)
-forward_addresses=(127.0.0.1 127.0.0.1 127.0.0.1 127.0.0.1 127.0.0.1 127.0.0.1)
+labels=(Grafana Prometheus Mailpit RabbitMQ MinIO)
+namespaces=(monitoring monitoring "$namespace" "$namespace" "$namespace")
+services=(grafana prometheus mailpit rabbitmq minio)
+local_ports=(3000 9090 8025 15672 9001)
+service_ports=(3000 9090 8025 15672 9001)
+forward_addresses=(127.0.0.1 127.0.0.1 127.0.0.1 127.0.0.1 127.0.0.1)
+
+if kubectl -n "$namespace" get service kibana >/dev/null 2>&1; then
+    labels+=(Kibana-Catalog)
+    namespaces+=("$namespace")
+    services+=(kibana)
+    local_ports+=(5601)
+    service_ports+=(5601)
+    forward_addresses+=(127.0.0.1)
+fi
+if [[ "$image_profile" != dev ]] && kubectl -n "$namespace" get service kibana-logs >/dev/null 2>&1; then
+    labels+=(Kibana-Logs)
+    namespaces+=("$namespace")
+    services+=(kibana-logs)
+    local_ports+=(5602)
+    service_ports+=(5601)
+    forward_addresses+=(127.0.0.1)
+fi
 
 if [[ ${1:-} == --gateway ]]; then
     gateway_forward_mode="${K8S_GATEWAY_FORWARD_MODE:-direct}"

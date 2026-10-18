@@ -56,6 +56,37 @@ spec:
           env:
             - {name: ELASTIC_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: ELASTIC_PASSWORD}}}
             - {name: KIBANA_PASSWORD_JSON, valueFrom: {secretKeyRef: {name: infra-config-secret, key: KIBANA_PASSWORD_JSON}}}
+{{- if ne .Values.logging.environment "dev" }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata: {name: elasticsearch-logs-setup, namespace: {{ .Release.Namespace }}, annotations: {"helm.sh/hook": "post-install,post-upgrade,post-rollback", "helm.sh/hook-delete-policy": "before-hook-creation"}}
+spec:
+  backoffLimit: 6
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: setup
+          image: curlimages/curl:8.14.1
+          command: [sh, -ec]
+          args:
+            - |
+              endpoint=http://elasticsearch-logs:9200
+              until curl --fail --silent --user "elastic:${LOGS_ELASTIC_PASSWORD}" "$endpoint/_cluster/health" >/dev/null; do sleep 5; done
+              curl --fail --silent --show-error --user "elastic:${LOGS_ELASTIC_PASSWORD}" -H 'Content-Type: application/json' -X POST "$endpoint/_security/user/kibana_system/_password" --data "{\"password\":${LOGS_KIBANA_PASSWORD_JSON}}"
+              curl --fail --silent --show-error --user "elastic:${LOGS_ELASTIC_PASSWORD}" -H 'Content-Type: application/json' -X PUT "$endpoint/_security/role/logs_writer" --data '{"indices":[{"names":["nginx-logs","nginx-logs-*"],"privileges":["create_doc","write"]}]}'
+              curl --fail --silent --show-error --user "elastic:${LOGS_ELASTIC_PASSWORD}" -H 'Content-Type: application/json' -X PUT "$endpoint/_security/user/filebeat_logs" --data "{\"password\":${LOGS_FILEBEAT_PASSWORD_JSON},\"roles\":[\"logs_writer\"]}"
+              curl --fail --silent --show-error --user "elastic:${LOGS_ELASTIC_PASSWORD}" -H 'Content-Type: application/json' -X PUT "$endpoint/_ilm/policy/nginx-logs" --data '{"policy":{"phases":{"hot":{"actions":{"rollover":{"max_primary_shard_size":"{{ .Values.logging.ilm.rolloverSize }}","max_age":"{{ .Values.logging.ilm.rolloverAge }}"}}},"delete":{"min_age":"{{ .Values.logging.ilm.retention }}","actions":{"delete":{}}}}}}'
+              curl --fail --silent --show-error --user "elastic:${LOGS_ELASTIC_PASSWORD}" -H 'Content-Type: application/json' -X PUT "$endpoint/_index_template/nginx-logs" --data '{"index_patterns":["nginx-logs-*"],"template":{"settings":{"index.lifecycle.name":"nginx-logs","index.lifecycle.rollover_alias":"nginx-logs","index.number_of_shards":1,"index.number_of_replicas":0},"mappings":{"properties":{"request_id":{"type":"keyword"},"environment":{"type":"keyword"},"service":{"properties":{"name":{"type":"keyword"}}},"http":{"properties":{"request":{"properties":{"method":{"type":"keyword"}}},"response":{"properties":{"status_code":{"type":"integer"}}}}},"request_time":{"type":"float"},"upstream_connect_time":{"type":"keyword"},"upstream_header_time":{"type":"keyword"},"upstream_response_time":{"type":"keyword"},"upstream_addr":{"type":"keyword"}}}}}'
+              if ! curl --fail --silent --user "elastic:${LOGS_ELASTIC_PASSWORD}" "$endpoint/nginx-logs-000001" >/dev/null; then
+                curl --fail --silent --show-error --user "elastic:${LOGS_ELASTIC_PASSWORD}" -H 'Content-Type: application/json' -X PUT "$endpoint/nginx-logs-000001" --data '{"aliases":{"nginx-logs":{"is_write_index":true}}}'
+              fi
+          env:
+            - {name: LOGS_ELASTIC_PASSWORD, valueFrom: {secretKeyRef: {name: infra-config-secret, key: LOGS_ELASTIC_PASSWORD}}}
+            - {name: LOGS_KIBANA_PASSWORD_JSON, valueFrom: {secretKeyRef: {name: infra-config-secret, key: LOGS_KIBANA_PASSWORD_JSON}}}
+            - {name: LOGS_FILEBEAT_PASSWORD_JSON, valueFrom: {secretKeyRef: {name: infra-config-secret, key: LOGS_FILEBEAT_PASSWORD_JSON}}}
+{{- end }}
 ---
 apiVersion: batch/v1
 kind: Job

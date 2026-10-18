@@ -75,6 +75,12 @@ kubectl get namespace monitoring >/dev/null 2>&1 || kubectl create namespace mon
 # any required application, infrastructure or monitoring Secret is missing.
 config_file="kubernetes/generated/$namespace/generated-values.yaml"
 chart_values_file="kubernetes/helm/symfony2026/values.yaml"
+profile_values=()
+if [[ "$image_profile" == prod ]]; then
+    profile_values=(-f kubernetes/helm/symfony2026/values-prod.yaml)
+elif [[ "$image_profile" == load-test ]]; then
+    profile_values=(-f kubernetes/helm/symfony2026/values-test-load.yaml)
+fi
 runtime_dir="kubernetes/generated/$namespace/runtime"
 capacity_file="$runtime_dir/postgres-capacity-values.yaml"
 for secret in auth-config-secret catalog-config-secret cart-config-secret infra-config-secret; do
@@ -110,6 +116,7 @@ node scripts/k8s-postgres-capacity.mjs \
 helm upgrade --install symfony2026 kubernetes/helm/symfony2026 \
     --namespace "$namespace" --create-namespace --take-ownership --timeout 15m \
     -f "$chart_values_file" \
+    "${profile_values[@]}" \
     -f "$config_file" \
     -f "$capacity_file" \
     --set-string "images.auth=$auth_image" \
