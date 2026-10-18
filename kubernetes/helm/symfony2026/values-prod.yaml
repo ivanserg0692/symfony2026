@@ -1,0 +1,4 @@
+logging:
+  environment: prod
+  ilm:
+    retention: 7d

@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: catalog-full-reindex
+  labels: {app: catalog-full-reindex}
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 7200
+  template:
+    metadata: {labels: {app: catalog-full-reindex}}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: release-job-reader
+      initContainers:
+        - name: wait-catalog-migration
+          image: bitnamilegacy/kubectl:1.33.4
+          command: [sh, -ec, 'until kubectl get job/catalog-migrate >/dev/null 2>&1; do sleep 5; done; kubectl wait --for=condition=complete job/catalog-migrate --timeout=3600s']
+        - name: wait-elasticsearch
+          image: curlimages/curl:8.14.1
+          command: [sh, -ec, 'until curl --fail --silent --output /dev/null --user "elastic:${ELASTICSEARCH_PASSWORD}" http://elasticsearch:9200/_cluster/health; do sleep 5; done']
+          env: [{name: ELASTICSEARCH_PASSWORD, valueFrom: {secretKeyRef: {name: catalog-config-secret, key: ELASTICSEARCH_PASSWORD}}}]
+      containers:
+        - name: reindex
+          image: __CATALOG_IMAGE__
+          imagePullPolicy: IfNotPresent
+          command: [php, -d, memory_limit=1G, bin/console, app:elasticsearch:reindex, --no-interaction]
+          envFrom: [{configMapRef: {name: catalog-config}}, {secretRef: {name: catalog-config-secret}}]
+          env: [{name: PRODUCT_SEARCH_INCREMENTAL_WORKER_PAUSED, value: "1"}]
+          resources: {requests: {cpu: 250m, memory: 1Gi}, limits: {memory: 2Gi}}

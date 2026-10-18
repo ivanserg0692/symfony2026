@@ -1,0 +1,428 @@
+{
+  "uid": "symfony2026-kubernetes",
+  "title": "Symfony services / Kubernetes",
+  "schemaVersion": 39,
+  "version": 2,
+  "refresh": "10s",
+  "timezone": "browser",
+  "tags": [
+    "kubernetes",
+    "symfony",
+    "php-fpm"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "namespace",
+        "label": "Namespace",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(kube_pod_info, namespace)",
+        "refresh": 1,
+        "sort": 1,
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      },
+      {
+        "name": "services",
+        "label": "Services",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "query_result(count by (service) (label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service!=\"\"}, \"service\", \"$1\", \"label_service\", \"(.+)\") or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app!=\"\"}, \"service\", \"$1\", \"label_app\", \"(.+)\")))",
+        "refresh": 1,
+        "sort": 1,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "regex": "/service=\"([^\"]+)\"/",
+        "allValue": ".*"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "PHP-FPM active processes by Pod",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "phpfpm_active_processes{namespace=~\"${namespace:regex}\",service=~\"${services:regex}\"}",
+          "legendFormat": "{{service}} / {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "PHP-FPM idle processes by Pod",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "phpfpm_idle_processes{namespace=~\"${namespace:regex}\",service=~\"${services:regex}\"}",
+          "legendFormat": "{{service}} / {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "PHP-FPM listen queue by Pod",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "phpfpm_listen_queue{namespace=~\"${namespace:regex}\",service=~\"${services:regex}\"}",
+          "legendFormat": "{{service}} / {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "PHP-FPM listen queue SUM / MAX",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (service) (phpfpm_listen_queue{namespace=~\"${namespace:regex}\",service=~\"${services:regex}\"})",
+          "legendFormat": "{{service}} SUM"
+        },
+        {
+          "refId": "B",
+          "expr": "max by (service) (phpfpm_listen_queue{namespace=~\"${namespace:regex}\",service=~\"${services:regex}\"})",
+          "legendFormat": "{{service}} MAX"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "CPU cores by Pod",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (label_service, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"}))",
+          "legendFormat": "{{label_service}} / {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "CPU cores for service",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (label_service) (rate(container_cpu_usage_seconds_total{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"}))",
+          "legendFormat": "{{label_service}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "RAM bytes by Pod",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (label_service, pod) (container_memory_working_set_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"} * on(namespace,pod) group_left(label_service) max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"}))",
+          "legendFormat": "{{label_service}} / {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "RAM bytes for service",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (label_service) (container_memory_working_set_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"} * on(namespace,pod) group_left(label_service) max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"}))",
+          "legendFormat": "{{label_service}}"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "HTTP Pods: running / ready",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (label_service) (kube_pod_status_phase{namespace=~\"${namespace:regex}\",phase=\"Running\"} * on(namespace,pod) group_left(label_service) max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"}))",
+          "legendFormat": "{{label_service}} running"
+        },
+        {
+          "refId": "B",
+          "expr": "sum by (label_service) (kube_pod_status_ready{namespace=~\"${namespace:regex}\",condition=\"true\"} * on(namespace,pod) group_left(label_service) max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"}))",
+          "legendFormat": "{{label_service}} ready"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Pod lifecycle",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kube_pod_status_ready{namespace=~\"${namespace:regex}\",condition=\"true\"} * on(namespace,pod) group_left(label_service) max by (namespace, pod, label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_component=\"http\"})",
+          "legendFormat": "{{label_service}} / {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Top 15 Pods by CPU (all namespaces)",
+      "description": "CPU usage in cores across all Kubernetes namespaces, including monitoring and system Pods. This panel is independent of the namespace and service filters.",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 35,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(15, sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\"}[5m])))",
+          "legendFormat": "{{namespace}} / {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Memory usage / limit by service",
+      "description": "Ratio of summed cAdvisor container memory usage to summed positive memory limits by namespace and service. Pods with a service label use it; Pods without one are included when they have an app label, including monitoring. Containers without a positive memory limit are excluded. Independent of the Pod filter.",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 48,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "((((label_replace(label_replace(container_memory_usage_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}, \"uid\", \"$1-$2-$3-$4-$5\", \"id\", \".*pod([0-9a-f]{8})_([0-9a-f]{4})_([0-9a-f]{4})_([0-9a-f]{4})_([0-9a-f]{12})\\\\.slice/.*\"), \"container_id\", \"containerd://$1\", \"id\", \".*cri-containerd-([0-9a-f]{64})\\\\.scope\")) and on(namespace,uid,container,container_id) kube_pod_container_info{namespace=~\"${namespace:regex}\",container!=\"\"})) / on(namespace,uid,container) group_left() (kube_pod_container_resource_limits{namespace=~\"${namespace:regex}\",resource=\"memory\",unit=\"byte\"} > 0)) * on(namespace,uid) group_left(label_service) (max by (namespace,uid,label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\"))) * 100",
+          "legendFormat": "{{namespace}} / {{label_service}} / {{pod}} / {{container}} / {{uid}} / {{container_id}}",
+          "datasource": "Prometheus"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Memory usage / limit by Pod (all namespaces)",
+      "description": "Ratio of cAdvisor container memory usage to configured memory limits for each Pod, including monitoring/Grafana. Only containers with a positive memory limit are counted. Independent of namespace, service and Pod filters.",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 48,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "((((label_replace(label_replace(container_memory_usage_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}, \"uid\", \"$1-$2-$3-$4-$5\", \"id\", \".*pod([0-9a-f]{8})_([0-9a-f]{4})_([0-9a-f]{4})_([0-9a-f]{4})_([0-9a-f]{12})\\\\.slice/.*\"), \"container_id\", \"containerd://$1\", \"id\", \".*cri-containerd-([0-9a-f]{64})\\\\.scope\")) and on(namespace,uid,container,container_id) kube_pod_container_info{namespace=~\"${namespace:regex}\",container!=\"\"})) / on(namespace,uid,container) group_left() (kube_pod_container_resource_limits{namespace=~\"${namespace:regex}\",resource=\"memory\",unit=\"byte\"} > 0)) * on(namespace,uid) group_left(label_service) (max by (namespace,uid,label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\"))) * 100",
+          "legendFormat": "{{namespace}} / {{label_service}} / {{pod}} / {{container}} / {{uid}} / {{container_id}}",
+          "datasource": "Prometheus"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Memory usage / limit by service and container",
+      "description": "Ratio of summed cAdvisor container memory usage to summed positive memory limits by namespace, service and container type. Pods with a service label use it; Pods without one are included when they have an app label, including monitoring. Replicas of the same service and container type are aggregated; different services and container types remain separate.",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 56,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "((((label_replace(label_replace(container_memory_usage_bytes{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}, \"uid\", \"$1-$2-$3-$4-$5\", \"id\", \".*pod([0-9a-f]{8})_([0-9a-f]{4})_([0-9a-f]{4})_([0-9a-f]{4})_([0-9a-f]{12})\\\\.slice/.*\"), \"container_id\", \"containerd://$1\", \"id\", \".*cri-containerd-([0-9a-f]{64})\\\\.scope\")) and on(namespace,uid,container,container_id) kube_pod_container_info{namespace=~\"${namespace:regex}\",container!=\"\"})) / on(namespace,uid,container) group_left() (kube_pod_container_resource_limits{namespace=~\"${namespace:regex}\",resource=\"memory\",unit=\"byte\"} > 0)) * on(namespace,uid) group_left(label_service) (max by (namespace,uid,label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\"))) * 100",
+          "legendFormat": "{{namespace}} / {{label_service}} / {{pod}} / {{container}} / {{uid}} / {{container_id}}",
+          "datasource": "Prometheus"
+        }
+      ]
+    }
+  ]
+}
