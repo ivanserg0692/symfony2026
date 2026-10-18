@@ -5,6 +5,7 @@ generated:
     auth:
       PHP_FPM_MAX_CHILDREN: "10"
       NGINX_WORKER_COUNT: "auto"
+      K8S_ENVIRONMENT: "load-test"
       CACHE_DSN: "redis://redis-symfony:6379/0?persistent=1"
       AUTH_SESSION_DSN: "redis://redis-symfony:6379/1"
       PROM_METRICS_DSN: "redis://redis-metrics:6379/0?persistent_connections=true"
@@ -31,6 +32,7 @@ generated:
     catalog:
       PHP_FPM_MAX_CHILDREN: "10"
       NGINX_WORKER_COUNT: "auto"
+      K8S_ENVIRONMENT: "load-test"
       CORS_ALLOW_ORIGIN: "^https?://(localhost|127\\.0\\.0\\.1|desktop-s6v2euu)(:[0-9]+)?$$"
       CACHE_DSN: "redis://redis-catalog:6379/0?persistent=1"
       PROM_METRICS_DSN: "redis://redis-metrics:6379/1?persistent_connections=true"
@@ -50,6 +52,7 @@ generated:
     cart:
       PHP_FPM_MAX_CHILDREN: "10"
       NGINX_WORKER_COUNT: "auto"
+      K8S_ENVIRONMENT: "load-test"
       CORS_ALLOW_ORIGIN: "^https?://(localhost|127\\.0\\.0\\.1|desktop-s6v2euu)(:[0-9]+)?$$"
       CACHE_DSN: "redis://redis-cart:6379/0?persistent=1"
       PROM_METRICS_DSN: "redis://redis-metrics:6379/2?persistent_connections=true"
