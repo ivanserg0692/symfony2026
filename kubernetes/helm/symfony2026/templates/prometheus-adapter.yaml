@@ -13,7 +13,7 @@ data:
         name:
           matches: '^phpfpm_listen_queue$'
           as: phpfpm_listen_queue
-        metricsQuery: 'avg by (<<.GroupBy>>) (avg_over_time(phpfpm_listen_queue{<<.LabelMatchers>>,job="php-fpm-pods",service=~"auth|catalog|cart"}[1m]))'
+        metricsQuery: 'max by (<<.GroupBy>>) (max_over_time(phpfpm_listen_queue{<<.LabelMatchers>>,job="php-fpm-pods",service=~"auth|catalog|cart"}[30s]))'
 ---
 apiVersion: v1
 kind: ServiceAccount
