@@ -2,7 +2,7 @@
   "uid": "symfony2026-kubernetes",
   "title": "Symfony services / Kubernetes",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "10s",
   "timezone": "browser",
   "tags": [
@@ -260,8 +260,8 @@
     },
     {
       "id": 11,
-      "title": "Top 15 Pods by CPU (all namespaces)",
-      "description": "CPU usage in cores across all Kubernetes namespaces, including monitoring and system Pods. This panel is independent of the namespace and service filters.",
+      "title": "Top 15 Pods by CPU",
+      "description": "Top 15 Pods by CPU usage in cores for the selected namespace and application services. Pods use label_service when present and fall back to label_app.",
       "type": "timeseries",
       "datasource": "Prometheus",
       "gridPos": {
@@ -287,8 +287,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(15, sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\"}[5m])))",
-          "legendFormat": "{{namespace}} / {{pod}}"
+          "expr": "topk(15, sum by (namespace, label_service, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) max by (namespace,pod,label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\"))))",
+          "legendFormat": "{{namespace}} / {{label_service}} / {{pod}}"
         }
       ]
     },
@@ -338,8 +338,8 @@
     },
     {
       "id": 13,
-      "title": "Memory usage / limit by Pod (all namespaces)",
-      "description": "Ratio of cAdvisor container memory usage to configured memory limits for each Pod, including monitoring/Grafana. Only containers with a positive memory limit are counted. Independent of namespace, service and Pod filters.",
+      "title": "Memory usage / limit by Pod",
+      "description": "Ratio of cAdvisor container memory usage to configured memory limits for each Pod in the selected namespace and application services. Pods use label_service when present and fall back to label_app. Only containers with a positive memory limit are counted. Independent of the Pod filter.",
       "type": "timeseries",
       "datasource": "Prometheus",
       "gridPos": {
