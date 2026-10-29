@@ -18,6 +18,7 @@
 
 <!-- END doctoc -->
 
+
 ## Overview
 
 This document captures the visible result of the current merge request related to the admin area and authentication flow.

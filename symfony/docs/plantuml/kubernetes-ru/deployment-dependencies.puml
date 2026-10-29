@@ -1,0 +1,93 @@
+@startuml
+title Зависимости развёртывания Kubernetes
+left to right direction
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+legend top
+  Прямоугольник: workload, Job или этап скрипта развёртывания.
+  Общая рамка: связанные компоненты и этапы; стрелки показывают зависимости.
+  <color:DarkGreen>Зелёный: проверка доступности Service или API в Pod/Job.</color>
+  <color:DarkOrange>Оранжевый: initContainer проверяет Job, rollout контроллера или ёмкость БД.</color>
+  <color:Purple>Фиолетовый: скрипт проверяет ожидаемый образ и текущий rollout или завершение Job.</color>
+  <color:RoyalBlue>Синий: итоговый k8s:verify проверяет ожидаемый образ и rollout или завершение Job.</color>
+  --> Зависимость проверяет initContainer Job или workload.
+  ..> Первый индекс Catalog координирует скрипт развёртывания.
+endlegend
+
+package "Auth" {
+  component "PostgreSQL Auth\nтекущий rollout и ёмкость" as AuthDb
+  component "auth-migrate Job\nобраз: symfony-auth:<current-tag>-<profile>\n<color:DarkOrange>init: wait-database-rollout (ёмкость и rollout)</color>\n<color:DarkGreen>init: wait-database (ёмкость SQL)</color>\n<color:RoyalBlue>образ и Complete: итоговый k8s:verify</color>" as AuthMigrate
+  component "symfony-web\nобраз: symfony-auth:<current-tag>-<profile>\n<color:DarkOrange>init: wait-auth-bootstrap (образы auth-migrate и minio-bucket-setup; Complete)</color>\n<color:DarkGreen>init: wait-database, wait-redis, wait-rabbitmq</color>\n<color:RoyalBlue>образ и rollout: итоговый k8s:verify</color>" as AuthWeb
+  component "auth-async-worker\nобраз: symfony-auth:<current-tag>-<profile>\n<color:DarkOrange>init: wait-auth-migration (образ auth-migrate и Complete)</color>\n<color:DarkGreen>init: wait-database, wait-rabbitmq, wait-mailpit</color>\n<color:RoyalBlue>образ и rollout: итоговый k8s:verify</color>" as AuthWorker
+  component "MinIO\nобраз: symfony-minio:<current-tag>\n<color:RoyalBlue>образ и rollout: итоговый k8s:verify</color>" as Minio
+  component "minio-bucket-setup Job\nобраз: symfony-mc:<current-tag>\n<color:DarkOrange>init: wait-minio-rollout (образ MinIO и rollout)</color>\n<color:DarkGreen>настройка: API MinIO</color>\n<color:RoyalBlue>образ и Complete: итоговый k8s:verify</color>" as MinioSetup
+
+  AuthDb --> AuthMigrate
+  AuthMigrate --> AuthWeb
+  AuthMigrate --> AuthWorker
+  Minio --> MinioSetup
+  MinioSetup --> AuthWeb
+}
+
+package "Catalog" {
+  component "PostgreSQL Catalog\nтекущий rollout и ёмкость" as CatalogDb
+  component "catalog-migrate Job\nобраз: symfony-catalog:<current-tag>-<profile>\n<color:DarkOrange>init: wait-database-rollout (ёмкость и rollout)</color>\n<color:DarkGreen>init: wait-database (ёмкость SQL)</color>\n<color:RoyalBlue>образ и Complete: итоговый k8s:verify</color>" as CatalogMigrate
+  component "catalog-web\nобраз: symfony-catalog:<current-tag>-<profile>\n<color:DarkOrange>init: wait-catalog-migration (образ миграции и Complete)</color>\n<color:DarkGreen>init: wait-database, wait-redis, wait-elasticsearch</color>\n<color:Purple>образ и rollout: проверка перед первым reindex</color>\n<color:RoyalBlue>образ и rollout: итоговый k8s:verify</color>" as CatalogWeb
+  component "catalog-grpc\nобраз: symfony-catalog:<current-tag>-<profile>\n<color:DarkOrange>init: wait-catalog-migration (образ миграции и Complete)</color>\n<color:DarkGreen>init: wait-database</color>\n<color:RoyalBlue>образ и rollout: итоговый k8s:verify</color>" as CatalogGrpc
+  component "catalog-search-outbox-worker\nобраз: symfony-catalog:<current-tag>-<profile>\n<color:DarkOrange>init: wait-catalog-migration (образ миграции и Complete)</color>\n<color:DarkGreen>init: wait-database, wait-rabbitmq</color>\n<color:RoyalBlue>образ и rollout: итоговый k8s:verify</color>" as CatalogOutbox
+  component "catalog-search-index-worker\nобраз: symfony-catalog:<current-tag>-<profile>\n<color:DarkOrange>init: wait-catalog-migration (образ миграции и Complete)</color>\n<color:DarkGreen>init: wait-database, wait-rabbitmq, wait-elasticsearch</color>\n<color:Purple>образ и rollout: восстановление index worker</color>\n<color:RoyalBlue>образ и rollout: итоговый k8s:verify</color>" as CatalogIndex
+
+  CatalogDb --> CatalogMigrate
+  CatalogMigrate --> CatalogWeb
+  CatalogMigrate --> CatalogGrpc
+  CatalogMigrate --> CatalogOutbox
+  CatalogMigrate --> CatalogIndex
+}
+
+package "Cart" {
+  component "PostgreSQL Cart\nтекущий rollout и ёмкость" as CartDb
+  component "cart-migrate Job\nобраз: symfony-cart:<current-tag>-<profile>\n<color:DarkOrange>init: wait-database-rollout (ёмкость и rollout)</color>\n<color:DarkGreen>init: wait-database (ёмкость SQL)</color>\n<color:RoyalBlue>образ и Complete: итоговый k8s:verify</color>" as CartMigrate
+  component "cart-web\nобраз: symfony-cart:<current-tag>-<profile>\n<color:DarkOrange>init: wait-cart-migration (образ миграции и Complete)</color>\n<color:DarkGreen>init: wait-database, wait-redis</color>\n<color:RoyalBlue>образ и rollout: итоговый k8s:verify</color>" as CartWeb
+
+  CartDb --> CartMigrate
+  CartMigrate --> CartWeb
+}
+
+component "api-gateway\nобраз: symfony-api-gateway-nginx:<current-tag>\n<color:DarkGreen>init: wait-http-upstreams (HTTP Services Auth, Catalog, Cart)</color>\n<color:RoyalBlue>образ и rollout: итоговый k8s:verify</color>" as Gateway
+AuthWeb --> Gateway
+CatalogWeb --> Gateway
+CartWeb --> Gateway
+
+package "Первый индекс Catalog (скрипт развёртывания)" {
+  component "Проверка перед первым reindex\n<color:Purple>catalog-migrate: ожидаемый образ и Complete</color>\n<color:Purple>catalog-web: ожидаемый образ и текущий rollout</color>" as ReindexGate
+  component "catalog-full-reindex Job\nобраз: symfony-catalog:<current-tag>-<profile>\n<color:DarkOrange>init: wait-catalog-migration (только Complete)</color>\n<color:DarkGreen>init: wait-elasticsearch</color>\n<color:Purple>скрипт: ожидаемый образ и Complete</color>" as ReindexJob
+  component "Восстановление catalog-search-index-worker\n<color:Purple>скрипт: ожидаемый образ и текущий rollout</color>" as RestoreWorker
+
+  ReindexGate ..> ReindexJob
+  ReindexJob ..> RestoreWorker
+}
+
+note bottom of ReindexGate
+  Выполняется только при отсутствии catalog-initial-index.
+  Эта операция на весь релиз не запускается в initContainer Pod.
+end note
+
+note bottom of Gateway
+  На wait-http-upstreams может ответить старая Ready-реплика.
+  Ответ не подтверждает версию образа upstream Pod.
+end note
+
+note as Independent
+  elasticsearch-setup ждёт Elasticsearch и задаёт пароль Kibana.
+  initContainer Kibana: wait-elasticsearch-credentials.
+  Workloads Catalog проверяют здоровье Elasticsearch, а не elasticsearch-setup.
+  Prometheus (symfony-prometheus:<current-tag>) и
+  Grafana (symfony-grafana:<current-tag>) запускаются независимо;
+  <color:RoyalBlue>итоговый k8s:verify проверяет их образы и rollout.</color>
+  Exporters баз данных запускаются независимо; у каждого init: wait-database.
+end note
+
+@enduml

@@ -1,0 +1,236 @@
+<?xml version="1.0"?>
+<!--Phoronix Test Suite v10.8.6-->
+<PhoronixTestSuite>
+  <Generated>
+    <Title>ssd-io-results</Title>
+    <LastModified>2026-10-04 17:58:54</LastModified>
+    <TestClient>Phoronix Test Suite v10.8.6</TestClient>
+    <Description>wsl testing on Ubuntu 22.04 via the Phoronix Test Suite.</Description>
+  </Generated>
+  <System>
+    <Identifier>wsl</Identifier>
+    <Hardware>Processor: Intel Core i9-13900KF (16 Cores / 32 Threads), Memory: 32GB, Disk: Virtual Disk + 0GB Virtual Disk + 9GB Virtual Disk + 1100GB Virtual Disk, Graphics: NVIDIA GeForce RTX 4090 24GB</Hardware>
+    <Software>OS: Ubuntu 22.04, Kernel: 6.18.40.1-microsoft-standard-WSL2 (x86_64), Display Server: Wayland, File-System: ext4, System Layer: wsl</Software>
+    <User>user</User>
+    <TimeStamp>2026-10-04 17:31:18</TimeStamp>
+    <TestClientVersion>10.8.6</TestClientVersion>
+    <Notes></Notes>
+    <JSON>{"disk-scheduler":"NONE","disk-mount-options":"data=ordered,discard,errors=remount-ro,relatime,rw","disk-details":"Block Size: 4096","cpu-microcode":"0xffffffff","kernel-extra-details":"Transparent Huge Pages: madvise","environment-variables":"NVM_CD_FLAGS=","security":"gather_data_sampling: Not affected + ghostwrite: Not affected + indirect_target_selection: Not affected + itlb_multihit: Not affected + l1tf: Not affected + mds: Not affected + meltdown: Not affected + mmio_stale_data: Not affected + old_microcode: Not affected + reg_file_data_sampling: Mitigation of Clear Register File + retbleed: Mitigation of Enhanced IBRS + spec_rstack_overflow: Not affected + spec_store_bypass: Mitigation of SSB disabled via prctl + spectre_v1: Mitigation of usercopy\/swapgs barriers and __user pointer sanitization + spectre_v2: Mitigation of Enhanced \/ Automatic IBRS; IBPB: conditional; PBRSB-eIBRS: SW sequence; BHI: BHI_DIS_S + srbds: Not affected + tsa: Not affected + tsx_async_abort: Not affected + vmscape: Not affected"}</JSON>
+  </System>
+  <Result>
+    <Identifier>system/fio-1.9.5</Identifier>
+    <Title>Flexible IO Tester</Title>
+    <AppVersion>3.28</AppVersion>
+    <Arguments>randread libaio 0 1 1m</Arguments>
+    <Description>Type: Random Read - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 1MB - Disk Target: Default Test Directory</Description>
+    <Scale>MB/s</Scale>
+    <Proportion>HIB</Proportion>
+    <DisplayFormat>BAR_GRAPH</DisplayFormat>
+    <Data>
+      <Entry>
+        <Identifier>wsl</Identifier>
+        <Value>527</Value>
+        <RawString>526:530:525</RawString>
+        <JSON>{"test-run-times":"35.65:30.48:30.50"}</JSON>
+      </Entry>
+    </Data>
+  </Result>
+  <Result>
+    <Identifier>system/fio-1.9.5</Identifier>
+    <Title>Flexible IO Tester</Title>
+    <AppVersion>3.28</AppVersion>
+    <Arguments>randread libaio 0 1 4k</Arguments>
+    <Description>Type: Random Read - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 4KB - Disk Target: Default Test Directory</Description>
+    <Scale>MB/s</Scale>
+    <Proportion>HIB</Proportion>
+    <DisplayFormat>BAR_GRAPH</DisplayFormat>
+    <Data>
+      <Entry>
+        <Identifier>wsl</Identifier>
+        <Value>194</Value>
+        <RawString>188:184:201:188:195:193:210:190:186:212:188:198:200:190:182</RawString>
+        <JSON>{"test-run-times":"30.53:30.37:30.38:30.37:30.37:30.37:30.40:30.37:30.39:30.42:30.37:30.37:30.37:30.36:30.38"}</JSON>
+      </Entry>
+    </Data>
+  </Result>
+  <Result>
+    <Identifier>system/fio-1.9.5</Identifier>
+    <Title>Flexible IO Tester</Title>
+    <AppVersion></AppVersion>
+    <Arguments>randread libaio 0 1 4k</Arguments>
+    <Description>Type: Random Read - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 4KB - Disk Target: Default Test Directory</Description>
+    <Scale>IOPS</Scale>
+    <Proportion>HIB</Proportion>
+    <DisplayFormat>BAR_GRAPH</DisplayFormat>
+    <Data>
+      <Entry>
+        <Identifier>wsl</Identifier>
+        <Value>49573</Value>
+        <RawString>48200:47000:51600:48100:50000:49300:53900:48700:47700:54200:48000:50700:51100:48500:46600</RawString>
+        <JSON>{"test-run-times":"30.53:30.37:30.38:30.37:30.37:30.37:30.40:30.37:30.39:30.42:30.37:30.37:30.37:30.36:30.38"}</JSON>
+      </Entry>
+    </Data>
+  </Result>
+  <Result>
+    <Identifier>system/fio-1.9.5</Identifier>
+    <Title>Flexible IO Tester</Title>
+    <AppVersion>3.28</AppVersion>
+    <Arguments>randwrite libaio 0 1 1m</Arguments>
+    <Description>Type: Random Write - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 1MB - Disk Target: Default Test Directory</Description>
+    <Scale>MB/s</Scale>
+    <Proportion>HIB</Proportion>
+    <DisplayFormat>BAR_GRAPH</DisplayFormat>
+    <Data>
+      <Entry>
+        <Identifier>wsl</Identifier>
+        <Value>355</Value>
+        <RawString>352:351:361</RawString>
+        <JSON>{"test-run-times":"30.72:31.02:30.64"}</JSON>
+      </Entry>
+    </Data>
+  </Result>
+  <Result>
+    <Identifier>system/fio-1.9.5</Identifier>
+    <Title>Flexible IO Tester</Title>
+    <AppVersion>3.28</AppVersion>
+    <Arguments>randwrite libaio 0 1 4k</Arguments>
+    <Description>Type: Random Write - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 4KB - Disk Target: Default Test Directory</Description>
+    <Scale>MB/s</Scale>
+    <Proportion>HIB</Proportion>
+    <DisplayFormat>BAR_GRAPH</DisplayFormat>
+    <Data>
+      <Entry>
+        <Identifier>wsl</Identifier>
+        <Value>167</Value>
+        <RawString>163:167:151:214:161:158:175:171:156:158:166:163</RawString>
+        <JSON>{"test-run-times":"30.39:30.40:30.37:30.39:30.38:30.39:30.39:30.38:30.38:30.41:30.37:30.38"}</JSON>
+      </Entry>
+    </Data>
+  </Result>
+  <Result>
+    <Identifier>system/fio-1.9.5</Identifier>
+    <Title>Flexible IO Tester</Title>
+    <AppVersion></AppVersion>
+    <Arguments>randwrite libaio 0 1 4k</Arguments>
+    <Description>Type: Random Write - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 4KB - Disk Target: Default Test Directory</Description>
+    <Scale>IOPS</Scale>
+    <Proportion>HIB</Proportion>
+    <DisplayFormat>BAR_GRAPH</DisplayFormat>
+    <Data>
+      <Entry>
+        <Identifier>wsl</Identifier>
+        <Value>42717</Value>
+        <RawString>41700:42800:38600:54800:41200:40400:44700:43700:40000:40400:42600:41700</RawString>
+        <JSON>{"test-run-times":"30.39:30.40:30.37:30.39:30.38:30.39:30.39:30.38:30.38:30.41:30.37:30.38"}</JSON>
+      </Entry>
+    </Data>
+  </Result>
+  <Result>
+    <Identifier>system/fio-1.9.5</Identifier>
+    <Title>Flexible IO Tester</Title>
+    <AppVersion>3.28</AppVersion>
+    <Arguments>read libaio 0 1 1m</Arguments>
+    <Description>Type: Sequential Read - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 1MB - Disk Target: Default Test Directory</Description>
+    <Scale>MB/s</Scale>
+    <Proportion>HIB</Proportion>
+    <DisplayFormat>BAR_GRAPH</DisplayFormat>
+    <Data>
+      <Entry>
+        <Identifier>wsl</Identifier>
+        <Value>367</Value>
+        <RawString>366:371:365</RawString>
+        <JSON>{"test-run-times":"30.53:30.57:30.54"}</JSON>
+      </Entry>
+    </Data>
+  </Result>
+  <Result>
+    <Identifier>system/fio-1.9.5</Identifier>
+    <Title>Flexible IO Tester</Title>
+    <AppVersion>3.28</AppVersion>
+    <Arguments>read libaio 0 1 4k</Arguments>
+    <Description>Type: Sequential Read - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 4KB - Disk Target: Default Test Directory</Description>
+    <Scale>MB/s</Scale>
+    <Proportion>HIB</Proportion>
+    <DisplayFormat>BAR_GRAPH</DisplayFormat>
+    <Data>
+      <Entry>
+        <Identifier>wsl</Identifier>
+        <Value>180</Value>
+        <RawString>179:180:180</RawString>
+        <JSON>{"test-run-times":"30.54:30.39:30.37"}</JSON>
+      </Entry>
+    </Data>
+  </Result>
+  <Result>
+    <Identifier>system/fio-1.9.5</Identifier>
+    <Title>Flexible IO Tester</Title>
+    <AppVersion></AppVersion>
+    <Arguments>read libaio 0 1 4k</Arguments>
+    <Description>Type: Sequential Read - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 4KB - Disk Target: Default Test Directory</Description>
+    <Scale>IOPS</Scale>
+    <Proportion>HIB</Proportion>
+    <DisplayFormat>BAR_GRAPH</DisplayFormat>
+    <Data>
+      <Entry>
+        <Identifier>wsl</Identifier>
+        <Value>46000</Value>
+        <RawString>45900:46000:46100</RawString>
+        <JSON>{"test-run-times":"30.54:30.39:30.37"}</JSON>
+      </Entry>
+    </Data>
+  </Result>
+  <Result>
+    <Identifier>system/fio-1.9.5</Identifier>
+    <Title>Flexible IO Tester</Title>
+    <AppVersion>3.28</AppVersion>
+    <Arguments>write libaio 0 1 1m</Arguments>
+    <Description>Type: Sequential Write - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 1MB - Disk Target: Default Test Directory</Description>
+    <Scale>MB/s</Scale>
+    <Proportion>HIB</Proportion>
+    <DisplayFormat>BAR_GRAPH</DisplayFormat>
+    <Data>
+      <Entry>
+        <Identifier>wsl</Identifier>
+        <Value>482</Value>
+        <RawString>479:480:486</RawString>
+        <JSON>{"test-run-times":"30.55:30.59:30.57"}</JSON>
+      </Entry>
+    </Data>
+  </Result>
+  <Result>
+    <Identifier>system/fio-1.9.5</Identifier>
+    <Title>Flexible IO Tester</Title>
+    <AppVersion>3.28</AppVersion>
+    <Arguments>write libaio 0 1 4k</Arguments>
+    <Description>Type: Sequential Write - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 4KB - Disk Target: Default Test Directory</Description>
+    <Scale>MB/s</Scale>
+    <Proportion>HIB</Proportion>
+    <DisplayFormat>BAR_GRAPH</DisplayFormat>
+    <Data>
+      <Entry>
+        <Identifier>wsl</Identifier>
+        <Value>160</Value>
+        <RawString>159:161:160</RawString>
+        <JSON>{"test-run-times":"30.37:30.39:30.39"}</JSON>
+      </Entry>
+    </Data>
+  </Result>
+  <Result>
+    <Identifier>system/fio-1.9.5</Identifier>
+    <Title>Flexible IO Tester</Title>
+    <AppVersion></AppVersion>
+    <Arguments>write libaio 0 1 4k</Arguments>
+    <Description>Type: Sequential Write - IO Engine: Linux AIO - Buffered: No - Direct: Yes - Block Size: 4KB - Disk Target: Default Test Directory</Description>
+    <Scale>IOPS</Scale>
+    <Proportion>HIB</Proportion>
+    <DisplayFormat>BAR_GRAPH</DisplayFormat>
+    <Data>
+      <Entry>
+        <Identifier>wsl</Identifier>
+        <Value>41033</Value>
+        <RawString>40800:41300:41000</RawString>
+        <JSON>{"test-run-times":"30.37:30.39:30.39"}</JSON>
+      </Entry>
+    </Data>
+  </Result>
+</PhoronixTestSuite>

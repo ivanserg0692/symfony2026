@@ -1,0 +1,14 @@
+.git
+.env*
+**/.env*
+**/vendor/
+**/var/
+**/node_modules/
+**/config/jwt/*.pem
+**/config/secrets/
+**/public/assets/
+**/public/bundles/
+**/assets/vendor/
+api-gateway/logs/
+frontend/
+load-testing/

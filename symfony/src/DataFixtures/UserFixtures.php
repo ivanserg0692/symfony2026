@@ -14,7 +14,7 @@ class UserFixtures extends Fixture implements DependentFixtureInterface
 {
     public const USER_REFERENCE_PREFIX = 'user_';
 
-    private const USERS_COUNT = 500;
+    private const USERS_COUNT = 2000;
     private const DEFAULT_PASSWORD = 'password123';
     private const MAX_GROUPS_PER_USER = 3;
 
