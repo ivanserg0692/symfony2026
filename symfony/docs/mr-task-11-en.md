@@ -9,12 +9,13 @@
 - [Out Of Scope](#out-of-scope)
 - [Task](#task)
 - [2026-10-04 — Kubernetes Monitoring Result](#2026-10-04--kubernetes-monitoring-result)
+- [2026-11-01 — Load observations and HTTP logs](#2026-11-01--load-observations-and-http-logs)
 
 <!-- END doctoc -->
 
 ## Summary
 
-This document records the planned scope of [PR #15](https://github.com/ivanserg0692/symfony2026/pull/15) for [Task 11](task-11.md). At this point, the repository contains the Task 11 description; Kubernetes deployment and scaling have not been verified or recorded as completed.
+This document records the original scope of [PR #15](https://github.com/ivanserg0692/symfony2026/pull/15) for [Task 11](task-11.md) and subsequent monitoring results. The plan below reflects the start of the task; the task file records the observations and measurement limits.
 
 The goal is to run the same project through either Docker Compose or Kubernetes and demonstrate independent horizontal scaling of Auth, Catalog, and Cart without depending on a fixed number of Kubernetes nodes.
 
@@ -52,4 +53,8 @@ The repository now contains three independent Kubernetes Grafana dashboards: [pr
 
 Each Kubernetes dashboard supports one application service or All. PHP-FPM series identify Pods, while shared application metrics are scraped once per logical service. Added resource views include stacked Top 15 Pods by CPU across namespaces and memory usage as a percentage of limit by service, by Pod across namespaces, and by service/container. The memory ratios use summed usage over summed positive limits for the matching containers; containers without a positive limit are excluded. The CPU stack covers only the selected 15 Pods.
 
-Two screenshots and a reading guide are in the [root README](../../README.md#run-with-kubernetes); dashboard details are in the [Kubernetes monitoring guide](../../kubernetes/README.md#monitoring). HPA verification and comparative k6 results are still not recorded, so Task 11 remains in progress.
+Dashboard captures and a reading guide are in the [root README](../../README.md#run-with-kubernetes); dashboard details are in the [Kubernetes monitoring guide](../../kubernetes/README.md#monitoring).
+
+## 2026-11-01 — Load observations and HTTP logs
+
+Task 11 implemented independent PHP-FPM queue HPAs for Auth, Catalog, and Cart through Prometheus Adapter. Current local Helm values target 10 queued requests per Pod, with 1–20 replicas and a 300-second scale-down stabilization window. The Grafana capture shows queues and ready HTTP Pod counts rising during two load intervals, then returning; it does not include HPA decisions or manual-action history, so the quantitative effect is unverified. Task 11 also implemented Gateway/application Nginx → Filebeat → separate Elasticsearch Logs → Kibana Logs for Kubernetes `prod`/`load-test`. The saved four-panel Kibana dashboard shows approximately **1,400 Gateway access records/s** in one interval, latency distribution, maximum latency by source, and individual 2xx/4xx/5xx frequencies. Filters and Discover expose individual errors and slow requests by time, service, status, path, and `request_id`. This is neither final k6 RPS nor an application maximum. See the [HPA and Kibana results](task-11.md#recorded-load-testing-and-monitoring-results); controlled comparative k6 runs and the cause of the RPS limit remain for Performance Bottleneck Investigation.

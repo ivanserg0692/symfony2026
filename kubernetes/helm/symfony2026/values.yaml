@@ -58,7 +58,7 @@ autoscaling:
     metrics:
       phpFpmQueue:
         enabled: true
-        targetAverageValue: 20
+        targetAverageValue: 10
     behavior:
       scaleUp:
         stabilizationWindowSeconds: 0
@@ -70,7 +70,7 @@ autoscaling:
     metrics:
       phpFpmQueue:
         enabled: true
-        targetAverageValue: 20
+        targetAverageValue: 10
     behavior:
       scaleUp:
         stabilizationWindowSeconds: 0
@@ -82,7 +82,7 @@ autoscaling:
     metrics:
       phpFpmQueue:
         enabled: true
-        targetAverageValue: 20
+        targetAverageValue: 10
     behavior:
       scaleUp:
         stabilizationWindowSeconds: 0
@@ -165,7 +165,6 @@ resources:
         cpu: 300m
         memory: 256Mi
       limits:
-        cpu: 500m
         memory: 1Gi
     php-fpm-exporter:
       requests:
@@ -180,7 +179,6 @@ resources:
         cpu: 900m
         memory: 256Mi
       limits:
-        cpu: '1'
         memory: 1Gi
     php-fpm-exporter:
       requests:
@@ -192,10 +190,9 @@ resources:
   cart-web:
     php:
       requests:
-        cpu: 300m
+        cpu: 2500m
         memory: 256Mi
       limits:
-        cpu: 500m
         memory: 1Gi
     php-fpm-exporter:
       requests:
@@ -210,7 +207,6 @@ resources:
         cpu: 100m
         memory: 256Mi
       limits:
-        cpu: '1'
         memory: 1Gi
   catalog-search-outbox-worker:
     worker:
@@ -296,14 +292,14 @@ resources:
     elasticsearch:
       requests:
         cpu: 250m
-        memory: 1536Mi
+        memory: 2000Mi
       limits:
         memory: 3Gi
   elasticsearch-logs:
     elasticsearch:
       requests:
         cpu: 250m
-        memory: 1536Mi
+        memory: 2000Mi
       limits:
         memory: 3Gi
   filebeat:
@@ -382,7 +378,7 @@ resources:
         cpu: 50m
         memory: 128Mi
       limits:
-        memory: 1Gi
+        memory: 1.5Gi
 
 # Timing for the existing container probes; check methods and targets stay in templates.
 probes:

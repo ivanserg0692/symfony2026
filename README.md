@@ -36,7 +36,7 @@
     - [`Task 8`: Monitoring and load testing for the online store - completed](#task-8-monitoring-and-load-testing-for-the-online-store---completed)
     - [`Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - completed](#task-9-application-performance-optimization-rps-improvement-and-php-environment-tuning---completed)
     - [`Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - done](#task-10-elasticsearch-catalog-read-model-for-search-filtering-aggregations-and-presets---done)
-    - [`Task 11`: Run services in Kubernetes and verify horizontal scaling of Symfony/PHP-FPM - in progress](#task-11-run-services-in-kubernetes-and-verify-horizontal-scaling-of-symfonyphp-fpm---in-progress)
+    - [`Task 11`: Kubernetes load testing and monitoring - documented](#task-11-kubernetes-load-testing-and-monitoring---documented)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
   - [Elasticsearch Catalog Indexing](#elasticsearch-catalog-indexing)
@@ -90,7 +90,7 @@
     - [`Task 8`: Мониторинг и нагрузочное тестирование интернет-магазина - completed](#task-8-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B8-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0---completed)
     - [`Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - completed](#task-9-%D0%BE%D0%BF%D1%82%D0%B8%D0%BC%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BF%D0%BE%D0%B2%D1%8B%D1%88%D0%B5%D0%BD%D0%B8%D0%B5-rps-%D0%B8-%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-php-%D0%BE%D0%BA%D1%80%D1%83%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F---completed)
     - [`Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - done](#task-10-elasticsearch-read-%D0%BC%D0%BE%D0%B4%D0%B5%D0%BB%D1%8C-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B4%D0%BB%D1%8F-%D0%BF%D0%BE%D0%B8%D1%81%D0%BA%D0%B0-%D1%84%D0%B8%D0%BB%D1%8C%D1%82%D1%80%D0%B0%D1%86%D0%B8%D0%B8-%D0%B0%D0%B3%D1%80%D0%B5%D0%B3%D0%B0%D1%86%D0%B8%D0%B9-%D0%B8-%D0%BF%D1%80%D0%B5%D1%81%D0%B5%D1%82%D0%BE%D0%B2---done)
-    - [`Task 11`: Запуск сервисов в Kubernetes и проверка горизонтального масштабирования Symfony/PHP-FPM - in progress](#task-11-%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2-%D0%B2-kubernetes-%D0%B8-%D0%BF%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D0%BA%D0%B0-%D0%B3%D0%BE%D1%80%D0%B8%D0%B7%D0%BE%D0%BD%D1%82%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D0%B3%D0%BE-%D0%BC%D0%B0%D1%81%D1%88%D1%82%D0%B0%D0%B1%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-symfonyphp-fpm---in-progress)
+    - [`Task 11`: Нагрузочное тестирование и мониторинг Kubernetes — документирование завершено](#task-11-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B8-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-kubernetes--%D0%B4%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B7%D0%B0%D0%B2%D0%B5%D1%80%D1%88%D0%B5%D0%BD%D0%BE)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
   - [Индексация каталога в Elasticsearch](#%D0%B8%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0%D1%86%D0%B8%D1%8F-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B2-elasticsearch)
@@ -555,8 +555,8 @@ The notification recipients are administrators resolved by the application, not 
 - MR result (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
 - Product catalog full reindex runbook: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
 
-#### `Task 11`: Run services in Kubernetes and verify horizontal scaling of Symfony/PHP-FPM - in progress
-- Brief info: Kubernetes is an independent deployment option with three Grafana dashboards and per-Pod monitoring; queue-based HPA is configured for Auth, Catalog, and Cart. Live scale-up/down and comparative k6 results are not yet recorded. Docker Compose and its original dashboard remain separate.
+#### `Task 11`: Kubernetes load testing and monitoring - documented
+- Brief info: Task 11 implemented queue-based HPA for Auth, Catalog, and Cart and centralized Gateway/application HTTP logs through Filebeat, Elasticsearch Logs, and a four-panel Kibana dashboard. Prometheus/Grafana track traffic, latency, PHP-FPM, Pods, and resources. A saved Kibana view shows approximately 1,400 Gateway access records/s during one load interval. The quantitative HPA benefit remains unverified. [HPA and Kibana results](symfony/docs/task-11.md).
 - Backend Merge Request 11: <https://github.com/ivanserg0692/symfony2026/pull/15>
 - Task file: [symfony/docs/task-11.md](symfony/docs/task-11.md)
 - MR result (EN): [symfony/docs/mr-task-11-en.md](symfony/docs/mr-task-11-en.md)
@@ -655,6 +655,14 @@ The Kubernetes dashboards let you select Auth, Catalog, Cart, or **All**. PHP-FP
 
 ![Combined Kubernetes Grafana dashboard with application, infrastructure, database, Pod, CPU, and memory panels](<docs/images/Symfony services _ Kubernetes _ Combined-1791129935393.png>)
 
+Task 11 added independent HPA for Auth, Catalog, and Cart using each Pod's PHP-FPM listen queue through Prometheus Adapter. The current Helm target is 10 queued requests per Pod, with 1–20 replicas per service. The Grafana capture shows two load intervals, queue growth, more ready HTTP Pods, and Pod CPU/memory alongside Gateway traffic and latency. Its peak is visually near 1,400 RPS; this is a different time window from the Kibana view below and does not establish a k6 average or attribute each replica change to HPA. [HPA configuration](kubernetes/README.md#http-horizontal-autoscaling) and [Task 11 observations](symfony/docs/task-11.md#implemented-hpa-and-load-observations) give the details.
+
+![Task 11 Kubernetes Grafana capture with Gateway RPS, latency, PHP-FPM queues, Pods and resources](<symfony/docs/images/11 task Symfony services _ Kubernetes _ Combined-1793541598970.png>)
+
+Task 11 also implemented centralized HTTP log analysis for Kubernetes `prod` and `load-test`: Nginx → Filebeat → dedicated Elasticsearch Logs → Kibana Logs. The saved four-panel Kibana dashboard for **1 November 2026, 18:31–18:44** shows Gateway access records/s, latency distribution, maximum request duration by source, and individual 2xx/4xx/5xx code frequencies. Its sustained rate near **1,400 records/s** is a log observation, not final k6 throughput or an application ceiling. Time, status, service, and `request_id` filters help inspect individual errors and slow requests around RPS changes. [Kibana dashboard and workflow](symfony/docs/task-11.md#centralized-http-logs-and-kibana-dashboard) and [logging setup](kubernetes/README.md#nginx-request-logs) provide the details.
+
+![Task 11 Kibana dashboard showing Gateway log-derived RPS, latency and HTTP status distribution](<symfony/docs/images/11 task kuber RPS.png>)
+
 The following close-ups show the added resource views:
 
 ![Kubernetes Grafana: Top 15 Pods by CPU and memory usage relative to limits by service and Pod](<docs/images/new grafana charts.png>)
@@ -677,6 +685,7 @@ Start with service-wide symptoms, inspect the container type, and use Pod lines 
 
 - [Hardware Performance Reference](docs/performance/hardware-benchmark.md) — server characteristics, benchmark procedure, and Sysbench/FIO results.
 - [Kubernetes Resource Calibration](docs/performance/kubernetes-resource-calibration.md) — observed CPU usage under load and the corresponding Helm requests/limits.
+- [Task 11 load testing and monitoring results](symfony/docs/task-11.md) — measured observations, logging workflow, limits of the evidence, and the next investigation.
 
 ### Run With Docker Compose
 
@@ -1474,8 +1483,8 @@ docker compose down
 - Результат MR (RU): [symfony/docs/mr-task-10-ru.md](symfony/docs/mr-task-10-ru.md)
 - Runbook полной переиндексации каталога: [catalog-service/docs/elasticsearch-reindex.md](catalog-service/docs/elasticsearch-reindex.md)
 
-#### `Task 11`: Запуск сервисов в Kubernetes и проверка горизонтального масштабирования Symfony/PHP-FPM - in progress
-- Brief info: Kubernetes доступен как независимый способ запуска с тремя Grafana dashboard и мониторингом каждого Pod; HPA по очереди настроен для Auth, Catalog и Cart. Проверка увеличения/уменьшения реплик и сравнительные результаты k6 ещё не зафиксированы. Docker Compose и его исходный dashboard остаются отдельными.
+#### `Task 11`: Нагрузочное тестирование и мониторинг Kubernetes — документирование завершено
+- Brief info: В Task 11 реализованы HPA для Auth, Catalog и Cart по очереди PHP-FPM и централизованный сбор HTTP-логов через Filebeat, отдельный Elasticsearch Logs и дашборд Kibana из четырёх графиков. Prometheus/Grafana показывают RPS, задержки, Pod и ресурсы. Снимок Kibana фиксирует около 1400 access-записей Gateway/с в одном нагрузочном интервале; количественный эффект HPA не подтверждён. [HPA и анализ логов](symfony/docs/task-11.md).
 - Backend Merge Request 11: <https://github.com/ivanserg0692/symfony2026/pull/15>
 - Файл задачи: [symfony/docs/task-11.md](symfony/docs/task-11.md)
 - Результат MR (EN): [symfony/docs/mr-task-11-en.md](symfony/docs/mr-task-11-en.md)
@@ -1574,6 +1583,14 @@ Kubernetes развёртывается через chart `kubernetes/helm/symfon
 
 ![Объединённый dashboard Grafana Kubernetes: приложение, инфраструктура, база данных, Pod, CPU и память](<docs/images/Symfony services _ Kubernetes _ Combined-1791129935393.png>)
 
+В Task 11 настроены независимые HPA для Auth, Catalog и Cart по очереди PHP-FPM каждого Pod через Prometheus Adapter. Текущая цель Helm — 10 ожидающих запросов на Pod при границах 1–20 реплик на сервис. На снимке Grafana видны два нагрузочных интервала, рост очередей и числа ready HTTP Pod, Gateway RPS, latency и ресурсы. Пик визуально близок к 1400 RPS; это другое временное окно, чем снимок Kibana ниже, и не итоговый средний RPS k6. Снимок не устанавливает причину каждого изменения числа Pod. [Конфигурация HPA](kubernetes/README.md#%D0%B3%D0%BE%D1%80%D0%B8%D0%B7%D0%BE%D0%BD%D1%82%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D0%B5-%D0%BC%D0%B0%D1%81%D1%88%D1%82%D0%B0%D0%B1%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-http-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BE%D0%B2) и [наблюдения Task 11](symfony/docs/task-11.md#%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D1%8B%D0%B9-hpa-%D0%B8-%D0%BD%D0%B0%D0%B1%D0%BB%D1%8E%D0%B4%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BF%D0%BE%D0%B4-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BA%D0%BE%D0%B9) содержат детали.
+
+![Task 11: Grafana, RPS, latency, PHP-FPM, Pod и ресурсы](<symfony/docs/images/11 task Symfony services _ Kubernetes _ Combined-1793541598970.png>)
+
+В Task 11 также реализован централизованный анализ HTTP-логов Kubernetes `prod`/`load-test`: Nginx → Filebeat → отдельный Elasticsearch Logs → Kibana Logs. Созданный дашборд Kibana за **1 ноября 2026 года, 18:31–18:44** содержит четыре графика: access-записи Gateway/с, распределение latency, максимум длительности по источникам и частоты отдельных кодов 2xx/4xx/5xx. На значительной части интервала наблюдается около **1400 записей Gateway/с**. Фильтры по времени, статусу, сервису и `request_id` позволяют исследовать отдельные ошибки и медленные запросы рядом с изменениями RPS. Это наблюдение по логам, а не доказанный максимум приложения. [Дашборд и практический анализ](symfony/docs/task-11.md#%D1%86%D0%B5%D0%BD%D1%82%D1%80%D0%B0%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D1%8B%D0%B5-http-%D0%BB%D0%BE%D0%B3%D0%B8-%D0%B8-%D0%B4%D0%B0%D1%88%D0%B1%D0%BE%D1%80%D0%B4-kibana) и [настройка логов](kubernetes/README.md#%D0%BB%D0%BE%D0%B3%D0%B8-%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%D0%BE%D0%B2-nginx) содержат детали.
+
+![Task 11: Kibana, RPS по HTTP-логам, задержки и статусы](<symfony/docs/images/11 task kuber RPS.png>)
+
 Ниже крупнее показаны новые графики ресурсов:
 
 ![Grafana Kubernetes: Top 15 Pod по CPU и память относительно лимита по сервису и Pod](<docs/images/new grafana charts.png>)
@@ -1596,6 +1613,7 @@ Stacked-график CPU суммирует нагрузку выбранных 
 
 - [Бенчмарк производительности сервера](docs/performance/hardware-benchmark.md) — характеристики машины, процедура тестирования и результаты Sysbench/FIO.
 - [Калибровка ресурсов Kubernetes](docs/performance/kubernetes-resource-calibration.md) — наблюдаемое потребление CPU под нагрузкой и соответствующие `requests`/`limits` Helm.
+- [Результаты нагрузочного тестирования и мониторинга Task 11](symfony/docs/task-11.md) — измерения, ограничения и следующий этап исследования.
 
 ### Запуск через Docker Compose
 

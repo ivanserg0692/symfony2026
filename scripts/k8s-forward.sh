@@ -79,21 +79,21 @@ if [[ ${1:-} == --gateway ]]; then
                 exit 2
                 ;;
         esac
-        labels+=(Gateway)
-        namespaces+=("$namespace")
-        services+=(api-gateway)
-        local_ports+=(8001)
-        service_ports+=(8001)
-        forward_addresses+=("$gateway_forward_address")
+#        labels+=(Gateway)
+#        namespaces+=("$namespace")
+#        services+=(api-gateway)
+#        local_ports+=(8001)
+#        service_ports+=(8001)
+#        forward_addresses+=("$gateway_forward_address")
     fi
 
     # Keep the stable WSL loopback port used by the Docker Nginx proxy.
-    labels+=(Gateway-Nginx-proxy)
-    namespaces+=("$namespace")
-    services+=(api-gateway)
-    local_ports+=(18001)
-    service_ports+=(8001)
-    forward_addresses+=(127.0.0.1)
+#    labels+=(Gateway-Nginx-proxy)
+#    namespaces+=("$namespace")
+#    services+=(api-gateway)
+#    local_ports+=(18001)
+#    service_ports+=(8001)
+#    forward_addresses+=(127.0.0.1)
 fi
 
 # Check every required Service and Service port before opening any local port.
