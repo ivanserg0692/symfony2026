@@ -13,6 +13,20 @@
   "templating": {
     "list": [
       {
+        "name": "cpu_pod_limit",
+        "label": "CPU Pod limit",
+        "type": "custom",
+        "query": "All : 0, 15 : 15",
+        "current": {
+          "text": "All",
+          "value": "0"
+        },
+        "options": [
+          { "text": "All", "value": "0", "selected": true },
+          { "text": "15", "value": "15", "selected": false }
+        ]
+      },
+      {
         "name": "namespace",
         "label": "Namespace",
         "type": "query",
@@ -260,8 +274,8 @@
     },
     {
       "id": 11,
-      "title": "Top 15 Pods by CPU",
-      "description": "Top 15 Pods by CPU usage in cores for the selected namespace and application services. Pods use label_service when present and fall back to label_app.",
+      "title": "CPU by Pod",
+      "description": "CPU usage in cores by Pod for the selected namespace and application services. CPU Pod limit defaults to All; choose 15 to show only the top 15 at each point. Pods use label_service when present and fall back to label_app. The stacked sum excludes Pods without these labels and is not node CPU utilization.",
       "type": "timeseries",
       "datasource": "Prometheus",
       "gridPos": {
@@ -287,7 +301,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(15, sum by (namespace, label_service, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) max by (namespace,pod,label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\"))))",
+          "expr": "topk(${cpu_pod_limit:raw}, sum by (namespace, label_service, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) max by (namespace,pod,label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\")))) or (sum by (namespace, label_service, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"${namespace:regex}\",container!=\"\",container!=\"POD\"}[5m]) * on(namespace,pod) group_left(label_service) max by (namespace,pod,label_service) (kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=~\"${services:regex}\",label_service!=\"\"} or label_replace(kube_pod_labels{namespace=~\"${namespace:regex}\",label_service=\"\",label_app=~\"${services:regex}\",label_app!=\"\"}, \"label_service\", \"$1\", \"label_app\", \"(.+)\"))) and on() (vector(${cpu_pod_limit:raw}) == 0))",
           "legendFormat": "{{namespace}} / {{label_service}} / {{pod}}"
         }
       ]

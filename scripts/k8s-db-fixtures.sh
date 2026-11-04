@@ -26,9 +26,12 @@ ensure_fixture_prerequisites() {
 }
 
 run_fixture_job() {
-    local service="$1" deployment="$2" image job manifest
+    local service="$1" deployment="$2" image job manifest wait_timeout=2h
     job="${service}-fixtures"
     manifest="${repo_root}/kubernetes/jobs/fixtures/${service}.yaml"
+    if [[ "$service" == auth ]]; then
+        wait_timeout=4h
+    fi
 
     # Use exactly the image serving this service, including its env profile.
     image="$(kubectl -n "$namespace" get deployment "$deployment" -o jsonpath='{.spec.template.spec.containers[?(@.name=="php")].image}')"
@@ -46,7 +49,7 @@ run_fixture_job() {
     if ! kubectl -n "$namespace" logs -f "job/$job" --pod-running-timeout=5m; then
         echo "Could not stream logs for job/$job. Checking the Job result." >&2
     fi
-    kubectl -n "$namespace" wait --for=condition=complete "job/$job" --timeout=2h
+    kubectl -n "$namespace" wait --for=condition=complete "job/$job" --timeout="$wait_timeout"
 }
 
 ensure_fixture_prerequisites

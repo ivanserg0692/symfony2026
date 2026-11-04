@@ -667,7 +667,7 @@ The following close-ups show the added resource views:
 
 ![Kubernetes Grafana: Top 15 Pods by CPU and memory usage relative to limits by service and Pod](<docs/images/new grafana charts.png>)
 
-The stacked CPU graph sums the selected Top 15 Pods across namespaces; it does not represent total cluster CPU. The service memory graph compares each application's total usage with its total memory limit. The Pod graph exposes individual Pods across all namespaces, which helps locate a replica or system Pod approaching its limit.
+The screenshot shows the CPU graph with a Top 15 selection. The current **CPU by Pod** panel defaults to **CPU Pod limit = All**, which sums all matching labeled Pods across the selected namespaces; choose **15** to restore the Top 15 view. Neither mode represents total cluster CPU. The service memory graph compares each application's total usage with its total memory limit. The Pod graph exposes individual Pods across all namespaces, which helps locate a replica or system Pod approaching its limit.
 
 ![Kubernetes Grafana: memory usage relative to limits by service and container](<docs/images/new grafana charts2.png>)
 
@@ -675,7 +675,7 @@ The service/container graph separates, for example, `catalog / nginx` from `cata
 
 | During a demo or k6 run, ask… | Open… | Decide… |
 |---|---|---|
-| Which Pod is using the most CPU? Is one replica different? | **Top 15 Pods by CPU** across namespaces, then **CPU cores by Pod** for the chosen service. | Whether load is shared between replicas or concentrated in one Pod. CPU values are actual cores; the stacked Top 15 is not whole-cluster CPU. |
+| Which Pod is using the most CPU? Is one replica different? | **CPU by Pod** across selected namespaces (**CPU Pod limit** defaults to **All**, or choose **15**), then **CPU cores by Pod** for the chosen service. | Whether load is shared between replicas or concentrated in one Pod. CPU values are actual cores; the stacked sum is not whole-cluster CPU. |
 | Is the service or a particular container approaching its memory limit? | **Memory usage / limit by service**, then **by service and container**, then **by Pod**. | Whether pressure is shared across replicas or comes from one container type or Pod. The service/container view keeps `catalog / php` and `catalog / nginx` separate. |
 | Are resource settings and horizontal scaling working under load? | Compare CPU cores and memory-limit percentages with configured requests/limits; watch **HTTP Pods: running / ready**, **Pod lifecycle**, and PHP-FPM queue. | Size resources for measured load, then verify that HPA adds ready replicas and they share traffic. The current dashboards do not contain a CPU usage/request or usage/limit ratio panel. |
 
@@ -1595,7 +1595,7 @@ Kubernetes развёртывается через chart `kubernetes/helm/symfon
 
 ![Grafana Kubernetes: Top 15 Pod по CPU и память относительно лимита по сервису и Pod](<docs/images/new grafana charts.png>)
 
-Stacked-график CPU суммирует нагрузку выбранных Top 15 Pod из всех namespace; это не общая нагрузка всего кластера. График памяти по сервису сравнивает суммарное использование памяти с суммой лимитов этого сервиса. График по Pod показывает отдельные Pod во всех namespace и помогает найти реплику или системный Pod, приближающийся к лимиту.
+На скриншоте показан CPU-график с выбором Top 15. Сейчас панель **CPU by Pod** по умолчанию использует **CPU Pod limit = All** и суммирует все подходящие Pod с метками в выбранных namespace; значение **15** возвращает вид Top 15. Ни один режим не показывает общую нагрузку CPU всего кластера. График памяти по сервису сравнивает суммарное использование памяти с суммой лимитов этого сервиса. График по Pod показывает отдельные Pod во всех namespace и помогает найти реплику или системный Pod, приближающийся к лимиту.
 
 ![Grafana Kubernetes: память относительно лимита по сервису и контейнеру](<docs/images/new grafana charts2.png>)
 
@@ -1603,7 +1603,7 @@ Stacked-график CPU суммирует нагрузку выбранных 
 
 | Вопрос во время демонстрации или k6-теста | Что открыть | Какое решение принять |
 |---|---|---|
-| Какой Pod расходует больше всего CPU? Отличается ли одна реплика? | **Top 15 Pods by CPU** по всем namespace, затем **CPU cores by Pod** нужного сервиса. | Равномерно ли распределена нагрузка между репликами. CPU измеряется в ядрах; stacked Top 15 не равен CPU всего кластера. |
+| Какой Pod расходует больше всего CPU? Отличается ли одна реплика? | **CPU by Pod** по выбранным namespace (**CPU Pod limit** по умолчанию **All**, либо выберите **15**), затем **CPU cores by Pod** нужного сервиса. | Равномерно ли распределена нагрузка между репликами. CPU измеряется в ядрах; stacked-сумма не равна CPU всего кластера. |
 | Близок ли сервис или отдельный контейнер к лимиту памяти? | **Memory usage / limit by service**, затем **by service and container**, затем **by Pod**. | Давление есть у всех реплик или только у одного типа контейнера либо Pod. Серии `catalog / php` и `catalog / nginx` остаются раздельными. |
 | Подходят ли настройки ресурсов и работает ли горизонтальное масштабирование под нагрузкой? | Сравнить ядра CPU и проценты памяти с requests/limits в манифестах; смотреть **HTTP Pods: running / ready**, **Pod lifecycle** и PHP-FPM queue. | Подобрать ресурсы по замерам, затем проверить, что HPA добавляет готовые реплики и они делят трафик. Панелей отношения CPU к request/limit сейчас нет. |
 
