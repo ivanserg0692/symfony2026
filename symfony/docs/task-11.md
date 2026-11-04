@@ -15,6 +15,7 @@
   - [Зафиксированные результаты нагрузочного тестирования и мониторинга](#%D0%B7%D0%B0%D1%84%D0%B8%D0%BA%D1%81%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D1%8B%D0%B5-%D1%80%D0%B5%D0%B7%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%82%D1%8B-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B3%D0%BE-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D0%B8-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3%D0%B0)
     - [Реализованный HPA и наблюдения под нагрузкой](#%D1%80%D0%B5%D0%B0%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D1%8B%D0%B9-hpa-%D0%B8-%D0%BD%D0%B0%D0%B1%D0%BB%D1%8E%D0%B4%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BF%D0%BE%D0%B4-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BA%D0%BE%D0%B9)
     - [Централизованные HTTP-логи и дашборд Kibana](#%D1%86%D0%B5%D0%BD%D1%82%D1%80%D0%B0%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D1%8B%D0%B5-http-%D0%BB%D0%BE%D0%B3%D0%B8-%D0%B8-%D0%B4%D0%B0%D1%88%D0%B1%D0%BE%D1%80%D0%B4-kibana)
+    - [Дополнительный прогон с повышенной конкурентной нагрузкой](#%D0%B4%D0%BE%D0%BF%D0%BE%D0%BB%D0%BD%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9-%D0%BF%D1%80%D0%BE%D0%B3%D0%BE%D0%BD-%D1%81-%D0%BF%D0%BE%D0%B2%D1%8B%D1%88%D0%B5%D0%BD%D0%BD%D0%BE%D0%B9-%D0%BA%D0%BE%D0%BD%D0%BA%D1%83%D1%80%D0%B5%D0%BD%D1%82%D0%BD%D0%BE%D0%B9-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BA%D0%BE%D0%B9)
   - [Следующая задача: Performance Bottleneck Investigation](#%D1%81%D0%BB%D0%B5%D0%B4%D1%83%D1%8E%D1%89%D0%B0%D1%8F-%D0%B7%D0%B0%D0%B4%D0%B0%D1%87%D0%B0-performance-bottleneck-investigation)
   - [Примечания](#%D0%BF%D1%80%D0%B8%D0%BC%D0%B5%D1%87%D0%B0%D0%BD%D0%B8%D1%8F)
 - [EN](#en)
@@ -29,6 +30,7 @@
   - [Recorded load testing and monitoring results](#recorded-load-testing-and-monitoring-results)
     - [Implemented HPA and load observations](#implemented-hpa-and-load-observations)
     - [Centralized HTTP logs and Kibana dashboard](#centralized-http-logs-and-kibana-dashboard)
+    - [Additional run with higher concurrency](#additional-run-with-higher-concurrency)
   - [Next task: Performance Bottleneck Investigation](#next-task-performance-bottleneck-investigation)
   - [Notes](#notes)
 
@@ -38,7 +40,7 @@
 
 ### Статус
 
-**Документирование завершено.** HPA для трёх HTTP-сервисов и централизованный анализ HTTP-логов реализованы в Task 11. Конфигурация и наблюдавшиеся нагрузочные интервалы зафиксированы ниже. Сопоставимый отчёт k6 для одного и нескольких Pod и история решений HPA не сохранены; количественный эффект автомасштабирования по ним не доказан.
+**Реализация и итоговый отчёт завершены с ограничениями измерений.** HPA для трёх HTTP-сервисов и централизованный анализ HTTP-логов реализованы в Task 11. Зафиксированы наблюдавшиеся нагрузочные интервалы, включая дополнительный прогон с повышенным числом VU и Gateway throughput около 1500 запросов/с. Сопоставимый отчёт k6 для одного и нескольких Pod и история решений HPA не сохранены; количественный эффект автомасштабирования по ним не доказан.
 
 ### Название
 
@@ -72,7 +74,7 @@
 - Пользовательская сессия stateful части Auth работает при попадании последовательных запросов в разные Pod; JWT-сценарии также работают через разные Pod.
 - Catalog HTTP, gRPC и workers запускаются как отдельные роли. Поведение очередей и индексации сохраняется.
 - Prometheus собирает PHP-FPM metrics отдельно для каждого Pod без смешивания экземпляров. Общие Symfony metrics не учитываются многократно.
-- Для Kubernetes созданы три независимых Grafana dashboard: основной Kubernetes, порт исходного Docker dashboard и объединённый без бессмысленных дублей. Выбор сервиса поддерживает Auth/Catalog/Cart и All. Основной dashboard показывает active/idle PHP-FPM processes и listen queue по Pod, `SUM` и `MAX` очереди по сервису, CPU/RAM по Pod и сервису, число активных и ready Pod и историю изменения числа Pod. Дополнительно доступны Top 15 Pod по CPU и использование памяти относительно лимита по сервису, Pod и паре service/container. Запросы используют Kubernetes/Prometheus labels.
+- Для Kubernetes созданы три независимых Grafana dashboard: основной Kubernetes, порт исходного Docker dashboard и объединённый без бессмысленных дублей. Выбор сервиса поддерживает Auth/Catalog/Cart и All. Основной dashboard показывает active/idle PHP-FPM processes и listen queue по Pod, `SUM` и `MAX` очереди по сервису, CPU/RAM по Pod и сервису, число активных и ready Pod и историю изменения числа Pod. Дополнительно доступны CPU по Pod с выбором всех подходящих Pod по умолчанию или Top 15 и использование памяти относительно лимита по сервису, Pod и паре service/container. Запросы используют Kubernetes/Prometheus labels.
 - Проверены ручное изменение числа Pod и работа HPA под нагрузкой существующих k6-сценариев; зафиксированы RPS, latency, error rate, ресурсы и изменение числа ready Pod.
 
 ### Технический подход
@@ -125,11 +127,21 @@
 
 Снимок показывает наличие 4xx/5xx, но не доказывает, что они вызвали провалы RPS. Nginx пишет access log после завершения запроса, поэтому таймаут k6 не обязан немедленно появиться в Kibana.
 
-Предыдущая [калибровка ресурсов](../../docs/performance/kubernetes-resource-calibration.md) описывает **другой** интервал: приблизительно 255 RPS в среднем и 302 RPS на пике по `nginx_vts_server_requests_total`, а также CPU usage и throttling контейнеров. Эти показатели нельзя объединять с ноябрьскими скриншотами как один прогон. Новый Grafana снимок показывает, что ресурсы стенда в рассматриваемых интервалах не были полностью исчерпаны; однако отдельные очереди PHP-FPM и ранее замеченный throttling требуют проверки по времени и Pod. Причина ограничения дальнейшего роста RPS не установлена. На наблюдение могли влиять Windows/WSL2, конкурирующие процессы, сеть или отдельные компоненты приложения; **1400 RPS не является доказанным максимумом приложения**.
+#### Дополнительный прогон с повышенной конкурентной нагрузкой
+
+При анализе Go-прокси был обнаружен исходный лимит TCP-соединений `maxConnections = 32`. Для последующих нагрузочных тестов лимит увеличили. После этого и увеличения числа виртуальных пользователей (VU) в k6 наблюдался Gateway throughput порядка **1500 завершённых запросов/с**. Точное новое значение лимита, число VU и итоговый k6 summary в доступных материалах не зафиксированы. Поэтому нельзя количественно отделить влияние лимита от изменения нагрузки или приписать весь прирост одному изменению.
+
+На дополнительном снимке Kibana за **4 ноября 2026 года, около 23:05–23:08** график `api-gateway RPS` показывает большую часть установившегося интервала примерно **1300–1500 access-записей/с** с отдельными пиками около **1600/с** и краткими провалами. Это частота *завершённых* запросов по Gateway-логам, а не заданная k6 интенсивность поступления запросов и не среднее значение за весь прогон. Панель `latency distribution` показывает **194 060 записей** в выбранном окне и распределение `request_time` с заметным хвостом до нескольких секунд; `max latency` показывает отдельные максимумы примерно до **6–7 секунд**. Число около **4000** на оси `latency distribution` означает **количество записей в интервале длительности запроса**. Это не 4000 RPS, не RPM и не количество одновременных запросов. По снимку также нельзя определить точную долю ошибок или p95/p99 k6.
+
+![Task 11: Kibana, дополнительный нагрузочный интервал 4 ноября, Gateway RPS и распределение latency](images/task-11-kibana-high-load-2026-11-04.png)
+
+По наблюдениям дополнительного прогона увеличение VU сопровождалось ростом задержек без пропорционального роста завершённых запросов/с — **признаки насыщения стенда**. Снимок подтверждает плато throughput и наличие медленных запросов; точную зависимость latency от числа VU без сохранённой временной серии k6 определить нельзя. Конкретный ограничивающий компонент не установлен.
+
+Предыдущая [калибровка ресурсов](../../docs/performance/kubernetes-resource-calibration.md) описывает **другой** интервал: приблизительно 255 RPS в среднем и 302 RPS на пике по `nginx_vts_server_requests_total`, а также CPU usage и throttling контейнеров. Эти показатели нельзя объединять с ноябрьскими скриншотами как один прогон. Более ранний Grafana снимок показывает, что ресурсы стенда в его интервалах не были полностью исчерпаны; это не опровергает признаки насыщения в дополнительном прогоне 4 ноября. Отдельные очереди PHP-FPM и ранее замеченный throttling требуют проверки по времени и Pod. Причина ограничения дальнейшего роста RPS не установлена. На наблюдение могли влиять Windows/WSL2, конкурирующие процессы, сеть или отдельные компоненты приложения. **Около 1500 RPS — достигнутая в наблюдаемом интервале пропускная способность, а не доказанный устойчивый максимум приложения.**
 
 ### Следующая задача: Performance Bottleneck Investigation
 
-Отдельным этапом нужно исследовать загрузку и очереди PHP-FPM и RoadRunner gRPC, CPU throttling и pressure, ограничения контейнеров, сетевые задержки и инфраструктуру WSL2. Следует синхронно сопоставить RPS, latency, 4xx/5xx, очереди и использование ресурсов, сохранить k6 summary и историю решений уже реализованного HPA для количественной оценки scale-up/scale-down. Затем повторить тот же профиль на выделенном Linux-стенде без Windows/WSL2. Это направления исследования, а не реализация HPA или логирования: обе системы уже входят в Task 11.
+Для дальнейшего повышения производительности отдельным этапом нужно определить ограничивающие компоненты: исследовать загрузку и очереди PHP-FPM и RoadRunner gRPC, CPU throttling и pressure, лимиты и соединения Go-прокси, ограничения контейнеров, сетевые задержки и инфраструктуру WSL2. Следует синхронно сопоставить RPS, latency, 4xx/5xx, число VU, очереди и использование ресурсов, сохранить k6 summary и историю решений уже реализованного HPA для количественной оценки scale-up/scale-down. Затем повторить тот же профиль на выделенном Linux-стенде без Windows/WSL2. Это направления отдельного исследования; текущий отчёт и реализация HPA/логирования завершены.
 
 ### Примечания
 
@@ -141,7 +153,7 @@
 
 ### Status
 
-**Documentation complete.** HPA for the three HTTP services and centralized HTTP log analysis were implemented in Task 11. The configuration and observed load intervals are recorded below. A comparable one-Pod versus multi-Pod k6 report and HPA decision history were not saved, so the quantitative scaling benefit remains unverified.
+**Implementation and final report complete, subject to measurement limits.** HPA for the three HTTP services and centralized HTTP log analysis were implemented in Task 11. The observed load intervals include an additional run with more k6 VUs and approximately 1,500 completed Gateway requests/s. A comparable one-Pod versus multi-Pod k6 report and HPA decision history were not saved, so the quantitative scaling benefit remains unverified.
 
 ### Title
 
@@ -170,7 +182,7 @@ Demonstrate that adding Auth, Catalog, or Cart Pods increases the capacity of th
 - All Auth replicas use the same JWT key pair and required secrets; newly created Pods do not regenerate keys. Stateful admin sessions and JWT requests work across replicas.
 - Catalog HTTP, gRPC, and workers run independently without changing queue or indexing behavior.
 - Prometheus exposes separate PHP-FPM metrics per Pod without multiplying shared Symfony metrics.
-- Three independent Kubernetes Grafana dashboards are available: the primary Kubernetes dashboard, a port of the original Docker dashboard, and a combined dashboard without redundant panels. Service selection supports Auth/Catalog/Cart and All. The primary dashboard provides PHP-FPM active/idle processes and listen queue per Pod; service-level queue `SUM` and `MAX`; CPU/RAM per Pod and service; active and ready Pod counts; and Pod-count history. Additional panels show the Top 15 Pods by CPU and memory usage relative to limits by service, Pod, and service/container.
+- Three independent Kubernetes Grafana dashboards are available: the primary Kubernetes dashboard, a port of the original Docker dashboard, and a combined dashboard without redundant panels. Service selection supports Auth/Catalog/Cart and All. The primary dashboard provides PHP-FPM active/idle processes and listen queue per Pod; service-level queue `SUM` and `MAX`; CPU/RAM per Pod and service; active and ready Pod counts; and Pod-count history. Additional panels show CPU by Pod with all matching Pods by default or an optional Top 15, and memory usage relative to limits by service, Pod, and service/container.
 - Manual scaling and HPA are verified under existing k6 workloads, with performance and readiness results recorded.
 
 ### Technical Approach
@@ -223,11 +235,21 @@ The saved Kibana capture for **1 November 2026, 18:31–18:44** shows roughly **
 
 The capture does not establish that the visible errors caused the RPS dips. Nginx writes an access record only when a request finishes, so a k6 timeout may not immediately appear in Kibana.
 
-The earlier [resource calibration](../../docs/performance/kubernetes-resource-calibration.md) covers a **different** interval: approximately 255 average and 302 peak RPS from `nginx_vts_server_requests_total`, plus container CPU usage and throttling. These measurements must not be merged with the November screenshots as one run. The newer Grafana capture indicates that the test environment's resources were not fully exhausted in the observed intervals, while per-Pod queues and previously observed throttling warrant time-aligned inspection. The factor limiting further RPS growth is unknown. Windows/WSL2, competing processes, networking, or an application component may contribute. **1,400 RPS is not an established application maximum.**
+#### Additional run with higher concurrency
+
+Analysis of the Go proxy found an initial TCP connection limit of `maxConnections = 32`. The limit was increased for subsequent load tests. After that change and an increase in k6 virtual users (VUs), observed Gateway throughput reached approximately **1,500 completed requests/s**. The exact new limit, VU count, and final k6 summary are not preserved in the available material. The contribution of the limit change therefore cannot be separated quantitatively from the increased workload or other conditions.
+
+In the additional Kibana capture for **4 November 2026, approximately 23:05–23:08**, `api-gateway RPS` sits around **1,300–1,500 access records/s** for much of the steady interval, with isolated peaks near **1,600/s** and brief dips. This measures *completed* Gateway requests in the access log, not the offered k6 arrival rate or the whole-run average. `latency distribution` contains **194,060 records** in the selected window and shows a `request_time` tail lasting several seconds; `max latency` shows individual maxima of roughly **6–7 seconds**. A value around **4,000** on the `latency distribution` axis is the **number of records in a request-duration bucket**. It is not 4,000 RPS, RPM, or concurrent requests. The capture also does not establish the exact error rate or k6 p95/p99.
+
+![Task 11 Kibana: additional 4 November load interval, Gateway RPS, and latency distribution](images/task-11-kibana-high-load-2026-11-04.png)
+
+In the additional run, increasing VUs was observed to increase latency without a proportional rise in completed requests/s: **signs of test-environment saturation**. The capture supports a throughput plateau and slow-request tail; without a saved k6 time series, it cannot quantify latency against VU count. No specific limiting component has been established.
+
+The earlier [resource calibration](../../docs/performance/kubernetes-resource-calibration.md) covers a **different** interval: approximately 255 average and 302 peak RPS from `nginx_vts_server_requests_total`, plus container CPU usage and throttling. These measurements must not be merged with the November screenshots as one run. The earlier Grafana capture indicates that the test environment's resources were not fully exhausted in its intervals; this does not contradict signs of saturation in the additional 4 November run. Per-Pod queues and previously observed throttling still require time-aligned inspection. The factor limiting further RPS growth is unknown. Windows/WSL2, competing processes, networking, or an application component may contribute. **Approximately 1,500 RPS is the throughput reached in the observed interval, not a demonstrated sustainable application maximum.**
 
 ### Next task: Performance Bottleneck Investigation
 
-In a separate task, inspect PHP-FPM and RoadRunner gRPC utilization and queues, CPU throttling and pressure, container limits, network delays, and WSL2 infrastructure. Correlate RPS, latency, 4xx/5xx, queues, and resource usage in the same time window; save the k6 summary and decision history of the already implemented HPA to quantify scale-up/down. Repeat the same workload on a dedicated Linux host without Windows/WSL2. These are future investigations; HPA and logging implementation belong to Task 11.
+Further performance gains require a separate investigation of the limiting components: inspect PHP-FPM and RoadRunner gRPC utilization and queues, CPU throttling and pressure, Go proxy connection limits, container limits, network delays, and WSL2 infrastructure. Correlate RPS, latency, 4xx/5xx, VUs, queues, and resource use in the same time window; save the k6 summary and decision history of the existing HPA to quantify scale-up/down. Repeat the same workload on a dedicated Linux host without Windows/WSL2. These are future investigations; the current report and HPA/logging implementation are complete.
 
 ### Notes
 
