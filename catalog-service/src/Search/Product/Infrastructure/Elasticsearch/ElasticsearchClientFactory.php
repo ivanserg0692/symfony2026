@@ -4,7 +4,6 @@ namespace App\Search\Product\Infrastructure\Elasticsearch;
 
 use Elastic\Elasticsearch\Client;
 use Elastic\Elasticsearch\ClientBuilder;
-use Elastic\Transport\Client\Curl;
 
 final readonly class ElasticsearchClientFactory
 {
@@ -28,8 +27,7 @@ final readonly class ElasticsearchClientFactory
 
         $builder = ClientBuilder::create()
             ->setHosts([$this->elasticsearchUrl])
-            ->setHttpClient(new Curl())
-            ->setHttpClientOptions([CURLOPT_SHARE => $share]);
+            ->setHttpClient(new ElasticsearchCurlClient([CURLOPT_SHARE => $share]));
 
         if ($this->elasticsearchUsername !== "") {
             $builder->setBasicAuthentication($this->elasticsearchUsername, $this->elasticsearchPassword);

@@ -20,14 +20,14 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
  * VU 1   → load-user-001@test.local
  * VU 2   → load-user-002@test.local
  * ...
- * VU 100 → load-user-100@test.local
+ * VU 10000 → load-user-10000@test.local
  *
  * Это позволяет каждому Virtual User использовать собственную корзину, собственные заказы
  * и собственную пользовательскую сессию без конфликтов.
  */
 class LoadTestUsersFixture extends Fixture implements DependentFixtureInterface
 {
-    private const USER_COUNT = 1000;
+    private const USER_COUNT = 10000;
     private const EMAIL_TEMPLATE = 'load-user-%03d@test.local';
     private const MAX_GROUPS_PER_USER = 3;
 

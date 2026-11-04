@@ -1,0 +1,96 @@
+{{- if .Values.prometheusAdapter.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: prometheus-adapter-config, namespace: monitoring}
+data:
+  config.yaml: |
+    rules:
+      - seriesQuery: 'phpfpm_listen_queue{job="php-fpm-pods",namespace!="",pod!="",service=~"auth|catalog|cart"}'
+        resources:
+          overrides:
+            namespace: {resource: namespace}
+            pod: {resource: pod}
+        name:
+          matches: '^phpfpm_listen_queue$'
+          as: phpfpm_listen_queue
+        metricsQuery: 'max by (<<.GroupBy>>) (max_over_time(phpfpm_listen_queue{<<.LabelMatchers>>,job="php-fpm-pods",service=~"auth|catalog|cart"}[30s]))'
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: prometheus-adapter, namespace: monitoring}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata: {name: symfony2026-prometheus-adapter}
+rules:
+  - apiGroups: ['']
+    resources: [namespaces, pods]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: {name: symfony2026-prometheus-adapter}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: symfony2026-prometheus-adapter}
+subjects: [{kind: ServiceAccount, name: prometheus-adapter, namespace: monitoring}]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: {name: symfony2026-prometheus-adapter-auth-delegator}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: 'system:auth-delegator'}
+subjects: [{kind: ServiceAccount, name: prometheus-adapter, namespace: monitoring}]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: symfony2026-prometheus-adapter-auth-reader, namespace: kube-system}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: extension-apiserver-authentication-reader}
+subjects: [{kind: ServiceAccount, name: prometheus-adapter, namespace: monitoring}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: prometheus-adapter, namespace: monitoring}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: prometheus-adapter}}
+  template:
+    metadata: {labels: {app: prometheus-adapter}}
+    spec:
+      serviceAccountName: prometheus-adapter
+      containers:
+        - name: adapter
+          image: {{ .Values.prometheusAdapter.image }}
+          args:
+            - --config=/etc/adapter/config.yaml
+            - --prometheus-url=http://prometheus.monitoring.svc.cluster.local:9090/
+            - --metrics-relist-interval=1m
+            - --cert-dir=/var/run/serving-cert
+            - --secure-port=6443
+          ports: [{name: https, containerPort: 6443}]
+          readinessProbe: {httpGet: {path: /readyz, port: https, scheme: HTTPS}, initialDelaySeconds: 30, periodSeconds: 5}
+          livenessProbe: {httpGet: {path: /livez, port: https, scheme: HTTPS}, initialDelaySeconds: 30, periodSeconds: 10}
+          resources:
+{{ toYaml (index .Values.resources "prometheus-adapter" "adapter") | indent 12 }}
+          volumeMounts:
+            - {name: config, mountPath: /etc/adapter, readOnly: true}
+            - {name: serving-cert, mountPath: /var/run/serving-cert}
+      volumes:
+        - {name: config, configMap: {name: prometheus-adapter-config}}
+        - {name: serving-cert, emptyDir: {}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: prometheus-adapter, namespace: monitoring}
+spec:
+  selector: {app: prometheus-adapter}
+  ports: [{name: https, port: 443, targetPort: https}]
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata: {name: v1beta1.custom.metrics.k8s.io}
+spec:
+  group: custom.metrics.k8s.io
+  version: v1beta1
+  groupPriorityMinimum: 100
+  versionPriority: 100
+  service: {name: prometheus-adapter, namespace: monitoring, port: 443}
+  insecureSkipTLSVerify: true
+{{- end }}

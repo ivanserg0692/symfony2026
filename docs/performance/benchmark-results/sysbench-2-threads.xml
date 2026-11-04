@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<!--Phoronix Test Suite v10.8.6-->
+<PhoronixTestSuite>
+  <Generated>
+    <Title>cpu-test-with2-threads</Title>
+    <LastModified>2026-10-05 04:08:54</LastModified>
+    <TestClient>Phoronix Test Suite v10.8.6</TestClient>
+    <Description>wsl testing on Ubuntu 22.04 via the Phoronix Test Suite.</Description>
+  </Generated>
+  <System>
+    <Identifier>wsl test</Identifier>
+    <Hardware>Processor: Intel Core i9-13900KF (16 Cores / 32 Threads), Memory: 32GB, Disk: Virtual Disk + 0GB Virtual Disk + 9GB Virtual Disk + 1100GB Virtual Disk, Graphics: NVIDIA GeForce RTX 4090 24GB</Hardware>
+    <Software>OS: Ubuntu 22.04, Kernel: 6.18.40.1-microsoft-standard-WSL2 (x86_64), Display Server: Wayland, File-System: ext4, System Layer: wsl</Software>
+    <User>user</User>
+    <TimeStamp>2026-10-05 03:37:47</TimeStamp>
+    <TestClientVersion>10.8.6</TestClientVersion>
+    <Notes></Notes>
+    <JSON>{"cpu-microcode":"0xffffffff","kernel-extra-details":"Transparent Huge Pages: madvise","environment-variables":"NVM_CD_FLAGS=","security":"gather_data_sampling: Not affected + ghostwrite: Not affected + indirect_target_selection: Not affected + itlb_multihit: Not affected + l1tf: Not affected + mds: Not affected + meltdown: Not affected + mmio_stale_data: Not affected + old_microcode: Not affected + reg_file_data_sampling: Mitigation of Clear Register File + retbleed: Mitigation of Enhanced IBRS + spec_rstack_overflow: Not affected + spec_store_bypass: Mitigation of SSB disabled via prctl + spectre_v1: Mitigation of usercopy\/swapgs barriers and __user pointer sanitization + spectre_v2: Mitigation of Enhanced \/ Automatic IBRS; IBPB: conditional; PBRSB-eIBRS: SW sequence; BHI: BHI_DIS_S + srbds: Not affected + tsa: Not affected + tsx_async_abort: Not affected + vmscape: Not affected"}</JSON>
+  </System>
+  <Result>
+    <Identifier>system/sysbench-1.0.0</Identifier>
+    <Title>Sysbench</Title>
+    <AppVersion></AppVersion>
+    <Arguments>memory run</Arguments>
+    <Description>Test: RAM / Memory</Description>
+    <Scale>MiB/sec</Scale>
+    <Proportion>HIB</Proportion>
+    <DisplayFormat>BAR_GRAPH</DisplayFormat>
+    <Data>
+      <Entry>
+        <Identifier>wsl test</Identifier>
+        <Value>4143.61</Value>
+        <RawString>4599.28:4308.67:4033.77:3642.98:3945.65:4429.72:4401.52:3799.51:4087.44:3558.98:4157.75:4164.91:4947.19:3927.39:4149.41</RawString>
+        <JSON>{"install-footnote":"sysbench 1.0.20 (using system LuaJIT 2.1.0-beta3)","test-run-times":"26.35:23.79:25.41:28.14:25.97:23.15:23.29:26.98:25.08:28.80:24.65:24.60:20.72:26.10:24.70"}</JSON>
+      </Entry>
+    </Data>
+  </Result>
+  <Result>
+    <Identifier>system/sysbench-1.0.0</Identifier>
+    <Title>Sysbench</Title>
+    <AppVersion></AppVersion>
+    <Arguments>cpu run</Arguments>
+    <Description>Test: CPU</Description>
+    <Scale>Events Per Second</Scale>
+    <Proportion>HIB</Proportion>
+    <DisplayFormat>BAR_GRAPH</DisplayFormat>
+    <Data>
+      <Entry>
+        <Identifier>wsl test</Identifier>
+        <Value>3367.69</Value>
+        <RawString>3660.39:3229.58:3096.87:3487.84:3131.55:3246.45:3648.95:3329.11:3624.12:3375.33:3312.31:3537.68:3425.22:3478.07:2931.93</RawString>
+        <JSON>{"install-footnote":"sysbench 1.0.20 (using system LuaJIT 2.1.0-beta3)","test-run-times":"90.03:90.03:90.03:90.02:90.03:90.03:90.03:90.03:90.03:90.03:90.03:90.02:90.03:90.03:90.03"}</JSON>
+      </Entry>
+    </Data>
+  </Result>
+</PhoronixTestSuite>

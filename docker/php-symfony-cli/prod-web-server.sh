@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Runs inside the PHP HTTP container as symfony-prod-server. Kubernetes images
+# invoke it via CMD, including in prod and test-load; Compose web services also
+# use it. It configures and starts PHP-FPM and Nginx.
 set -euo pipefail
 
 require_positive_integer() {
@@ -32,16 +35,33 @@ else
     fastcgi_keepalive_directive='# FastCGI keepalive is disabled because the calculated cache size is 0.'
 fi
 
+# The prod Dockerfile saves the Nginx package's nginx.conf as this template.
 sed -E \
     "s/^worker_processes[[:space:]]+[^;]+;/worker_processes ${nginx_worker_count};/" \
     /etc/nginx/nginx.conf.template \
     > /etc/nginx/nginx.conf
 
+# The prod Dockerfile copies docker/php-symfony-cli/nginx-prod.conf to this template.
 sed \
     "s/__FASTCGI_KEEPALIVE_DIRECTIVE__/${fastcgi_keepalive_directive}/" \
     /etc/nginx/sites-available/default.template \
     > /etc/nginx/sites-available/default
 
+if [[ "${K8S_ENVIRONMENT:-}" == prod || "${K8S_ENVIRONMENT:-}" == load-test ]]; then
+    # The file is included inside nginx's http block. Only Kubernetes emits
+    # this compact access record; Compose keeps its existing Nginx logging.
+    nginx_site="$(mktemp)"
+    {
+        cat <<'NGINX_LOG_FORMAT'
+log_format k8s_request escape=json '{"nginx_time":"$time_iso8601","request_id":"$http_x_request_id","request_uri":"$request_uri","http":{"request":{"method":"$request_method"},"response":{"status_code":$status}},"request_time":$request_time,"upstream_addr":"$upstream_addr","upstream_connect_time":"$upstream_connect_time","upstream_header_time":"$upstream_header_time","upstream_response_time":"$upstream_response_time"}';
+NGINX_LOG_FORMAT
+        sed '/^[[:space:]]*server[[:space:]]*{/a\    access_log /dev/stdout k8s_request;' /etc/nginx/sites-available/default
+    } > "$nginx_site"
+    cat "$nginx_site" > /etc/nginx/sites-available/default
+    rm -f "$nginx_site"
+fi
+
+# The prod Dockerfile copies docker/php-symfony-cli/php-fpm-prod.conf to this template.
 sed \
     "s/__PHP_FPM_MAX_CHILDREN__/${PHP_FPM_MAX_CHILDREN}/" \
     /usr/local/etc/php-fpm.d/zz-prod.conf.template \

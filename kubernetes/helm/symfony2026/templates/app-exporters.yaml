@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: database-exporter, namespace: {{ .Release.Namespace }}}
+spec:
+  replicas: {{ index .Values.replicas "database-exporter" }}
+  selector: {matchLabels: {app: database-exporter}}
+  template:
+    metadata: {labels: {app: database-exporter}}
+    spec:
+      initContainers:
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec, 'until pg_isready -h database -p 5432; do sleep 5; done']
+      containers:
+        - name: exporter
+          image: prometheuscommunity/postgres-exporter:latest
+          env:
+            - {name: DATA_SOURCE_URI, valueFrom: {configMapKeyRef: {name: db-exporter-config, key: AUTH_DB_URI}}}
+            - {name: DATA_SOURCE_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_USER}}}
+            - {name: DATA_SOURCE_PASS, valueFrom: {secretKeyRef: {name: infra-config-secret, key: POSTGRES_PASSWORD}}}
+          ports: [{name: metrics, containerPort: 9187}]
+          resources:
+{{ toYaml (index .Values.resources "database-exporter" "exporter") | indent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: database-exporter, namespace: {{ .Release.Namespace }}}
+spec: {selector: {app: database-exporter}, ports: [{name: metrics, port: 9187}]}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: catalog-db-exporter, namespace: {{ .Release.Namespace }}}
+spec:
+  replicas: {{ index .Values.replicas "catalog-db-exporter" }}
+  selector: {matchLabels: {app: catalog-db-exporter}}
+  template:
+    metadata: {labels: {app: catalog-db-exporter}}
+    spec:
+      initContainers:
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec, 'until pg_isready -h catalog-db -p 5432; do sleep 5; done']
+      containers:
+        - name: exporter
+          image: prometheuscommunity/postgres-exporter:latest
+          env:
+            - {name: DATA_SOURCE_URI, valueFrom: {configMapKeyRef: {name: db-exporter-config, key: CATALOG_DB_URI}}}
+            - {name: DATA_SOURCE_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_USER}}}
+            - {name: DATA_SOURCE_PASS, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CATALOG_POSTGRES_PASSWORD}}}
+          ports: [{name: metrics, containerPort: 9187}]
+          resources:
+{{ toYaml (index .Values.resources "catalog-db-exporter" "exporter") | indent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: catalog-db-exporter, namespace: {{ .Release.Namespace }}}
+spec: {selector: {app: catalog-db-exporter}, ports: [{name: metrics, port: 9187}]}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: cart-db-exporter, namespace: {{ .Release.Namespace }}}
+spec:
+  replicas: {{ index .Values.replicas "cart-db-exporter" }}
+  selector: {matchLabels: {app: cart-db-exporter}}
+  template:
+    metadata: {labels: {app: cart-db-exporter}}
+    spec:
+      initContainers:
+        - name: wait-database
+          image: postgres:16-alpine
+          command: [sh, -ec, 'until pg_isready -h cart-db -p 5432; do sleep 5; done']
+      containers:
+        - name: exporter
+          image: prometheuscommunity/postgres-exporter:latest
+          env:
+            - {name: DATA_SOURCE_URI, valueFrom: {configMapKeyRef: {name: db-exporter-config, key: CART_DB_URI}}}
+            - {name: DATA_SOURCE_USER, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_USER}}}
+            - {name: DATA_SOURCE_PASS, valueFrom: {secretKeyRef: {name: infra-config-secret, key: CART_POSTGRES_PASSWORD}}}
+          ports: [{name: metrics, containerPort: 9187}]
+          resources:
+{{ toYaml (index .Values.resources "cart-db-exporter" "exporter") | indent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: cart-db-exporter, namespace: {{ .Release.Namespace }}}
+spec: {selector: {app: cart-db-exporter}, ports: [{name: metrics, port: 9187}]}
