@@ -84,7 +84,7 @@
 - Backend и frontend остаются отдельными репозиториями. Frontend не обращается напрямую к базам данных, Elasticsearch или внутреннему gRPC.
 - Недостающие API-возможности и изменения контрактов согласуются отдельно; задача не предполагает их незаметного добавления.
 - Платёжные интеграции, доставка и административный интерфейс не входят в базовый объём задачи.
-- Backend Merge Request 12: TBD.
+- Backend Merge Request 12: <https://github.com/ivanserg0692/symfony2026/pull/16>.
 - Frontend Merge Request 12: TBD.
 - MR-логи: [EN](mr-task-12-en.md), [RU](mr-task-12-ru.md).
 
@@ -148,6 +148,6 @@ Create a consistent responsive interface where customers can find a product, ins
 - Backend and frontend remain separate repositories. The frontend does not access databases, Elasticsearch, or internal gRPC directly.
 - Missing API capabilities and contract changes require separate agreement; the task does not implicitly add them.
 - Payment integrations, shipping, and an administration interface are outside the base scope.
-- Backend Merge Request 12: TBD.
+- Backend Merge Request 12: <https://github.com/ivanserg0692/symfony2026/pull/16>.
 - Frontend Merge Request 12: TBD.
 - MR logs: [EN](mr-task-12-en.md), [RU](mr-task-12-ru.md).

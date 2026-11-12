@@ -567,7 +567,7 @@ The notification recipients are administrators resolved by the application, not 
 #### `Task 12`: Online store frontend development - planned
 
 - Brief info: Develop the online store UI with Next.js, React, and Refine in the separate [frontend repository](https://github.com/ivanserg0692/symfony2026-frontend), integrating the existing Symfony API and supporting light and dark themes. Only task documentation is prepared at this stage.
-- Backend Merge Request 12: TBD
+- Backend Merge Request 12: <https://github.com/ivanserg0692/symfony2026/pull/16>
 - Frontend Merge Request 12: TBD
 - Task file: [symfony/docs/task-12.md](symfony/docs/task-12.md)
 - MR result (EN): [symfony/docs/mr-task-12-en.md](symfony/docs/mr-task-12-en.md)
@@ -1506,7 +1506,7 @@ docker compose down
 #### `Task 12`: Разработка фронтенда интернет-магазина - planned
 
 - Brief info: Разработать пользовательский интерфейс интернет-магазина на Next.js, React и Refine в отдельном [репозитории фронтенда](https://github.com/ivanserg0692/symfony2026-frontend), с интеграцией существующего Symfony API и поддержкой светлой и тёмной тем. На текущем этапе подготовлена только документация задачи.
-- Backend Merge Request 12: TBD
+- Backend Merge Request 12: <https://github.com/ivanserg0692/symfony2026/pull/16>
 - Frontend Merge Request 12: TBD
 - Файл задачи: [symfony/docs/task-12.md](symfony/docs/task-12.md)
 - Результат MR (EN): [symfony/docs/mr-task-12-en.md](symfony/docs/mr-task-12-en.md)

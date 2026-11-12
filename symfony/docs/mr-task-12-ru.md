@@ -14,7 +14,7 @@
 
 ## Обзор
 
-Backend Merge Request 12: TBD
+Backend Merge Request 12: <https://github.com/ivanserg0692/symfony2026/pull/16>
 
 Frontend Merge Request 12: TBD
 
