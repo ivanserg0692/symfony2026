@@ -37,6 +37,7 @@
     - [`Task 9`: Application performance optimization, RPS improvement, and PHP environment tuning - completed](#task-9-application-performance-optimization-rps-improvement-and-php-environment-tuning---completed)
     - [`Task 10`: Elasticsearch catalog read model for search, filtering, aggregations, and presets - done](#task-10-elasticsearch-catalog-read-model-for-search-filtering-aggregations-and-presets---done)
     - [`Task 11`: Kubernetes load testing and monitoring - documented](#task-11-kubernetes-load-testing-and-monitoring---documented)
+    - [`Task 12`: Online store frontend development - planned](#task-12-online-store-frontend-development---planned)
     - [Frontend Application](#frontend-application)
     - [Frontend Screenshots](#frontend-screenshots)
   - [Elasticsearch Catalog Indexing](#elasticsearch-catalog-indexing)
@@ -91,6 +92,7 @@
     - [`Task 9`: Оптимизация производительности приложения, повышение RPS и настройка PHP-окружения - completed](#task-9-%D0%BE%D0%BF%D1%82%D0%B8%D0%BC%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D0%BF%D1%80%D0%BE%D0%B8%D0%B7%D0%B2%D0%BE%D0%B4%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BF%D0%BE%D0%B2%D1%8B%D1%88%D0%B5%D0%BD%D0%B8%D0%B5-rps-%D0%B8-%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-php-%D0%BE%D0%BA%D1%80%D1%83%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F---completed)
     - [`Task 10`: Elasticsearch read-модель каталога для поиска, фильтрации, агрегаций и пресетов - done](#task-10-elasticsearch-read-%D0%BC%D0%BE%D0%B4%D0%B5%D0%BB%D1%8C-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B4%D0%BB%D1%8F-%D0%BF%D0%BE%D0%B8%D1%81%D0%BA%D0%B0-%D1%84%D0%B8%D0%BB%D1%8C%D1%82%D1%80%D0%B0%D1%86%D0%B8%D0%B8-%D0%B0%D0%B3%D1%80%D0%B5%D0%B3%D0%B0%D1%86%D0%B8%D0%B9-%D0%B8-%D0%BF%D1%80%D0%B5%D1%81%D0%B5%D1%82%D0%BE%D0%B2---done)
     - [`Task 11`: Нагрузочное тестирование и мониторинг Kubernetes — документирование завершено](#task-11-%D0%BD%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D1%87%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B8-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-kubernetes--%D0%B4%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B7%D0%B0%D0%B2%D0%B5%D1%80%D1%88%D0%B5%D0%BD%D0%BE)
+    - [`Task 12`: Разработка фронтенда интернет-магазина - planned](#task-12-%D1%80%D0%B0%D0%B7%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0-%D1%84%D1%80%D0%BE%D0%BD%D1%82%D0%B5%D0%BD%D0%B4%D0%B0-%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0---planned)
     - [Frontend-приложение](#frontend-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5)
     - [Скриншоты frontend](#%D1%81%D0%BA%D1%80%D0%B8%D0%BD%D1%88%D0%BE%D1%82%D1%8B-frontend)
   - [Индексация каталога в Elasticsearch](#%D0%B8%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0%D1%86%D0%B8%D1%8F-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B0-%D0%B2-elasticsearch)
@@ -561,6 +563,15 @@ The notification recipients are administrators resolved by the application, not 
 - Task file: [symfony/docs/task-11.md](symfony/docs/task-11.md)
 - MR result (EN): [symfony/docs/mr-task-11-en.md](symfony/docs/mr-task-11-en.md)
 - MR result (RU): [symfony/docs/mr-task-11-ru.md](symfony/docs/mr-task-11-ru.md)
+
+#### `Task 12`: Online store frontend development - planned
+
+- Brief info: Develop the online store UI with Next.js, React, and Refine in the separate [frontend repository](https://github.com/ivanserg0692/symfony2026-frontend), integrating the existing Symfony API and supporting light and dark themes. Only task documentation is prepared at this stage.
+- Backend Merge Request 12: TBD
+- Frontend Merge Request 12: TBD
+- Task file: [symfony/docs/task-12.md](symfony/docs/task-12.md)
+- MR result (EN): [symfony/docs/mr-task-12-en.md](symfony/docs/mr-task-12-en.md)
+- MR result (RU): [symfony/docs/mr-task-12-ru.md](symfony/docs/mr-task-12-ru.md)
 
 #### Frontend Application
 A separate frontend application was developed with React and Refine:
@@ -1491,6 +1502,15 @@ docker compose down
 - Файл задачи: [symfony/docs/task-11.md](symfony/docs/task-11.md)
 - Результат MR (EN): [symfony/docs/mr-task-11-en.md](symfony/docs/mr-task-11-en.md)
 - Результат MR (RU): [symfony/docs/mr-task-11-ru.md](symfony/docs/mr-task-11-ru.md)
+
+#### `Task 12`: Разработка фронтенда интернет-магазина - planned
+
+- Brief info: Разработать пользовательский интерфейс интернет-магазина на Next.js, React и Refine в отдельном [репозитории фронтенда](https://github.com/ivanserg0692/symfony2026-frontend), с интеграцией существующего Symfony API и поддержкой светлой и тёмной тем. На текущем этапе подготовлена только документация задачи.
+- Backend Merge Request 12: TBD
+- Frontend Merge Request 12: TBD
+- Файл задачи: [symfony/docs/task-12.md](symfony/docs/task-12.md)
+- Результат MR (EN): [symfony/docs/mr-task-12-en.md](symfony/docs/mr-task-12-en.md)
+- Результат MR (RU): [symfony/docs/mr-task-12-ru.md](symfony/docs/mr-task-12-ru.md)
 
 #### Frontend-приложение
 Отдельное frontend-приложение разработано на React и Refine:
