@@ -39,6 +39,7 @@
     "docs:plantuml": "node scripts/render-plantuml.mjs README.md kubernetes/README.md symfony/docs"
   },
   "devDependencies": {
-    "doctoc": "^2.4.1"
+    "doctoc": "^2.4.1",
+    "sharp": "^0.35.5"
   }
 }
