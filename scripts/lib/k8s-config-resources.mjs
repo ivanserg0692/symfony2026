@@ -162,6 +162,11 @@ function catalogConfigData({ auth, catalog }, common) {
     CATALOG_READ_MODEL: catalog.CATALOG_READ_MODEL || 'doctrine',
     CATALOG_PAGINATION_USE_HAS_NEXT_PAGE: catalog.CATALOG_PAGINATION_USE_HAS_NEXT_PAGE || 'false',
     CATALOG_SECTIONS_CACHE_TTL_SECONDS: catalog.CATALOG_SECTIONS_CACHE_TTL_SECONDS || '600',
+    MINIO_ENDPOINT: catalog.MINIO_ENDPOINT || 'http://minio:9000',
+    MINIO_REGION: catalog.MINIO_REGION || 'us-east-1',
+    CATALOG_MEDIA_BUCKET: catalog.CATALOG_MEDIA_BUCKET || 'catalog-media',
+    CATALOG_MEDIA_SOURCE_BUCKET: catalog.CATALOG_MEDIA_SOURCE_BUCKET || 'catalog-media-sources',
+    CATALOG_MEDIA_PUBLIC_BASE_URL: catalog.CATALOG_MEDIA_PUBLIC_BASE_URL || 'http://localhost:8001/api/v1/catalog/media',
     ELASTICSEARCH_USERNAME: catalog.ELASTICSEARCH_USERNAME || 'elastic',
     PRODUCT_SEARCH_INDEX_PREFIX: catalog.PRODUCT_SEARCH_INDEX_PREFIX || 'products',
     PRODUCT_SEARCH_INDEX_ALIAS: catalog.PRODUCT_SEARCH_INDEX_ALIAS || 'products',
@@ -174,13 +179,15 @@ function catalogConfigData({ auth, catalog }, common) {
   };
 }
 
-function catalogSecret({ catalog }) {
+function catalogSecret({ catalog, minio }) {
   return secretManifest('catalog-config-secret', {
     APP_SECRET: required(catalog, 'APP_SECRET'),
     DATABASE_URL: required(catalog, 'DATABASE_URL'),
     ELASTICSEARCH_URL: catalog.ELASTICSEARCH_URL || 'http://elasticsearch:9200',
     ELASTICSEARCH_PASSWORD: required(catalog, 'ELASTICSEARCH_PASSWORD'),
     CATALOG_SEARCH_MESSENGER_TRANSPORT_DSN: required(catalog, 'CATALOG_SEARCH_MESSENGER_TRANSPORT_DSN'),
+    MINIO_ROOT_USER: required(minio, 'MINIO_ROOT_USER'),
+    MINIO_ROOT_PASSWORD: required(minio, 'MINIO_ROOT_PASSWORD'),
   });
 }
 
