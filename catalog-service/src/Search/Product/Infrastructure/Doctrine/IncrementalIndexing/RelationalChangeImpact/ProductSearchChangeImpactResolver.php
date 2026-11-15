@@ -20,7 +20,7 @@ final readonly class ProductSearchChangeImpactResolver extends AbstractProductSe
 
     protected function indexedFields(): array
     {
-        return ['name', 'createdAt', 'active', 'description', 'slug', 'pictureId'];
+        return ['name', 'createdAt', 'active', 'description', 'slug', 'picture'];
     }
 
     protected function doResolveEntityChange(object $entity, array $changeSet, bool $insertion): array

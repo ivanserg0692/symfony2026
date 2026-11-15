@@ -2,6 +2,7 @@
 
 namespace App\Search\Product\Infrastructure\Doctrine;
 
+use App\Search\Product\Infrastructure\CatalogResponseFactory;
 use App\Search\Product\Application\Dto\Read\CatalogElementResponse;
 use App\Search\Product\Application\Dto\Read\CatalogListCriteria;
 use App\Search\Product\Application\Dto\Read\CatalogPage;
@@ -12,6 +13,7 @@ final readonly class DoctrineCatalogReader implements CatalogReadInterface
 {
     public function __construct(
         private CatalogElementsRepository $repository,
+        private CatalogResponseFactory $responses,
     ) {
     }
 
@@ -26,8 +28,9 @@ final readonly class DoctrineCatalogReader implements CatalogReadInterface
             $ids = array_slice($ids, 0, $criteria->limit);
         }
         $items = [];
-        foreach ($this->repository->findListByIds($ids) as $element) {
-            $items[] = CatalogElementResponse::fromEntity($element, false);
+        $elements = $this->repository->findListByIds($ids);
+        foreach ($elements as $element) {
+            $items[] = $this->responses->elementFromEntity($element, false);
         }
 
         return new CatalogPage(
@@ -41,6 +44,9 @@ final readonly class DoctrineCatalogReader implements CatalogReadInterface
     {
         $element = $this->repository->findOneForPublicApi($id);
 
-        return $element === null ? null : CatalogElementResponse::fromEntity($element, true);
+        if ($element === null) {
+            return null;
+        }
+        return $this->responses->elementFromEntity($element, true);
     }
 }
