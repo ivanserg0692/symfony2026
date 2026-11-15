@@ -2,6 +2,8 @@
 
 namespace App\Tests\Unit\Search\Product\Infrastructure\Doctrine\IncrementalIndexing;
 
+use App\Search\Product\Infrastructure\Doctrine\IncrementalIndexing\RelationalChangeImpact\ProductSearchChangeImpactResolver;
+use App\Tests\Support\CatalogMediaFactory;
 use App\Entity\CatalogElements;
 use App\Entity\CatalogSections;
 use App\Entity\PriceType;
@@ -48,7 +50,7 @@ final class RelationalChangeImpactTest extends TestCase
             ->with($products)->willReturn([$first, $second]);
         $resolver = new CatalogSectionSearchChangeImpactResolver($sections, $elements);
 
-        foreach (['description', 'pictureId'] as $field) {
+        foreach (['description', 'picture'] as $field) {
             self::assertTrue($resolver->hasIndexedChanges([$field]));
             self::assertSame([10, 20], $resolver->resolveEntityChange($section, [$field => ['Old', null]], false));
         }
@@ -57,6 +59,20 @@ final class RelationalChangeImpactTest extends TestCase
         foreach (['name', 'slug', 'active', 'level', 'parent', 'leftMargin', 'rightMargin', 'sort'] as $field) {
             self::assertTrue($resolver->hasIndexedChanges([$field]));
         }
+    }
+
+    public function testProductPictureChangesResolveTheOwningCatalogElement(): void
+    {
+        $element = $this->element(10);
+        $product = $element->getProduct();
+        $elements = $this->createMock(CatalogElementsRepository::class);
+        $elements->expects(self::exactly(2))->method('findByProducts')->with([$product])->willReturn([$element]);
+        $resolver = new ProductSearchChangeImpactResolver($elements);
+        $old = CatalogMediaFactory::create('chair', 'Old');
+        $new = CatalogMediaFactory::create('chair', 'New');
+        self::assertTrue($resolver->hasIndexedChanges(['picture']));
+        self::assertSame([10], $resolver->resolveEntityChange($product, ['picture' => [$old, $new]], false));
+        self::assertSame([10], $resolver->resolveEntityChange($product, ['picture' => [$new, null]], false));
     }
 
     private function element(int $id): CatalogElements

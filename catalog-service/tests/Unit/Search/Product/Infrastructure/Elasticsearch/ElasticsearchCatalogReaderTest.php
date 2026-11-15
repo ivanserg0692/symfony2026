@@ -2,6 +2,10 @@
 
 namespace App\Tests\Unit\Search\Product\Infrastructure\Elasticsearch;
 
+use App\Media\Infrastructure\CatalogPictureResponseFactory;
+use App\Search\Product\Infrastructure\CatalogResponseFactory;
+use App\Search\Product\Application\Dto\Document\ProductSearchPicture;
+use App\Tests\Support\CatalogMediaFactory;
 use App\Search\Product\Application\Dto\Read\CatalogListCriteria;
 use App\Search\Product\Infrastructure\Elasticsearch\ElasticsearchCatalogReader;
 use App\Search\Product\Infrastructure\Elasticsearch\ProductSearchRepository;
@@ -165,6 +169,29 @@ final class ElasticsearchCatalogReaderTest extends TestCase
         $reader->findById(42);
     }
 
+    public function testPicturesComeFromDocumentsAndExcludeLookAheadHit(): void
+    {
+        $picture = ProductSearchPicture::fromEntity(
+            CatalogMediaFactory::create('chair', 'Product alt'),
+        )->toArray();
+        $hit = $this->hit(1);
+        $hit['_source']['picture'] = $picture;
+        $hit['_source']['sections'] = [[
+            'id' => 1, 'name' => 'Furniture', 'slug' => 'furniture', 'active' => true,
+            'description' => null, 'picture' => array_replace($picture, ['alt' => 'Section alt']),
+            'level' => 1, 'sort' => 1, 'parent_id' => null,
+        ]];
+        // The extra hit has no source; mapping it would fail.
+        $reader = $this->reader([fn () => $this->result([$hit, []])]);
+        $page = $reader->findPage(new CatalogListCriteria(null, null, 1, 1, true));
+        self::assertCount(1, $page->items);
+        self::assertSame('Product alt', $page->items[0]->picture->alt);
+        self::assertSame('Section alt', $page->items[0]->sections[0]->picture->alt);
+        self::assertSame($page->items[0]->picture->fullUrl, $page->items[0]->sections[0]->picture->fullUrl);
+        self::assertStringStartsWith('http://localhost:8001/api/v1/catalog/media/', $page->items[0]->picture->fullUrl);
+        self::assertTrue($page->hasNextPage);
+    }
+
     /** @param list<callable> $steps */
     private function reader(array $steps): ElasticsearchCatalogReader
     {
@@ -182,6 +209,7 @@ final class ElasticsearchCatalogReaderTest extends TestCase
                 new CatalogSearchGateway($client, "products"),
                 new CatalogSearchQueryBuilder(10000),
             ),
+            new CatalogResponseFactory(new CatalogPictureResponseFactory("http://localhost:8001/api/v1/catalog/media")),
         );
     }
 
@@ -193,8 +221,8 @@ final class ElasticsearchCatalogReaderTest extends TestCase
     private function hit(int $id): array
     {
         return ["_source" => [
-            "id" => $id, "name" => "Product", "active" => false, "description" => null,
-            "slug" => "product", "picture_id" => null, "sort" => 100,
+            "id" => $id, "product_id" => $id + 100, "name" => "Product", "active" => false, "description" => null,
+            "slug" => "product", "picture" => null, "sort" => 100,
             "prices" => [], "sections" => [], "total_stock" => 0,
         ]];
     }

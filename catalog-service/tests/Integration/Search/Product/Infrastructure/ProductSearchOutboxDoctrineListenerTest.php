@@ -2,6 +2,7 @@
 
 namespace App\Tests\Integration\Search\Product\Infrastructure;
 
+use App\Tests\Support\CatalogMediaFactory;
 use App\Entity\CatalogElements;
 use App\Entity\CatalogSections;
 use App\Entity\PriceType;
@@ -151,6 +152,30 @@ final class ProductSearchOutboxDoctrineListenerTest extends KernelTestCase
         $this->entityManager->flush();
 
         self::assertSame([$element->getId()], $this->outboxCatalogElementIds());
+    }
+
+    public function testPictureReplacementAndRemovalCreateOutboxForEveryAffectedProduct(): void
+    {
+        $first = $this->createElement('picture-first');
+        $second = $this->createElement('picture-second');
+        $section = (new CatalogSections())->setName('Section')->setSlug('picture-section')->setActive(true);
+        $this->entityManager->persist($section);
+        $first->addSection($section);
+        $second->addSection($section);
+        $this->entityManager->flush();
+        foreach (['Original', 'Replacement', null] as $alt) {
+            $this->clearOutbox();
+            $first->setPicture($alt === null ? null : CatalogMediaFactory::create('chair', $alt));
+            $this->entityManager->flush();
+            self::assertSame([$first->getId()], $this->outboxCatalogElementIds());
+
+            $this->clearOutbox();
+            $section->setPicture($alt === null ? null : CatalogMediaFactory::create('chair', 'Section '.$alt));
+            $this->entityManager->flush();
+            $ids = $this->outboxCatalogElementIds();
+            sort($ids);
+            self::assertSame([$first->getId(), $second->getId()], $ids);
+        }
     }
 
     public function testPriceCreateUpdateAndDeleteCreateOutboxEvents(): void
