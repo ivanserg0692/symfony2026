@@ -2,6 +2,9 @@
 
 namespace App\DataFixtures\Media;
 
+use App\Entity\CatalogMedia;
+use App\Media\CatalogMediaVariant;
+
 final readonly class FixtureMediaAsset
 {
     /** @param list<string> $categorySlugs @param array<string, FixtureMediaFile> $variants */
@@ -26,6 +29,15 @@ final readonly class FixtureMediaAsset
         if ($categorySlugs === [] || $productType === '') {
             throw new \InvalidArgumentException('A catalog image needs categories and a product type.');
         }
+    }
+
+    public function createMedia(): CatalogMedia
+    {
+        $variant = fn (string $name): CatalogMediaVariant => new CatalogMediaVariant($this->variants[$name]->key, $this->variants[$name]->sha256);
+        return new CatalogMedia(
+            $this->pictureId(), $variant('thumb'), $variant('card'), $variant('main'),
+            $this->alt, $this->creator, $this->sourceUrl, $this->license, $this->licenseUrl, $this->attribution,
+        );
     }
 
     public function pictureId(): string

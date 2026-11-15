@@ -2,6 +2,7 @@
 
 namespace App\DataFixtures;
 
+use App\DataFixtures\Media\CatalogMediaBulkWriter;
 use App\Entity\CatalogElements;
 use App\Entity\CatalogSections;
 use App\Entity\PriceType;
@@ -351,7 +352,7 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
                 ->setSlug($this->slugify(implode(' ', $sectionPath)))
                 ->setActive(true)
                 ->setDescription(sprintf('Products and offers in the %s catalog section.', $name))
-                ->setPictureId($this->mediaLibrary->forSection($this->slugify(implode(' ', $sectionPath)))->pictureId())
+                ->setPicture($this->mediaLibrary->forSection($this->slugify(implode(' ', $sectionPath)))->createMedia())
                 ->setSort($sort)
                 ->setParent($parent);
 
@@ -456,8 +457,9 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
         array $leafSections,
         array $storeIds,
         array $priceTypeIds,
+        int $productCount = self::PRODUCT_COUNT,
     ): void {
-        for ($i = 1; $i <= self::PRODUCT_COUNT; ++$i) {
+        for ($i = 1; $i <= $productCount; ++$i) {
             $createdAt = \DateTimeImmutable::createFromMutable($faker->dateTimeBetween('-18 months', '-1 day'));
             // Each product belongs to one to three leaf categories, never to a parent category.
             $sectionIds = $this->pickRandomIds($faker, array_keys($leafSections), 1, 3);
@@ -475,7 +477,7 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
                 ->setCreatedBy($faker->numberBetween(1, 20))
                 ->setDescription($faker->paragraphs($faker->numberBetween(2, 4), true))
                 ->setSlug(sprintf('%s-%05d', $this->slugify($productName), $i))
-                ->setPictureId($picture->pictureId())
+                ->setPicture($picture->createMedia())
                 ->setSort($faker->numberBetween(10, 500));
 
             foreach ($sectionIds as $sectionId) {
@@ -556,12 +558,14 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
         array $leafSections,
         array $storeIds,
         array $priceTypeIds,
+        int $productCount = self::PRODUCT_COUNT,
     ): void {
         $productIndex = 1;
 
-        while ($productIndex <= self::PRODUCT_COUNT) {
-            $batchLimit = min(self::PRODUCT_COUNT, $productIndex + self::PRODUCT_BULK_BATCH_SIZE - 1);
+        while ($productIndex <= $productCount) {
+            $batchLimit = min($productCount, $productIndex + self::PRODUCT_BULK_BATCH_SIZE - 1);
             $productRows = [];
+            $mediaRows = [];
             $generatedProducts = [];
 
             for (; $productIndex <= $batchLimit; ++$productIndex) {
@@ -581,8 +585,10 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
                     'created_by' => $faker->numberBetween(1, 20),
                     'description' => $faker->paragraphs($faker->numberBetween(2, 4), true),
                     'slug' => sprintf('%s-%05d', $this->slugify($productName), $productIndex),
-                    'picture_id' => $picture->pictureId(),
+                    'picture_id' => null,
                 ];
+
+                $mediaRows[] = CatalogMediaBulkWriter::row($picture->createMedia());
 
                 $generatedProducts[] = [
                     'created_at' => $createdAtValue,
@@ -602,7 +608,12 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
                 ];
             }
 
-            $connection->transactional(function () use ($connection, $faker, $productRows, $generatedProducts, $priceTypeIds): void {
+            $connection->transactional(function () use ($connection, $faker, $productRows, $mediaRows, $generatedProducts, $priceTypeIds): void {
+                $mediaIds = CatalogMediaBulkWriter::insert($connection, $mediaRows);
+                foreach ($productRows as $offset => &$row) {
+                    $row['picture_id'] = $mediaIds[$offset];
+                }
+                unset($row);
                 $productIds = $this->insertRowsReturningIds(
                     $connection,
                     'product',
