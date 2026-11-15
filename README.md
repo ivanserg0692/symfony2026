@@ -318,7 +318,11 @@ The API Gateway table below describes the external public API surface exposed to
 <!-- START api-endpoints service=api-gateway locale=en sourceType=file source=symfony/public/api-gateway/openapi.json -->
 | Method | Path | Summary |
 | --- | --- | --- |
+| `GET` | `/api/v1/auth/csrf` | Issue CSRF token for auth endpoints |
+| `POST` | `/api/v1/auth/login` | Authenticate user and issue JWT token |
+| `POST` | `/api/v1/auth/logout` | Logout current user |
 | `GET` | `/api/v1/auth/me` | Get current authenticated user |
+| `POST` | `/api/v1/auth/refresh` | Refresh JWT access token |
 | `GET` | `/api/v1/cart` | Get current cart |
 | `DELETE` | `/api/v1/cart` | Clear current cart |
 | `POST` | `/api/v1/cart/items` | Add cart item |
@@ -326,6 +330,8 @@ The API Gateway table below describes the external public API surface exposed to
 | `DELETE` | `/api/v1/cart/items/{itemId}` | Delete cart item |
 | `GET` | `/api/v1/catalog/elements` | List catalog elements |
 | `GET` | `/api/v1/catalog/elements/{id}` | Get catalog element |
+| `GET` | `/api/v1/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get a catalog product photograph |
+| `HEAD` | `/api/v1/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get catalog photograph headers |
 | `GET` | `/api/v1/catalog/sections` | List active catalog sections |
 | `GET` | `/api/v1/catalog/sections/{id}` | Get catalog section |
 | `GET` | `/api/v1/news` | Paginated list of news. |
@@ -369,11 +375,15 @@ The service tables below describe internal service endpoints generated from each
 
 #### Catalog Service API
 
+[Shared fixture photographs, MinIO import and image URLs](catalog-service/docs/fixture-media.md).
+
 <!-- START api-endpoints service=catalog locale=en sourceType=docker source=catalog-cli -->
 | Method | Path | Summary |
 | --- | --- | --- |
 | `GET` | `/api/catalog/elements` | List catalog elements |
 | `GET` | `/api/catalog/elements/{id}` | Get catalog element |
+| `GET` | `/api/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get a catalog product photograph |
+| `HEAD` | `/api/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get catalog photograph headers |
 | `GET` | `/api/catalog/sections` | List active catalog sections |
 | `GET` | `/api/catalog/sections/{id}` | Get catalog section |
 | `GET` | `/api/stores` | List active stores |
@@ -1257,7 +1267,11 @@ docker compose down
 <!-- START api-endpoints service=api-gateway locale=ru sourceType=file source=symfony/public/api-gateway/openapi.json -->
 | Method | Path | Описание из OpenAPI |
 | --- | --- | --- |
+| `GET` | `/api/v1/auth/csrf` | Issue CSRF token for auth endpoints |
+| `POST` | `/api/v1/auth/login` | Authenticate user and issue JWT token |
+| `POST` | `/api/v1/auth/logout` | Logout current user |
 | `GET` | `/api/v1/auth/me` | Get current authenticated user |
+| `POST` | `/api/v1/auth/refresh` | Refresh JWT access token |
 | `GET` | `/api/v1/cart` | Get current cart |
 | `DELETE` | `/api/v1/cart` | Clear current cart |
 | `POST` | `/api/v1/cart/items` | Add cart item |
@@ -1265,6 +1279,8 @@ docker compose down
 | `DELETE` | `/api/v1/cart/items/{itemId}` | Delete cart item |
 | `GET` | `/api/v1/catalog/elements` | List catalog elements |
 | `GET` | `/api/v1/catalog/elements/{id}` | Get catalog element |
+| `GET` | `/api/v1/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get a catalog product photograph |
+| `HEAD` | `/api/v1/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get catalog photograph headers |
 | `GET` | `/api/v1/catalog/sections` | List active catalog sections |
 | `GET` | `/api/v1/catalog/sections/{id}` | Get catalog section |
 | `GET` | `/api/v1/news` | Paginated list of news. |
@@ -1308,11 +1324,15 @@ docker compose down
 
 #### Catalog Service API
 
+[Фотографии fixtures, импорт в MinIO и URL изображений](catalog-service/docs/fixture-media.md).
+
 <!-- START api-endpoints service=catalog locale=ru sourceType=docker source=catalog-cli -->
 | Method | Path | Описание из OpenAPI |
 | --- | --- | --- |
 | `GET` | `/api/catalog/elements` | List catalog elements |
 | `GET` | `/api/catalog/elements/{id}` | Get catalog element |
+| `GET` | `/api/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get a catalog product photograph |
+| `HEAD` | `/api/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get catalog photograph headers |
 | `GET` | `/api/catalog/sections` | List active catalog sections |
 | `GET` | `/api/catalog/sections/{id}` | Get catalog section |
 | `GET` | `/api/stores` | List active stores |
