@@ -11,15 +11,15 @@ final readonly class CatalogPictureResponseFactory
 
     public function __construct(string $catalogMediaPublicBaseUrl)
     {
-        $this->publicBaseUrl = rtrim($catalogMediaPublicBaseUrl, '/').'/';
+        $this->publicBaseUrl = rtrim($catalogMediaPublicBaseUrl, '/') . '/';
     }
 
     public function fromEntity(CatalogMedia $media): CatalogPictureResponse
     {
         return new CatalogPictureResponse(
-            $this->publicBaseUrl.$media->getVariant('thumb')->key,
-            $this->publicBaseUrl.$media->getVariant('card')->key,
-            $this->publicBaseUrl.$media->getVariant('main')->key,
+            $this->publicBaseUrl . $media->getVariant('thumb')->key,
+            $this->publicBaseUrl . $media->getVariant('card')->key,
+            $this->publicBaseUrl . $media->getVariant('main')->key,
             $media->getAlt(), $media->getCreator(), $media->getSourceUrl(),
             $media->getLicense(), $media->getLicenseUrl(), $media->getAttribution(),
         );
@@ -29,7 +29,9 @@ final readonly class CatalogPictureResponseFactory
     public function fromDocument(array $picture): CatalogPictureResponse
     {
         return new CatalogPictureResponse(
-            $this->publicBaseUrl.$picture['variants']['thumb'], $this->publicBaseUrl.$picture['variants']['card'], $this->publicBaseUrl.$picture['variants']['main'],
+            $this->publicBaseUrl . $picture['variants']['thumb'],
+            $this->publicBaseUrl . $picture['variants']['card'],
+            $this->publicBaseUrl . $picture['variants']['main'],
             $picture['alt'], $picture['creator'], $picture['source_url'],
             $picture['license'], $picture['license_url'], $picture['attribution'],
         );

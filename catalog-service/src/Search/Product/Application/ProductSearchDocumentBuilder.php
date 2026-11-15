@@ -4,6 +4,7 @@ namespace App\Search\Product\Application;
 
 use App\Entity\CatalogElements;
 use App\Search\Product\Application\Dto\Document\ProductSearchDocument;
+use App\Search\Product\Application\Dto\Document\ProductSearchPicture;
 use App\Search\Product\Application\Dto\Document\ProductSearchPrice;
 use App\Search\Product\Application\Dto\Document\ProductSearchSection;
 use App\Search\Product\Application\Dto\Document\ProductSearchStock;
@@ -35,7 +36,7 @@ final class ProductSearchDocumentBuilder
                 level: $section->getLevel(),
                 sort: $section->getSort(),
                 description: $section->getDescription(),
-                pictureId: $section->getPictureId(),
+                picture: $section->getPicture() === null ? null : ProductSearchPicture::fromEntity($section->getPicture()),
             );
         }
         usort($sections, static fn(ProductSearchSection $left, ProductSearchSection $right): int => $left->id <=> $right->id);
@@ -89,7 +90,7 @@ final class ProductSearchDocumentBuilder
             name: $element->getName(),
             slug: $element->getSlug(),
             description: $element->getDescription(),
-            pictureId: $element->getPictureId(),
+            picture: $element->getProduct()->getPicture() === null ? null : ProductSearchPicture::fromEntity($element->getProduct()->getPicture()),
             active: $element->isActive(),
             sort: $element->getSort(),
             createdAt: $element->getCreatedAt(),
