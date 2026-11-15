@@ -13,7 +13,7 @@ final readonly class ProductSearchSection
         public ?int $level,
         public ?int $sort,
         public ?string $description,
-        public ?string $pictureId,
+        public ?ProductSearchPicture $picture,
     ) {
     }
 }
