@@ -165,7 +165,6 @@ function catalogConfigData({ auth, catalog }, common) {
     MINIO_ENDPOINT: catalog.MINIO_ENDPOINT || 'http://minio:9000',
     MINIO_REGION: catalog.MINIO_REGION || 'us-east-1',
     CATALOG_MEDIA_BUCKET: catalog.CATALOG_MEDIA_BUCKET || 'catalog-media',
-    CATALOG_MEDIA_SOURCE_BUCKET: catalog.CATALOG_MEDIA_SOURCE_BUCKET || 'catalog-media-sources',
     CATALOG_MEDIA_PUBLIC_BASE_URL: catalog.CATALOG_MEDIA_PUBLIC_BASE_URL || 'http://localhost:8001/api/v1/catalog/media',
     ELASTICSEARCH_USERNAME: catalog.ELASTICSEARCH_USERNAME || 'elastic',
     PRODUCT_SEARCH_INDEX_PREFIX: catalog.PRODUCT_SEARCH_INDEX_PREFIX || 'products',

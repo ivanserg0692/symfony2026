@@ -10,7 +10,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand(name: 'catalog:media:import', description: 'Validate and import the shared fixture photo library into private MinIO buckets.')]
+#[AsCommand(name: 'catalog:media:import', description: 'Validate the shared fixture library and import WebP variants into the private MinIO bucket.')]
 final class CatalogMediaImportCommand extends Command
 {
     public function __construct(private readonly FixtureMediaLibrary $library, private readonly FixtureMediaImporter $importer)

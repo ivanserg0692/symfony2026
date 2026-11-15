@@ -136,7 +136,7 @@ final class CatalogMediaTest extends TestCase
         $request = Request::create('/api/catalog/media/'.$this->key, server: ['HTTP_IF_NONE_MATCH' => '"'.$hash.'"']);
         $storage = new CatalogMediaStorage($this->client(static function (): never {
             self::fail('A matching ETag must not read S3.');
-        }), 'photos', 'sources');
+        }), 'photos');
         $response = (new CatalogMediaController())('office-chair', '0123456789abcdef', 'main', $request, $this->repository(), $storage);
         self::assertSame(304, $response->getStatusCode());
     }
@@ -168,14 +168,15 @@ final class CatalogMediaTest extends TestCase
             self::fail('Storage must not be touched before local verification succeeds.');
         });
         $this->expectException(\RuntimeException::class);
-        $this->importer(new FixtureMediaLibrary($this->directory), new CatalogMediaStorage($client, 'photos', 'sources'))->import();
+        $this->importer(new FixtureMediaLibrary($this->directory), new CatalogMediaStorage($client, 'photos'))->import();
     }
 
-    public function testImportReusesObjectsAndKeepsSourcesInTheirOwnBucket(): void
+    public function testImportUploadsOnlyVariantsAndReusesObjects(): void
     {
         $objects = [];
         $puts = 0;
         $client = $this->client(static function (CommandInterface $command) use (&$objects, &$puts) {
+            self::assertSame('photos', $command['Bucket']);
             $key = $command['Bucket'].'/'.($command['Key'] ?? '');
             if ($command->getName() === 'HeadBucket') {
                 return Create::promiseFor(new Result());
@@ -187,19 +188,22 @@ final class CatalogMediaTest extends TestCase
                 return Create::promiseFor(new Result(['Metadata' => $objects[$key]]));
             }
             if ($command->getName() === 'PutObject') {
+                self::assertSame('image/webp', $command['ContentType']);
+                self::assertStringEndsWith('.webp', $command['Key']);
                 ++$puts;
                 $objects[$key] = $command['Metadata'];
                 return Create::promiseFor(new Result());
             }
             self::fail('Unexpected storage command '.$command->getName());
         });
-        $storage = new CatalogMediaStorage($client, 'photos', 'sources');
+        $storage = new CatalogMediaStorage($client, 'photos');
         $library = new FixtureMediaLibrary($this->directory);
         $importer = $this->importer($library, $storage);
-        self::assertSame(4, $importer->import());
+        self::assertSame(3, $importer->import());
         self::assertSame(0, $importer->import());
-        self::assertSame(4, $puts);
-        self::assertArrayHasKey('sources/'.dirname($this->key).'/source.jpg', $objects);
+        self::assertSame(3, $puts);
+        self::assertCount(3, $objects);
+        self::assertFileExists($this->directory.'/source.jpg');
         self::assertArrayHasKey('photos/'.$this->key, $objects);
     }
 
@@ -209,6 +213,7 @@ final class CatalogMediaTest extends TestCase
         $objects = [];
         $puts = 0;
         $storage = new CatalogMediaStorage($this->client(static function (CommandInterface $command) use (&$objects, &$puts) {
+            self::assertSame('photos', $command['Bucket']);
             $key = $command['Bucket'].'/'.($command['Key'] ?? '');
             if ($command->getName() === 'HeadObject') {
                 return isset($objects[$key])
@@ -216,11 +221,13 @@ final class CatalogMediaTest extends TestCase
                     : Create::rejectionFor(new S3Exception('Not found', $command, ['response' => new Response(404)]));
             }
             if ($command->getName() === 'PutObject') {
+                self::assertSame('image/webp', $command['ContentType']);
+                self::assertStringEndsWith('.webp', $command['Key']);
                 ++$puts;
                 $objects[$key] = $command['Metadata'];
             }
             return Create::promiseFor(new Result());
-        }), 'photos', 'sources');
+        }), 'photos');
         $importer = $this->importer($library, $storage);
         $fixture = new CatalogMediaFixtures($library, static fn () => $importer, new ArrayInput([]));
         $manager = $this->createMock(ObjectManager::class);
@@ -228,7 +235,7 @@ final class CatalogMediaTest extends TestCase
         $manager->expects(self::never())->method('flush');
         $fixture->load($manager);
         $fixture->load($manager);
-        self::assertSame(4, $puts);
+        self::assertSame(3, $puts);
     }
 
     private function libraryForAllCategories(): FixtureMediaLibrary
@@ -250,7 +257,7 @@ final class CatalogMediaTest extends TestCase
                 throw new \RuntimeException('Upload failed');
             }
             return Create::promiseFor(new Result());
-        }), 'photos', 'sources');
+        }), 'photos');
         $this->expectExceptionMessage('Upload failed');
         $this->importer(new FixtureMediaLibrary($this->directory), $storage)->import();
     }
@@ -264,7 +271,7 @@ final class CatalogMediaTest extends TestCase
         });
         $response = (new CatalogMediaController())('office-chair', '0123456789abcdef', 'main',
             Request::create('/api/catalog/media/'.$this->key, 'HEAD'), $this->repository(),
-            new CatalogMediaStorage($client, 'photos', 'sources'));
+            new CatalogMediaStorage($client, 'photos'));
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('image/webp', $response->headers->get('Content-Type'));
     }
