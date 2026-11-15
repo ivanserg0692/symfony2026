@@ -2,7 +2,7 @@
 
 namespace App\DataFixtures\Media;
 
-use App\Media\CatalogMediaStorage;
+use App\Media\Infrastructure\CatalogMediaStorage;
 
 final readonly class FixtureMediaImporter
 {
