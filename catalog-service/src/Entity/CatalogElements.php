@@ -144,15 +144,15 @@ class CatalogElements
         return $this;
     }
 
-    #[Groups(["catalog_element:list", "catalog_element:item", "product_snapshot:list", "product_snapshot:item"])]
+    #[Groups(["product_snapshot:list", "product_snapshot:item"])]
     public function getPictureId(): ?string
     {
         return $this->product?->getPictureId();
     }
 
-    public function setPictureId(?string $pictureId): static
+    public function setPicture(?CatalogMedia $picture): static
     {
-        $this->getProductModel()->setPictureId($pictureId);
+        $this->getProductModel()->setPicture($picture);
 
         return $this;
     }

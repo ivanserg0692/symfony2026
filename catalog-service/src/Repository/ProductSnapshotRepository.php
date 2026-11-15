@@ -92,6 +92,8 @@ class ProductSnapshotRepository extends ServiceEntityRepository
         $snapshots = $this->createQueryBuilder("snapshot")
             ->innerJoin("snapshot.product", "product")
             ->addSelect("product")
+            ->leftJoin("product.picture", "media")
+            ->addSelect("media")
             ->innerJoin("snapshot.originalProduct", "originalProduct")
             ->addSelect("originalProduct")
             ->andWhere("snapshot.id IN (:ids)")
@@ -132,7 +134,7 @@ class ProductSnapshotRepository extends ServiceEntityRepository
             ->setCreatedBy($sourceProduct->getCreatedBy() ?? 0)
             ->setDescription($sourceProduct->getDescription())
             ->setSlug($this->createSnapshotSlug($sourceProduct->getSlug(), $operationId, $productId))
-            ->setPictureId($sourceProduct->getPictureId());
+            ->setPicture($sourceProduct->getPicture()?->copy());
 
         $snapshot = (new ProductSnapshot())
             ->setProduct($snapshotProduct)
@@ -153,10 +155,14 @@ class ProductSnapshotRepository extends ServiceEntityRepository
         return $queryBuilder
             ->innerJoin(sprintf("%s.product", $snapshotAlias), $productAlias)
             ->addSelect($productAlias)
+            ->leftJoin(sprintf("%s.picture", $productAlias), "snapshotMedia")
+            ->addSelect("snapshotMedia")
             ->innerJoin(sprintf("%s.originalProduct", $snapshotAlias), $originalProductAlias)
             ->addSelect($originalProductAlias)
             ->innerJoin(sprintf("%s.product", $originalProductAlias), $originalProductModelAlias)
-            ->addSelect($originalProductModelAlias);
+            ->addSelect($originalProductModelAlias)
+            ->leftJoin(sprintf("%s.picture", $originalProductModelAlias), "originalMedia")
+            ->addSelect("originalMedia");
     }
 
     private function applyListFilters(QueryBuilder $queryBuilder, ?int $originalProductId): QueryBuilder
