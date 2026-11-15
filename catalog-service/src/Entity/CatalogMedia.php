@@ -9,7 +9,9 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CatalogMediaRepository::class)]
 #[ORM\Table(name: 'catalog_media')]
-#[ORM\Index(name: 'catalog_media_picture_idx', columns: ['picture_id'])]
+#[ORM\Index(name: 'catalog_media_thumbnail_idx', columns: ['thumbnail_key'])]
+#[ORM\Index(name: 'catalog_media_card_idx', columns: ['card_key'])]
+#[ORM\Index(name: 'catalog_media_main_idx', columns: ['main_key'])]
 class CatalogMedia
 {
     #[ORM\Id]
@@ -17,13 +19,25 @@ class CatalogMedia
     #[ORM\Column(type: Types::BIGINT)]
     private ?int $id = null;
 
-    /** @var array<string, array{key: string, sha256: string}> */
-    #[ORM\Column(type: Types::JSON)]
-    private array $variants;
+    #[ORM\Column(length: 255)]
+    private string $thumbnailKey;
+
+    #[ORM\Column(length: 64)]
+    private string $thumbnailSha256;
+
+    #[ORM\Column(length: 255)]
+    private string $cardKey;
+
+    #[ORM\Column(length: 64)]
+    private string $cardSha256;
+
+    #[ORM\Column(length: 255)]
+    private string $mainKey;
+
+    #[ORM\Column(length: 64)]
+    private string $mainSha256;
 
     public function __construct(
-        #[ORM\Column(length: 255)]
-        private string $pictureId,
         CatalogMediaVariant $thumbnail,
         CatalogMediaVariant $card,
         CatalogMediaVariant $main,
@@ -40,14 +54,12 @@ class CatalogMedia
         #[ORM\Column(type: Types::TEXT)]
         private string $attribution,
     ) {
-        if ($pictureId !== $main->key) {
-            throw new \InvalidArgumentException('pictureId must identify the main variant.');
-        }
-        $this->variants = [
-            'thumb' => ['key' => $thumbnail->key, 'sha256' => $thumbnail->sha256],
-            'card' => ['key' => $card->key, 'sha256' => $card->sha256],
-            'main' => ['key' => $main->key, 'sha256' => $main->sha256],
-        ];
+        $this->thumbnailKey = $thumbnail->key;
+        $this->thumbnailSha256 = $thumbnail->sha256;
+        $this->cardKey = $card->key;
+        $this->cardSha256 = $card->sha256;
+        $this->mainKey = $main->key;
+        $this->mainSha256 = $main->sha256;
     }
 
     public function getId(): ?int
@@ -59,20 +71,35 @@ class CatalogMedia
     public function copy(): self
     {
         return new self(
-            $this->pictureId, $this->getVariant('thumb'), $this->getVariant('card'), $this->getVariant('main'),
+            $this->getVariant('thumb'), $this->getVariant('card'), $this->getVariant('main'),
             $this->alt, $this->creator, $this->sourceUrl, $this->license, $this->licenseUrl, $this->attribution,
         );
     }
 
     public function getVariant(string $name): CatalogMediaVariant
     {
-        $variant = $this->variants[$name] ?? throw new \InvalidArgumentException('Unknown media variant.');
-        return new CatalogMediaVariant($variant['key'], $variant['sha256']);
+        return match ($name) {
+            'thumb' => new CatalogMediaVariant($this->thumbnailKey, $this->thumbnailSha256),
+            'card' => new CatalogMediaVariant($this->cardKey, $this->cardSha256),
+            'main' => new CatalogMediaVariant($this->mainKey, $this->mainSha256),
+            default => throw new \InvalidArgumentException('Unknown media variant.'),
+        };
     }
 
+    public function getVariantByKey(string $key): ?CatalogMediaVariant
+    {
+        return match ($key) {
+            $this->thumbnailKey => $this->getVariant('thumb'),
+            $this->cardKey => $this->getVariant('card'),
+            $this->mainKey => $this->getVariant('main'),
+            default => null,
+        };
+    }
+
+    /** Main object key retained for the existing gRPC snapshot contract. */
     public function getPictureId(): string
     {
-        return $this->pictureId;
+        return $this->mainKey;
     }
 
     public function getAlt(): string

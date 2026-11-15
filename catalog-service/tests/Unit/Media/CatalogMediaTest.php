@@ -27,6 +27,7 @@ use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
@@ -137,7 +138,7 @@ final class CatalogMediaTest extends TestCase
         $storage = new CatalogMediaStorage($this->client(static function (): never {
             self::fail('A matching ETag must not read S3.');
         }), 'photos');
-        $response = (new CatalogMediaController())('office-chair', '0123456789abcdef', 'main', $request, $this->repository(), $storage);
+        $response = (new CatalogMediaController())($this->key, $request, $this->repository(), $storage);
         self::assertSame(304, $response->getStatusCode());
     }
 
@@ -269,7 +270,7 @@ final class CatalogMediaTest extends TestCase
             self::assertSame($this->key, $command['Key']);
             return Create::promiseFor(new Result());
         });
-        $response = (new CatalogMediaController())('office-chair', '0123456789abcdef', 'main',
+        $response = (new CatalogMediaController())($this->key,
             Request::create('/api/catalog/media/'.$this->key, 'HEAD'), $this->repository(),
             new CatalogMediaStorage($client, 'photos'));
         self::assertSame(200, $response->getStatusCode());
@@ -279,14 +280,79 @@ final class CatalogMediaTest extends TestCase
     private function repository(): CatalogMediaRepository
     {
         $repository = $this->createMock(CatalogMediaRepository::class);
-        $repository->method('findOneByPictureId')->with($this->key)->willReturn($this->media());
+        $repository->method('findOneByVariantKey')->with($this->key)->willReturn($this->media());
         return $repository;
+    }
+
+    /** @dataProvider variants */
+    public function testRegisteredOpaqueKeyStreamsTheRequestedVariant(string $variant): void
+    {
+        $file = new CatalogMediaVariant('catalog/products/photos/2026/'.$variant.'-image.webp', str_repeat('a', 64));
+        $other = new CatalogMediaVariant('catalog/other/large.webp', str_repeat('b', 64));
+        $picture = new CatalogMedia(
+            $variant === 'thumb' ? $file : $other,
+            $variant === 'card' ? $file : $other,
+            $variant === 'main' ? $file : $other,
+            'Alt', 'Author', 'https://example.com', 'License', 'https://example.com/license', 'Credit',
+        );
+        $repository = $this->createMock(CatalogMediaRepository::class);
+        $repository->expects(self::once())->method('findOneByVariantKey')->with($file->key)->willReturn($picture);
+        $storage = new CatalogMediaStorage($this->client(static function (CommandInterface $command) use ($file) {
+            self::assertSame('GetObject', $command->getName());
+            self::assertSame($file->key, $command['Key']);
+            return Create::promiseFor(new Result(['Body' => \GuzzleHttp\Psr7\Utils::streamFor('webp bytes')]));
+        }), 'photos');
+        $response = (new CatalogMediaController())($file->key, Request::create('/api/catalog/media/'.$file->key), $repository, $storage);
+        self::assertSame('"'.$file->sha256.'"', $response->getEtag());
+        ob_start();
+        try {
+            $response->sendContent();
+            self::assertSame('webp bytes', ob_get_contents());
+        } finally {
+            ob_end_clean();
+        }
+    }
+
+    public static function variants(): iterable
+    {
+        yield ['thumb'];
+        yield ['card'];
+        yield ['main'];
+    }
+
+    /** @dataProvider invalidVariantKeys */
+    public function testVariantRejectsKeysOutsideTheCatalogNamespace(string $key): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new CatalogMediaVariant($key, str_repeat('a', 64));
+    }
+
+    public static function invalidVariantKeys(): iterable
+    {
+        yield ['image.webp'];
+        yield ['products/image.webp'];
+        yield ['catalogue/image.webp'];
+        yield ['catalog/../image.webp'];
+        yield ['catalog//image.webp'];
+        yield ['catalog/image.jpg'];
+    }
+
+    public function testUnregisteredKeyDoesNotAccessStorage(): void
+    {
+        $key = 'private/source.jpg';
+        $repository = $this->createMock(CatalogMediaRepository::class);
+        $repository->expects(self::once())->method('findOneByVariantKey')->with($key)->willReturn(null);
+        $storage = new CatalogMediaStorage($this->client(static function (): never {
+            self::fail('Unregistered keys must not access storage.');
+        }), 'photos');
+        $this->expectException(NotFoundHttpException::class);
+        (new CatalogMediaController())($key, Request::create('/api/catalog/media/'.$key), $repository, $storage);
     }
 
     private function media(): CatalogMedia
     {
         $variant = fn (string $name): CatalogMediaVariant => new CatalogMediaVariant(dirname($this->key).'/'.$name.'.webp', hash_file('sha256', $this->directory.'/'.$name.'.webp'));
-        return new CatalogMedia($this->key, $variant('thumb'), $variant('card'), $variant('main'),
+        return new CatalogMedia($variant('thumb'), $variant('card'), $variant('main'),
             'Office chair', 'Photographer', 'https://example.com/photo', 'CC BY 4.0',
             'https://creativecommons.org/licenses/by/4.0/', 'Photo by Photographer, CC BY 4.0; resized.');
     }

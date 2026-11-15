@@ -16,7 +16,7 @@ final class CatalogMediaFactory
     {
         $key = self::key($name);
         $variant = static fn (string $size): CatalogMediaVariant => new CatalogMediaVariant(dirname($key).'/'.$size.'.webp', str_repeat('a', 64));
-        return new CatalogMedia($key, $variant('thumb'), $variant('card'), $variant('main'),
+        return new CatalogMedia($variant('thumb'), $variant('card'), $variant('main'),
             $alt, 'Author', 'https://example.com/source', 'CC BY 4.0', 'https://example.com/license', 'Credit');
     }
 }

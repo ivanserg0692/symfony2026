@@ -474,7 +474,7 @@ final class InventoryDeductionServiceTest extends KernelTestCase
     private function snapshotRow(int $snapshotId): array
     {
         $row = $this->entityManager->getConnection()->fetchAssociative(
-            'SELECT snapshot.id, snapshot.original_product_id, product.name, product.description, media.picture_id, product.active, product.created_by FROM product_snapshot snapshot INNER JOIN product ON product.id = snapshot.product_id LEFT JOIN catalog_media media ON media.id = product.picture_id WHERE snapshot.id = :snapshot_id',
+            'SELECT snapshot.id, snapshot.original_product_id, product.name, product.description, media.main_key AS picture_id, product.active, product.created_by FROM product_snapshot snapshot INNER JOIN product ON product.id = snapshot.product_id LEFT JOIN catalog_media media ON media.id = product.picture_id WHERE snapshot.id = :snapshot_id',
             ['snapshot_id' => $snapshotId],
         );
 

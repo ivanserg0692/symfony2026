@@ -15,10 +15,11 @@ class CatalogMediaRepository extends ServiceEntityRepository
     }
 
     /** A file can have millions of owners: resolve only one indexed row for file delivery. */
-    public function findOneByPictureId(string $pictureId): ?CatalogMedia
+    public function findOneByVariantKey(string $key): ?CatalogMedia
     {
         return $this->createQueryBuilder('media')
-            ->where('media.pictureId = :key')->setParameter('key', $pictureId)
+            ->where('media.thumbnailKey = :key OR media.cardKey = :key OR media.mainKey = :key')
+            ->setParameter('key', $key)
             ->setMaxResults(1)->getQuery()->getOneOrNullResult();
     }
 }

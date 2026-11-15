@@ -122,7 +122,8 @@ SELECT
     product.description,
     product.slug,
     product.picture_id AS source_picture_id,
-    media.picture_id, media.variants, media.alt, media.creator,
+    media.thumbnail_key, media.thumbnail_sha256, media.card_key, media.card_sha256,
+    media.main_key, media.main_sha256, media.alt, media.creator,
     media.source_url, media.license, media.license_url, media.attribution
 FROM catalog_elements element
 INNER JOIN product ON product.id = element.product_id

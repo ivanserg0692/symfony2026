@@ -35,7 +35,7 @@ final readonly class FixtureMediaAsset
     {
         $variant = fn (string $name): CatalogMediaVariant => new CatalogMediaVariant($this->variants[$name]->key, $this->variants[$name]->sha256);
         return new CatalogMedia(
-            $this->pictureId(), $variant('thumb'), $variant('card'), $variant('main'),
+            $variant('thumb'), $variant('card'), $variant('main'),
             $this->alt, $this->creator, $this->sourceUrl, $this->license, $this->licenseUrl, $this->attribution,
         );
     }

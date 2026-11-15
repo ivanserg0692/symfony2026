@@ -11,6 +11,7 @@ use App\Entity\CatalogElements;
 use App\Entity\CatalogMedia;
 use App\Entity\CatalogSections;
 use App\Entity\Product;
+use App\Media\CatalogMediaVariant;
 use App\Repository\CatalogElementsRepository;
 use App\Repository\CatalogMediaRepository;
 use App\Repository\CatalogSectionsRepository;
@@ -27,6 +28,8 @@ use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
+use Doctrine\DBAL\Schema\Schema;
+use Psr\Log\NullLogger;
 use Psr\Log\AbstractLogger;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -71,7 +74,7 @@ final class CatalogMediaRepositoryTest extends KernelTestCase
         $this->entityManager->remove($loaded->getProduct());
         $this->entityManager->flush();
         self::assertNull($this->entityManager->find(CatalogMedia::class, $firstMediaId));
-        self::assertNotNull(static::getContainer()->get(CatalogMediaRepository::class)->findOneByPictureId($second->getPictureId()));
+        self::assertNotNull(static::getContainer()->get(CatalogMediaRepository::class)->findOneByVariantKey($second->getPictureId()));
     }
 
     public function testDatabaseRejectsASecondProductUsingTheSameMediaRow(): void
@@ -83,6 +86,66 @@ final class CatalogMediaRepositoryTest extends KernelTestCase
         $this->entityManager->getConnection()->executeStatement('UPDATE product SET picture_id = ? WHERE id = ?', [
             $first->getProduct()->getPicture()->getId(), $second->getProduct()->getId(),
         ]);
+    }
+
+    public function testOpaqueVariantKeysResolveThroughOrmAndRouter(): void
+    {
+        $picture = new CatalogMedia(
+            new CatalogMediaVariant('catalog/previews/small.webp', str_repeat('a', 64)),
+            new CatalogMediaVariant('catalog/products/2026/medium.webp', str_repeat('b', 64)),
+            new CatalogMediaVariant('catalog/original-sized.webp', str_repeat('c', 64)),
+            'Alt', 'Author', 'https://example.com', 'License', 'https://example.com/license', 'Credit',
+        );
+        $this->entityManager->persist($picture);
+        $this->entityManager->persist($picture->copy());
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+        $repository = static::getContainer()->get(CatalogMediaRepository::class);
+        $router = static::getContainer()->get('router');
+        foreach (['thumb', 'card', 'main'] as $variant) {
+            $file = $picture->getVariant($variant);
+            $loaded = $repository->findOneByVariantKey($file->key);
+            self::assertNotNull($loaded);
+            self::assertSame($file->sha256, $loaded->getVariantByKey($file->key)->sha256);
+            $route = $router->match('/api/catalog/media/'.$file->key);
+            self::assertSame('api_catalog_media', $route['_route']);
+            self::assertSame($file->key, $route['key']);
+        }
+        self::assertNull($repository->findOneByVariantKey("missing.webp' OR 1=1 --"));
+        self::assertNull($picture->getVariantByKey('private/source.jpg'));
+        $columns = $this->entityManager->getConnection()->createSchemaManager()->listTableColumns('catalog_media');
+        self::assertArrayNotHasKey('variants', $columns);
+        self::assertArrayNotHasKey('picture_id', $columns);
+        $indexes = $this->entityManager->getConnection()->fetchAllKeyValue(
+            'SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = current_schema() AND tablename = :table',
+            ['table' => 'catalog_media'],
+        );
+        foreach (['thumbnail', 'card', 'main'] as $name) {
+            self::assertStringContainsString(' USING btree ('.$name.'_key)', $indexes['catalog_media_'.$name.'_idx']);
+            self::assertStringNotContainsString('CREATE UNIQUE INDEX', $indexes['catalog_media_'.$name.'_idx']);
+        }
+    }
+
+    public function testConsolidatedMigrationCanRollBackAndRecreateTheMediaSchema(): void
+    {
+        require_once dirname(__DIR__, 3).'/migrations/Version20261114173605.php';
+        $connection = $this->entityManager->getConnection();
+        $migration = new \DoctrineMigrations\Version20261114173605($connection, new NullLogger());
+        $migration->down(new Schema());
+        foreach ($migration->getSql() as $query) {
+            $connection->executeStatement($query->getStatement());
+        }
+        self::assertFalse($connection->createSchemaManager()->tablesExist(['catalog_media']));
+        $migration = new \DoctrineMigrations\Version20261114173605($connection, new NullLogger());
+        $migration->up(new Schema());
+        foreach ($migration->getSql() as $query) {
+            $connection->executeStatement($query->getStatement());
+        }
+        $schemaChanges = (new SchemaTool($this->entityManager))->getUpdateSchemaSql($this->entityManager->getMetadataFactory()->getAllMetadata());
+        // Doctrine's migration version table is infrastructure, outside the ORM mapping.
+        self::assertSame([], array_values(array_filter($schemaChanges,
+            static fn (string $sql): bool => $sql !== 'DROP TABLE doctrine_migration_versions',
+        )));
     }
 
     public function testOrmSnapshotCopiesMetadataIntoANewRowAndSharesOnlyFiles(): void
@@ -116,7 +179,7 @@ final class CatalogMediaRepositoryTest extends KernelTestCase
         self::assertSame(2, (int) $connection->fetchOne('SELECT COUNT(*) FROM product_snapshot'));
         self::assertSame(1004, (int) $connection->fetchOne('SELECT COUNT(*) FROM catalog_media'));
         self::assertSame(4, (int) $connection->fetchOne('SELECT COUNT(DISTINCT picture_id) FROM product'));
-        self::assertSame(1, (int) $connection->fetchOne('SELECT COUNT(DISTINCT picture_id) FROM catalog_media'));
+        self::assertSame(1, (int) $connection->fetchOne('SELECT COUNT(DISTINCT main_key) FROM catalog_media'));
         self::assertSame(['First', 'Second'], $connection->fetchFirstColumn('SELECT media.alt FROM product_snapshot s JOIN product p ON p.id = s.product_id JOIN catalog_media media ON media.id = p.picture_id ORDER BY s.original_product_id'));
     }
 

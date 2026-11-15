@@ -330,8 +330,8 @@ The API Gateway table below describes the external public API surface exposed to
 | `DELETE` | `/api/v1/cart/items/{itemId}` | Delete cart item |
 | `GET` | `/api/v1/catalog/elements` | List catalog elements |
 | `GET` | `/api/v1/catalog/elements/{id}` | Get catalog element |
-| `GET` | `/api/v1/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get a catalog product photograph |
-| `HEAD` | `/api/v1/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get catalog photograph headers |
+| `GET` | `/api/v1/catalog/media/{key}` | Get a catalog product photograph |
+| `HEAD` | `/api/v1/catalog/media/{key}` | Get catalog photograph headers |
 | `GET` | `/api/v1/catalog/sections` | List active catalog sections |
 | `GET` | `/api/v1/catalog/sections/{id}` | Get catalog section |
 | `GET` | `/api/v1/news` | Paginated list of news. |
@@ -382,8 +382,8 @@ The service tables below describe internal service endpoints generated from each
 | --- | --- | --- |
 | `GET` | `/api/catalog/elements` | List catalog elements |
 | `GET` | `/api/catalog/elements/{id}` | Get catalog element |
-| `GET` | `/api/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get a catalog product photograph |
-| `HEAD` | `/api/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get catalog photograph headers |
+| `GET` | `/api/catalog/media/{key}` | Get a catalog product photograph |
+| `HEAD` | `/api/catalog/media/{key}` | Get catalog photograph headers |
 | `GET` | `/api/catalog/sections` | List active catalog sections |
 | `GET` | `/api/catalog/sections/{id}` | Get catalog section |
 | `GET` | `/api/stores` | List active stores |
@@ -1279,8 +1279,8 @@ docker compose down
 | `DELETE` | `/api/v1/cart/items/{itemId}` | Delete cart item |
 | `GET` | `/api/v1/catalog/elements` | List catalog elements |
 | `GET` | `/api/v1/catalog/elements/{id}` | Get catalog element |
-| `GET` | `/api/v1/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get a catalog product photograph |
-| `HEAD` | `/api/v1/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get catalog photograph headers |
+| `GET` | `/api/v1/catalog/media/{key}` | Get a catalog product photograph |
+| `HEAD` | `/api/v1/catalog/media/{key}` | Get catalog photograph headers |
 | `GET` | `/api/v1/catalog/sections` | List active catalog sections |
 | `GET` | `/api/v1/catalog/sections/{id}` | Get catalog section |
 | `GET` | `/api/v1/news` | Paginated list of news. |
@@ -1331,8 +1331,8 @@ docker compose down
 | --- | --- | --- |
 | `GET` | `/api/catalog/elements` | List catalog elements |
 | `GET` | `/api/catalog/elements/{id}` | Get catalog element |
-| `GET` | `/api/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get a catalog product photograph |
-| `HEAD` | `/api/catalog/media/catalog/demo/v1/{assetId}/{hash}/{variant}.webp` | Get catalog photograph headers |
+| `GET` | `/api/catalog/media/{key}` | Get a catalog product photograph |
+| `HEAD` | `/api/catalog/media/{key}` | Get catalog photograph headers |
 | `GET` | `/api/catalog/sections` | List active catalog sections |
 | `GET` | `/api/catalog/sections/{id}` | Get catalog section |
 | `GET` | `/api/stores` | List active stores |
