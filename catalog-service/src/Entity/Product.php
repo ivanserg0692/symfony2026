@@ -146,9 +146,9 @@ class Product
     }
 
     #[Groups(["product_snapshot:list", "product_snapshot:item"])]
-    public function getPictureId(): ?string
+    public function getPictureKey(): ?string
     {
-        return $this->picture?->getPictureId();
+        return $this->picture?->getPictureKey();
     }
 
     public function getPicture(): ?CatalogMedia

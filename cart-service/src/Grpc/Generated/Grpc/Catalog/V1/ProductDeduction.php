@@ -43,7 +43,8 @@ class ProductDeduction extends \Google\Protobuf\Internal\Message
      *     @type int|string $product_snapshot_id
      * }
      */
-    public function __construct($data = NULL) {
+    public function __construct($data = null)
+    {
         \Grpc\Catalog\V1\GPBMetadata\Inventory::initOnce();
         parent::__construct($data);
     }

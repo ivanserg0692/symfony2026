@@ -63,7 +63,7 @@ final class CatalogMediaRepositoryTest extends KernelTestCase
         $secondId = $second->getProduct()->getId();
         $firstMediaId = $first->getProduct()->getPicture()->getId();
         self::assertNotSame($firstMediaId, $second->getProduct()->getPicture()->getId());
-        self::assertSame($first->getPictureId(), $second->getPictureId());
+        self::assertSame($first->getPictureKey(), $second->getPictureKey());
         $this->entityManager->clear();
         $products = $this->entityManager->createQueryBuilder()->select('p', 'm')->from(Product::class, 'p')
             ->leftJoin('p.picture', 'm')->where('p.id IN (:ids)')->setParameter('ids', [$firstId, $secondId])
@@ -74,7 +74,7 @@ final class CatalogMediaRepositoryTest extends KernelTestCase
         $this->entityManager->remove($loaded->getProduct());
         $this->entityManager->flush();
         self::assertNull($this->entityManager->find(CatalogMedia::class, $firstMediaId));
-        self::assertNotNull(static::getContainer()->get(CatalogMediaRepository::class)->findOneByVariantKey($second->getPictureId()));
+        self::assertNotNull(static::getContainer()->get(CatalogMediaRepository::class)->findOneByVariantKey($second->getPictureKey()));
     }
 
     public function testDatabaseRejectsASecondProductUsingTheSameMediaRow(): void
@@ -156,7 +156,7 @@ final class CatalogMediaRepositoryTest extends KernelTestCase
         $this->entityManager->flush();
         $snapshotMediaId = $snapshot->getProduct()->getPicture()->getId();
         self::assertNotSame($element->getProduct()->getPicture()->getId(), $snapshotMediaId);
-        self::assertSame($element->getPictureId(), $snapshot->getProduct()->getPictureId());
+        self::assertSame($element->getPictureKey(), $snapshot->getProduct()->getPictureKey());
         $element->setPicture(CatalogMediaFactory::create('chair', 'Replacement alt'));
         $this->entityManager->flush();
         $this->entityManager->clear();
@@ -255,7 +255,7 @@ final class CatalogMediaRepositoryTest extends KernelTestCase
                 $products = $manager->createQueryBuilder()->select('p', 'm')->from(Product::class, 'p')
                     ->leftJoin('p.picture', 'm')->where('p.id IN (:ids)')->setParameter('ids', array_slice($productIds, 0, $count))->getQuery()->getResult();
                 foreach ($products as $product) {
-                    self::assertNotNull($product->getPictureId());
+                    self::assertNotNull($product->getPictureKey());
                     self::assertSame('Author', $product->getPicture()->getCreator());
                 }
                 self::assertSame(1, $counter->queries);

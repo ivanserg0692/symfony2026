@@ -12,7 +12,11 @@ use Grpc\Catalog\V1\DeductStocksRequest;
 use Grpc\Catalog\V1\DeductStocksResponse;
 use Grpc\Catalog\V1\GetProductPricesRequest;
 use Grpc\Catalog\V1\GetProductPricesResponse;
+use Grpc\Catalog\V1\GetProductSnapshotsRequest;
+use Grpc\Catalog\V1\GetProductSnapshotsResponse;
 use Grpc\Catalog\V1\InventoryServiceClient;
+use Grpc\Catalog\V1\ProductSnapshot;
+use Grpc\Catalog\V1\SnapshotProduct;
 use Grpc\Catalog\V1\ProductDeduction;
 use Grpc\Catalog\V1\ProductPrice;
 use Grpc\Catalog\V1\StoreDeduction;
@@ -21,6 +25,38 @@ use Psr\Log\NullLogger;
 
 final class CatalogInventoryClientTest extends TestCase
 {
+    public function testSnapshotPictureKeySurvivesProtobufAndClientMapping(): void
+    {
+        foreach (['catalog/demo/v1/chairs/0123456789abcdef/main.webp', ''] as $key) {
+            $response = new GetProductSnapshotsResponse([
+                'snapshots' => [new ProductSnapshot([
+                    'id' => 501,
+                    'original_product_id' => 10,
+                    'product' => new SnapshotProduct(['id' => 20, 'picture_key' => $key]),
+                ])],
+            ]);
+            $decoded = new GetProductSnapshotsResponse();
+            $decoded->mergeFromString($response->serializeToString());
+            $nativeClient = $this->createMock(InventoryServiceClient::class);
+            $nativeClient->expects(self::once())->method('GetProductSnapshots')
+                ->with(self::callback(static fn (GetProductSnapshotsRequest $request): bool => iterator_to_array($request->getProductSnapshotIds()) === [501]))
+                ->willReturn(new class($decoded) {
+                    public function __construct(private readonly GetProductSnapshotsResponse $response)
+                    {
+                    }
+
+                    public function wait(): array
+                    {
+                        return [$this->response, (object) ['code' => \Grpc\STATUS_OK]];
+                    }
+                });
+
+            $snapshots = $this->client($nativeClient)->getProductSnapshots([501]);
+
+            self::assertSame($key !== '' ? $key : null, $snapshots[0]->product->pictureKey);
+        }
+    }
+
     public function testBuildsGetProductPricesRequest(): void
     {
         $nativeClient = $this->nativeClient(productPricesResponse: new GetProductPricesResponse());

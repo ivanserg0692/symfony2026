@@ -96,8 +96,8 @@ class CatalogMedia
         };
     }
 
-    /** Main object key retained for the existing gRPC snapshot contract. */
-    public function getPictureId(): string
+    /** Main image object key used in product snapshots. */
+    public function getPictureKey(): string
     {
         return $this->mainKey;
     }

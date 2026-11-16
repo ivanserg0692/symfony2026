@@ -140,7 +140,7 @@ class CatalogInventoryClient
                     (int) $product->getCreatedBy(),
                     $product->getDescription() !== '' ? $product->getDescription() : null,
                     $product->getSlug(),
-                    $product->getPictureId() !== '' ? $product->getPictureId() : null,
+                    $product->getPictureKey() !== '' ? $product->getPictureKey() : null,
                 ),
             );
         }

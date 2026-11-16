@@ -2173,7 +2173,7 @@
           "slug": {
             "type": "string"
           },
-          "pictureId": {
+          "pictureKey": {
             "type": "string",
             "nullable": true
           }

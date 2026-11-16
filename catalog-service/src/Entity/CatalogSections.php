@@ -139,9 +139,9 @@ class CatalogSections
         return $this;
     }
 
-    public function getPictureId(): ?string
+    public function getPictureKey(): ?string
     {
-        return $this->picture?->getPictureId();
+        return $this->picture?->getPictureKey();
     }
 
     public function getPicture(): ?CatalogMedia

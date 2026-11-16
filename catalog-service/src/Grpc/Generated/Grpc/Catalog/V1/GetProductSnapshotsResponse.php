@@ -28,7 +28,8 @@ class GetProductSnapshotsResponse extends \Google\Protobuf\Internal\Message
      *     @type \Grpc\Catalog\V1\ProductSnapshot[] $snapshots
      * }
      */
-    public function __construct($data = NULL) {
+    public function __construct($data = null)
+    {
         \Grpc\Catalog\V1\GPBMetadata\Inventory::initOnce();
         parent::__construct($data);
     }

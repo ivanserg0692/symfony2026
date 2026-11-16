@@ -12,7 +12,7 @@ final readonly class CatalogSnapshotProduct
         public int $createdBy,
         public ?string $description,
         public string $slug,
-        public ?string $pictureId,
+        public ?string $pictureKey,
     ) {
     }
 }
