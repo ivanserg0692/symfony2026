@@ -33,7 +33,8 @@ class DeductStocksRequest extends \Google\Protobuf\Internal\Message
      *     @type \Grpc\Catalog\V1\DeductStockItem[] $items
      * }
      */
-    public function __construct($data = NULL) {
+    public function __construct($data = null)
+    {
         \Grpc\Catalog\V1\GPBMetadata\Inventory::initOnce();
         parent::__construct($data);
     }

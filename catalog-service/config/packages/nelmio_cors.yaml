@@ -1,6 +1,7 @@
 nelmio_cors:
     defaults:
         origin_regex: true
+        allow_credentials: true
     paths:
         '^/api/':
             origin_regex: true

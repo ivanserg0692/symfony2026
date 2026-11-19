@@ -42,9 +42,9 @@ class Product
     #[Groups(["catalog_element:list", "catalog_element:item", "product_snapshot:list", "product_snapshot:item"])]
     private ?string $slug = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(["catalog_element:list", "catalog_element:item", "product_snapshot:list", "product_snapshot:item"])]
-    private ?string $pictureId = null;
+    #[ORM\OneToOne(targetEntity: CatalogMedia::class, cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\JoinColumn(referencedColumnName: 'id', unique: true, nullable: true)]
+    private ?CatalogMedia $picture = null;
 
     /**
      * @var Collection<int, CatalogSections>
@@ -145,14 +145,20 @@ class Product
         return $this;
     }
 
-    public function getPictureId(): ?string
+    #[Groups(["product_snapshot:list", "product_snapshot:item"])]
+    public function getPictureKey(): ?string
     {
-        return $this->pictureId;
+        return $this->picture?->getPictureKey();
     }
 
-    public function setPictureId(?string $pictureId): static
+    public function getPicture(): ?CatalogMedia
     {
-        $this->pictureId = $pictureId;
+        return $this->picture;
+    }
+
+    public function setPicture(?CatalogMedia $picture): static
+    {
+        $this->picture = $picture;
 
         return $this;
     }

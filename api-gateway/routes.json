@@ -120,6 +120,18 @@
       }
     },
     {
+      "id": "catalog_media",
+      "match": "prefix",
+      "publicPath": "/api/v1/catalog/media/",
+      "upstream": "catalog_web",
+      "internalPath": "/api/catalog/media/",
+      "auth": false,
+      "openapi": {
+        "source": "catalog",
+        "pathPrefix": "/api/catalog/media/"
+      }
+    },
+    {
       "id": "catalog_elements",
       "match": "prefix",
       "publicPath": "/api/v1/catalog/elements",

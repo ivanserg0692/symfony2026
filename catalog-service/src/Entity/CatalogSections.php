@@ -36,9 +36,9 @@ class CatalogSections
     #[Groups(["catalog_section:list", "catalog_section:item", "catalog_element:item"])]
     private ?string $description = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(["catalog_section:list", "catalog_section:item", "catalog_element:item"])]
-    private ?string $pictureId = null;
+    #[ORM\OneToOne(targetEntity: CatalogMedia::class, cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\JoinColumn(referencedColumnName: 'id', unique: true, nullable: true)]
+    private ?CatalogMedia $picture = null;
 
     #[ORM\Column]
     #[Gedmo\TreeLevel]
@@ -139,14 +139,19 @@ class CatalogSections
         return $this;
     }
 
-    public function getPictureId(): ?string
+    public function getPictureKey(): ?string
     {
-        return $this->pictureId;
+        return $this->picture?->getPictureKey();
     }
 
-    public function setPictureId(?string $pictureId): static
+    public function getPicture(): ?CatalogMedia
     {
-        $this->pictureId = $pictureId;
+        return $this->picture;
+    }
+
+    public function setPicture(?CatalogMedia $picture): static
+    {
+        $this->picture = $picture;
 
         return $this;
     }

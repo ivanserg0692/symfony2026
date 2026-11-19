@@ -2,8 +2,11 @@
 
 namespace App\Tests\Controller\Api;
 
+use App\Media\Infrastructure\CatalogPictureResponseFactory;
+use App\Search\Product\Infrastructure\CatalogResponseFactory;
 use App\Controller\Api\CatalogSectionsController;
 use App\Entity\CatalogSections;
+use App\Tests\Support\CatalogMediaFactory;
 use App\Repository\CatalogSectionsRepository;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Response;
@@ -57,10 +60,25 @@ final class CatalogSectionsControllerTest extends KernelTestCase
         self::assertSame(['message' => 'Catalog section was not found.'], $this->payload($response));
     }
 
+    public function testSectionListUsesJoinedPictures(): void
+    {
+        $repository = $this->createMock(CatalogSectionsRepository::class);
+        $repository->expects(self::once())->method('findActiveForPublicList')->willReturn([
+            (new CatalogSections())->setId(1)->setPicture(CatalogMediaFactory::create('chair', 'First')),
+            (new CatalogSections())->setId(2)->setPicture(CatalogMediaFactory::create('chair', 'Second')),
+            (new CatalogSections())->setId(3),
+        ]);
+        $sections = $this->payload($this->controller()->list($repository));
+        self::assertSame('First', $sections[0]['picture']['alt']);
+        self::assertSame('Second', $sections[1]['picture']['alt']);
+        self::assertSame($sections[0]['picture']['fullUrl'], $sections[1]['picture']['fullUrl']);
+        self::assertNull($sections[2]['picture']);
+    }
+
     private function controller(): CatalogSectionsController
     {
         self::bootKernel();
-        $controller = new CatalogSectionsController();
+        $controller = new CatalogSectionsController(new CatalogResponseFactory(new CatalogPictureResponseFactory('https://shop.example/media')));
         $controller->setContainer(static::getContainer());
 
         return $controller;

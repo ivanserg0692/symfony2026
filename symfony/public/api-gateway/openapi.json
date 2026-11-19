@@ -686,6 +686,69 @@
         }
       }
     },
+    "/api/v1/catalog/media/{key}": {
+      "get": {
+        "tags": [
+          "Catalog Media"
+        ],
+        "summary": "Get a catalog product photograph",
+        "operationId": "get_api_catalog_media",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": ".+"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registered WebP catalog photograph.",
+            "content": {
+              "image/webp": {}
+            }
+          },
+          "304": {
+            "description": "Photograph has not changed."
+          },
+          "404": {
+            "description": "Photograph not found."
+          }
+        }
+      },
+      "head": {
+        "tags": [
+          "Catalog Media"
+        ],
+        "summary": "Get catalog photograph headers",
+        "operationId": "head_api_catalog_media",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": ".+"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WebP photograph headers without a response body."
+          },
+          "304": {
+            "description": "Photograph has not changed."
+          },
+          "404": {
+            "description": "Photograph not found."
+          }
+        }
+      }
+    },
     "/api/v1/catalog/sections": {
       "get": {
         "tags": [
@@ -702,7 +765,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/CatalogSections"
+                    "$ref": "#/components/schemas/CatalogSectionResponse"
                   }
                 }
               }
@@ -735,7 +798,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CatalogSections"
+                  "$ref": "#/components/schemas/CatalogSectionResponse"
                 }
               }
             }
@@ -1597,10 +1660,6 @@
             "type": "string",
             "nullable": true
           },
-          "pictureId": {
-            "type": "string",
-            "nullable": true
-          },
           "sort": {
             "type": "integer",
             "nullable": true
@@ -1613,6 +1672,15 @@
           },
           "totalStock": {
             "type": "integer"
+          },
+          "picture": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CatalogPictureResponse"
+              }
+            ],
+            "nullable": true,
+            "default": null
           }
         },
         "type": "object"
@@ -1644,10 +1712,6 @@
             "type": "string",
             "nullable": true
           },
-          "pictureId": {
-            "type": "string",
-            "nullable": true
-          },
           "sort": {
             "type": "integer",
             "nullable": true
@@ -1666,6 +1730,15 @@
             "items": {
               "$ref": "#/components/schemas/CatalogSectionResponse"
             }
+          },
+          "picture": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CatalogPictureResponse"
+              }
+            ],
+            "nullable": true,
+            "default": null
           }
         },
         "type": "object"
@@ -1819,6 +1892,54 @@
                 }
               }
             ]
+          }
+        },
+        "type": "object"
+      },
+      "CatalogPictureResponse": {
+        "required": [
+          "thumbnailUrl",
+          "cardUrl",
+          "fullUrl",
+          "alt",
+          "creator",
+          "sourceUrl",
+          "license",
+          "licenseUrl",
+          "attribution"
+        ],
+        "properties": {
+          "thumbnailUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "cardUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "fullUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "alt": {
+            "type": "string"
+          },
+          "creator": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "license": {
+            "type": "string"
+          },
+          "licenseUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "attribution": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -1996,10 +2117,6 @@
             "type": "string",
             "nullable": true
           },
-          "pictureId": {
-            "type": "string",
-            "nullable": true
-          },
           "level": {
             "type": "integer",
             "nullable": true
@@ -2011,49 +2128,15 @@
           "parentId": {
             "type": "integer",
             "nullable": true
-          }
-        },
-        "type": "object"
-      },
-      "CatalogSections": {
-        "required": [
-          "id",
-          "name",
-          "slug",
-          "active",
-          "level"
-        ],
-        "properties": {
-          "id": {
-            "type": "integer"
           },
-          "name": {
-            "type": "string"
-          },
-          "slug": {
-            "type": "string"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "pictureId": {
-            "type": "string",
-            "nullable": true
-          },
-          "level": {
-            "type": "integer"
-          },
-          "sort": {
-            "type": "integer",
-            "default": 100
-          },
-          "parentId": {
-            "type": "integer",
-            "nullable": true
+          "picture": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CatalogPictureResponse"
+              }
+            ],
+            "nullable": true,
+            "default": null
           }
         },
         "type": "object"
@@ -2090,7 +2173,7 @@
           "slug": {
             "type": "string"
           },
-          "pictureId": {
+          "pictureKey": {
             "type": "string",
             "nullable": true
           }
@@ -2655,6 +2738,10 @@
     },
     {
       "name": "Catalog Elements"
+    },
+    {
+      "name": "Catalog Media",
+      "description": "Catalog Media"
     },
     {
       "name": "Catalog Sections"

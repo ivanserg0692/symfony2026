@@ -98,5 +98,5 @@ message SnapshotProduct {
   int64 created_by = 5;
   string description = 6;
   string slug = 7;
-  string picture_id = 8;
+  string picture_key = 8;
 }

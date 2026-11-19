@@ -2,6 +2,7 @@
 
 namespace App\DataFixtures;
 
+use App\DataFixtures\Media\CatalogMediaBulkWriter;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
@@ -58,8 +59,18 @@ class ProductSnapshotFixtures extends Fixture implements FixtureGroupInterface, 
 
             $connection->transactional(function () use ($connection, $sourceProducts): void {
                 $snapshotProductRows = [];
+                $mediaRows = [];
+                $mediaOffsets = [];
+                foreach ($sourceProducts as $offset => $source) {
+                    if ($source['source_picture_id'] !== null) {
+                        $mediaOffsets[] = $offset;
+                        $mediaRows[] = $source;
+                    }
+                }
+                $mediaIds = CatalogMediaBulkWriter::insert($connection, $mediaRows);
+                $mediaByOffset = $mediaOffsets === [] ? [] : array_combine($mediaOffsets, $mediaIds);
 
-                foreach ($sourceProducts as $sourceProduct) {
+                foreach ($sourceProducts as $offset => $sourceProduct) {
                     $originalProductId = (int) $sourceProduct['original_product_id'];
 
                     $snapshotProductRows[] = [
@@ -69,7 +80,7 @@ class ProductSnapshotFixtures extends Fixture implements FixtureGroupInterface, 
                         'created_by' => $sourceProduct['created_by'],
                         'description' => $sourceProduct['description'],
                         'slug' => $this->createSnapshotSlug((string) $sourceProduct['slug'], $originalProductId),
-                        'picture_id' => $sourceProduct['picture_id'],
+                        'picture_id' => $mediaByOffset[$offset] ?? null,
                     ];
                 }
 
@@ -110,9 +121,13 @@ SELECT
     product.created_by,
     product.description,
     product.slug,
-    product.picture_id
+    product.picture_id AS source_picture_id,
+    media.thumbnail_key, media.thumbnail_sha256, media.card_key, media.card_sha256,
+    media.main_key, media.main_sha256, media.alt, media.creator,
+    media.source_url, media.license, media.license_url, media.attribution
 FROM catalog_elements element
 INNER JOIN product ON product.id = element.product_id
+LEFT JOIN catalog_media media ON media.id = product.picture_id
 LEFT JOIN product_snapshot snapshot ON snapshot.original_product_id = element.id
 WHERE snapshot.id IS NULL
 ORDER BY element.id ASC

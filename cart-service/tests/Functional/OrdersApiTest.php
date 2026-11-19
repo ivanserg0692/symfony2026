@@ -246,6 +246,8 @@ class OrdersApiTest extends ApiTestCase
         self::assertArrayHasKey("lineTotal", $payload["items"][0]);
         self::assertSame("Snapshot product " . $payload["items"][0]["productSnapshotId"], $payload["items"][0]["productSnapshot"]["product"]["name"]);
         self::assertSame($payload["items"][0]["productSnapshotId"], $payload["items"][0]["productSnapshot"]["id"]);
+        self::assertSame("snapshot-picture-" . $payload["items"][0]["productSnapshotId"], $payload["items"][0]["productSnapshot"]["product"]["pictureKey"]);
+        self::assertArrayNotHasKey("pictureId", $payload["items"][0]["productSnapshot"]["product"]);
         self::assertArrayNotHasKey("ownerId", $payload);
         self::assertSame([[2124, 2125]], $this->catalogSnapshotRequests());
     }

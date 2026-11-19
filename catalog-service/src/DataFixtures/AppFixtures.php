@@ -2,12 +2,14 @@
 
 namespace App\DataFixtures;
 
+use App\DataFixtures\Media\CatalogMediaBulkWriter;
 use App\Entity\CatalogElements;
 use App\Entity\CatalogSections;
 use App\Entity\PriceType;
 use App\Entity\ProductPrice;
 use App\Entity\Stores;
 use App\Entity\StoresElementsStocks;
+use App\DataFixtures\Media\FixtureMediaLibrary;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
 use Doctrine\DBAL\Connection;
@@ -279,6 +281,28 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
         'Vector',
     ];
 
+    public function __construct(private readonly FixtureMediaLibrary $mediaLibrary)
+    {
+    }
+
+    /** @return list<string> Required leaf-category identities for media validation. */
+    public static function mediaCategorySlugs(): array
+    {
+        $slugs = [];
+        $visit = static function (array $tree, array $path) use (&$visit, &$slugs): void {
+            foreach ($tree as $name => $children) {
+                $parts = [...$path, $name];
+                if ($children === []) {
+                    $slugs[] = trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower(implode(' ', $parts))), '-');
+                } else {
+                    $visit($children, $parts);
+                }
+            }
+        };
+        $visit(self::CATALOG_TREE, []);
+        return $slugs;
+    }
+
     public function getOrder(): int
     {
         return 10;
@@ -309,7 +333,7 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
     /**
      * @param array<string, array<string, mixed>> $tree
      * @param array<int, string>                  $path
-     * @param array<int, string>                  $leafSections
+     * @param array<int, array{name: string, slug: string}> $leafSections
      */
     private function loadCatalogSections(
         ObjectManager $manager,
@@ -328,7 +352,7 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
                 ->setSlug($this->slugify(implode(' ', $sectionPath)))
                 ->setActive(true)
                 ->setDescription(sprintf('Products and offers in the %s catalog section.', $name))
-                ->setPictureId(sprintf('catalog/sections/%s.webp', $this->slugify(implode('-', $sectionPath))))
+                ->setPicture($this->mediaLibrary->forSection($this->slugify(implode(' ', $sectionPath)))->createMedia())
                 ->setSort($sort)
                 ->setParent($parent);
 
@@ -337,7 +361,7 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
             if ($children === []) {
                 // Flush here only to obtain the generated section ID for later product assignment.
                 $manager->flush();
-                $leafSections[(int) $section->getId()] = $name;
+                $leafSections[(int) $section->getId()] = ['name' => $name, 'slug' => $section->getSlug()];
             } else {
                 /** @var array<string, array<string, mixed>> $children */
                 $this->loadCatalogSections($manager, $children, $section, $sectionPath, $leafSections);
@@ -400,7 +424,7 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
     }
 
     /**
-     * @param array<int, string> $leafSections
+     * @param array<int, array{name: string, slug: string}> $leafSections
      * @param array<int, int>    $storeIds
      * @param array<string, int> $priceTypeIds
      */
@@ -423,7 +447,7 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
     }
 
     /**
-     * @param array<int, string> $leafSections
+     * @param array<int, array{name: string, slug: string}> $leafSections
      * @param array<int, int>    $storeIds
      * @param array<string, int> $priceTypeIds
      */
@@ -433,13 +457,17 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
         array $leafSections,
         array $storeIds,
         array $priceTypeIds,
+        int $productCount = self::PRODUCT_COUNT,
     ): void {
-        for ($i = 1; $i <= self::PRODUCT_COUNT; ++$i) {
+        for ($i = 1; $i <= $productCount; ++$i) {
             $createdAt = \DateTimeImmutable::createFromMutable($faker->dateTimeBetween('-18 months', '-1 day'));
             // Each product belongs to one to three leaf categories, never to a parent category.
             $sectionIds = $this->pickRandomIds($faker, array_keys($leafSections), 1, 3);
-            $productName = $this->createProductName($faker, $leafSections[$sectionIds[0]]);
-            $pictureUuid = $faker->uuid();
+            $category = $leafSections[$sectionIds[0]];
+            $picture = $this->mediaLibrary->forCategory($category['slug'], $i);
+            $productName = $this->createProductName($faker, $category['name'], $picture->productType);
+            // Preserve the old Faker sequence for unrelated prices, activity and stock.
+            $faker->uuid();
 
             $product = new CatalogElements();
             $product
@@ -449,7 +477,7 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
                 ->setCreatedBy($faker->numberBetween(1, 20))
                 ->setDescription($faker->paragraphs($faker->numberBetween(2, 4), true))
                 ->setSlug(sprintf('%s-%05d', $this->slugify($productName), $i))
-                ->setPictureId(sprintf('products/%s/main.webp', $pictureUuid))
+                ->setPicture($picture->createMedia())
                 ->setSort($faker->numberBetween(10, 500));
 
             foreach ($sectionIds as $sectionId) {
@@ -520,7 +548,7 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
      * and product-section links are inserted with DBAL batches because ORM UnitOfWork is too expensive
      * for hundreds of thousands or millions of rows.
      *
-     * @param array<int, string> $leafSections
+     * @param array<int, array{name: string, slug: string}> $leafSections
      * @param array<int, int>    $storeIds
      * @param array<string, int> $priceTypeIds
      */
@@ -530,20 +558,24 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
         array $leafSections,
         array $storeIds,
         array $priceTypeIds,
+        int $productCount = self::PRODUCT_COUNT,
     ): void {
         $productIndex = 1;
 
-        while ($productIndex <= self::PRODUCT_COUNT) {
-            $batchLimit = min(self::PRODUCT_COUNT, $productIndex + self::PRODUCT_BULK_BATCH_SIZE - 1);
+        while ($productIndex <= $productCount) {
+            $batchLimit = min($productCount, $productIndex + self::PRODUCT_BULK_BATCH_SIZE - 1);
             $productRows = [];
+            $mediaRows = [];
             $generatedProducts = [];
 
             for (; $productIndex <= $batchLimit; ++$productIndex) {
                 $createdAt = \DateTimeImmutable::createFromMutable($faker->dateTimeBetween('-18 months', '-1 day'));
                 $createdAtValue = $this->formatDateTime($createdAt);
                 $sectionIds = $this->pickRandomIds($faker, array_keys($leafSections), 1, 3);
-                $productName = $this->createProductName($faker, $leafSections[$sectionIds[0]]);
-                $pictureUuid = $faker->uuid();
+                $category = $leafSections[$sectionIds[0]];
+                $picture = $this->mediaLibrary->forCategory($category['slug'], $productIndex);
+                $productName = $this->createProductName($faker, $category['name'], $picture->productType);
+                $faker->uuid();
                 $basePrice = $faker->numberBetween(50000, 50000000);
 
                 $productRows[] = [
@@ -553,8 +585,10 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
                     'created_by' => $faker->numberBetween(1, 20),
                     'description' => $faker->paragraphs($faker->numberBetween(2, 4), true),
                     'slug' => sprintf('%s-%05d', $this->slugify($productName), $productIndex),
-                    'picture_id' => sprintf('products/%s/main.webp', $pictureUuid),
+                    'picture_id' => null,
                 ];
+
+                $mediaRows[] = CatalogMediaBulkWriter::row($picture->createMedia());
 
                 $generatedProducts[] = [
                     'created_at' => $createdAtValue,
@@ -574,7 +608,12 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
                 ];
             }
 
-            $connection->transactional(function () use ($connection, $faker, $productRows, $generatedProducts, $priceTypeIds): void {
+            $connection->transactional(function () use ($connection, $faker, $productRows, $mediaRows, $generatedProducts, $priceTypeIds): void {
+                $mediaIds = CatalogMediaBulkWriter::insert($connection, $mediaRows);
+                foreach ($productRows as $offset => &$row) {
+                    $row['picture_id'] = $mediaIds[$offset];
+                }
+                unset($row);
                 $productIds = $this->insertRowsReturningIds(
                     $connection,
                     'product',
@@ -781,13 +820,17 @@ class AppFixtures extends Fixture implements OrderedFixtureInterface
         return $dateTime->format('Y-m-d H:i:s');
     }
 
-    private function createProductName(Generator $faker, string $categoryName): string
+    private function createProductName(Generator $faker, string $categoryName, string $picturedType): string
     {
+        $brand = $faker->randomElement(self::PRODUCT_BRANDS);
+        $line = $faker->randomElement(self::PRODUCT_LINES);
+        // Consume the original type choice so image selection does not change other fixture data.
+        $this->createProductType($faker, $categoryName);
         return sprintf(
             '%s %s %s %d',
-            $faker->randomElement(self::PRODUCT_BRANDS),
-            $faker->randomElement(self::PRODUCT_LINES),
-            $this->createProductType($faker, $categoryName),
+            $brand,
+            $line,
+            $picturedType,
             $faker->numberBetween(100, 9999),
         );
     }

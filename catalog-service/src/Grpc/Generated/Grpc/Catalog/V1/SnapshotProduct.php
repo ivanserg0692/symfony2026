@@ -43,9 +43,9 @@ class SnapshotProduct extends \Google\Protobuf\Internal\Message
      */
     protected $slug = '';
     /**
-     * Generated from protobuf field <code>string picture_id = 8 [json_name = "pictureId"];</code>
+     * Generated from protobuf field <code>string picture_key = 8 [json_name = "pictureKey"];</code>
      */
-    protected $picture_id = '';
+    protected $picture_key = '';
 
     /**
      * Constructor.
@@ -60,10 +60,11 @@ class SnapshotProduct extends \Google\Protobuf\Internal\Message
      *     @type int|string $created_by
      *     @type string $description
      *     @type string $slug
-     *     @type string $picture_id
+     *     @type string $picture_key
      * }
      */
-    public function __construct($data = NULL) {
+    public function __construct($data = null)
+    {
         \Grpc\Catalog\V1\GPBMetadata\Inventory::initOnce();
         parent::__construct($data);
     }
@@ -222,23 +223,23 @@ class SnapshotProduct extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>string picture_id = 8 [json_name = "pictureId"];</code>
+     * Generated from protobuf field <code>string picture_key = 8 [json_name = "pictureKey"];</code>
      * @return string
      */
-    public function getPictureId()
+    public function getPictureKey()
     {
-        return $this->picture_id;
+        return $this->picture_key;
     }
 
     /**
-     * Generated from protobuf field <code>string picture_id = 8 [json_name = "pictureId"];</code>
+     * Generated from protobuf field <code>string picture_key = 8 [json_name = "pictureKey"];</code>
      * @param string $var
      * @return $this
      */
-    public function setPictureId(string $var)
+    public function setPictureKey(string $var)
     {
         GPBUtil::checkString($var, true);
-        $this->picture_id = $var;
+        $this->picture_key = $var;
 
         return $this;
     }

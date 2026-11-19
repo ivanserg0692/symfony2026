@@ -73,6 +73,9 @@ COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 COPY docker/php-symfony-cli/entrypoint.sh /usr/local/bin/symfony-entrypoint
 RUN chmod +x /usr/local/bin/symfony-entrypoint
 
+RUN chown www-data:www-data /var/www \
+    && chmod 755 /var/www
+
 WORKDIR /workspace
 
 FROM php-runtime-base AS prod
