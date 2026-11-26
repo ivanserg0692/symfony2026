@@ -8,6 +8,8 @@ use App\Cart\CartItemUnavailableException;
 use App\Cart\CartItemUpdateRequest;
 use App\Cart\CatalogInventoryUnavailableException;
 use App\Cart\CatalogProductNotFoundException;
+use App\Cart\GuestCartTransferItem;
+use App\Cart\GuestCartTransferRequest;
 use App\Controller\Api\Request\RequestPayloadResolver;
 use App\Entity\Cart;
 use App\Entity\CartItem;
@@ -48,6 +50,68 @@ class CartController extends AbstractController
         }
 
         return $this->json($cart, context: ["groups" => ["cart:item"]]);
+    }
+
+    #[Route('/transfer', name: 'api_cart_transfer_post', methods: ['POST'])]
+    #[OA\Post(
+        summary: 'Transfer a guest cart',
+        description: 'Merge available guest lines or replace the entire cart atomically. Replaying an operation ID with the same payload returns the recorded result. A failed stock check leaves the current cart intact in replace mode.',
+        security: [['XUserId' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['operationId', 'ownerId', 'mode', 'items'],
+                properties: [
+                    new OA\Property(property: 'operationId', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'ownerId', description: 'Must match the authenticated owner.', type: 'integer', minimum: 1),
+                    new OA\Property(property: 'mode', type: 'string', enum: ['merge', 'replace']),
+                    new OA\Property(property: 'items', type: 'array', minItems: 1, maxItems: 100,
+                        items: new OA\Items(ref: new Model(type: GuestCartTransferItem::class))),
+                ],
+                type: 'object',
+            ),
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Transfer result, including any unavailable product IDs.',
+                content: new OA\JsonContent(
+                    required: ['transferred', 'unavailable'],
+                    properties: [
+                        new OA\Property(property: 'transferred', type: 'array', items: new OA\Items(type: 'integer')),
+                        new OA\Property(property: 'unavailable', type: 'array', items: new OA\Items(type: 'integer')),
+                    ],
+                    type: 'object',
+                )),
+            new OA\Response(response: 400, description: 'Invalid request. Each product ID must appear only once.'),
+            new OA\Response(response: 409, description: 'Authenticated owner changed or operation ID was reused with a different payload.'),
+            new OA\Response(response: 503, description: 'Catalog inventory service is unavailable.'),
+        ],
+    )]
+    public function transferGuestCart(
+        Request $request,
+        CurrentUserProvider $currentUserProvider,
+        CartApiService $cartApiService,
+        RequestPayloadResolver $requestPayloadResolver,
+    ): JsonResponse {
+        $ownerId = $currentUserProvider->getRequiredUserId($request);
+
+        try {
+            $transfer = $requestPayloadResolver->resolve(
+                $request->getContent(),
+                GuestCartTransferRequest::class,
+                'Request body must contain a guest cart transfer.',
+            );
+            if ($transfer->ownerId !== $ownerId) {
+                return $this->json(['message' => 'The authenticated cart owner has changed.'], Response::HTTP_CONFLICT);
+            }
+
+            return $this->json($cartApiService->transferGuestCart($ownerId, $transfer));
+        } catch (\InvalidArgumentException $exception) {
+            return $this->json(['message' => $exception->getMessage()], Response::HTTP_BAD_REQUEST);
+        } catch (\DomainException $exception) {
+            return $this->json(['message' => $exception->getMessage()], Response::HTTP_CONFLICT);
+        } catch (CatalogInventoryUnavailableException) {
+            return $this->json(['message' => 'Catalog inventory service is unavailable.'], Response::HTTP_SERVICE_UNAVAILABLE);
+        }
     }
 
     #[Route("/items", name: "api_cart_item_post", methods: ["POST"])]

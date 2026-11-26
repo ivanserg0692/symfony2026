@@ -484,6 +484,102 @@
         ]
       }
     },
+    "/api/v1/cart/transfer": {
+      "post": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Transfer a guest cart",
+        "description": "Merge available guest lines or replace the entire cart atomically. Replaying an operation ID with the same payload returns the recorded result. A failed stock check leaves the current cart intact in replace mode.",
+        "operationId": "post_api_cart_transfer_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "operationId",
+                  "ownerId",
+                  "mode",
+                  "items"
+                ],
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "ownerId": {
+                    "description": "Must match the authenticated owner.",
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "merge",
+                      "replace"
+                    ]
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/GuestCartTransferItem"
+                    },
+                    "maxItems": 100,
+                    "minItems": 1
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transfer result, including any unavailable product IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "transferred",
+                    "unavailable"
+                  ],
+                  "properties": {
+                    "transferred": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      }
+                    },
+                    "unavailable": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request. Each product ID must appear only once."
+          },
+          "409": {
+            "description": "Authenticated owner changed or operation ID was reused with a different payload."
+          },
+          "503": {
+            "description": "Catalog inventory service is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/catalog/elements": {
       "get": {
         "tags": [
@@ -2176,6 +2272,25 @@
           "pictureKey": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "type": "object"
+      },
+      "GuestCartTransferItem": {
+        "required": [
+          "productId",
+          "quantity"
+        ],
+        "properties": {
+          "productId": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": 1
+          },
+          "quantity": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": 1
           }
         },
         "type": "object"

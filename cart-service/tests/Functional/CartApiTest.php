@@ -8,6 +8,92 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CartApiTest extends ApiTestCase
 {
+    public function testMergeReplaysOriginalResultAndTransfersOnlyAvailableLines(): void
+    {
+        $this->createCart(123);
+        $this->setCatalogStockAvailableQuantity(4);
+        $request = [
+            'ownerId' => 123,
+            'operationId' => '7ebc6ad6-70ac-463a-bb1e-d5f5b97e98b3',
+            'mode' => 'merge',
+            'items' => [
+                ['productId' => 1124, 'quantity' => 2],
+                ['productId' => 1125, 'quantity' => 3],
+            ],
+        ];
+
+        $this->requestJson('POST', '/api/cart/transfer', 123, $request);
+        self::assertResponseIsSuccessful();
+        self::assertSame(['transferred' => [1124], 'unavailable' => [1125]], $this->jsonResponse());
+
+        $this->requestJson('POST', '/api/cart/transfer', 123, $request);
+        self::assertResponseIsSuccessful();
+        self::assertSame(['transferred' => [1124], 'unavailable' => [1125]], $this->jsonResponse());
+        self::assertCount(2, $this->catalogStockRequests());
+
+        $this->requestJson('GET', '/api/cart', 123);
+        self::assertSame([1124 => 3, 1125 => 2], array_column($this->jsonResponse()['items'], 'quantity', 'catalogElementId'));
+
+        $request['mode'] = 'replace';
+        $this->requestJson('POST', '/api/cart/transfer', 123, $request);
+        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
+    }
+
+    public function testReplacePreservesExistingCartUntilAllGuestLinesAreAvailable(): void
+    {
+        $this->createCart(123);
+        $this->setCatalogStockAvailableQuantity(4);
+        $request = [
+            'ownerId' => 123,
+            'operationId' => '7ebc6ad6-70ac-463a-bb1e-d5f5b97e98b3',
+            'mode' => 'replace',
+            'items' => [
+                ['productId' => 1124, 'quantity' => 3],
+                ['productId' => 3001, 'quantity' => 5],
+            ],
+        ];
+
+        $this->requestJson('POST', '/api/cart/transfer', 123, $request);
+        self::assertResponseIsSuccessful();
+        self::assertSame(['transferred' => [], 'unavailable' => [3001]], $this->jsonResponse());
+
+        $this->requestJson('GET', '/api/cart', 123);
+        self::assertSame([1124 => 1, 1125 => 2], array_column($this->jsonResponse()['items'], 'quantity', 'catalogElementId'));
+
+        $this->setCatalogStockAvailableQuantity(5);
+        $request['operationId'] = 'd761d868-a2f4-4787-abf1-fe1df175d41c';
+        $this->requestJson('POST', '/api/cart/transfer', 123, $request);
+        self::assertResponseIsSuccessful();
+        self::assertSame(['transferred' => [1124, 3001], 'unavailable' => []], $this->jsonResponse());
+
+        $this->entityManager->clear();
+        $this->requestJson('GET', '/api/cart', 123);
+        self::assertSame([1124 => 3, 3001 => 5], array_column($this->jsonResponse()['items'], 'quantity', 'catalogElementId'));
+    }
+
+    public function testTransferValidatesNestedLinesAndRejectsAnAccountChange(): void
+    {
+        $request = [
+            'ownerId' => 123,
+            'operationId' => '7ebc6ad6-70ac-463a-bb1e-d5f5b97e98b3',
+            'mode' => 'merge',
+            'items' => [['productId' => 501, 'quantity' => 0]],
+        ];
+
+        $this->requestJson('POST', '/api/cart/transfer', 123, $request);
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+
+        $request['items'][0]['quantity'] = 1;
+        $request['items'][] = $request['items'][0];
+        $this->requestJson('POST', '/api/cart/transfer', 123, $request);
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+
+        array_pop($request['items']);
+        $this->requestJson('POST', '/api/cart/transfer', 456, $request);
+        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
+        self::assertCount(0, $this->catalogStockRequests());
+    }
+
     public function testGetExistingCart(): void
     {
         $cart = $this->createCart(123);

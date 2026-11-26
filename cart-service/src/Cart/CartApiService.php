@@ -4,6 +4,7 @@ namespace App\Cart;
 
 use App\Entity\Cart;
 use App\Entity\CartItem;
+use App\Entity\GuestCartTransfer;
 use App\Grpc\CatalogInventoryClient;
 use App\Grpc\CatalogStockResponse;
 use App\Repository\CartItemRepository;
@@ -150,6 +151,95 @@ class CartApiService
 
         $this->entityManager->remove($cart);
         $this->entityManager->flush();
+    }
+
+    /** @return array{transferred: list<int>, unavailable: list<int>} */
+    public function transferGuestCart(int $ownerId, GuestCartTransferRequest $request): array
+    {
+        $operationId = strtolower($request->operationId);
+        $payloadHash = hash('sha256', json_encode([$request->mode, $request->items], JSON_THROW_ON_ERROR));
+
+        return $this->entityManager->wrapInTransaction(function () use ($ownerId, $request, $operationId, $payloadHash): array {
+            // Serialize transfers even when the owner does not have a cart row yet.
+            $this->entityManager->getConnection()->executeQuery('SELECT pg_advisory_xact_lock(46129, ?)', [$ownerId]);
+            $previous = $this->entityManager->find(GuestCartTransfer::class, [
+                'ownerId' => $ownerId,
+                'operationId' => $operationId,
+            ]);
+            if ($previous !== null) {
+                return $previous->getResultFor($payloadHash);
+            }
+
+            $cart = $this->cartRepository->findForOwnerForUpdate($ownerId);
+            $items = $cart === null ? [] : $this->cartItemRepository->findForCart($cart);
+            $replace = $request->mode === 'replace';
+            $byProduct = [];
+            foreach ($items as $item) {
+                $byProduct[$item->getCatalogElementId()] = $item;
+            }
+
+            $quantities = [];
+            $unavailable = [];
+            foreach ($request->items as $line) {
+                $existing = $byProduct[$line->productId] ?? null;
+                $quantity = $line->quantity + ($replace ? 0 : ($existing?->getQuantity() ?? 0));
+                if (!$this->hasTransferStock($line->productId, $quantity)) {
+                    $unavailable[] = $line->productId;
+                    continue;
+                }
+
+                $quantities[$line->productId] = $quantity;
+            }
+
+            if ($replace && $unavailable !== []) {
+                $quantities = [];
+            }
+            if ($quantities !== []) {
+                if ($cart === null) {
+                    $cart = $this->createCart($ownerId);
+                    $this->entityManager->persist($cart);
+                }
+                if ($replace) {
+                    foreach (array_diff_key($byProduct, $quantities) as $item) {
+                        $this->entityManager->remove($item);
+                    }
+                }
+
+                $sort = $this->nextSort($items);
+                foreach ($quantities as $productId => $quantity) {
+                    $item = $byProduct[$productId] ?? null;
+                    if ($item !== null) {
+                        $item->setQuantity($quantity);
+                        continue;
+                    }
+
+                    $item = $this->createItem($productId, $quantity, $sort);
+                    $item->setCart($cart);
+                    $this->entityManager->persist($item);
+                    $sort += 100;
+                }
+            }
+
+            $result = ['transferred' => array_keys($quantities), 'unavailable' => $unavailable];
+            $this->entityManager->persist(new GuestCartTransfer($ownerId, $operationId, $payloadHash, $result));
+
+            return $result;
+        });
+    }
+
+    private function hasTransferStock(int $productId, int $quantity): bool
+    {
+        if ($quantity > 2147483647) {
+            return false;
+        }
+
+        try {
+            $response = $this->catalogInventoryClient->checkStock($productId, $quantity);
+        } catch (\Throwable $exception) {
+            throw new CatalogInventoryUnavailableException('Catalog inventory service is unavailable.', previous: $exception);
+        }
+
+        return $response->productId === $productId && $response->available;
     }
 
     private function isMissingProductResponse(CatalogStockResponse $response, int $productId): bool
