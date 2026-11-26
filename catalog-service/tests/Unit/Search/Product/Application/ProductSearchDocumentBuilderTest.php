@@ -3,6 +3,7 @@
 namespace App\Tests\Unit\Search\Product\Application;
 
 use App\Entity\CatalogElements;
+use App\Tests\Support\CatalogMediaFactory;
 use App\Entity\CatalogSections;
 use App\Entity\PriceType;
 use App\Entity\ProductPrice;
@@ -23,7 +24,7 @@ final class ProductSearchDocumentBuilderTest extends TestCase
             ->setName("Test product")
             ->setSlug("test-product")
             ->setDescription("Description")
-            ->setPictureId("picture-1")
+            ->setPicture(CatalogMediaFactory::create("picture-1"))
             ->setActive(true)
             ->setCreatedBy(7)
             ->setCreatedAt(new \DateTimeImmutable("2026-08-31T12:30:00+00:00"))
@@ -33,7 +34,7 @@ final class ProductSearchDocumentBuilderTest extends TestCase
 
         $element->addSection((new CatalogSections())->setId(20)->setName("Second")->setSlug("second")->setActive(true)->setSort(20));
         $element->addSection((new CatalogSections())->setId(10)->setName("First")->setSlug("first")->setActive(true)->setSort(10)
-            ->setDescription("Section description")->setPictureId("section-picture"));
+            ->setDescription("Section description")->setPicture(CatalogMediaFactory::create("section-picture")));
 
         $priceType = (new PriceType())->setCode("retail")->setName("Retail")->setActive(true)
             ->setSort(0)->setDescription("Retail description");
@@ -61,13 +62,19 @@ final class ProductSearchDocumentBuilderTest extends TestCase
         self::assertContainsOnlyInstancesOf(ProductSearchPrice::class, $document->prices);
         self::assertContainsOnlyInstancesOf(ProductSearchStock::class, $document->stocks);
         self::assertSame(142, $source["product_id"]);
+        self::assertArrayNotHasKey('picture_id', $source);
+        self::assertArrayNotHasKey('picture_id', $source['sections'][0]);
+        self::assertSame('Author', $source['picture']['creator']);
+        self::assertSame('CC BY 4.0', $source['picture']['license']);
+        self::assertSame('https://example.com/license', $source['picture']['license_url']);
+        self::assertArrayNotHasKey('sha256', $source['picture']);
         self::assertSame([10, 20], $source["section_ids"]);
         self::assertSame("Description", $source["description"]);
-        self::assertSame("picture-1", $source["picture_id"]);
+        self::assertSame(CatalogMediaFactory::key("picture-1"), $source["picture"]["variants"]["main"]);
         self::assertSame("Section description", $source["sections"][0]["description"]);
-        self::assertSame("section-picture", $source["sections"][0]["picture_id"]);
+        self::assertSame(CatalogMediaFactory::key("section-picture"), $source["sections"][0]["picture"]["variants"]["main"]);
         self::assertNull($source["sections"][1]["description"]);
-        self::assertNull($source["sections"][1]["picture_id"]);
+        self::assertNull($source["sections"][1]["picture"]);
         self::assertSame("retail", $source["prices"][0]["type_code"]);
         self::assertSame(0, $source["prices"][0]["type_sort"]);
         self::assertSame("Retail description", $source["prices"][0]["type_description"]);

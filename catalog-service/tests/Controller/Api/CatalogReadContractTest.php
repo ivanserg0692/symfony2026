@@ -2,8 +2,11 @@
 
 namespace App\Tests\Controller\Api;
 
+use App\Media\Infrastructure\CatalogPictureResponseFactory;
+use App\Search\Product\Infrastructure\CatalogResponseFactory;
 use App\Controller\Api\CatalogElementsController;
 use App\Entity\CatalogElements;
+use App\Tests\Support\CatalogMediaFactory;
 use App\Entity\CatalogSections;
 use App\Entity\PriceType;
 use App\Entity\ProductPrice;
@@ -14,7 +17,6 @@ use App\Search\Product\Application\Dto\Read\CatalogListCriteria;
 use App\Search\Product\Application\Dto\Read\CatalogPage;
 use App\Search\Product\Application\Dto\Read\CatalogListQuery;
 use App\Search\Product\Application\ProductSearchDocumentBuilder;
-use App\Search\Product\Application\Dto\Read\CatalogElementResponse;
 use App\Search\Product\Port\Output\CatalogReadInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -26,17 +28,19 @@ final class CatalogReadContractTest extends KernelTestCase
         self::bootKernel();
         $serializer = static::getContainer()->get("serializer");
         $element = $this->element($populated);
-        $expected = json_decode($serializer->serialize($element, "json", ["groups" => [$group]]), true);
+        $expected = $this->expectedContract($element, $group, true);
         $document = (new ProductSearchDocumentBuilder())->build($element)->toArray();
         $responses = [
-            CatalogElementResponse::fromEntity($element, $group === "catalog_element:item"),
-            CatalogElementResponse::fromDocument($document),
+            (new CatalogResponseFactory(new CatalogPictureResponseFactory('https://shop.example/media')))->elementFromEntity($element, $group === "catalog_element:item"),
+            (new CatalogResponseFactory(new CatalogPictureResponseFactory('https://shop.example/media')))->elementFromDocument($document),
         ];
         foreach ($responses as $response) {
             $actual = json_decode($serializer->serialize($response, "json", ["groups" => [$group]]), true);
             // JSON object key order is not part of the contract; array order is.
             self::assertEquals($expected, $actual);
             self::assertSame($expected["productPrices"], $actual["productPrices"]);
+            self::assertArrayNotHasKey("pictureId", $actual);
+            self::assertArrayNotHasKey("picture_id", $document);
             self::assertArrayNotHasKey("product_id", $actual);
             self::assertArrayNotHasKey("available", $actual);
             if ($group === "catalog_element:list") {
@@ -45,7 +49,8 @@ final class CatalogReadContractTest extends KernelTestCase
                     self::assertArrayNotHasKey("description", $actual["productPrices"][0]["priceType"]);
                 }
             } else {
-                self::assertSame($expected["sections"], $actual["sections"]);
+                self::assertEquals($expected["sections"], $actual["sections"]);
+                self::assertSame(array_column($expected["sections"], "id"), array_column($actual["sections"], "id"));
             }
         }
     }
@@ -156,14 +161,14 @@ final class CatalogReadContractTest extends KernelTestCase
     {
         self::bootKernel();
         $element = $this->element(true);
-        $dto = CatalogElementResponse::fromDocument((new ProductSearchDocumentBuilder())->build($element)->toArray());
+        $dto = (new CatalogResponseFactory(new CatalogPictureResponseFactory('https://shop.example/media')))->elementFromDocument((new ProductSearchDocumentBuilder())->build($element)->toArray());
         $reader = $this->createMock(CatalogReadInterface::class);
         $reader->expects(self::exactly(2))->method("findById")->withConsecutive([42], [99])->willReturnOnConsecutiveCalls($dto, null);
         $controller = new CatalogElementsController(false);
         $controller->setContainer(static::getContainer());
         $service = new CatalogReadService($reader);
         $response = $controller->item(42, $service);
-        $expected = static::getContainer()->get("serializer")->serialize($element, "json", ["groups" => ["catalog_element:item"]]);
+        $expected = json_encode($this->expectedContract($element, "catalog_element:item"), JSON_THROW_ON_ERROR);
         self::assertJsonStringEqualsJsonString($expected, $response->getContent());
         $response = $controller->item(99, $service);
         self::assertSame(404, $response->getStatusCode());
@@ -174,7 +179,7 @@ final class CatalogReadContractTest extends KernelTestCase
     {
         self::bootKernel();
         $element = $this->element(true);
-        $dto = CatalogElementResponse::fromDocument((new ProductSearchDocumentBuilder())->build($element)->toArray());
+        $dto = (new CatalogResponseFactory(new CatalogPictureResponseFactory('https://shop.example/media')))->elementFromDocument((new ProductSearchDocumentBuilder())->build($element)->toArray());
         $serializer = static::getContainer()->get("serializer");
         foreach ([false, true] as $lookAhead) {
             $reader = $this->createMock(CatalogReadInterface::class);
@@ -184,10 +189,30 @@ final class CatalogReadContractTest extends KernelTestCase
             $controller->setContainer(static::getContainer());
             $response = $controller->list(new CatalogListQuery(), new CatalogReadService($reader));
             $pagination = ["page" => 1, "limit" => 20] + ($lookAhead ? ["hasNextPage" => true] : ["total" => 5]);
-            $expected = $serializer->serialize(["items" => [$element], "pagination" => $pagination],
+            $expected = $serializer->serialize(["items" => [$this->expectedContract($element, "catalog_element:list")], "pagination" => $pagination],
                 "json", ["groups" => ["catalog_element:list"]]);
             self::assertJsonStringEqualsJsonString($expected, $response->getContent());
         }
+    }
+
+    /** Catalog responses expose the picture object instead of the legacy file key. */
+    private function expectedContract(CatalogElements $element, string $group, bool $withPictures = true): array
+    {
+        $expected = json_decode(static::getContainer()->get('serializer')->serialize($element, 'json', ['groups' => [$group]]), true, flags: JSON_THROW_ON_ERROR);
+        $expected['picture'] = null;
+        if ($withPictures && $element->getProduct()->getPicture() !== null) {
+            $expected['picture'] = (array) (new CatalogPictureResponseFactory('https://shop.example/media'))->fromEntity($element->getProduct()->getPicture());
+        }
+        if (isset($expected['sections'])) {
+            foreach ($expected['sections'] as $offset => &$section) {
+                $section['picture'] = null;
+                $picture = $element->getSections()->get($offset)->getPicture();
+                if ($withPictures && $picture !== null) {
+                    $section['picture'] = (array) (new CatalogPictureResponseFactory('https://shop.example/media'))->fromEntity($picture);
+                }
+            }
+        }
+        return $expected;
     }
 
     private function element(bool $populated): CatalogElements
@@ -198,10 +223,10 @@ final class CatalogReadContractTest extends KernelTestCase
         if (!$populated) {
             return $element;
         }
-        $element->setDescription("Описание")->setPictureId("picture");
+        $element->setDescription("Описание")->setPicture(CatalogMediaFactory::create("picture"));
         $parent = (new CatalogSections())->setId(1);
         $element->addSection((new CatalogSections())->setId(2)->setName("Раздел")->setSlug("section")
-            ->setActive(false)->setDescription("Описание раздела")->setPictureId("section-picture")->setParent($parent)->setSort(0));
+            ->setActive(false)->setDescription("Описание раздела")->setPicture(CatalogMediaFactory::create("section-picture"))->setParent($parent)->setSort(0));
         $element->addSection((new CatalogSections())->setId(3)->setName("Другой")->setSlug("other")->setActive(true));
         foreach ([5, 6] as $id) {
             $type = (new PriceType())->setCode("type-".$id)->setName("Цена")->setActive(false)->setSort(0)

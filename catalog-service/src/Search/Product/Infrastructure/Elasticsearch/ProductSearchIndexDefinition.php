@@ -4,7 +4,7 @@ namespace App\Search\Product\Infrastructure\Elasticsearch;
 
 final class ProductSearchIndexDefinition
 {
-    public const int SCHEMA_VERSION = 2;
+    public const int SCHEMA_VERSION = 3;
 
     public function __construct(
         private readonly int $productSearchResultWindow,
@@ -37,7 +37,7 @@ final class ProductSearchIndexDefinition
                     ],
                     "slug" => ["type" => "keyword"],
                     "description" => ["type" => "text"],
-                    "picture_id" => ["type" => "keyword"],
+                    "picture" => ["type" => "object", "enabled" => false],
                     "active" => ["type" => "boolean"],
                     "sort" => ["type" => "integer"],
                     "created_at" => ["type" => "date"],
@@ -51,7 +51,7 @@ final class ProductSearchIndexDefinition
                             "active" => ["type" => "boolean"],
                             "parent_id" => ["type" => "long"],
                             "description" => ["type" => "text"],
-                            "picture_id" => ["type" => "keyword"],
+                            "picture" => ["type" => "object", "enabled" => false],
                             "level" => ["type" => "integer"],
                             "sort" => ["type" => "integer"],
                         ],

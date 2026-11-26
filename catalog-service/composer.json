@@ -16,6 +16,8 @@
         "elasticsearch/elasticsearch": "^9.5",
         "fakerphp/faker": "^1.24",
         "google/protobuf": "^5.35",
+        "league/flysystem-aws-s3-v3": "^3.32",
+        "league/flysystem-bundle": "^3.7",
         "nelmio/api-doc-bundle": "^5.10",
         "nelmio/cors-bundle": "^2.6",
         "spiral/roadrunner-grpc": "^3.6",

@@ -2,6 +2,8 @@
 
 namespace App\Tests\Unit\Search\Product\Application;
 
+use App\Entity\CatalogSections;
+use App\Tests\Support\CatalogMediaFactory;
 use App\Entity\CatalogElements;
 use App\Search\Product\Application\Dto\Indexing\BulkIndexResult;
 use App\Search\Product\Application\ProductSearchDocumentBuilder;
@@ -34,6 +36,28 @@ final class ProductSearchIncrementalIndexerTest extends TestCase
         self::assertSame("Current name", $gateway->indexedDocuments[1]->toArray()["name"]);
         self::assertSame(2, $source->releaseCount);
         self::assertSame(2, $lock->sharedReleaseCount);
+    }
+
+    public function testPictureReplacementAndRemovalUpdateProductAndSectionSources(): void
+    {
+        $element = $this->createElement(10, 'Chair');
+        $section = (new CatalogSections())->setId(7);
+        $element->addSection($section);
+        $gateway = new IncrementalTestIndexGateway();
+        $indexer = new ProductSearchIncrementalIndexer(new IncrementalTestCatalogSource([$element]),
+            new ProductSearchDocumentBuilder(), $gateway, new IncrementalTestReindexLock());
+        foreach (['Original', 'Replacement', null] as $alt) {
+            $element->setPicture($alt === null ? null : CatalogMediaFactory::create('chair', $alt));
+            $section->setPicture($alt === null ? null : CatalogMediaFactory::create('chair', 'Section '.$alt));
+            $indexer->reindex(10);
+        }
+        $sources = array_map(static fn ($document) => $document->toArray(), $gateway->indexedDocuments);
+        self::assertSame('Original', $sources[0]['picture']['alt']);
+        self::assertSame('Replacement', $sources[1]['picture']['alt']);
+        self::assertSame('Section Replacement', $sources[1]['sections'][0]['picture']['alt']);
+        self::assertNull($sources[2]['picture']);
+        self::assertNull($sources[2]['sections'][0]['picture']);
+        self::assertSame($sources[0]['picture']['variants'], $sources[1]['picture']['variants']);
     }
 
     public function testDeletesDocumentWhenCatalogElementNoLongerExists(): void

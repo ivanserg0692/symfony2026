@@ -3,6 +3,7 @@
 namespace App\Tests\Integration\Inventory;
 
 use App\Entity\CatalogElements;
+use App\Tests\Support\CatalogMediaFactory;
 use App\Entity\Stores;
 use App\Entity\StoresElementsStocks;
 use App\Inventory\StockDeductionRequestItem;
@@ -83,7 +84,7 @@ final class InventoryDeductionServiceTest extends KernelTestCase
         self::assertSame($product->getId(), (int) $snapshot['original_product_id']);
         self::assertSame('product-1', $snapshot['name']);
         self::assertSame('Description for product-1', $snapshot['description']);
-        self::assertSame('product-1-picture', $snapshot['picture_id']);
+        self::assertSame(CatalogMediaFactory::key('product-1-picture'), $snapshot['picture_key']);
         self::assertSame(1, (int) $snapshot['active']);
         self::assertSame(1, (int) $snapshot['created_by']);
     }
@@ -101,14 +102,14 @@ final class InventoryDeductionServiceTest extends KernelTestCase
         $product
             ->setName('changed-product')
             ->setDescription('Changed description')
-            ->setPictureId('changed-picture');
+            ->setPicture(CatalogMediaFactory::create('changed-picture'));
         $this->entityManager->flush();
 
         $snapshot = $this->snapshotRow($result->products[0]->getProductSnapshotId());
 
         self::assertSame('product-1', $snapshot['name']);
         self::assertSame('Description for product-1', $snapshot['description']);
-        self::assertSame('product-1-picture', $snapshot['picture_id']);
+        self::assertSame(CatalogMediaFactory::key('product-1-picture'), $snapshot['picture_key']);
     }
 
     public function testAutomaticSplitCreatesOneSnapshotForProduct(): void
@@ -436,7 +437,7 @@ final class InventoryDeductionServiceTest extends KernelTestCase
             ->setCreatedAt(new \DateTimeImmutable('2026-01-01 10:00:00'))
             ->setCreatedBy(1)
             ->setDescription(sprintf('Description for %s', $slug))
-            ->setPictureId(sprintf('%s-picture', $slug))
+            ->setPicture(CatalogMediaFactory::create(sprintf('%s-picture', $slug)))
             ->setSort(100);
 
         $this->entityManager->persist($product);
@@ -468,12 +469,12 @@ final class InventoryDeductionServiceTest extends KernelTestCase
     }
 
     /**
-     * @return array{id: int|string, original_product_id: int|string, name: string, description: string|null, picture_id: string|null, active: bool|int|string, created_by: int|string}
+     * @return array{id: int|string, original_product_id: int|string, name: string, description: string|null, picture_key: string|null, active: bool|int|string, created_by: int|string}
      */
     private function snapshotRow(int $snapshotId): array
     {
         $row = $this->entityManager->getConnection()->fetchAssociative(
-            'SELECT snapshot.id, snapshot.original_product_id, product.name, product.description, product.picture_id, product.active, product.created_by FROM product_snapshot snapshot INNER JOIN product ON product.id = snapshot.product_id WHERE snapshot.id = :snapshot_id',
+            'SELECT snapshot.id, snapshot.original_product_id, product.name, product.description, media.main_key AS picture_key, product.active, product.created_by FROM product_snapshot snapshot INNER JOIN product ON product.id = snapshot.product_id LEFT JOIN catalog_media media ON media.id = product.picture_id WHERE snapshot.id = :snapshot_id',
             ['snapshot_id' => $snapshotId],
         );
 

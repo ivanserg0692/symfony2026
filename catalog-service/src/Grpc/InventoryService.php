@@ -309,7 +309,7 @@ final readonly class InventoryService implements InventoryServiceInterface
                 "created_by" => $product->getCreatedBy() ?? 0,
                 "description" => $product->getDescription() ?? "",
                 "slug" => $product->getSlug() ?? "",
-                "picture_id" => $product->getPictureId() ?? "",
+                "picture_key" => $product->getPictureKey() ?? "",
             ]),
         ]);
     }

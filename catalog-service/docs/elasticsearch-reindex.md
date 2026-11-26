@@ -7,6 +7,7 @@
   - [Purpose](#purpose)
   - [Incremental indexing](#incremental-indexing)
   - [Product to CatalogElements relation](#product-to-catalogelements-relation)
+  - [Picture metadata (schema v3)](#picture-metadata-schema-v3)
   - [Configuration](#configuration)
   - [Run](#run)
   - [Verified result](#verified-result)
@@ -17,6 +18,7 @@
   - [Назначение](#%D0%BD%D0%B0%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D0%B5)
   - [Инкрементальная индексация](#%D0%B8%D0%BD%D0%BA%D1%80%D0%B5%D0%BC%D0%B5%D0%BD%D1%82%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F-%D0%B8%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0%D1%86%D0%B8%D1%8F)
   - [Связь Product с CatalogElements](#%D1%81%D0%B2%D1%8F%D0%B7%D1%8C-product-%D1%81-catalogelements)
+  - [Метаданные изображения (схема v3)](#%D0%BC%D0%B5%D1%82%D0%B0%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D0%B5-%D0%B8%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F-%D1%81%D1%85%D0%B5%D0%BC%D0%B0-v3)
   - [Конфигурация](#%D0%BA%D0%BE%D0%BD%D1%84%D0%B8%D0%B3%D1%83%D1%80%D0%B0%D1%86%D0%B8%D1%8F)
   - [Запуск](#%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA)
   - [Подтверждённый результат](#%D0%BF%D0%BE%D0%B4%D1%82%D0%B2%D0%B5%D1%80%D0%B6%D0%B4%D1%91%D0%BD%D0%BD%D1%8B%D0%B9-%D1%80%D0%B5%D0%B7%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%82)
@@ -47,6 +49,16 @@ The `CatalogElements -> Product` association is intentionally unidirectional. It
 Avoiding the N+1 would require every query that loads products, including the different `ProductSnapshot` loading paths, to add an explicit fetch join. The inverse association and its compensating joins were removed in commit `da820fe` while optimizing the SQL query count and must not be restored for incremental indexing.
 
 When a `Product` change must be mapped to an affected search document, incremental indexing uses a narrow ORM repository query that accepts the `Product` object and resolves its `CatalogElements`. Other relational impacts are resolved through the ORM associations already present on their entities.
+
+### Picture metadata (schema v3)
+
+Product documents embed nullable `picture` and `sections[].picture`. Each picture stores relative `variants` keys (`thumb`, `card`, `main`), `alt`, `creator`, `source_url`, `license`, `license_url` and `attribution`. Both picture mappings use `type: object, enabled: false`: metadata is available in `_source` only and does not participate in search, sorting or aggregations. Standalone `picture_id`, media IDs, checksums and public URLs are not stored.
+
+Catalog REST responses expose only `picture`. The configured `CATALOG_MEDIA_PUBLIC_BASE_URL` is applied while mapping responses, so changing the public domain does not require reindexing. Elasticsearch reads perform no SQL or S3 calls. A missing image is represented by null, without a database fallback. Shared file keys retain independent metadata for each owner. PostgreSQL OneToOne foreign keys and gRPC snapshot fields are unchanged.
+
+Full and incremental indexing reuse the same builder and three bounded ORM queries; existing fetch joins load product and section pictures. Replacing/removing an owner’s `picture` creates outbox events for affected products. `CatalogMedia` has no metadata setters: change metadata by replacing the owner’s media row. Image data has the same eventual consistency as other indexed product data.
+
+Deploy this schema together with a full application rebuild from PostgreSQL (`npm run catalog:elasticsearch:reindex`) and the atomic alias switch. Elasticsearch `_reindex` only copies old documents and cannot add picture metadata. During the transition keep catalog reads on Doctrine and pause incremental workers targeting the old strict mapping. Run the full rebuild with the new code, switch readers to Elasticsearch only after the v3 alias is active, then resume workers. There is no SQL fallback for old documents. At million-product scale metadata increases `_source` storage, including repeated section pictures, but adds no searchable image fields or per-product read queries. PostgreSQL does not require a migration.
 
 ### Configuration
 
@@ -190,6 +202,16 @@ Catalog Service восстанавливает производную поиск
 Чтобы избежать N+1, пришлось бы добавлять явный fetch join во все запросы, загружающие товары, включая разные пути загрузки `ProductSnapshot`. Обратная связь и компенсирующие её join были удалены в коммите `da820fe` при оптимизации количества SQL-запросов и не должны возвращаться ради incremental indexing.
 
 Когда изменение `Product` необходимо сопоставить с затронутым поисковым документом, incremental indexing использует узкий ORM-запрос репозитория: принимает объект `Product` и находит его `CatalogElements`. Влияние остальных связанных сущностей определяется через уже существующие у них ORM relations.
+
+### Метаданные изображения (схема v3)
+
+Документы содержат nullable `picture` и `sections[].picture`: относительные ключи `variants` (`thumb`, `card`, `main`), `alt`, `creator`, `source_url`, `license`, `license_url` и `attribution`. Mapping обоих объектов — `type: object, enabled: false`: данные хранятся только в `_source`, без поиска, сортировок и агрегаций. Отдельный `picture_id`, ID медиа, контрольные суммы и абсолютные URL в документ не входят.
+
+REST-ответы каталога содержат только `picture`. URL строятся при формировании ответа через `CATALOG_MEDIA_PUBLIC_BASE_URL`; смена домена не требует переиндексации. Чтение из Elasticsearch не выполняет SQL- и S3-запросы. Отсутствие картинки обозначается null без обращения к БД. Общие файлы сохраняют независимые метаданные владельцев. FK OneToOne в PostgreSQL и поля gRPC-снимков не меняются.
+
+Полная и инкрементальная индексация используют общий построитель и три ограниченных ORM-запроса; изображения товаров и разделов загружаются существующими fetch joins. Замена или удаление `picture` владельца создаёт outbox-события для затронутых товаров. У `CatalogMedia` нет сеттеров метаданных: изменения выполняются заменой записи у владельца. Актуальность изображений соответствует eventual consistency остальных данных индекса.
+
+Для перехода нужна полная переиндексация приложением из PostgreSQL (`npm run catalog:elasticsearch:reindex`) и атомарное переключение alias. Elasticsearch `_reindex` только копирует старые документы и не добавит метаданные. На время перехода оставьте чтение каталога на Doctrine и остановите инкрементальные workers, обращающиеся к старому строгому mapping. Выполните rebuild новым кодом; переключайте чтение на Elasticsearch после появления v3 под alias, затем возобновите workers. SQL fallback для старых документов отсутствует. На миллионе товаров увеличится размер `_source`, включая повторение картинок разделов, но не число поисковых полей или запросов чтения на товар. Миграция PostgreSQL не нужна.
 
 ### Конфигурация
 

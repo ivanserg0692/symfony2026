@@ -2,6 +2,10 @@
 
 namespace App\Tests\Controller\Api;
 
+use App\Entity\CatalogElements;
+use App\Entity\CatalogSections;
+use App\Tests\Support\CatalogMediaFactory;
+use App\Search\Product\Application\ProductSearchDocumentBuilder;
 use App\Search\Product\Application\CatalogReadService;
 use App\Search\Product\Application\Dto\Read\CatalogListCriteria;
 use App\Search\Product\Infrastructure\Doctrine\DoctrineCatalogReader;
@@ -53,6 +57,49 @@ final class CatalogReadWiringTest extends KernelTestCase
             self::assertSame([], $page->items);
             self::assertSame(["page" => 1, "limit" => 20, "total" => 0], $page->pagination);
             self::assertNull($service->item(42));
+            self::assertFalse($connection->isConnected());
+        });
+    }
+
+    public function testPopulatedElasticsearchPicturesNeverOpenDatabaseConnection(): void
+    {
+        $this->withModel('elasticsearch', function (): void {
+            self::bootKernel();
+            $container = static::getContainer();
+            $sources = [];
+            for ($id = 1; $id <= 30; ++$id) {
+                $element = (new CatalogElements())->setName('Chair')
+                    ->setPicture(CatalogMediaFactory::create('chair', 'Product '.$id))
+                    ->addSection((new CatalogSections())->setId(7)
+                        ->setPicture(CatalogMediaFactory::create('chair', 'Section')));
+                (new \ReflectionProperty($element, 'id'))->setValue($element, $id);
+                $element->getProduct()->setId(100 + $id);
+                $sources[] = (new ProductSearchDocumentBuilder())->build($element)->toArray();
+            }
+            $responses = [
+                ['hits' => ['hits' => array_map(static fn (array $source) => ['_source' => $source], $sources), 'total' => ['value' => 30, 'relation' => 'eq']]],
+                ['docs' => [['found' => true, '_source' => $sources[0]]]],
+            ];
+            $http = $this->createMock(ClientInterface::class);
+            $http->expects(self::exactly(2))->method('sendRequest')->willReturnCallback(
+                static function () use (&$responses): Response {
+                    return new Response(200, ['X-Elastic-Product' => 'Elasticsearch', 'Content-Type' => 'application/json'],
+                        json_encode(array_shift($responses), JSON_THROW_ON_ERROR));
+                },
+            );
+            $container->set('app.catalog_read.elasticsearch_client', ClientBuilder::create()
+                ->setHosts(['http://elasticsearch:9200'])->setHttpClient($http)->build());
+            $connection = $container->get('doctrine.dbal.default_connection');
+            self::assertFalse($connection->isConnected());
+            $reader = $container->get(CatalogReadInterface::class);
+            $page = $reader->findPage(new CatalogListCriteria(null, null, 1, 30, false));
+            self::assertCount(30, $page->items);
+            self::assertSame('Product 1', $page->items[0]->picture->alt);
+            self::assertSame('Product 30', $page->items[29]->picture->alt);
+            self::assertSame($page->items[0]->picture->fullUrl, $page->items[29]->picture->fullUrl);
+            $item = $reader->findById(1);
+            self::assertSame('Section', $item->sections[0]->picture->alt);
+            self::assertSame($item->picture->fullUrl, $item->sections[0]->picture->fullUrl);
             self::assertFalse($connection->isConnected());
         });
     }

@@ -272,7 +272,9 @@ class CatalogElementsRepository extends ServiceEntityRepository
     ): QueryBuilder {
         return $queryBuilder
             ->innerJoin(sprintf("%s.product", $elementAlias), $productAlias)
-            ->addSelect($productAlias);
+            ->addSelect($productAlias)
+            ->leftJoin(sprintf("%s.picture", $productAlias), "productMedia")
+            ->addSelect("productMedia");
     }
 
     private function addSectionsRelation(
@@ -283,6 +285,8 @@ class CatalogElementsRepository extends ServiceEntityRepository
         return $queryBuilder
             ->leftJoin(sprintf("%s.sections", $productAlias), $sectionAlias)
             ->addSelect($sectionAlias)
+            ->leftJoin(sprintf("%s.picture", $sectionAlias), "sectionMedia")
+            ->addSelect("sectionMedia")
             ->leftJoin(sprintf("%s.parent", $sectionAlias), "sectionParent")
             ->addSelect("sectionParent");
     }

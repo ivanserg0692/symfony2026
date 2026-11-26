@@ -2,6 +2,8 @@
 
 namespace App\Tests\Controller\Api;
 
+use App\Media\Infrastructure\CatalogPictureResponseFactory;
+use App\Search\Product\Infrastructure\CatalogResponseFactory;
 use App\Controller\Api\CatalogElementsController;
 use App\Repository\CatalogElementsRepository;
 use App\Search\Product\Application\CatalogReadService;
@@ -137,7 +139,7 @@ final class CatalogElementsControllerTest extends KernelTestCase
         $controller->setContainer(static::getContainer());
 
         $response = $controller->list($query ?? new CatalogListQuery(page: 2, limit: 2), new CatalogReadService(
-            new DoctrineCatalogReader($repository),
+            new DoctrineCatalogReader($repository, new CatalogResponseFactory(new CatalogPictureResponseFactory('https://shop.example/media'))),
         ));
         $content = $response->getContent();
 

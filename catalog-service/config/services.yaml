@@ -8,6 +8,7 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     env(CATALOG_READ_MODEL): 'doctrine'
+    env(PRODUCT_SEARCH_REINDEX_LOCK_ID): !php/enum App\AdvisoryLockKey::ProductSearchReindex->value
 
 services:
     # default configuration for services in *this* file
@@ -28,6 +29,8 @@ services:
             int $productSearchReindexLockId: '%env(int:PRODUCT_SEARCH_REINDEX_LOCK_ID)%'
             bool $productSearchIncrementalWorkerPaused: '%env(bool:PRODUCT_SEARCH_INCREMENTAL_WORKER_PAUSED)%'
             bool $appTracingEnabled: '%env(bool:APP_TRACING_ENABLED)%'
+            string $catalogMediaPublicBaseUrl: '%env(CATALOG_MEDIA_PUBLIC_BASE_URL)%'
+            string $catalogMediaBucket: '%env(CATALOG_MEDIA_BUCKET)%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -35,6 +38,20 @@ services:
         resource: '../src/'
         exclude:
             - '../src/Grpc/Generated/'
+            - '../src/DataFixtures/Media/FixtureMediaAsset.php'
+            - '../src/DataFixtures/Media/FixtureMediaFile.php'
+            - '../src/Media/CatalogMediaVariant.php'
+            - '../src/Media/CatalogPictureResponse.php'
+
+    Aws\S3\S3Client:
+        arguments:
+            - version: 'latest'
+              region: '%env(MINIO_REGION)%'
+              endpoint: '%env(MINIO_ENDPOINT)%'
+              use_path_style_endpoint: true
+              credentials:
+                  key: '%env(MINIO_ROOT_USER)%'
+                  secret: '%env(MINIO_ROOT_PASSWORD)%'
 
     App\Search\Product\Port\Output\CatalogReadInterface:
         factory: ['@App\Search\Product\Infrastructure\CatalogReadFactory', 'create']

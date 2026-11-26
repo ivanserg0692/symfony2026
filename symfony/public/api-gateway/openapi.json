@@ -484,6 +484,96 @@
         ]
       }
     },
+    "/api/v1/cart/transfer": {
+      "post": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Transfer a guest cart",
+        "description": "Merge available guest lines or replace the entire cart atomically. Replaying an operation ID with the same payload returns the recorded result. A failed stock check leaves the current cart intact in replace mode.",
+        "operationId": "post_api_cart_transfer_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "operationId",
+                  "mode",
+                  "items"
+                ],
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "merge",
+                      "replace"
+                    ]
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/GuestCartTransferItem"
+                    },
+                    "maxItems": 100,
+                    "minItems": 1
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transfer result, including any unavailable product IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "transferred",
+                    "unavailable"
+                  ],
+                  "properties": {
+                    "transferred": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      }
+                    },
+                    "unavailable": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request. Each product ID must appear only once."
+          },
+          "409": {
+            "description": "Operation ID was reused with a different payload."
+          },
+          "503": {
+            "description": "Catalog inventory service is unavailable."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/catalog/elements": {
       "get": {
         "tags": [
@@ -686,6 +776,69 @@
         }
       }
     },
+    "/api/v1/catalog/media/{key}": {
+      "get": {
+        "tags": [
+          "Catalog Media"
+        ],
+        "summary": "Get a catalog product photograph",
+        "operationId": "get_api_catalog_media",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": ".+"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registered WebP catalog photograph.",
+            "content": {
+              "image/webp": {}
+            }
+          },
+          "304": {
+            "description": "Photograph has not changed."
+          },
+          "404": {
+            "description": "Photograph not found."
+          }
+        }
+      },
+      "head": {
+        "tags": [
+          "Catalog Media"
+        ],
+        "summary": "Get catalog photograph headers",
+        "operationId": "head_api_catalog_media",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": ".+"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WebP photograph headers without a response body."
+          },
+          "304": {
+            "description": "Photograph has not changed."
+          },
+          "404": {
+            "description": "Photograph not found."
+          }
+        }
+      }
+    },
     "/api/v1/catalog/sections": {
       "get": {
         "tags": [
@@ -702,7 +855,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/CatalogSections"
+                    "$ref": "#/components/schemas/CatalogSectionResponse"
                   }
                 }
               }
@@ -735,7 +888,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CatalogSections"
+                  "$ref": "#/components/schemas/CatalogSectionResponse"
                 }
               }
             }
@@ -1597,10 +1750,6 @@
             "type": "string",
             "nullable": true
           },
-          "pictureId": {
-            "type": "string",
-            "nullable": true
-          },
           "sort": {
             "type": "integer",
             "nullable": true
@@ -1613,6 +1762,15 @@
           },
           "totalStock": {
             "type": "integer"
+          },
+          "picture": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CatalogPictureResponse"
+              }
+            ],
+            "nullable": true,
+            "default": null
           }
         },
         "type": "object"
@@ -1644,10 +1802,6 @@
             "type": "string",
             "nullable": true
           },
-          "pictureId": {
-            "type": "string",
-            "nullable": true
-          },
           "sort": {
             "type": "integer",
             "nullable": true
@@ -1666,6 +1820,15 @@
             "items": {
               "$ref": "#/components/schemas/CatalogSectionResponse"
             }
+          },
+          "picture": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CatalogPictureResponse"
+              }
+            ],
+            "nullable": true,
+            "default": null
           }
         },
         "type": "object"
@@ -1819,6 +1982,54 @@
                 }
               }
             ]
+          }
+        },
+        "type": "object"
+      },
+      "CatalogPictureResponse": {
+        "required": [
+          "thumbnailUrl",
+          "cardUrl",
+          "fullUrl",
+          "alt",
+          "creator",
+          "sourceUrl",
+          "license",
+          "licenseUrl",
+          "attribution"
+        ],
+        "properties": {
+          "thumbnailUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "cardUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "fullUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "alt": {
+            "type": "string"
+          },
+          "creator": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "license": {
+            "type": "string"
+          },
+          "licenseUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "attribution": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -1996,10 +2207,6 @@
             "type": "string",
             "nullable": true
           },
-          "pictureId": {
-            "type": "string",
-            "nullable": true
-          },
           "level": {
             "type": "integer",
             "nullable": true
@@ -2011,49 +2218,15 @@
           "parentId": {
             "type": "integer",
             "nullable": true
-          }
-        },
-        "type": "object"
-      },
-      "CatalogSections": {
-        "required": [
-          "id",
-          "name",
-          "slug",
-          "active",
-          "level"
-        ],
-        "properties": {
-          "id": {
-            "type": "integer"
           },
-          "name": {
-            "type": "string"
-          },
-          "slug": {
-            "type": "string"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "pictureId": {
-            "type": "string",
-            "nullable": true
-          },
-          "level": {
-            "type": "integer"
-          },
-          "sort": {
-            "type": "integer",
-            "default": 100
-          },
-          "parentId": {
-            "type": "integer",
-            "nullable": true
+          "picture": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CatalogPictureResponse"
+              }
+            ],
+            "nullable": true,
+            "default": null
           }
         },
         "type": "object"
@@ -2090,9 +2263,28 @@
           "slug": {
             "type": "string"
           },
-          "pictureId": {
+          "pictureKey": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "type": "object"
+      },
+      "GuestCartTransferItem": {
+        "required": [
+          "productId",
+          "quantity"
+        ],
+        "properties": {
+          "productId": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": 1
+          },
+          "quantity": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": 1
           }
         },
         "type": "object"
@@ -2655,6 +2847,10 @@
     },
     {
       "name": "Catalog Elements"
+    },
+    {
+      "name": "Catalog Media",
+      "description": "Catalog Media"
     },
     {
       "name": "Catalog Sections"
