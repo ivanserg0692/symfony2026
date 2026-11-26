@@ -60,10 +60,9 @@ class CartController extends AbstractController
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['operationId', 'ownerId', 'mode', 'items'],
+                required: ['operationId', 'mode', 'items'],
                 properties: [
                     new OA\Property(property: 'operationId', type: 'string', format: 'uuid'),
-                    new OA\Property(property: 'ownerId', description: 'Must match the authenticated owner.', type: 'integer', minimum: 1),
                     new OA\Property(property: 'mode', type: 'string', enum: ['merge', 'replace']),
                     new OA\Property(property: 'items', type: 'array', minItems: 1, maxItems: 100,
                         items: new OA\Items(ref: new Model(type: GuestCartTransferItem::class))),
@@ -82,7 +81,7 @@ class CartController extends AbstractController
                     type: 'object',
                 )),
             new OA\Response(response: 400, description: 'Invalid request. Each product ID must appear only once.'),
-            new OA\Response(response: 409, description: 'Authenticated owner changed or operation ID was reused with a different payload.'),
+            new OA\Response(response: 409, description: 'Operation ID was reused with a different payload.'),
             new OA\Response(response: 503, description: 'Catalog inventory service is unavailable.'),
         ],
     )]
@@ -100,9 +99,6 @@ class CartController extends AbstractController
                 GuestCartTransferRequest::class,
                 'Request body must contain a guest cart transfer.',
             );
-            if ($transfer->ownerId !== $ownerId) {
-                return $this->json(['message' => 'The authenticated cart owner has changed.'], Response::HTTP_CONFLICT);
-            }
 
             return $this->json($cartApiService->transferGuestCart($ownerId, $transfer));
         } catch (\InvalidArgumentException $exception) {

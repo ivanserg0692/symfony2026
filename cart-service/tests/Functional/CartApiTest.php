@@ -13,7 +13,6 @@ class CartApiTest extends ApiTestCase
         $this->createCart(123);
         $this->setCatalogStockAvailableQuantity(4);
         $request = [
-            'ownerId' => 123,
             'operationId' => '7ebc6ad6-70ac-463a-bb1e-d5f5b97e98b3',
             'mode' => 'merge',
             'items' => [
@@ -44,7 +43,6 @@ class CartApiTest extends ApiTestCase
         $this->createCart(123);
         $this->setCatalogStockAvailableQuantity(4);
         $request = [
-            'ownerId' => 123,
             'operationId' => '7ebc6ad6-70ac-463a-bb1e-d5f5b97e98b3',
             'mode' => 'replace',
             'items' => [
@@ -71,10 +69,9 @@ class CartApiTest extends ApiTestCase
         self::assertSame([1124 => 3, 3001 => 5], array_column($this->jsonResponse()['items'], 'quantity', 'catalogElementId'));
     }
 
-    public function testTransferValidatesNestedLinesAndRejectsAnAccountChange(): void
+    public function testTransferRequiresAuthenticationAndRejectsOwnerInBody(): void
     {
         $request = [
-            'ownerId' => 123,
             'operationId' => '7ebc6ad6-70ac-463a-bb1e-d5f5b97e98b3',
             'mode' => 'merge',
             'items' => [['productId' => 501, 'quantity' => 0]],
@@ -89,8 +86,12 @@ class CartApiTest extends ApiTestCase
         self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
 
         array_pop($request['items']);
-        $this->requestJson('POST', '/api/cart/transfer', 456, $request);
-        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
+        $this->requestJson('POST', '/api/cart/transfer', body: $request);
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        self::assertSame('X-User-Id header must be a positive integer.', $this->jsonResponse()['message']);
+
+        $this->requestJson('POST', '/api/cart/transfer', 456, $request + ['ownerId' => 123]);
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
         self::assertCount(0, $this->catalogStockRequests());
     }
 

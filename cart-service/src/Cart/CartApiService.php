@@ -161,7 +161,10 @@ class CartApiService
 
         return $this->entityManager->wrapInTransaction(function () use ($ownerId, $request, $operationId, $payloadHash): array {
             // Serialize transfers even when the owner does not have a cart row yet.
-            $this->entityManager->getConnection()->executeQuery('SELECT pg_advisory_xact_lock(46129, ?)', [$ownerId]);
+            $this->entityManager->getConnection()->executeQuery(
+                'SELECT pg_advisory_xact_lock(?, ?)',
+                [AdvisoryLockKey::GuestCartTransfer->value, $ownerId],
+            );
             $previous = $this->entityManager->find(GuestCartTransfer::class, [
                 'ownerId' => $ownerId,
                 'operationId' => $operationId,
@@ -171,53 +174,21 @@ class CartApiService
             }
 
             $cart = $this->cartRepository->findForOwnerForUpdate($ownerId);
+            /** @var list<CartItem> $items */
             $items = $cart === null ? [] : $this->cartItemRepository->findForCart($cart);
+            $currentItems = new CartTransferItems($items);
             $replace = $request->mode === 'replace';
-            $byProduct = [];
-            foreach ($items as $item) {
-                $byProduct[$item->getCatalogElementId()] = $item;
-            }
-
-            $quantities = [];
-            $unavailable = [];
-            foreach ($request->items as $line) {
-                $existing = $byProduct[$line->productId] ?? null;
-                $quantity = $line->quantity + ($replace ? 0 : ($existing?->getQuantity() ?? 0));
-                if (!$this->hasTransferStock($line->productId, $quantity)) {
-                    $unavailable[] = $line->productId;
-                    continue;
-                }
-
-                $quantities[$line->productId] = $quantity;
-            }
+            ['quantities' => $quantities, 'unavailable' => $unavailable] = $this->checkTransferStock(
+                $currentItems,
+                $request->items,
+                $replace,
+            );
 
             if ($replace && $unavailable !== []) {
                 $quantities = [];
             }
             if ($quantities !== []) {
-                if ($cart === null) {
-                    $cart = $this->createCart($ownerId);
-                    $this->entityManager->persist($cart);
-                }
-                if ($replace) {
-                    foreach (array_diff_key($byProduct, $quantities) as $item) {
-                        $this->entityManager->remove($item);
-                    }
-                }
-
-                $sort = $this->nextSort($items);
-                foreach ($quantities as $productId => $quantity) {
-                    $item = $byProduct[$productId] ?? null;
-                    if ($item !== null) {
-                        $item->setQuantity($quantity);
-                        continue;
-                    }
-
-                    $item = $this->createItem($productId, $quantity, $sort);
-                    $item->setCart($cart);
-                    $this->entityManager->persist($item);
-                    $sort += 100;
-                }
+                $this->applyTransferItems($ownerId, $cart, $currentItems, $quantities, $replace, $this->nextSort($items));
             }
 
             $result = ['transferred' => array_keys($quantities), 'unavailable' => $unavailable];
@@ -225,6 +196,66 @@ class CartApiService
 
             return $result;
         });
+    }
+
+    /**
+     * @param array<array-key, GuestCartTransferItem> $guestItems
+     * @return array{quantities: array<int, int>, unavailable: list<int>}
+     */
+    private function checkTransferStock(CartTransferItems $currentItems, array $guestItems, bool $replace): array
+    {
+        /** @var array<int, int> $quantities Final quantities keyed by product ID. */
+        $quantities = [];
+        /** @var list<int> $unavailable Product IDs that failed the stock check. */
+        $unavailable = [];
+
+        foreach ($guestItems as $line) {
+            $existing = $currentItems->getByProductId($line->productId);
+            $quantity = $line->quantity + ($replace ? 0 : ($existing?->getQuantity() ?? 0));
+            if (!$this->hasTransferStock($line->productId, $quantity)) {
+                $unavailable[] = $line->productId;
+                continue;
+            }
+
+            $quantities[$line->productId] = $quantity;
+        }
+
+        return ['quantities' => $quantities, 'unavailable' => $unavailable];
+    }
+
+    /**
+     * @param array<int, int> $quantities Final quantities keyed by product ID.
+     */
+    private function applyTransferItems(
+        int $ownerId,
+        ?Cart $cart,
+        CartTransferItems $currentItems,
+        array $quantities,
+        bool $replace,
+        int $sort,
+    ): void {
+        if ($cart === null) {
+            $cart = $this->createCart($ownerId);
+            $this->entityManager->persist($cart);
+        }
+        if ($replace) {
+            foreach ($currentItems->getItemsAbsentFrom($quantities) as $item) {
+                $this->entityManager->remove($item);
+            }
+        }
+
+        foreach ($quantities as $productId => $quantity) {
+            $item = $currentItems->getByProductId($productId);
+            if ($item !== null) {
+                $item->setQuantity($quantity);
+                continue;
+            }
+
+            $item = $this->createItem($productId, $quantity, $sort);
+            $item->setCart($cart);
+            $this->entityManager->persist($item);
+            $sort += 100;
+        }
     }
 
     private function hasTransferStock(int $productId, int $quantity): bool

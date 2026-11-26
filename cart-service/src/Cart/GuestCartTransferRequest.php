@@ -12,8 +12,6 @@ final readonly class GuestCartTransferRequest
     public function __construct(
         #[Assert\Uuid]
         public string $operationId,
-        #[Assert\Positive]
-        public int $ownerId,
         #[Assert\Choice(choices: ['merge', 'replace'])]
         public string $mode,
         /** @var GuestCartTransferItem[] */

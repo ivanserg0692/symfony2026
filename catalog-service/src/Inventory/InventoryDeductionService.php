@@ -2,6 +2,7 @@
 
 namespace App\Inventory;
 
+use App\AdvisoryLockKey;
 use App\Entity\InventoryOperation;
 use App\Entity\StoresElementsStocks;
 use App\Repository\CatalogElementsRepository;
@@ -179,9 +180,13 @@ final readonly class InventoryDeductionService
 
     private function lockOperationId(string $operationId): void
     {
-        $this->connection->executeQuery("SELECT pg_advisory_xact_lock(hashtextextended(:operation_id, 0))", [
-            "operation_id" => $operationId,
-        ]);
+        $this->connection->executeQuery(
+            "SELECT pg_advisory_xact_lock(hashtextextended(:operation_id, :seed))",
+            [
+                "operation_id" => $operationId,
+                "seed" => AdvisoryLockKey::InventoryDeductionHashSeed->value,
+            ],
+        );
     }
 
     /**
